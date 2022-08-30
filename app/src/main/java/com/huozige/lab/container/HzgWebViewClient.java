@@ -7,6 +7,7 @@ import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -60,6 +61,4 @@ public class HzgWebViewClient extends WebViewClient {
     public void onLoadResource(WebView view, String url) {
         super.onLoadResource(view, url);
     }
-
-
 }

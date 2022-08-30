@@ -4,12 +4,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 public class MainActivity extends AppCompatActivity {
 
     WebView _webView;
+
+    static final int MENU_ID_HOME = 0;
+    static final int MENU_ID_REFRESH = 1;
+    static final int MENU_ID_HELP = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +27,11 @@ public class MainActivity extends AppCompatActivity {
         initWebView();
     }
 
-    private void initWebView(){
+    private void initActionBar() {
+
+    }
+
+    private void initWebView() {
 
         // 1. WebSettings
         WebSettings settings = _webView.getSettings();
@@ -58,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         _webView.requestFocusFromTouch();
 
         // 注册交互对象
-        _webView.addJavascriptInterface(new HzgJsBridgeIndex(this),"index");
+        _webView.addJavascriptInterface(new HzgJsBridgeIndex(this), "index");
 
         // 加载页面
         _webView.loadUrl(getString(R.string.huozige_app));
@@ -68,10 +78,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-        if ((keyCode == KeyEvent.KEYCODE_BACK) ){
+        if ((keyCode == KeyEvent.KEYCODE_BACK)) {
 
             // 避免误操作，不允许通过后退键退出应用
-            if( _webView.canGoBack()) {
+            if (_webView.canGoBack()) {
                 _webView.goBack();
             }
 
@@ -79,5 +89,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
+        menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
+        menu.add(0, MENU_ID_HELP, 2, getString(R.string.ui_menu_help));
+        menu.findItem(MENU_ID_REFRESH);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch(item.getItemId())
+        {
+            case MENU_ID_HOME:
+                initWebView();
+                break;
+            case MENU_ID_REFRESH:
+                _webView.reload();
+                break;
+            case MENU_ID_HELP:
+                _webView.loadUrl(getString(R.string.help_webpage));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

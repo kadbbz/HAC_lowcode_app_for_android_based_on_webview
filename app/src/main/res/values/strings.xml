@@ -3,4 +3,12 @@
     <string name="app_name">活字格</string>
     <!--您需要承载的活字格应用的首页地址-->
     <string name="huozige_app">https://hzgdemo.app.hzgcloud.cn/Features</string>
+    <!--您的帮助文档-->
+    <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
+    <!-- 界面文字，不建议修改-->
+    <string name="ui_menu_home">首页</string>
+    <string name="ui_menu_refresh">刷新</string>
+    <string name="ui_menu_help">帮助</string>
+    <string name="ui_title_loading">加载中，请稍等……</string>
+    <string name="ui_title_progressing">处理中：%d%%</string>
 </resources>
