@@ -1,6 +1,6 @@
 <resources>
     <!--您的应用名称-->
-    <string name="app_name">活字格</string>
+    <string name="app_name">企业办公平台（创新版）</string>
     <!--您需要承载的活字格应用的首页地址-->
     <string name="huozige_app">https://hzgcclass.app.hzgcloud.cn/seuic_demo</string>
     <!--您的帮助文档-->
