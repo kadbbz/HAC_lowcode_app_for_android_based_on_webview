@@ -2,7 +2,7 @@
     <!--您的应用名称-->
     <string name="app_name">企业办公平台（创新版）</string>
     <!--您需要承载的活字格应用的首页地址-->
-    <string name="huozige_app">https://hzgcclass.app.hzgcloud.cn/seuic_demo</string>
+    <string name="huozige_app">https://hzgdemo.app.hzgcloud.cn/Features</string>
     <!--您的帮助文档-->
     <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
     <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
@@ -27,4 +27,6 @@
     <string name="ui_button_cancel">取消</string>
     <string name="ui_barscanner_cancel_button">取消</string>
     <string name="ui_barscanner_wait_content">准备就绪\n请按扫码键</string>
+    <string name="ui_toast_permissions_denied_never">您选择了永久拒绝授权，应用很可能无法正常运行。应用将自动导航到系统设置页面，请手动为应用授权。</string>
+    <string name="ui_toast_permissions_denied">您没有为应用授权这些权限，应用很可能无法正常运行。如需授权，可彻底关闭应用或重启设备后重试。</string>
 </resources>

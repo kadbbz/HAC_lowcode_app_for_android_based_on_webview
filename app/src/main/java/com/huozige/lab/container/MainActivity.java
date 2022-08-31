@@ -1,13 +1,9 @@
 package com.huozige.lab.container;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
-import android.net.Uri;
+
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -16,7 +12,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
-import com.huozige.lab.container.pda.WaitForScannerBroadcastActivity;
+
 
 import java.util.List;
 
@@ -33,14 +29,18 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         _webView = new WebView(getApplicationContext());
-        setContentView(_webView);
+
         initActionBar();
         initWebView();
+
+        setContentView(_webView);
     }
 
     private void initActionBar() {
         setTitle(getString(R.string.ui_title_loading));
     }
+
+
 
     private void initWebView() {
 
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
 
         // 2. WebViewClient
-        _webView.setWebViewClient(new HzgWebViewClient());
+        _webView.setWebViewClient(new HzgWebViewClient(this));
 
         // 3. WebChromeClient
         _webView.setWebChromeClient(new HzgWebChromeClient(this));
