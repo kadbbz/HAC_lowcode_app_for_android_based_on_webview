@@ -2,13 +2,29 @@
     <!--您的应用名称-->
     <string name="app_name">活字格</string>
     <!--您需要承载的活字格应用的首页地址-->
-    <string name="huozige_app">https://hzgdemo.app.hzgcloud.cn/Features</string>
+    <string name="huozige_app">https://hzgcclass.app.hzgcloud.cn/seuic_demo</string>
     <!--您的帮助文档-->
     <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
+    <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
+    <string name="feature_scanner_activity_title">扫码中...</string>
+    <string name="feature_scanner_broadcast_name">com.android.server.scan.huozige</string>
+    <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配-->
+    <string name="feature_scanner_intent_action">com.android.scanner.service_settings</string>
+    <string name="feature_scanner_extra_def_action_barcode_broadcast">action_barcode_broadcast</string>
+    <string name="feature_scanner_extra_def_barcode_send_mode">barcode_send_mode</string>
+    <string name="feature_scanner_extra_barcode_send_mode_broadcast">BROADCAST</string>
+    <string name="feature_scanner_extra_def_key_barcode_broadcast">key_barcode_broadcast</string>
+    <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
+    <string name="feature_scanner_extra_def_sound_play">sound_play</string>
+    <string name="feature_scanner_extra_def_viberate">viberate</string>
     <!-- 界面文字，不建议修改-->
     <string name="ui_menu_home">首页</string>
     <string name="ui_menu_refresh">刷新</string>
     <string name="ui_menu_help">帮助</string>
     <string name="ui_title_loading">加载中，请稍等……</string>
     <string name="ui_title_progressing">处理中：%d%%</string>
+    <string name="ui_button_ok">确定</string>
+    <string name="ui_button_cancel">取消</string>
+    <string name="ui_barscanner_cancel_button">取消</string>
+    <string name="ui_barscanner_wait_content">准备就绪\n请按扫码键</string>
 </resources>

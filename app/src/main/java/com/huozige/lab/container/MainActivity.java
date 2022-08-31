@@ -1,13 +1,24 @@
 package com.huozige.lab.container;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import com.huozige.lab.container.pda.HzgJsBridgePDA;
+import com.huozige.lab.container.pda.WaitForScannerBroadcastActivity;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,12 +34,12 @@ public class MainActivity extends AppCompatActivity {
 
         _webView = new WebView(getApplicationContext());
         setContentView(_webView);
-
+        initActionBar();
         initWebView();
     }
 
     private void initActionBar() {
-
+        setTitle(getString(R.string.ui_title_loading));
     }
 
     private void initWebView() {
@@ -69,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 注册交互对象
         _webView.addJavascriptInterface(new HzgJsBridgeIndex(this), "index");
+        _webView.addJavascriptInterface(new HzgJsBridgePDA(this, _webView), "pda");
 
         // 加载页面
         _webView.loadUrl(getString(R.string.huozige_app));
@@ -101,10 +113,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        switch(item.getItemId())
-        {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case MENU_ID_HOME:
                 initWebView();
                 break;
@@ -116,5 +126,13 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void OpenDocument(String mime){
+
+    }
+
+    public void OpenMultiDocument(String mime){
+
     }
 }

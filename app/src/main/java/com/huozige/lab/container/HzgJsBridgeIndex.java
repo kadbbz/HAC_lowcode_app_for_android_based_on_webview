@@ -18,4 +18,6 @@ public class HzgJsBridgeIndex {
     public void showToast(String toast) {
         Toast.makeText(_activity, toast, Toast.LENGTH_SHORT).show();
     }
+
+
 }
