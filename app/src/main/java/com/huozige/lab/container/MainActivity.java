@@ -53,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
         settings.setLoadWithOverviewMode(true);
 
         // 缩放
-        settings.setBuiltInZoomControls(true);
-        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(false);
+        settings.setSupportZoom(false);
 
         // 2. WebViewClient
         _webView.setWebViewClient(new HzgWebViewClient());
