@@ -1,14 +1,12 @@
 <resources>
     <!--您的应用名称-->
-    <string name="app_name">活字格 Android Demo</string>
+    <string name="app_name">业务平台</string>
     <!--您的应用版本号-->
-    <string name="app_version_name">Beta 0.1</string>
+    <string name="app_version_name">8.0</string>
     <!--配置广播的过滤器，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
     <string name="app_config_broadcast_filter">com.huozige.hac_config_default</string>
     <!--您需要承载的活字格应用的首页地址-->
     <string name="app_default_entry">https://hzgcclass.app.hzgcloud.cn/app_demo</string>
-    <!--您的帮助文档-->
-    <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
 
     <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
     <string name="feature_scanner_activity_title">扫码中</string>

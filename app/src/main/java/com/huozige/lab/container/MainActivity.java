@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         // 依次创建默认的菜单
         menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
         menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
-        menu.add(0, MENU_ID_ABOUT, 3, getString(R.string.ui_menu_about));
+        // menu.add(0, MENU_ID_ABOUT, 3, getString(R.string.ui_menu_about));
 
         // 你可以在这里创建新的菜单
 
