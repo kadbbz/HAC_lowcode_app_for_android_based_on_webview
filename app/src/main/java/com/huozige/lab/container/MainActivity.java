@@ -1,17 +1,18 @@
 package com.huozige.lab.container;
 
 
-import androidx.appcompat.app.AppCompatActivity;
-
-
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
@@ -35,6 +36,17 @@ public class MainActivity extends AppCompatActivity {
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_ABOUT = 2;
 
+    static final String PREFERENCE_NAME = "MAIN";
+    static final String PREFERENCE_KEY_ENTRY = "ENTRY";
+
+    private String getEntryUrl() {
+        // 从配置库中读取启动地址
+        SharedPreferences sharedPref = getSharedPreferences(
+                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+
+        return sharedPref.getString(PREFERENCE_KEY_ENTRY, getString(R.string.app_default_entry));
+    }
+
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Step 2. 初始化浏览器内核
         // 2.1 创建浏览器内核
-        _webView= new WebView(getApplicationContext());
+        _webView = new WebView(getApplicationContext());
         setContentView(_webView);
 
         // 2.2 通过WebSettings设置策略
@@ -75,10 +87,10 @@ public class MainActivity extends AppCompatActivity {
         _webView.requestFocusFromTouch();
 
         // 2.4 加载页面
-        _webView.loadUrl(getString(R.string.app_entry));
+        _webView.loadUrl(getEntryUrl());
 
         // Step 3. 设置WebViewClient，处理页面事件
-        _webViewClient =  new HzgWebViewClient(this);
+        _webViewClient = new HzgWebViewClient(this);
         _webView.setWebViewClient(_webViewClient);
 
         // Step 4. 设置WebChromeClient，处理浏览器事件
@@ -91,18 +103,18 @@ public class MainActivity extends AppCompatActivity {
         // 5.1 创建需要嵌入页面的JS桥
         _bridges = new BaseBridge[]{
                 // 创建默认的JS桥
-                new HzgJsBridgeIndex(this,_webView),
-                new HzgJsBridgePDA(this,_webView),
-                new HzgJsBridgeApp(this,_webView)
+                new HzgJsBridgeIndex(this, _webView),
+                new HzgJsBridgePDA(this, _webView),
+                new HzgJsBridgeApp(this, _webView)
 
                 // 你可以在此定义和处理新的JS桥
         };
 
         // 5.2 依次处理JS桥
-        for (BaseBridge br:_bridges
+        for (BaseBridge br : _bridges
         ) {
             br.InitOnActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
-            _webView.addJavascriptInterface(br,br.GetName()); // 将JS桥嵌入页面
+            _webView.addJavascriptInterface(br, br.GetName()); // 将JS桥嵌入页面
         }
 
 
@@ -151,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                _webView.loadUrl(getString(R.string.app_entry));
+                _webView.loadUrl(getEntryUrl());
                 break;
             case MENU_ID_REFRESH:
                 _webView.reload();
@@ -177,14 +189,14 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         // 优先分发给浏览器内核事件
-        if(_webChromeClient.ProcessActivityResult(requestCode,resultCode,data)){
+        if (_webChromeClient.ProcessActivityResult(requestCode, resultCode, data)) {
             return;
         }
 
         // 依次分发给所有JS桥
-        for (BaseBridge br:
-           _bridges  ) {
-            if(br.ProcessActivityResult(requestCode,resultCode,data)){
+        for (BaseBridge br :
+                _bridges) {
+            if (br.ProcessActivityResult(requestCode, resultCode, data)) {
                 break;
             }
         }

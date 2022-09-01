@@ -3,9 +3,10 @@
     <string name="app_name">活字格 Android Demo</string>
     <!--您的应用版本号-->
     <string name="app_version_name">Beta 0.1</string>
-
+    <!--配置项目的前缀，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
+    <string name="app_config_key_prefix">default</string>
     <!--您需要承载的活字格应用的首页地址-->
-    <string name="app_entry">https://hzgcclass.app.hzgcloud.cn/app_demo</string>
+    <string name="app_default_entry">https://hzgcclass.app.hzgcloud.cn/app_demo</string>
     <!--您的帮助文档-->
     <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
 
