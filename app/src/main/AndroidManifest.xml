@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.huozige.lab.container">
+    package="com.huozige.lab.container"
+    android:versionName="@string/app_version_name"
+    >
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--敏感权限-->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -17,7 +22,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Huozige_morden_android"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
+
+        <meta-data android:name="ScopedStorage" android:value="true" />
 
         <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing"
             android:value="false" />
@@ -35,6 +43,47 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.king.zxing.CaptureActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/CaptureTheme"/>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.huozige.lab.container"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths_public" />
+        </provider>
     </application>
+
+    <!--适配android 11无法唤起第三方apk 注意代码段在注册表里的位置-->
+    <queries>
+        <!--        &lt;!&ndash; com.blankj.utilcode SDK检测虚拟机 &ndash;&gt;-->
+        <!--        <intent>-->
+        <!--            <action android:name="android.intent.action.DIAL" />-->
+        <!--        </intent>-->
+
+        <!--        &lt;!&ndash; 微信支付SDK &ndash;&gt;-->
+        <!--        <package android:name="com.tencent.mm" />-->
+        <!--        &lt;!&ndash; 支付宝支付SDK &ndash;&gt;-->
+        <!--        <package android:name="com.eg.android.AlipayGphone" />-->
+        <!--        &lt;!&ndash; 微博 &ndash;&gt;-->
+        <!--        <package android:name="com.sina.weibo" />-->
+        <!--        &lt;!&ndash; QQ &ndash;&gt;-->
+        <!--        <package android:name="com.tencent.mobileqq" />-->
+
+        <!-- 判断相机是否 可以使用 如果不加以下配置 那么captureIntent.resolveActivity(context.getPackageManager())==null -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+
+        <intent>
+            <action android:name="android.media.action.VIDEO_CAPTURE" />
+        </intent>
+    </queries>
 
 </manifest>

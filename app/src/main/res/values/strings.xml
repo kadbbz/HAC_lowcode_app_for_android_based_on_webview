@@ -1,10 +1,14 @@
 <resources>
     <!--您的应用名称-->
     <string name="app_name">企业办公平台（创新版）</string>
+    <!--您的应用版本号-->
+    <string name="app_version_name">Beta 0.1</string>
+
     <!--您需要承载的活字格应用的首页地址-->
-    <string name="huozige_app">https://hzgdemo.app.hzgcloud.cn/Features</string>
+    <string name="huozige_app">https://hzgcclass.app.hzgcloud.cn/app_demo</string>
     <!--您的帮助文档-->
     <string name="help_webpage">https://github.com/kadbbz/huozige_morden_android_lowcode_app</string>
+
     <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
     <string name="feature_scanner_activity_title">扫码中...</string>
     <string name="feature_scanner_broadcast_name">com.android.server.scan.huozige</string>
@@ -17,10 +21,15 @@
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
     <string name="feature_scanner_extra_def_sound_play">sound_play</string>
     <string name="feature_scanner_extra_def_viberate">viberate</string>
+
+    <!-- 图片选择-->
+    <string name="feature_pick_photo_error_gif">文件的长宽需要达到 %1$dpx，文件尺寸不得超过 %2$sM。</string>
+
     <!-- 界面文字，不建议修改-->
     <string name="ui_menu_home">首页</string>
     <string name="ui_menu_refresh">刷新</string>
     <string name="ui_menu_help">帮助</string>
+    <string name="ui_menu_about">关于</string>
     <string name="ui_title_loading">加载中，请稍等……</string>
     <string name="ui_title_progressing">处理中：%d%%</string>
     <string name="ui_button_ok">确定</string>

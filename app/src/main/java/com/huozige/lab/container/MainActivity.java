@@ -4,6 +4,8 @@ package com.huozige.lab.container;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -11,28 +13,30 @@ import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
-
-
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     WebView _webView;
 
+    BaseBridge[] _bridges;
+
+    HzgWebViewClient _webViewClient;
+
+    HzgWebChromeClient _webChromeClient;
+
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_HELP = 2;
+    static final int MENU_ID_ABOUT = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        _webView = new WebView(getApplicationContext());
-
         initActionBar();
         initWebView();
-
+        initBridgesRegisters();
         setContentView(_webView);
     }
 
@@ -40,9 +44,10 @@ public class MainActivity extends AppCompatActivity {
         setTitle(getString(R.string.ui_title_loading));
     }
 
-
-
     private void initWebView() {
+
+        //0. 创建
+        _webView= new WebView(getApplicationContext());
 
         // 1. WebSettings
         WebSettings settings = _webView.getSettings();
@@ -68,22 +73,36 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
 
         // 2. WebViewClient
-        _webView.setWebViewClient(new HzgWebViewClient(this));
+        _webViewClient =  new HzgWebViewClient(this);
+        _webView.setWebViewClient(_webViewClient);
 
         // 3. WebChromeClient
-        _webView.setWebChromeClient(new HzgWebChromeClient(this));
+        _webChromeClient = new HzgWebChromeClient(this);
+        _webChromeClient.RegistryLaunchersOnCreated();
+        _webView.setWebChromeClient(_webChromeClient);
 
         // 4. WebView
-
         // 默认设置焦点
         _webView.requestFocusFromTouch();
 
-        // 注册交互对象
-        _webView.addJavascriptInterface(new HzgJsBridgeIndex(this), "index");
-        _webView.addJavascriptInterface(new HzgJsBridgePDA(this, _webView), "pda");
-
         // 加载页面
         _webView.loadUrl(getString(R.string.huozige_app));
+
+    }
+
+    @SuppressLint("JavascriptInterface")
+    private void initBridgesRegisters(){
+
+        _bridges = new BaseBridge[]{
+                new HzgJsBridgeIndex(this,_webView),
+                new HzgJsBridgePDA(this,_webView)
+        };
+
+        for (BaseBridge br:_bridges
+             ) {
+            br.RegisterOnActivityCreated();
+            _webView.addJavascriptInterface(br,br.Name);
+        }
 
     }
 
@@ -108,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
         menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
         menu.add(0, MENU_ID_HELP, 2, getString(R.string.ui_menu_help));
+        menu.add(0, MENU_ID_ABOUT, 3, getString(R.string.ui_menu_about));
         menu.findItem(MENU_ID_REFRESH);
         return true;
     }
@@ -124,15 +144,26 @@ public class MainActivity extends AppCompatActivity {
             case MENU_ID_HELP:
                 _webView.loadUrl(getString(R.string.help_webpage));
                 break;
+            case MENU_ID_ABOUT:
+                _webView.loadUrl("file:///android_asset/about/about.html");
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void OpenDocument(String mime){
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-    }
+        if(_webChromeClient.ProcessActivityResult(requestCode,resultCode,data)){
+            return;
+        }
 
-    public void OpenMultiDocument(String mime){
-
+        for (BaseBridge br:
+           _bridges  ) {
+            if(br.ProcessActivityResult(requestCode,resultCode,data)){
+                break;
+            }
+        }
     }
 }

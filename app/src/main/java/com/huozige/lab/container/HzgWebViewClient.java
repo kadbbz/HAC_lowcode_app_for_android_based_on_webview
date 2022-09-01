@@ -7,7 +7,6 @@ import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
@@ -65,7 +64,10 @@ public class HzgWebViewClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
 
-        initPermissions();
+        // 提前申请权限
+        PermissionHelpers.RequirePermission(_activity, Permission.CAMERA);
+        PermissionHelpers.RequirePermission(_activity, Permission.WRITE_EXTERNAL_STORAGE);
+
     }
 
     @Override
@@ -78,30 +80,4 @@ public class HzgWebViewClient extends WebViewClient {
         super.onLoadResource(view, url);
     }
 
-    private void initPermissions(){
-
-        XXPermissions.with(_activity)
-                .permission(Permission.CAMERA)
-                .request(new OnPermissionCallback() {
-
-                    @Override
-                    public void onGranted(List<String> permissions, boolean all) {
-                        if (!all) {
-                            Toast.makeText(_activity,_activity.getString(R.string.ui_toast_permissions_denied),Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                    }
-
-                    @Override
-                    public void onDenied(List<String> permissions, boolean never) {
-                        if (never) {
-                            Toast.makeText(_activity,_activity.getString(R.string.ui_toast_permissions_denied_never),Toast.LENGTH_LONG).show();
-                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
-                            XXPermissions.startPermissionActivity(_activity, permissions);
-                        } else {
-                            Toast.makeText(_activity,_activity.getString(R.string.ui_toast_permissions_denied),Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-    }
 }
