@@ -4,6 +4,7 @@ package com.huozige.lab.container;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -13,6 +14,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
@@ -31,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     HzgWebViewClient _webViewClient; // 页面事件处理器
 
     HzgWebChromeClient _webChromeClient; // 浏览器事件处理器
+
+    ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(); // 配置监听器
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
@@ -117,7 +121,24 @@ public class MainActivity extends AppCompatActivity {
             _webView.addJavascriptInterface(br, br.GetName()); // 将JS桥嵌入页面
         }
 
+        // Step 6. 注册配置变更广播
+        // 新版本Android不允许在配置中注册广播，必须和上下文绑定：https://developer.android.com/guide/components/broadcasts#context-registered-recievers
+        // 这里的做法是绑定到应用上下文，寿命长于当前页面
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(getString(R.string.app_config_broadcast_filter));
+        getApplicationContext().registerReceiver(_configRev, filter);
+    }
 
+    /**
+     * 销毁前的操作：取消监听器
+     */
+    @Override
+    public void onDestroy() {
+
+        // 取消广播监听
+        getApplicationContext().unregisterReceiver(_configRev);
+
+        super.onDestroy();
     }
 
     /**
