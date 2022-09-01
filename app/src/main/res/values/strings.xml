@@ -1,6 +1,6 @@
 <resources>
     <!--您的应用名称-->
-    <string name="app_name">企业办公平台（创新版）</string>
+    <string name="app_name">活字格 Android Demo</string>
     <!--您的应用版本号-->
     <string name="app_version_name">Beta 0.1</string>
 
