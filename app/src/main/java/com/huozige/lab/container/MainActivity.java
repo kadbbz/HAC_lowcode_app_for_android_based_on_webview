@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_ABOUT = 2;
+
+    static final String INTENT_EXTRA_IS_FORCE_RELOAD = "reload";
 
     static final String PREFERENCE_NAME = "MAIN";
     static final String PREFERENCE_KEY_ENTRY = "ENTRY";
@@ -138,7 +141,31 @@ public class MainActivity extends AppCompatActivity {
         // 取消广播监听
         getApplicationContext().unregisterReceiver(_configRev);
 
+        if (_webView != null) {
+            _webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+            _webView.clearHistory();
+            _webView.destroy();
+          }
+
         super.onDestroy();
+    }
+
+    /**
+     * 处理恢复时的特殊任务，如强制刷新
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // 获取传入的Intent
+        Intent prev = getIntent();
+        if (null != prev) {
+
+            // 如果要求强制刷新（如配置变更的推送通知），就刷新
+            if (prev.getBooleanExtra(INTENT_EXTRA_IS_FORCE_RELOAD, false)) {
+                _webView.loadUrl(getEntryUrl());
+            }
+        }
     }
 
     /**

@@ -49,6 +49,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Huozige_morden_android"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
         <receiver
