@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.widget.Toast;
 
 import com.hjq.permissions.OnPermissionCallback;
-import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 
 import java.util.List;
