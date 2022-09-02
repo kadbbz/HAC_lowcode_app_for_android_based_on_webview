@@ -1,7 +1,6 @@
 package com.huozige.lab.container;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -38,7 +36,7 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
 
         Log.v(LOG_TAG, "广播中接入点变更为：" + entry);
 
-        if (null != entry && !entry.equals("")) {
+        if (null != entry) {
 
             // 打开配置库
             SharedPreferences sharedPref = context.getSharedPreferences(
@@ -65,7 +63,7 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
             Intent intent2 = new Intent(context, MainActivity.class);
             intent2.putExtra(MainActivity.INTENT_EXTRA_IS_FORCE_RELOAD,true); // 要求首页自动刷新
             intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, 0);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT); // 允许静音，多条推送使用更新模式
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_launcher)

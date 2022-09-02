@@ -21,6 +21,8 @@ import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
 
+import java.util.Locale;
+
 /**
  * 主Activity，主要负责加载浏览器内核
  * 也需要作为其他功能的默认上下文
@@ -51,7 +53,14 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPref = getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
-        return sharedPref.getString(PREFERENCE_KEY_ENTRY, getString(R.string.app_default_entry));
+        String url = sharedPref.getString(PREFERENCE_KEY_ENTRY, getString(R.string.app_default_entry));
+
+        // 不合法的地址，采用默认接入点
+        if (url.equals("")||!url.toLowerCase().startsWith("http")) {
+            url = getString(R.string.app_default_entry);
+        }
+
+        return url;
     }
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
@@ -145,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
             _webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
             _webView.clearHistory();
             _webView.destroy();
-          }
+        }
 
         super.onDestroy();
     }

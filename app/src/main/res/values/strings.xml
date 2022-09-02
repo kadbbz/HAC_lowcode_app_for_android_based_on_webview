@@ -6,7 +6,7 @@
     <!--配置广播的过滤器，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
     <string name="app_config_broadcast_filter">com.huozige.hac_config_default</string>
     <!--您需要承载的活字格应用的首页地址-->
-    <string name="app_default_entry">https://hzgcclass.app.hzgcloud.cn/app_demo</string>
+    <string name="app_default_entry">file:///android_asset/about/about.html</string>
 
     <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
     <string name="feature_scanner_activity_title">扫码中</string>
