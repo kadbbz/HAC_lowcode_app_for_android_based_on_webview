@@ -1,6 +1,7 @@
 package com.huozige.lab.container;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.util.Log;
@@ -39,6 +40,8 @@ public class HzgWebViewClient extends WebViewClient {
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
+        Log.v(LOG_TAG,"SSL验证出错，应用将跳过："+error.toString());
+
         // 对SSL错误不予处理
         handler.proceed();
     }
@@ -49,6 +52,8 @@ public class HzgWebViewClient extends WebViewClient {
      */
     @Override
     public boolean shouldOverrideUrlLoading(WebView view,  WebResourceRequest request) {
+
+        Log.v(LOG_TAG,"请求地址："+request.getUrl());
 
         // 获取请求地址
         Uri reqUri = request.getUrl();
@@ -72,10 +77,15 @@ public class HzgWebViewClient extends WebViewClient {
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-        Log.e(LOG_TAG,error.toString());
+        Log.e(LOG_TAG,"页面加载出错：" +request.getUrl() +" ，错误：" +error.toString());
 
         // 异常可能是网络原因，所以，这里的错误页面是本地的资源文件
         view.loadUrl("file:///android_asset/error/error.html");
+    }
+
+    @Override
+    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        Log.e(LOG_TAG,"页面加载开始：" +url);
     }
 
     /**
@@ -86,10 +96,14 @@ public class HzgWebViewClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
 
-        // 提前申请权限
-        PermissionHelpers.RequirePermission(_context, Permission.CAMERA);
-        PermissionHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
+        Log.v(LOG_TAG,"页面加载完成："+url);
 
+        if(url.equalsIgnoreCase(ConfigHelpers.GetEntryUrl(_context))) {
+
+            // 首页加载完成后，提前申请权限
+            PermissionHelpers.RequirePermission(_context, Permission.CAMERA);
+            PermissionHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
+        }
     }
 
 }

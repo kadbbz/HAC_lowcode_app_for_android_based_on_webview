@@ -17,13 +17,19 @@ import androidx.core.app.NotificationManagerCompat;
  * 接收配置变更的消息
  */
 public class ConfigBroadcastReceiver extends BroadcastReceiver {
+
     static final String CONFIG_BROADCAST_EXTRA_ENTRY = "entry";
     static final String LOG_TAG = "ConfigBroadcastReceiver";
     static final  String CHANNEL_ID="hac_push";
     static final  Integer CONFIG_RELOAD_NITIFICATION=1001;
 
-    public ConfigBroadcastReceiver(){
+    Activity _activityContext;
+
+    public ConfigBroadcastReceiver(Activity activity){
         super();
+
+        _activityContext = activity;
+
         Log.v(LOG_TAG, "广播接收已创建" );
     }
 
@@ -38,12 +44,7 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
 
         if (null != entry) {
 
-            // 打开配置库
-            SharedPreferences sharedPref = context.getSharedPreferences(
-                    MainActivity.PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
-            // 保存到配置库
-            sharedPref.edit().putString(MainActivity.PREFERENCE_KEY_ENTRY, entry).apply();
+            ConfigHelpers.UpsertEntryUrl(_activityContext, entry);
 
             Log.v(LOG_TAG, "接入点已保存至配置数据库。");
 

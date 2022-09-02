@@ -59,7 +59,7 @@ public class HzgJsBridgePDA extends BaseBridge {
                 if (code == WaitForScannerBroadcastActivity.SCAN_STATUS_OK) {
 
                     // 成功接收到返回的扫码结果
-                    String resultS = data.getBundleExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT).getString(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
+                    String resultS = data.getStringExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
                     HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + resultS);

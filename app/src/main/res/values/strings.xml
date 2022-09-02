@@ -13,16 +13,11 @@
     <string name="feature_scanner_broadcast_name">com.android.server.scan</string>
     <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配-->
     <string name="feature_scanner_intent_action">com.android.scanner.service_settings</string>
-    <string name="feature_scanner_extra_def_action_barcode_broadcast">action_barcode_broadcast</string>
-    <string name="feature_scanner_extra_def_barcode_send_mode">barcode_send_mode</string>
-    <string name="feature_scanner_extra_barcode_send_mode_broadcast">BROADCAST</string>
-    <string name="feature_scanner_extra_def_key_barcode_broadcast">key_barcode_broadcast</string>
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
-    <string name="feature_scanner_extra_def_sound_play">sound_play</string>
-    <string name="feature_scanner_extra_def_viberate">viberate</string>
 
     <!-- 图片选择-->
     <string name="feature_pick_photo_error_gif">文件的长宽需要达到 %1$dpx，文件尺寸不得超过 %2$sM。</string>
+
 
     <!-- 界面文字，不建议修改-->
     <string name="ui_menu_home">首页</string>

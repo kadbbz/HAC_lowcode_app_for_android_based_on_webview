@@ -8,16 +8,12 @@
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/drawable/ic_flask_vial_solid.xml" value="0.157" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1935" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/layout/activity_wait_for_bar_scanner.xml" value="0.1" />
-        <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/layout/activity_wait_for_bar_scanner_broadcast.xml" value="0.1" />
+        <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/layout/activity_wait_for_bar_scanner_broadcast.xml" value="0.25" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1935" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.157" />
-        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_wait_for_bar_scanner_broadcast.xml" value="0.1" />
         <entry key="app/src/main/res/layout/app_bar_menu.xml" value="0.10371376811594203" />
         <entry key="app/src/main/res/layout/fragment_appbar.xml" value="0.1" />
-        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.157" />
-        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.157" />
       </map>
     </option>
   </component>

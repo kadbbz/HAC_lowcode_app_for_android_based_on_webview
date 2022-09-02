@@ -7,21 +7,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
-
-import java.util.Locale;
 
 /**
  * 主Activity，主要负责加载浏览器内核
@@ -37,31 +34,14 @@ public class MainActivity extends AppCompatActivity {
 
     HzgWebChromeClient _webChromeClient; // 浏览器事件处理器
 
-    ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(); // 配置监听器
+    ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(this); // 配置监听器
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_ABOUT = 2;
 
+    static final String LOG_TAG = "MainActivity"; // 日志的标识
     static final String INTENT_EXTRA_IS_FORCE_RELOAD = "reload";
-
-    static final String PREFERENCE_NAME = "MAIN";
-    static final String PREFERENCE_KEY_ENTRY = "ENTRY";
-
-    private String getEntryUrl() {
-        // 从配置库中读取启动地址
-        SharedPreferences sharedPref = getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
-        String url = sharedPref.getString(PREFERENCE_KEY_ENTRY, getString(R.string.app_default_entry));
-
-        // 不合法的地址，采用默认接入点
-        if (url.equals("")||!url.toLowerCase().startsWith("http")) {
-            url = getString(R.string.app_default_entry);
-        }
-
-        return url;
-    }
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
@@ -69,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Step 1. 设置页面标题
-        setTitle(getString(R.string.ui_title_loading));
+        setTitle(getString(R.string.app_name));
 
         // Step 2. 初始化浏览器内核
         // 2.1 创建浏览器内核
@@ -98,12 +78,6 @@ public class MainActivity extends AppCompatActivity {
         // 缩放
         settings.setBuiltInZoomControls(false); // 不显示缩放按钮
         settings.setSupportZoom(false); // 不允许缩放
-
-        // 2.3 默认设置焦点
-        _webView.requestFocusFromTouch();
-
-        // 2.4 加载页面
-        _webView.loadUrl(getEntryUrl());
 
         // Step 3. 设置WebViewClient，处理页面事件
         _webViewClient = new HzgWebViewClient(this);
@@ -139,6 +113,11 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction(getString(R.string.app_config_broadcast_filter));
         getApplicationContext().registerReceiver(_configRev, filter);
+
+        // Step 7. 加载页面
+        String target = ConfigHelpers.GetEntryUrl(this);
+        _webView.loadUrl(target);
+        Log.v(LOG_TAG,"浏览器初始化完成，打开启动页面：" + target);
     }
 
     /**
@@ -149,12 +128,6 @@ public class MainActivity extends AppCompatActivity {
 
         // 取消广播监听
         getApplicationContext().unregisterReceiver(_configRev);
-
-        if (_webView != null) {
-            _webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
-            _webView.clearHistory();
-            _webView.destroy();
-        }
 
         super.onDestroy();
     }
@@ -172,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
             // 如果要求强制刷新（如配置变更的推送通知），就刷新
             if (prev.getBooleanExtra(INTENT_EXTRA_IS_FORCE_RELOAD, false)) {
-                _webView.loadUrl(getEntryUrl());
+                _webView.loadUrl(ConfigHelpers.GetEntryUrl(this));
             }
         }
     }
@@ -220,15 +193,16 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                _webView.loadUrl(getEntryUrl());
+
+                Log.v(LOG_TAG,"点击菜单【首页】");
+
+                _webView.loadUrl(ConfigHelpers.GetEntryUrl(this));
                 break;
             case MENU_ID_REFRESH:
+
+                Log.v(LOG_TAG,"点击菜单【刷新】");
                 _webView.reload();
                 break;
-            case MENU_ID_ABOUT:
-                _webView.loadUrl("file:///android_asset/about/about.html");
-                break;
-
             // 你可以在这里处理新创建菜单的点击事件
         }
 
