@@ -2,7 +2,6 @@ package com.huozige.lab.container;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.InputType;
@@ -39,7 +38,6 @@ public class HzgWebChromeClient extends WebChromeClient {
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
-    static final int REQUEST_CODE_OTHER_FILES = 20002; // 从文件树中选文件的标识
 
     /**
      * 简单的构造函数
@@ -145,7 +143,6 @@ public class HzgWebChromeClient extends WebChromeClient {
     /**
      * 处理文件选择框
      * WebView默认不支持文件上传，需要通过这个方法来实现
-     *
      */
     @Override
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
@@ -198,12 +195,15 @@ public class HzgWebChromeClient extends WebChromeClient {
         _contentChooser = _context.registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
 
-                    // GetContent是单选，需要组织成数组，才能返回给页面进行后续操作
-                    List<Uri> mSelected = new ArrayList<>();
-                    mSelected.add(uri);
+                    List<Uri> selectedFiles = new ArrayList<>();
 
-                    // 让页面接手处理
-                    _filePathCallback.onReceiveValue(mSelected.toArray(new Uri[0]));
+                    // GetContent是单选，如果用户取消时，会返回null
+                    if (null != uri) {
+                        selectedFiles.add(uri);
+                    }
+
+                    // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                 });
     }
 
@@ -213,45 +213,22 @@ public class HzgWebChromeClient extends WebChromeClient {
     public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
 
         // 先处理Matisse的照片和视频请求
-        if (requestCode == REQUEST_CODE_PICK_PHOTO_VIDEO && resultCode == Activity.RESULT_OK) {
+        if (requestCode == REQUEST_CODE_PICK_PHOTO_VIDEO) {
 
             // 根据文档的要求，获取用户选择的照片和视频
-            List<Uri> mSelected = Matisse.obtainResult(data);
+            // 这里有可能是单个或多个
+            List<Uri> selectedUris = new ArrayList<>();
 
-            // 让页面接手处理
-            _filePathCallback.onReceiveValue(mSelected.toArray(new Uri[0]));
-        }
-
-        if (requestCode == REQUEST_CODE_OTHER_FILES && resultCode == Activity.RESULT_OK) {
-            Uri[] results = null;
-            if (null != data) {
-
-                // 不同手机对GetContent的处理不同，部分厂商会将单选和多选分开，部分厂商则统一采用多选模式
-                // 这意味着，用户选择一个文件时，不一定是多选，也可能是多选模式
-                // 所以，这里需要做两套处理
-
-                // 先处理多选
-                ClipData clipData = data.getClipData();
-
-                if (clipData != null) {
-                    results = new Uri[clipData.getItemCount()];
-                    for (int i = 0; i < clipData.getItemCount(); i++) {
-                        ClipData.Item item = clipData.getItemAt(i);
-                        results[i] = item.getUri();
-                    }
-                }
-
-                // 再处理单选
-                String dataString = data.getDataString();
-                if (dataString != null)
-                    results = new Uri[]{Uri.parse(dataString)};
+            if (resultCode == Activity.RESULT_OK) {
+                // 根据文档的要求，获取用户选择的照片和视频
+                selectedUris = Matisse.obtainResult(data);
             }
 
-            // 让页面接手处理
-            _filePathCallback.onReceiveValue(results);
+            // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+            _filePathCallback.onReceiveValue(selectedUris.toArray(new Uri[0]));
         }
 
         return false;
-    }
+}
 
 }
