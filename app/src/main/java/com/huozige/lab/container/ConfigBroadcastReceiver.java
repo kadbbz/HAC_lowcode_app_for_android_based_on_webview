@@ -67,7 +67,7 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT); // 允许静音，多条推送使用更新模式
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setSmallIcon(R.drawable.loading)
                     .setContentTitle(context.getString(R.string.app_name))
                     .setContentText(context.getString(R.string.ui_notification_config_changed))
                     // Set the intent that will fire when the user taps the notification
