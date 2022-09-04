@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
     static final int MENU_ID_HAA = 9;
 
     static final String LOG_TAG = "MainActivity"; // 日志的标识
-    static final String INTENT_EXTRA_IS_FORCE_RELOAD = "reload";
 
     /**
      * 根据配置文件，重新加载浏览器内核
@@ -159,17 +158,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-
-        // 获取传入的Intent
-        Intent prev = getIntent();
-        if (null != prev) {
-
-            // 如果要求强制刷新（如配置变更的推送通知），就刷新
-            if (prev.getBooleanExtra(INTENT_EXTRA_IS_FORCE_RELOAD, false)) {
-               refreshWebView();
-               Log.v(LOG_TAG,"按照Intent要求，强制刷新浏览器配置和页面。");
-            }
-        }
     }
 
     /**

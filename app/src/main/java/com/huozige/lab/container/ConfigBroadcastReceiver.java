@@ -63,7 +63,6 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
 
             // Create an explicit intent for an Activity in your app
             Intent intent2 = new Intent(context, MainActivity.class);
-            intent2.putExtra(MainActivity.INTENT_EXTRA_IS_FORCE_RELOAD,true); // 要求首页自动刷新
             intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT); // 允许静音，多条推送使用更新模式
 
