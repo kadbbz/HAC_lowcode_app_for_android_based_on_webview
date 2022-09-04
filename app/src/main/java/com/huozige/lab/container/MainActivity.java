@@ -2,17 +2,17 @@ package com.huozige.lab.container;
 
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -34,14 +34,34 @@ public class MainActivity extends AppCompatActivity {
 
     HzgWebChromeClient _webChromeClient; // 浏览器事件处理器
 
-    ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(this); // 配置监听器
+    ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(); // 配置监听器
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
-    static final int MENU_ID_ABOUT = 2;
+    static final int MENU_ID_HAA = 9;
 
     static final String LOG_TAG = "MainActivity"; // 日志的标识
     static final String INTENT_EXTRA_IS_FORCE_RELOAD = "reload";
+
+    /**
+     * 根据配置文件，重新加载浏览器内核
+     */
+    private void refreshWebView(){
+
+        // 根据选项决定是否启用硬件加速
+        if(ConfigHelpers.GetHAEnabled(this)){
+            _webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
+            Log.v(LOG_TAG,"浏览器加速模式：硬件加速");
+        }else{
+            _webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
+            Log.v(LOG_TAG,"浏览器加速模式：软件加速");
+        }
+
+        String target = ConfigHelpers.GetEntryUrl(this);
+        _webView.loadUrl(target);
+
+        Log.v(LOG_TAG,"浏览器加载完成，打开启动页面：" + target);
+    }
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
@@ -61,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 权限
         settings.setJavaScriptEnabled(true); // 执行JS
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setAllowFileAccess(true); // 访问缓存、本地数据库等文件
         settings.setAllowContentAccess(true); // 访问本地的所有文件，需配合权限设置
         settings.setAllowFileAccessFromFileURLs(true); // 通过URL访问网上的文件
@@ -110,14 +131,14 @@ public class MainActivity extends AppCompatActivity {
         // Step 6. 注册配置变更广播
         // 新版本Android不允许在配置中注册广播，必须和上下文绑定：https://developer.android.com/guide/components/broadcasts#context-registered-recievers
         // 这里的做法是绑定到应用上下文，寿命长于当前页面
+
+        _configRev.AssignContext(this);
         IntentFilter filter = new IntentFilter();
         filter.addAction(getString(R.string.app_config_broadcast_filter));
         getApplicationContext().registerReceiver(_configRev, filter);
 
         // Step 7. 加载页面
-        String target = ConfigHelpers.GetEntryUrl(this);
-        _webView.loadUrl(target);
-        Log.v(LOG_TAG,"浏览器初始化完成，打开启动页面：" + target);
+        refreshWebView();
     }
 
     /**
@@ -145,7 +166,8 @@ public class MainActivity extends AppCompatActivity {
 
             // 如果要求强制刷新（如配置变更的推送通知），就刷新
             if (prev.getBooleanExtra(INTENT_EXTRA_IS_FORCE_RELOAD, false)) {
-                _webView.loadUrl(ConfigHelpers.GetEntryUrl(this));
+               refreshWebView();
+               Log.v(LOG_TAG,"按照Intent要求，强制刷新浏览器配置和页面。");
             }
         }
     }
@@ -179,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         // 依次创建默认的菜单
         menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
         menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
-        // menu.add(0, MENU_ID_ABOUT, 3, getString(R.string.ui_menu_about));
+        menu.add(0, MENU_ID_HAA, 2, getString(R.string.ui_menu_haa));
 
         // 你可以在这里创建新的菜单
 
@@ -193,16 +215,23 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-
                 Log.v(LOG_TAG,"点击菜单【首页】");
-
-                _webView.loadUrl(ConfigHelpers.GetEntryUrl(this));
+                refreshWebView(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
 
                 Log.v(LOG_TAG,"点击菜单【刷新】");
-                _webView.reload();
+                _webView.reload(); // 仅刷新
                 break;
+            case MENU_ID_HAA:
+                    Log.v(LOG_TAG,"点击切换硬件加速");
+                    Boolean current = ConfigHelpers.GetHAEnabled(this);
+                    ConfigHelpers.UpsertHardwareAccelerateEnabled(this,!current);
+                    String msg =  current?getString(R.string.ui_toast_haa_disabled):getString(R.string.ui_toast_haa_enabled);
+                    Toast.makeText(this,msg,Toast.LENGTH_LONG).show();
+                    Log.v(LOG_TAG,msg);
+                    refreshWebView(); // 页面初始化
+
             // 你可以在这里处理新创建菜单的点击事件
         }
 

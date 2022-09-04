@@ -40,7 +40,7 @@ public class HzgWebViewClient extends WebViewClient {
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
-        Log.v(LOG_TAG,"SSL验证出错，应用将跳过："+error.toString());
+        Log.e(LOG_TAG,"SSL验证出错，应用将跳过："+error.toString());
 
         // 对SSL错误不予处理
         handler.proceed();
@@ -85,7 +85,7 @@ public class HzgWebViewClient extends WebViewClient {
 
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        Log.e(LOG_TAG,"页面加载开始：" +url);
+        Log.v(LOG_TAG,"页面加载开始：" +url);
     }
 
     /**

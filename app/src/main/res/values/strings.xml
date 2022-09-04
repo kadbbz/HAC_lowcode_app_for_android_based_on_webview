@@ -24,7 +24,9 @@
     <string name="ui_menu_home">首页</string>
     <string name="ui_menu_refresh">刷新</string>
     <string name="ui_menu_help">帮助</string>
-    <string name="ui_menu_about">关于</string>
+    <string name="ui_menu_haa">启用/禁用硬件加速</string>
+    <string name="ui_toast_haa_enabled">恢复使用硬件加速，您将获得更快的操作体验。</string>
+    <string name="ui_toast_haa_disabled">硬件加速被禁用，部分兼容性问题可能已经得到解决。</string>
     <string name="ui_title_loading">加载中，请稍等……</string>
     <string name="ui_title_progressing">处理中：%d%%</string>
     <string name="ui_button_ok">确定</string>

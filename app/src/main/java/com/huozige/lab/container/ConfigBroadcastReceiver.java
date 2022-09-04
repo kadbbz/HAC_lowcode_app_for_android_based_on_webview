@@ -25,12 +25,13 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
 
     Activity _activityContext;
 
-    public ConfigBroadcastReceiver(Activity activity){
+    public ConfigBroadcastReceiver(){
         super();
+    }
 
+    public void AssignContext(Activity activity)
+    {
         _activityContext = activity;
-
-        Log.v(LOG_TAG, "广播接收已创建" );
     }
 
     @Override
