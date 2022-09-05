@@ -20,6 +20,6 @@ HAC可以将使用活字格开发的Web应用打包成Android APP。配合插件
 * 运行内存 >= 2GB
 
 ## 使用方法
-Step 1：在Android手机上安装HAC（业务平台）APP和HACC（HAC配置工具）APP
-Step 2：打开HACC，输入或扫码录入需要加载的Web应用地址，点击【配置】按钮
-Step 3：打开HAC，即可使用。
+- Step 1：在Android手机上安装HAC（业务平台）APP和HACC（HAC配置工具）APP
+- Step 2：打开HACC，输入或扫码录入需要加载的Web应用地址，点击【配置】按钮
+- Step 3：打开HAC，即可使用。
