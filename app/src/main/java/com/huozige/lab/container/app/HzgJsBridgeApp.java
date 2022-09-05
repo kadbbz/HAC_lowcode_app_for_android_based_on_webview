@@ -45,16 +45,25 @@ public class HzgJsBridgeApp extends BaseBridge {
 
     }
 
+    /**
+     * 无需操作
+     */
     @Override
     public void BeforeActivityDestroy() {
 
     }
 
+    /**
+     * 无需操作
+     */
     @Override
     public void BeforeActivityPause() {
 
     }
 
+    /**
+     * 无需操作
+     */
     @Override
     public void OnActivityResumed() {
 

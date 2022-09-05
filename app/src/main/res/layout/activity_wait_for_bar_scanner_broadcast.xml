@@ -45,7 +45,7 @@
         android:layout_marginStart="100dp"
         android:layout_marginTop="62dp"
         android:layout_marginEnd="100dp"
-        android:contentDescription="@string/feature_scanner_activity_title"
+        android:contentDescription="@string/ui_title_scanner_activity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

@@ -1,26 +1,20 @@
 <resources>
-    <!--您的应用名称-->
+    <!--应用名称-->
     <string name="app_name">业务平台</string>
-    <!--您的应用版本号-->
-    <string name="app_version_name">8.0</string>
-    <!--配置广播的过滤器，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
-    <string name="app_config_broadcast_filter">com.huozige.hac_config_default</string>
-    <!--您需要承载的活字格应用的首页地址-->
-    <!--内置引导页面：file:///android_asset/about/about.html，您可能需要修改这个文件-->
+    <!--应用版本号-->
+    <string name="app_version_name">1.1.0-beta1</string>
+    <!--您需要承载的活字格应用的首页地址，内置引导页面：file:///android_asset/about/about.html，您可能需要修改这个文件-->
     <string name="app_default_entry">file:///android_asset/about/about.html</string>
 
-    <!--扫码枪广播模式中设置的广播名，需要与设备内置应用的设置匹配-->
-    <string name="feature_scanner_activity_title">扫码中</string>
+    <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置-->
     <string name="feature_scanner_broadcast_name">com.android.server.scan</string>
-    <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配-->
-    <string name="feature_scanner_intent_action">com.android.scanner.service_settings</string>
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
 
-    <!-- 图片选择-->
-    <string name="feature_pick_photo_error_gif">文件的长宽需要达到 %1$dpx，文件尺寸不得超过 %2$sM。</string>
+    <!-- 内置参数，不建议修改 -->
+    <!--HAC配置广播的过滤器，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
+    <string name="app_config_broadcast_filter">com.huozige.hac_config_default</string>
 
-
-    <!-- 界面文字，不建议修改-->
+    <!-- 界面文字，修改前建议确认字符串长度-->
     <string name="ui_menu_home">首页</string>
     <string name="ui_menu_refresh">刷新</string>
     <string name="ui_menu_help">帮助</string>
@@ -29,6 +23,7 @@
     <string name="ui_toast_haa_disabled">硬件加速被禁用，部分兼容性问题可能已经得到解决。</string>
     <string name="ui_title_loading">加载中，请稍等……</string>
     <string name="ui_title_progressing">处理中：%d%%</string>
+    <string name="ui_title_scanner_activity">扫码中</string>
     <string name="ui_button_ok">确定</string>
     <string name="ui_button_cancel">取消</string>
     <string name="ui_barscanner_cancel_button">取消</string>

@@ -31,7 +31,7 @@ public class HzgJsBridgePDA extends BaseBridge {
     String _cscanCell;
     String _cscanResultCache;
 
-    static final  String LOG_TAG="HzgJsBridgePDA";
+    static final String LOG_TAG = "HzgJsBridgePDA";
 
     /**
      * 基础的构造函数
@@ -73,44 +73,61 @@ public class HzgJsBridgePDA extends BaseBridge {
                     String resultS = data.getStringExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + resultS);
+                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_cell,resultS);
-                }else{
+                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, resultS);
+                } else {
                     // 记录日志
-                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan canceled or failed. Return code is : "+code);
+                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_cell,"");
+                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, "");
                 }
-            }else{
+            } else {
                 // 记录日志
-                HzgWebInteropHelpers.WriteErrorIntoConsole(CurrentWebView,"PDA scan failed.");
+                HzgWebInteropHelpers.WriteErrorIntoConsole(CurrentWebView, "PDA scan failed.");
 
                 // 重置单元格
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_cell,"");
+                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, "");
             }
         });
     }
 
+    /**
+     * 无需操作
+     */
     @Override
     public void BeforeActivityDestroy() {
 
     }
 
+    /**
+     * 停止监听器
+     */
     @Override
     public void BeforeActivityPause() {
         stopReceiver();
     }
 
+    /**
+     * 如果处在持续扫描状态，恢复监听器
+     */
     @Override
     public void OnActivityResumed() {
-        if(_cscanOn){
+        if (_cscanOn) {
             startReceiver();
         }
     }
 
+    /**
+     * 无需操作
+     *
+     * @param requestCode 同onActivityResult
+     * @param resultCode  同onActivityResult
+     * @param data        同onActivityResult
+     * @return
+     */
     @Override
     public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
         // 没有用到Activity调用，无需处理，自然无需中断
@@ -118,7 +135,7 @@ public class HzgJsBridgePDA extends BaseBridge {
     }
 
     /**
-     * 定义广播接收器
+     * 定义用于接收持续扫描的广播接收器
      * 支持扫码的PDA通常支持以广播的方式，将扫码的结果通知到各App
      * 广播的名称是通过内置应用来配置的，当用户按下扫码按钮时，该广播会以这个名称发出
      */
@@ -133,14 +150,20 @@ public class HzgJsBridgePDA extends BaseBridge {
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
-            if(_cscanOn){
-                _cscanResultCache = _cscanResultCache+result+",";
+            if (_cscanOn) {
+
+                // 将当次扫描结果拼接到累计结果上，一次刷新到页面，分割符为半角逗号，与活字格的内置数组保持一致
+                _cscanResultCache = _cscanResultCache + result + ",";
 
                 // 记录日志
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + _cscanResultCache + " (Continues Mode Start)");
+                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + _cscanResultCache);
 
                 // 输出到界面
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_cscanCell,_cscanResultCache);
+                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cscanCell, _cscanResultCache);
+            }else{
+
+                // 预期外场景需要记录日志
+                Log.e(LOG_TAG,"当前没有处在持续扫描模式，但监听器仍在运行。");
             }
         }
     };
@@ -158,6 +181,10 @@ public class HzgJsBridgePDA extends BaseBridge {
 
         // 调用Broadcast模式扫码页面
         _arcScanner.launch(new Intent(ActivityContext, WaitForScannerBroadcastActivity.class));
+
+        // 记录日志
+        HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Single Mode) started.");
+
     }
 
     @JavascriptInterface
@@ -166,16 +193,21 @@ public class HzgJsBridgePDA extends BaseBridge {
         // 记录传入的Cell信息
         _cscanCell = cellLocation;
         _cscanOn = true;
-        _cscanResultCache="";
+        _cscanResultCache = ""; // 清空缓存
+
         startReceiver();
-         }
+    }
 
     @JavascriptInterface
     public void cscan_stop() {
-stopReceiver();
+        stopReceiver();
     }
 
-    private void startReceiver(){
+    /**
+     * 启动监听
+     */
+    private void startReceiver() {
+
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(ActivityContext.getString(R.string.feature_scanner_broadcast_name));
         intentFilter.setPriority(Integer.MAX_VALUE);
@@ -183,17 +215,23 @@ stopReceiver();
         // 注册广播监听
         ActivityContext.registerReceiver(_scanReceiver, intentFilter);
 
+        // 记录日志
+        HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) started.");
+
     }
 
-    private  void stopReceiver(){
-        if(_cscanOn){
+    /**
+     * 暂停监听
+     */
+    private void stopReceiver() {
+        if (_cscanOn) {
 
             ActivityContext.unregisterReceiver(_scanReceiver);
 
             _cscanOn = false;
 
             // 记录日志
-            HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + _cscanResultCache + " (Continues Mode Stop)");
+            HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) stopped.");
 
         }
     }

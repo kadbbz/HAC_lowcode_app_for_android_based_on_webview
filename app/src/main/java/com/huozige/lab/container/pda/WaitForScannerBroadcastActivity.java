@@ -68,7 +68,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
 
         // 初始化界面
         setContentView(R.layout.activity_wait_for_bar_scanner_broadcast);
-        setTitle(getString(R.string.feature_scanner_activity_title));
+        setTitle(getString(R.string.ui_title_scanner_activity));
         findViewById(R.id.button_cancel).setOnClickListener(_cancelButtonClick);
     }
 
