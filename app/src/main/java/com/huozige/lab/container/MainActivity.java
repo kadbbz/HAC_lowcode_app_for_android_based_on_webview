@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         // 5.2 依次处理JS桥
         for (BaseBridge br : _bridges
         ) {
-            br.InitOnActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+            br.OnActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
             _webView.addJavascriptInterface(br, br.GetName()); // 将JS桥嵌入页面
         }
 

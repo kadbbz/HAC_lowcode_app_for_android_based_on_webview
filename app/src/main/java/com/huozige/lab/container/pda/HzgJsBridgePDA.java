@@ -1,7 +1,11 @@
 package com.huozige.lab.container.pda;
 
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -11,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.BaseBridge;
 import com.huozige.lab.container.HzgWebInteropHelpers;
+import com.huozige.lab.container.R;
 
 /**
  * 让页面具备操作扫码枪硬件的能力
@@ -21,6 +26,12 @@ public class HzgJsBridgePDA extends BaseBridge {
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
 
     String _cell; // 用来接收扫码结果的单元格位置信息
+
+    Boolean _cscanOn = false;
+    String _cscanCell;
+    String _cscanResultCache;
+
+    static final  String LOG_TAG="HzgJsBridgePDA";
 
     /**
      * 基础的构造函数
@@ -45,7 +56,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 初始化过程：创建调用器
      */
     @Override
-    public void InitOnActivityCreated() {
+    public void OnActivityCreated() {
 
         // 创建Broadcast模式扫码页面
         _arcScanner = ActivityContext.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -84,10 +95,55 @@ public class HzgJsBridgePDA extends BaseBridge {
     }
 
     @Override
+    public void BeforeActivityDestroy() {
+
+    }
+
+    @Override
+    public void BeforeActivityPause() {
+        stopReceiver();
+    }
+
+    @Override
+    public void OnActivityResumed() {
+        if(_cscanOn){
+            startReceiver();
+        }
+    }
+
+    @Override
     public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
         // 没有用到Activity调用，无需处理，自然无需中断
         return false;
     }
+
+    /**
+     * 定义广播接收器
+     * 支持扫码的PDA通常支持以广播的方式，将扫码的结果通知到各App
+     * 广播的名称是通过内置应用来配置的，当用户按下扫码按钮时，该广播会以这个名称发出
+     */
+    BroadcastReceiver _scanReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Log.v(LOG_TAG, "收到持续扫码结果的广播");
+
+            // 按照厂商的文档，从广播中获取扫码结果
+            String result = intent.getStringExtra(context.getString(R.string.feature_scanner_extra_key_barcode_broadcast));
+
+            Log.v(LOG_TAG, "当次扫码结果是：" + result);
+
+            if(_cscanOn){
+                _cscanResultCache = _cscanResultCache+result+",";
+
+                // 记录日志
+                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + _cscanResultCache + " (Continues Mode Start)");
+
+                // 输出到界面
+                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_cscanCell,_cscanResultCache);
+            }
+        }
+    };
 
     /**
      * 注册到页面的pda.scan(cell)方法
@@ -104,5 +160,41 @@ public class HzgJsBridgePDA extends BaseBridge {
         _arcScanner.launch(new Intent(ActivityContext, WaitForScannerBroadcastActivity.class));
     }
 
+    @JavascriptInterface
+    public void cscan_start(String cellLocation) {
 
+        // 记录传入的Cell信息
+        _cscanCell = cellLocation;
+        _cscanOn = true;
+        _cscanResultCache="";
+        startReceiver();
+         }
+
+    @JavascriptInterface
+    public void cscan_stop() {
+stopReceiver();
+    }
+
+    private void startReceiver(){
+        // 按照名称来过滤出需要处理的广播
+        IntentFilter intentFilter = new IntentFilter(ActivityContext.getString(R.string.feature_scanner_broadcast_name));
+        intentFilter.setPriority(Integer.MAX_VALUE);
+
+        // 注册广播监听
+        ActivityContext.registerReceiver(_scanReceiver, intentFilter);
+
+    }
+
+    private  void stopReceiver(){
+        if(_cscanOn){
+
+            ActivityContext.unregisterReceiver(_scanReceiver);
+
+            _cscanOn = false;
+
+            // 记录日志
+            HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"PDA scan completed. Result is : " + _cscanResultCache + " (Continues Mode Stop)");
+
+        }
+    }
 }

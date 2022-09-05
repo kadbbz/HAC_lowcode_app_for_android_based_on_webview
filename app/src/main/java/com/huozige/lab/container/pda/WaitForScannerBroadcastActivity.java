@@ -31,7 +31,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            Log.v(LOG_TAG, "收到扫码结果的广播");
+            Log.v(LOG_TAG, "收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra(getString(R.string.feature_scanner_extra_key_barcode_broadcast));

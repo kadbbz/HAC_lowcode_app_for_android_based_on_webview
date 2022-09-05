@@ -62,7 +62,7 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * 初始化过程：创建调用器
      */
     @Override
-    public void InitOnActivityCreated(){
+    public void OnActivityCreated(){
 
         // 创建到ZXingLite的调用器
         _arcZxingLite= ActivityContext.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -82,6 +82,21 @@ public class HzgJsBridgeIndex extends BaseBridge {
             // 将结果写回到单元格
             HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_scanResultCell,resultS);
         });
+    }
+
+    @Override
+    public void BeforeActivityDestroy() {
+
+    }
+
+    @Override
+    public void BeforeActivityPause() {
+
+    }
+
+    @Override
+    public void OnActivityResumed() {
+
     }
 
     /**

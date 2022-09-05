@@ -39,7 +39,22 @@ public abstract class BaseBridge {
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void InitOnActivityCreated();
+    public abstract void OnActivityCreated();
+
+    /**
+     * 需要注册到上下文中的初始化操作
+     */
+    public abstract void BeforeActivityDestroy();
+
+    /**
+     * 需要注册到上下文中的初始化操作
+     */
+    public abstract void BeforeActivityPause();
+
+    /**
+     * 需要注册到上下文中的初始化操作
+     */
+    public abstract void OnActivityResumed();
 
     /**
      * 处理上下文转发来的Activity调用返回结果
