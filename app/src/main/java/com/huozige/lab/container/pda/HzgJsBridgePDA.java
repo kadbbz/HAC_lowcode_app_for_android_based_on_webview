@@ -156,15 +156,13 @@ public class HzgJsBridgePDA extends BaseBridge {
                 _cscanResultCache = _cscanResultCache + result + ",";
 
                 // 去掉多余的的逗号
-                if(_cscanResultCache.endsWith(",")){
-                    _cscanResultCache = _cscanResultCache.substring(0,_cscanResultCache.length()-1);
-                }
+                String rc = _cscanResultCache.endsWith(",")?_cscanResultCache.substring(0,_cscanResultCache.length()-1):_cscanResultCache;
 
                 // 记录日志
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + _cscanResultCache);
+                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cscanCell, _cscanResultCache);
+                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cscanCell, rc);
             }else{
 
                 // 预期外场景需要记录日志
