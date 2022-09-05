@@ -51,7 +51,7 @@
         android:theme="@style/Theme.Huozige_morden_android"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
-        tools:targetApi="27">
+        tools:targetApi="26">
 
         <meta-data
             android:name="ScopedStorage"
