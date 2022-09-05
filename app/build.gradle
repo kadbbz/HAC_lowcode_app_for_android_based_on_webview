@@ -7,8 +7,8 @@ android {
 
     defaultConfig {
         applicationId "com.huozige.lab.container"
-        minSdk 28
-        targetSdk 28
+        minSdk 27
+        targetSdk 27
         versionCode 1
         versionName "1.0"
 
