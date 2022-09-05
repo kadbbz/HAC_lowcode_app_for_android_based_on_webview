@@ -155,6 +155,11 @@ public class HzgJsBridgePDA extends BaseBridge {
                 // 将当次扫描结果拼接到累计结果上，一次刷新到页面，分割符为半角逗号，与活字格的内置数组保持一致
                 _cscanResultCache = _cscanResultCache + result + ",";
 
+                // 去掉多余的的逗号
+                if(_cscanResultCache.endsWith(",")){
+                    _cscanResultCache = _cscanResultCache.substring(0,_cscanResultCache.length()-1);
+                }
+
                 // 记录日志
                 HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + _cscanResultCache);
 
