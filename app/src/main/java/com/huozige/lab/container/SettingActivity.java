@@ -10,9 +10,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.hjq.permissions.OnPermissionCallback;
@@ -36,6 +39,17 @@ public class SettingActivity extends AppCompatActivity {
     CheckBox _cboHa;
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        // 设置状态栏颜色，更美观
+        Window window = this.getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.setStatusBarColor(this.getColor(R.color.huozige_blue));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -56,6 +70,9 @@ public class SettingActivity extends AppCompatActivity {
 
         Button cmdScan = findViewById(R.id.cmdUrlQrCode);
         cmdScan.setOnClickListener(ScanForUrl);
+
+        ImageButton imgScan = findViewById(R.id.imgScan);
+        imgScan.setOnClickListener(ScanForUrl);
 
         // 创建到ZXingLite的调用器
         _arcZxingLite = this.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -78,6 +95,7 @@ public class SettingActivity extends AppCompatActivity {
         Log.v(LOG_TAG, "配置页面初始化完成。");
 
     }
+
     View.OnClickListener ScanForUrl = new View.OnClickListener() {
         @Override
         public void onClick(View view) {

@@ -153,8 +153,9 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction(getString(R.string.app_config_broadcast_filter));
         getApplicationContext().registerReceiver(_configRev, filter);
 
-        // Step 8. 创建到设置页面的加载器
+        // Step 8. 初始化启动器
         _arcSettings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> refreshWebView());
+
     }
 
     /**
@@ -175,6 +176,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        // 如果没有设置入口，视同”未配置“
+        if(_cm.GetEntry().length() == 0){
+            // 跳转到设置页面
+            _arcSettings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+        }
 
         // 设置状态栏颜色，更美观
         Window window = this.getWindow();
