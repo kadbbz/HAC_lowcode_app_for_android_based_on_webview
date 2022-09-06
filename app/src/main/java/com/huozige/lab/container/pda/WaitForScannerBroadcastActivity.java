@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.R;
 
 /**
@@ -21,6 +22,8 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
     final static int SCAN_STATUS_CANCEL = -1;
     final static String BUNDLE_EXTRA_RESULT = "result";
     final static String LOG_TAG = "WaitForScannerBroadcastActivity";
+
+    ConfigManager _cm = new ConfigManager(this);
 
     /**
      * 定义广播接收器
@@ -34,7 +37,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
             Log.v(LOG_TAG, "收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra(getString(R.string.feature_scanner_extra_key_barcode_broadcast));
+            String result = intent.getStringExtra( (null == _cm.GetScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):_cm.GetScanExtra());
 
             Log.v(LOG_TAG, "扫码结果是：" + result);
 
@@ -80,8 +83,10 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
 
         super.onResume();
 
+        String intentF = (_cm.GetScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):_cm.GetScanAction();
+
         // 按照名称来过滤出需要处理的广播
-        IntentFilter intentFilter = new IntentFilter(getString(R.string.feature_scanner_broadcast_name));
+        IntentFilter intentFilter = new IntentFilter(intentF);
         intentFilter.setPriority(Integer.MAX_VALUE);
 
         // 注册广播监听

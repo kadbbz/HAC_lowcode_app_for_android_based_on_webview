@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.BaseBridge;
+import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.HzgWebInteropHelpers;
 import com.huozige.lab.container.R;
 
@@ -24,7 +25,7 @@ import com.huozige.lab.container.R;
 public class HzgJsBridgePDA extends BaseBridge {
 
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
-
+    ConfigManager _cm ;
     String _cell; // 用来接收扫码结果的单元格位置信息
 
     Boolean _cscanOn = false;
@@ -41,6 +42,8 @@ public class HzgJsBridgePDA extends BaseBridge {
      */
     public HzgJsBridgePDA(AppCompatActivity context, WebView webView) {
         super(context, webView);
+
+       _cm = new ConfigManager(context);
     }
 
 
@@ -146,7 +149,8 @@ public class HzgJsBridgePDA extends BaseBridge {
             Log.v(LOG_TAG, "收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra(context.getString(R.string.feature_scanner_extra_key_barcode_broadcast));
+            String result = intent.getStringExtra( (null == _cm.GetScanExtra())? ActivityContext.getString( R.string.feature_scanner_extra_key_barcode_broadcast):_cm.GetScanExtra());
+
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
@@ -212,7 +216,11 @@ public class HzgJsBridgePDA extends BaseBridge {
     private void startReceiver() {
 
         // 按照名称来过滤出需要处理的广播
-        IntentFilter intentFilter = new IntentFilter(ActivityContext.getString(R.string.feature_scanner_broadcast_name));
+        String intentF = (_cm.GetScanAction() == null)?ActivityContext.getString(R.string.feature_scanner_broadcast_name):_cm.GetScanAction();
+
+        // 按照名称来过滤出需要处理的广播
+        IntentFilter intentFilter = new IntentFilter(intentF);
+
         intentFilter.setPriority(Integer.MAX_VALUE);
 
         // 注册广播监听

@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(); // 配置监听器
 
+    ConfigManager _cm = new ConfigManager(this);
+
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_HAA = 9;
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private void refreshWebView(){
 
         // 根据选项决定是否启用硬件加速
-        if(ConfigHelpers.GetHAEnabled(this)){
+        if(_cm.GetHA()){
             _webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
             Log.v(LOG_TAG,"浏览器加速模式：硬件加速");
         }else{
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             Log.v(LOG_TAG,"浏览器加速模式：软件加速");
         }
 
-        String target = ConfigHelpers.GetEntryUrl(this);
+        String target = _cm.GetEntry();
         _webView.loadUrl(target);
 
         Log.v(LOG_TAG,"浏览器加载完成，打开启动页面：" + target);
@@ -204,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
                 Log.v(LOG_TAG,"点击菜单【首页】");
+
                 refreshWebView(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
@@ -213,11 +216,12 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case MENU_ID_HAA:
                     Log.v(LOG_TAG,"点击切换硬件加速");
-                    Boolean current = ConfigHelpers.GetHAEnabled(this);
-                    ConfigHelpers.UpsertHardwareAccelerateEnabled(this,!current);
+                    Boolean current = _cm.GetHA();
+                    _cm.UpsertHA(!current);
                     String msg =  current?getString(R.string.ui_toast_haa_disabled):getString(R.string.ui_toast_haa_enabled);
                     Toast.makeText(this,msg,Toast.LENGTH_LONG).show();
                     Log.v(LOG_TAG,msg);
+
                     refreshWebView(); // 页面初始化
 
             // 你可以在这里处理新创建菜单的点击事件

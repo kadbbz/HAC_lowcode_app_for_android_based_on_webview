@@ -19,11 +19,15 @@ import androidx.core.app.NotificationManagerCompat;
 public class ConfigBroadcastReceiver extends BroadcastReceiver {
 
     static final String CONFIG_BROADCAST_EXTRA_ENTRY = "entry";
+    static final String CONFIG_BROADCAST_ACTION = "scan_action";
+    static final String CONFIG_BROADCAST_EXTRA = "scan_extra";
+
     static final String LOG_TAG = "ConfigBroadcastReceiver";
     static final  String CHANNEL_ID="hac_push";
     static final  Integer CONFIG_RELOAD_NITIFICATION=1001;
 
     Activity _activityContext;
+    ConfigManager _cm;
 
     public ConfigBroadcastReceiver(){
         super();
@@ -32,22 +36,24 @@ public class ConfigBroadcastReceiver extends BroadcastReceiver {
     public void AssignContext(Activity activity)
     {
         _activityContext = activity;
+        _cm = new ConfigManager(_activityContext);
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
 
         Log.v(LOG_TAG, "接收到广播：" + intent.getAction());
-        // 读取入口消息
-        String entry = intent.getStringExtra(CONFIG_BROADCAST_EXTRA_ENTRY);
 
-        Log.v(LOG_TAG, "广播中接入点变更为：" + entry);
+        if (null != intent) {
 
-        if (null != entry) {
+            _cm.UpsertEntry(intent.getStringExtra(CONFIG_BROADCAST_EXTRA_ENTRY));
+            Log.v(LOG_TAG, "接入点已保存至配置数据库： "+intent.getStringExtra(CONFIG_BROADCAST_EXTRA_ENTRY));
 
-            ConfigHelpers.UpsertEntryUrl(_activityContext, entry);
+            _cm.UpsertScanAction(intent.getStringExtra(CONFIG_BROADCAST_ACTION));
+            Log.v(LOG_TAG, "广播名称已保存至配置数据库： " +intent.getStringExtra(CONFIG_BROADCAST_ACTION));
 
-            Log.v(LOG_TAG, "接入点已保存至配置数据库。");
+            _cm.UpsertScanExtra(intent.getStringExtra(CONFIG_BROADCAST_EXTRA));
+            Log.v(LOG_TAG, "数据键值已保存至配置数据库： "+intent.getStringExtra(CONFIG_BROADCAST_ACTION));
 
             // Create the NotificationChannel, but only on API 26+ because
             // the NotificationChannel class is new and not in the support library

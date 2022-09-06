@@ -23,6 +23,8 @@ public class HzgWebViewClient extends WebViewClient {
     AppCompatActivity _context; // 包含有浏览器内核的上下文
     static final String LOG_TAG = "HzgWebViewClient"; // 日志的标识
 
+    ConfigManager _cm;
+
     /**
      * 简单的构造函数
      * @param activity 上下文
@@ -30,6 +32,7 @@ public class HzgWebViewClient extends WebViewClient {
     HzgWebViewClient(AppCompatActivity activity)
     {
         _context = activity;
+        _cm = new ConfigManager(_context);
     }
 
     /**
@@ -98,7 +101,7 @@ public class HzgWebViewClient extends WebViewClient {
 
         Log.v(LOG_TAG,"页面加载完成："+url);
 
-        if(url.equalsIgnoreCase(ConfigHelpers.GetEntryUrl(_context))) {
+        if(url.equalsIgnoreCase(_cm.GetEntry())) {
 
             // 首页加载完成后，提前申请权限
             PermissionHelpers.RequirePermission(_context, Permission.CAMERA);
