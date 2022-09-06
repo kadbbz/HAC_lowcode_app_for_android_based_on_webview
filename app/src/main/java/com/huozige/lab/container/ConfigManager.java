@@ -37,8 +37,8 @@ public class ConfigManager {
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
-        // 从数据库中加载，默认为硬件加速
-        return sharedPref.getBoolean(PREFERENCE_KEY_HA, true);
+        // 从数据库中加载，默认为软件加速
+        return sharedPref.getBoolean(PREFERENCE_KEY_HA, false);
     }
 
     public  void UpsertEntry(String value){

@@ -10,6 +10,8 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -74,7 +76,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Step 2. 初始化浏览器内核
         // 2.1 创建浏览器内核
-        _webView = new WebView(getApplicationContext());
+
+        Log.v(LOG_TAG,"开始创建并初始化浏览器内核。");
+        _webView = new WebView(this);
         setContentView(_webView);
 
         // 2.2 通过WebSettings设置策略
@@ -83,9 +87,10 @@ public class MainActivity extends AppCompatActivity {
         // 权限
         settings.setJavaScriptEnabled(true); // 执行JS
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
-        settings.setAllowFileAccess(true); // 访问缓存、本地数据库等文件
-        settings.setAllowContentAccess(true); // 访问本地的所有文件，需配合权限设置
-        settings.setAllowFileAccessFromFileURLs(true); // 通过URL访问网上的文件
+        settings.setAllowFileAccess(true); // 支持file://，这个是文件访问的总开关
+        settings.setAllowContentAccess(true); // 支持content://
+        settings.setAllowFileAccessFromFileURLs(true); // loadUrl()方法和JS文件也能通过URL访问本地文件
+        settings.setAllowUniversalAccessFromFileURLs(true); // 加载的本地的JS文件如果需要访问本地文件时，需要用到这个选项
         settings.setGeolocationEnabled(true); // 允许获取地理位置
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);  // 允许混用HTTP和HTTPS
 
@@ -93,13 +98,16 @@ public class MainActivity extends AppCompatActivity {
         settings.setDomStorageEnabled(true); // DOM缓存
         settings.setAppCacheEnabled(true); // 数据缓存（活字格采用的本地库就是这个）
         settings.setAppCachePath(getApplicationContext().getCacheDir().getAbsolutePath()); // 数据缓存路径
-
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         // 布局
         settings.setUseWideViewPort(true); // 默认全屏
 
         // 缩放
         settings.setBuiltInZoomControls(false); // 不显示缩放按钮
         settings.setSupportZoom(false); // 不允许缩放
+
+        // 2.3 启用Debug
+        _webView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
         // Step 3. 设置WebViewClient，处理页面事件
         _webViewClient = new HzgWebViewClient(this);
@@ -129,17 +137,19 @@ public class MainActivity extends AppCompatActivity {
             _webView.addJavascriptInterface(br, br.GetName()); // 将JS桥嵌入页面
         }
 
-        // Step 6. 注册配置变更广播
+        Log.v(LOG_TAG,"浏览器内核初始化完成。");
+
+        // Step 6. 加载页面
+        refreshWebView();
+
+        // Step 7. 注册配置变更广播
         // 新版本Android不允许在配置中注册广播，必须和上下文绑定：https://developer.android.com/guide/components/broadcasts#context-registered-recievers
         // 这里的做法是绑定到应用上下文，寿命长于当前页面
-
         _configRev.AssignContext(this);
         IntentFilter filter = new IntentFilter();
         filter.addAction(getString(R.string.app_config_broadcast_filter));
         getApplicationContext().registerReceiver(_configRev, filter);
 
-        // Step 7. 加载页面
-        refreshWebView();
     }
 
     /**
@@ -160,6 +170,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        // 设置状态栏颜色，更美观
+        Window window = this.getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.setStatusBarColor(this.getColor(R.color.huozige_blue));
     }
 
     /**

@@ -27,10 +27,10 @@ public class HzgWebViewClient extends WebViewClient {
 
     /**
      * 简单的构造函数
+     *
      * @param activity 上下文
      */
-    HzgWebViewClient(AppCompatActivity activity)
-    {
+    HzgWebViewClient(AppCompatActivity activity) {
         _context = activity;
         _cm = new ConfigManager(_context);
     }
@@ -43,7 +43,7 @@ public class HzgWebViewClient extends WebViewClient {
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
-        Log.e(LOG_TAG,"SSL验证出错，应用将跳过："+error.toString());
+        Log.e(LOG_TAG, "SSL验证出错，应用将跳过：" + error.toString());
 
         // 对SSL错误不予处理
         handler.proceed();
@@ -54,22 +54,19 @@ public class HzgWebViewClient extends WebViewClient {
      * 我们的处理策略是，针对HTTP和HTTPS，在WebView中使用，其他Url schema（如tel:等）则转交给系统
      */
     @Override
-    public boolean shouldOverrideUrlLoading(WebView view,  WebResourceRequest request) {
+    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
-        Log.v(LOG_TAG,"请求地址："+request.getUrl());
+        Log.v(LOG_TAG, "请求地址：" + request.getUrl());
 
         // 获取请求地址
         Uri reqUri = request.getUrl();
 
         // 判断导航的协议，HTTP/HTTPS在当前WebView打开
-        if(reqUri.getScheme().equalsIgnoreCase("http")  || reqUri.getScheme().equalsIgnoreCase("https"))
-        {
+        if (reqUri.getScheme().equalsIgnoreCase("http") || reqUri.getScheme().equalsIgnoreCase("https")) {
             return false;
-        }
-        else
-        {
+        } else {
             // 其他协议使用系统服务打开
-            Log.v(LOG_TAG,"导航到系统服务：" + reqUri);
+            Log.v(LOG_TAG, "导航到系统服务：" + reqUri);
             return true;
         }
 
@@ -80,15 +77,26 @@ public class HzgWebViewClient extends WebViewClient {
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-        Log.e(LOG_TAG,"页面加载出错：" +request.getUrl() +" ，错误：" +error.toString());
+        Log.e(LOG_TAG, "页面加载出错：" + request.getUrl() + " ，错误：" + error.getDescription());
 
-        // 异常可能是网络原因，所以，这里的错误页面是本地的资源文件
-        view.loadUrl("file:///android_asset/error/error.html");
+        // 对超时错误做特殊处理
+        if (error.getErrorCode() == WebViewClient.ERROR_CONNECT || error.getErrorCode() == WebViewClient.ERROR_TIMEOUT || error.getErrorCode() == WebViewClient.ERROR_HOST_LOOKUP) {
+            if (request.getUrl().toString().equalsIgnoreCase(view.getUrl())) {
+
+                // 只有页面出现异常才会提示这个错误，需要应对某些JS加载失败，但系统依然可用的场景
+                // 网络异常专属错误页面
+                view.loadUrl("file:///android_asset/error/timeout.html");
+            }
+        } else {
+
+            // 其他异常的提示页面
+            view.loadUrl("file:///android_asset/error/error.html");
+        }
     }
 
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        Log.v(LOG_TAG,"页面加载开始：" +url);
+        Log.v(LOG_TAG, "页面加载开始：" + url);
     }
 
     /**
@@ -99,9 +107,9 @@ public class HzgWebViewClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
 
-        Log.v(LOG_TAG,"页面加载完成："+url);
+        Log.v(LOG_TAG, "页面加载完成：" + url);
 
-        if(url.equalsIgnoreCase(_cm.GetEntry())) {
+        if (url.equalsIgnoreCase(_cm.GetEntry())) {
 
             // 首页加载完成后，提前申请权限
             PermissionHelpers.RequirePermission(_context, Permission.CAMERA);

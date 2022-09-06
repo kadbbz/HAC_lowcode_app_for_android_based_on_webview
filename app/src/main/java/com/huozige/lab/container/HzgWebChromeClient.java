@@ -58,9 +58,10 @@ public class HzgWebChromeClient extends WebChromeClient {
     @Override
     public void onProgressChanged(WebView view, int newProgress) {
 
-        // 在标题上显示页面的加载进度
+        // 在标题上显示页面的加载状态，0-99意味着正在加载，100加载完成。
+        // 加载完成的处理，放在其他事件中，这里只关注加载中
         if (newProgress < 100) {
-            _title = _context.getString(R.string.ui_title_progressing, newProgress);
+            _title = _context.getString(R.string.ui_title_loading);
             _context.setTitle(_title);
         }
     }
