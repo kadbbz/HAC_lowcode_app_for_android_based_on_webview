@@ -129,7 +129,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * @param requestCode 同onActivityResult
      * @param resultCode  同onActivityResult
      * @param data        同onActivityResult
-     * @return
+     * @return 否，无需中断
      */
     @Override
     public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {

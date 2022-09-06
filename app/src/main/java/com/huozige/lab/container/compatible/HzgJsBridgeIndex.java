@@ -109,9 +109,6 @@ public class HzgJsBridgeIndex extends BaseBridge {
     }
 
     /**
-     * 无需操作
-     */
-    /**
      * 无需处理
      * @param requestCode 同onActivityResult
      * @param resultCode 同onActivityResult

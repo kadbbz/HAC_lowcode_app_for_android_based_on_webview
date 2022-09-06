@@ -14,7 +14,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -23,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
-import com.huozige.lab.container.pda.WaitForScannerBroadcastActivity;
 
 /**
  * 主Activity，主要负责加载浏览器内核
@@ -112,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false); // 不允许缩放
 
         // 2.3 启用Debug
-        _webView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
+        WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
         // Step 3. 设置WebViewClient，处理页面事件
         _webViewClient = new HzgWebViewClient(this);
@@ -156,9 +154,7 @@ public class MainActivity extends AppCompatActivity {
         getApplicationContext().registerReceiver(_configRev, filter);
 
         // Step 8. 创建到设置页面的加载器
-        _arcSettings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            refreshWebView();
-        });
+        _arcSettings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> refreshWebView());
     }
 
     /**

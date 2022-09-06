@@ -23,6 +23,9 @@ import com.king.zxing.CaptureActivity;
 
 import java.util.List;
 
+/**
+ * 系统设置页面
+ */
 public class SettingActivity extends AppCompatActivity {
 
     static final String LOG_TAG = "SettingActivity";
@@ -89,11 +92,7 @@ public class SettingActivity extends AppCompatActivity {
 
                         @Override
                         public void onDenied(List<String> permissions, boolean never) {
-                            if (never) {
-                                Toast.makeText(SettingActivity.this, "请允许应用利用摄像头扫描二维码", Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(SettingActivity.this, "请允许应用利用摄像头扫描二维码", Toast.LENGTH_LONG).show();
-                            }
+                            Toast.makeText(SettingActivity.this, "请允许应用利用摄像头扫描二维码", Toast.LENGTH_LONG).show();
                         }
                     });
 
@@ -123,12 +122,8 @@ public class SettingActivity extends AppCompatActivity {
                 finish();
             }
         });
-        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel),new DialogInterface.OnClickListener(){
-
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                // 什么都不干
-            }
+        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
+            // 什么都不干
         });
 
         ab.setMessage(R.string.ui_message_setting_save);
@@ -140,21 +135,15 @@ public class SettingActivity extends AppCompatActivity {
     View.OnClickListener Restart = view -> {
 
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
-        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok),new DialogInterface.OnClickListener(){
+        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                Intent inte = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-                inte.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(inte);
-            }
+            // 重启应用
+            Intent intentR = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
+            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intentR);
         });
-        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel),new DialogInterface.OnClickListener(){
-
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                // 什么都不干
-            }
+        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
+            // 什么都不干
         });
 
         ab.setMessage(R.string.ui_message_setting_restart);
