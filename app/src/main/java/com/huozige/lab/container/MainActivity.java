@@ -16,11 +16,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
+import com.huozige.lab.container.pda.WaitForScannerBroadcastActivity;
 
 /**
  * 主Activity，主要负责加载浏览器内核
@@ -38,11 +41,13 @@ public class MainActivity extends AppCompatActivity {
 
     ConfigBroadcastReceiver _configRev = new ConfigBroadcastReceiver(); // 配置监听器
 
+    ActivityResultLauncher<Intent> _arcSettings; // 用来弹出配置页面。
+
     ConfigManager _cm = new ConfigManager(this);
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
-    static final int MENU_ID_HAA = 9;
+    static final int MENU_ID_SETTINGS = 9;
 
     static final String LOG_TAG = "MainActivity"; // 日志的标识
 
@@ -150,6 +155,10 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction(getString(R.string.app_config_broadcast_filter));
         getApplicationContext().registerReceiver(_configRev, filter);
 
+        // Step 8. 创建到设置页面的加载器
+        _arcSettings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            refreshWebView();
+        });
     }
 
     /**
@@ -207,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         // 依次创建默认的菜单
         menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
         menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
-        menu.add(0, MENU_ID_HAA, 2, getString(R.string.ui_menu_haa));
+        menu.add(0, MENU_ID_SETTINGS, 2, getString(R.string.ui_menu_settings));
 
         // 你可以在这里创建新的菜单
 
@@ -230,16 +239,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.v(LOG_TAG,"点击菜单【刷新】");
                 _webView.reload(); // 仅刷新
                 break;
-            case MENU_ID_HAA:
-                    Log.v(LOG_TAG,"点击切换硬件加速");
-                    Boolean current = _cm.GetHA();
-                    _cm.UpsertHA(!current);
-                    String msg =  current?getString(R.string.ui_toast_haa_disabled):getString(R.string.ui_toast_haa_enabled);
-                    Toast.makeText(this,msg,Toast.LENGTH_LONG).show();
-                    Log.v(LOG_TAG,msg);
-
-                    refreshWebView(); // 页面初始化
-
+            case MENU_ID_SETTINGS:
+                _arcSettings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+                break;
             // 你可以在这里处理新创建菜单的点击事件
         }
 
