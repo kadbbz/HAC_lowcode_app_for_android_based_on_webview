@@ -1,6 +1,9 @@
 package com.huozige.lab.container.app;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -18,6 +21,8 @@ import com.huozige.lab.container.R;
 public class HzgJsBridgeApp extends BaseBridge {
 
     String _versionCell, _packageCell; // 单元格位置缓存
+
+    static final String LOG_TAG = "HzgJsBridgeApp";
 
     /**
      * 基础的构造函数
@@ -91,9 +96,7 @@ public class HzgJsBridgeApp extends BaseBridge {
 
         // 记录参数
         _packageCell = cell;
-
-        // 需要调度回主线程操作
-        ActivityContext.runOnUiThread(() -> HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell, ActivityContext.getPackageName()));
+        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell, ActivityContext.getPackageName());
     }
 
     /**
@@ -106,7 +109,18 @@ public class HzgJsBridgeApp extends BaseBridge {
         // 记录参数
         _versionCell = cell;
 
+        String versionName = "";
+
+        try {
+            PackageInfo pinfo = ActivityContext.getPackageManager().getPackageInfo(ActivityContext.getPackageName(), PackageManager.GET_CONFIGURATIONS);
+            versionName = pinfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(LOG_TAG, "获取应用版本信息出错：" + e.toString());
+            e.printStackTrace();
+        }
+
         // 需要调度回主线程操作
-        ActivityContext.runOnUiThread(() -> HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _versionCell, ActivityContext.getString(R.string.app_version_name)));
+        String finalVersionName = versionName;
+        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _versionCell, finalVersionName);
     }
 }
