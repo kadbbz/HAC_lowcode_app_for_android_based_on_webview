@@ -36,6 +36,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtAction" />
 
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="100dp"
+        android:labelFor="@id/txtExtra"
+        android:text="@string/ui_label_settings_dark_color"
+        android:textAlignment="viewStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.405"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtExtra" />
+
     <Button
         android:id="@+id/cmdUrlQrCode"
         style="@style/Widget.Material3.Button.TextButton"
@@ -52,35 +67,6 @@
         app:layout_constraintHorizontal_bias="0.367"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/cmdSave"
-        style="@style/Widget.Material3.Button"
-        android:layout_width="113dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="100dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="100dp"
-        android:text="@string/ui_label_settings_save"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cboHa" />
-
-    <Button
-        android:id="@+id/cmdRestart"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="113dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="100dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="100dp"
-        android:text="@string/ui_label_settings_restart"
-        android:textColor="?android:attr/colorFocusedHighlight"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cmdSave" />
 
     <EditText
         android:id="@+id/txtUrl"
@@ -141,18 +127,49 @@
         android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_marginStart="30dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="120dp"
         android:layout_marginEnd="30dp"
         android:text="@string/ui_label_settings_ha"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.315"
+        app:layout_constraintHorizontal_bias="0.328"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtExtra" />
 
+    <Button
+        android:id="@+id/cmdSave"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="113dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="100dp"
+        android:text="@string/ui_label_settings_save"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cboHa" />
+
+    <Button
+        android:id="@+id/cmdRestart"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="113dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="100dp"
+        android:text="@string/ui_label_settings_restart"
+        android:textColor="?android:attr/colorFocusedHighlight"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cmdSave" />
+
     <ImageButton
         android:id="@+id/imgScan"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginTop="64dp"
         android:background="@color/white"
         android:contentDescription="@string/ui_title_scanner_activity"
@@ -160,5 +177,16 @@
         app:layout_constraintStart_toEndOf="@+id/txtUrl"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/qrcode" />
+
+    <com.rtugeek.android.colorseekbar.ColorSeekBar
+        android:id="@+id/colorSeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="19dp"
+        android:layout_marginEnd="60dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,31 +23,22 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
+import com.rtugeek.android.colorseekbar.ColorSeekBar;
 
 import java.util.List;
 
 /**
  * 系统设置页面
  */
-public class SettingActivity extends AppCompatActivity {
+public class SettingActivity extends BaseActivity {
 
     static final String LOG_TAG = "SettingActivity";
-    ConfigManager _cm = new ConfigManager(this);
+
     ActivityResultLauncher<Intent> _arcZxingLite; // 用来弹出ZXingLite扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
 
     EditText _txtUrl,_txtScanAction,_txtScanExtra;
     CheckBox _cboHa;
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        // 设置状态栏颜色，更美观
-        Window window = this.getWindow();
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.setStatusBarColor(this.getColor(R.color.default_dark_background));
-    }
+    ColorSeekBar _colorSeek;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +52,7 @@ public class SettingActivity extends AppCompatActivity {
         _txtScanAction = findViewById(R.id.txtAction);
         _txtScanExtra = findViewById(R.id.txtExtra);
         _cboHa = findViewById(R.id.cboHa);
+        _colorSeek = findViewById(R.id.colorSeekBar);
 
         Button cmdRestart = findViewById(R.id.cmdRestart);
         cmdRestart.setOnClickListener(Restart);
@@ -87,10 +79,11 @@ public class SettingActivity extends AppCompatActivity {
         });
 
         // 设置初始值
-        _txtUrl.setText(_cm.GetEntry());
-        _txtScanAction.setText(_cm.GetScanAction());
-        _txtScanExtra.setText(_cm.GetScanExtra());
-        _cboHa.setChecked(_cm.GetHA());
+        _txtUrl.setText(configManager.GetEntry());
+        _txtScanAction.setText(configManager.GetScanAction());
+        _txtScanExtra.setText(configManager.GetScanExtra());
+        _cboHa.setChecked(configManager.GetHA());
+        _colorSeek.setColor(configManager.GetTCD());
 
         Log.v(LOG_TAG, "配置页面初始化完成。");
 
@@ -128,10 +121,11 @@ public class SettingActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // 保存配置
-                _cm.UpsertEntry(_txtUrl.getText().toString());
-                _cm.UpsertScanAction(_txtScanAction.getText().toString());
-                _cm.UpsertScanExtra(_txtScanExtra.getText().toString());
-                _cm.UpsertHA(_cboHa.isChecked());
+                configManager.UpsertEntry(_txtUrl.getText().toString());
+                configManager.UpsertScanAction(_txtScanAction.getText().toString());
+                configManager.UpsertScanExtra(_txtScanExtra.getText().toString());
+                configManager.UpsertHA(_cboHa.isChecked());
+                configManager.UpsertTCD(_colorSeek.getColor());
 
                 Toast.makeText(SettingActivity.this, "设置保存成功，点击右上角【首页】菜单即可生效。", Toast.LENGTH_LONG).show();
 

@@ -33,6 +33,7 @@
     <string name="ui_label_setting_entry">应用入口</string>
     <string name="ui_label_settings_action">扫描头广播名称（Action）</string>
     <string name="ui_label_settings_extra">扫描头广播键值（Extra）</string>
+    <string name="ui_label_settings_dark_color">主题颜色</string>
     <string name="ui_button_settings_scan">应用入口（点击扫描二维码）</string>
     <string name="ui_label_settings_save">保存</string>
     <string name="ui_label_settings_restart">重启应用</string>

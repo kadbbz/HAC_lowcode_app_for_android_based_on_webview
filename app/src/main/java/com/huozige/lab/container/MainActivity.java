@@ -4,6 +4,7 @@ package com.huozige.lab.container;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -17,6 +18,7 @@ import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
@@ -27,7 +29,7 @@ import com.huozige.lab.container.pda.HzgJsBridgePDA;
  * 主Activity，主要负责加载浏览器内核
  * 也需要作为其他功能的默认上下文
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     WebView _webView; // 浏览器内核
 
@@ -41,8 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
     ActivityResultLauncher<Intent> _arcSettings; // 用来弹出配置页面。
 
-    ConfigManager _cm = new ConfigManager(this);
-
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_SETTINGS = 9;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private void refreshWebView(){
 
         // 根据选项决定是否启用硬件加速
-        if(_cm.GetHA()){
+        if(configManager.GetHA()){
             _webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
             Log.v(LOG_TAG,"浏览器加速模式：硬件加速");
         }else{
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
             Log.v(LOG_TAG,"浏览器加速模式：软件加速");
         }
 
-        String target = _cm.GetEntry();
+        String target = configManager.GetEntry();
         _webView.loadUrl(target);
 
         Log.v(LOG_TAG,"浏览器加载完成，打开启动页面：" + target);
@@ -178,16 +178,11 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         // 如果没有设置入口，视同”未配置“
-        if(_cm.GetEntry().length() == 0){
+        if(configManager.GetEntry().length() == 0){
             // 跳转到设置页面
             _arcSettings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
         }
 
-        // 设置状态栏颜色，更美观
-        Window window = this.getWindow();
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.setStatusBarColor(this.getColor(R.color.default_dark_background));
     }
 
     /**
