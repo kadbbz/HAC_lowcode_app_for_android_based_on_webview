@@ -6,23 +6,12 @@
         <type value="RUNNING_DEVICE_TARGET" />
         <deviceKey>
           <Key>
-            <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\NingWei\.android\avd\Android13-Hi-Res.avd" />
+            <type value="SERIAL_NUMBER" />
+            <value value="T0121A4X206F0021" />
           </Key>
         </deviceKey>
       </Target>
     </runningDeviceTargetSelectedWithDropDown>
-    <targetSelectedWithDropDown>
-      <Target>
-        <type value="QUICK_BOOT_TARGET" />
-        <deviceKey>
-          <Key>
-            <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\NingWei\.android\avd\Android13-Hi-Res.avd" />
-          </Key>
-        </deviceKey>
-      </Target>
-    </targetSelectedWithDropDown>
-    <timeTargetWasSelectedWithDropDown value="2022-09-15T10:40:52.665195300Z" />
+    <timeTargetWasSelectedWithDropDown value="2022-09-15T11:33:50.106605400Z" />
   </component>
 </project>
