@@ -7,11 +7,10 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import com.huozige.lab.container.HACBaseActivity;
 import com.huozige.lab.container.BaseBridge;
+import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.HzgWebInteropHelpers;
-import com.huozige.lab.container.R;
 
 /**
  * 让页面具备对APP壳子的感知能力
@@ -22,6 +21,8 @@ public class HzgJsBridgeApp extends BaseBridge {
 
     String _versionCell, _packageCell; // 单元格位置缓存
 
+    ConfigManager _cm;
+
     static final String LOG_TAG = "HzgJsBridgeApp";
 
     /**
@@ -30,8 +31,10 @@ public class HzgJsBridgeApp extends BaseBridge {
      * @param context 上下文
      * @param webView 浏览器内核
      */
-    public HzgJsBridgeApp(AppCompatActivity context, WebView webView) {
+    public HzgJsBridgeApp(HACBaseActivity context, WebView webView) {
         super(context, webView);
+
+        _cm = new ConfigManager(context);
     }
 
     /**
@@ -85,6 +88,35 @@ public class HzgJsBridgeApp extends BaseBridge {
     @Override
     public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
         return false;
+    }
+
+    /**
+     * 注册到页面的app.getActionBarColor(cell)方法
+     * 获取APP ActionBar的颜色
+     * 返回的数值是16进制，去掉透明度
+     */
+    @JavascriptInterface
+    public void getActionBarColor(String cell) {
+
+        // 记录参数
+        _packageCell = cell;
+        Integer woTrans = _cm.GetTCD() - 0xFF000000;
+        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell,  Integer.toHexString(woTrans));
+    }
+
+    /**
+     * 注册到页面的app.setActionBarColor(colorInteger)方法
+     * 设置APP ActionBar的颜色
+     * 输入的颜色是16进制，不需要透明度
+     */
+    @JavascriptInterface
+    public void setActionBarColor(String colorInteger) {
+
+        // 更新配置项
+        _cm.UpsertTCD(Integer.parseInt(colorInteger,16)+0xFF000000);
+
+        // 刷新ActionBar
+       ActivityContext.refreshActionBarsColor();
     }
 
     /**

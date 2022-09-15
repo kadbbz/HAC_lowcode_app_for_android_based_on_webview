@@ -4,22 +4,17 @@ package com.huozige.lab.container;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
@@ -29,7 +24,7 @@ import com.huozige.lab.container.pda.HzgJsBridgePDA;
  * 主Activity，主要负责加载浏览器内核
  * 也需要作为其他功能的默认上下文
  */
-public class MainActivity extends BaseActivity {
+public class MainActivity extends HACBaseActivity {
 
     WebView _webView; // 浏览器内核
 

@@ -11,8 +11,8 @@ import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.huozige.lab.container.HACBaseActivity;
 import com.huozige.lab.container.BaseBridge;
 import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.HzgWebInteropHelpers;
@@ -42,7 +42,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * @param context 上下文
      * @param webView 浏览器内核
      */
-    public HzgJsBridgePDA(AppCompatActivity context, WebView webView) {
+    public HzgJsBridgePDA(HACBaseActivity context, WebView webView) {
         super(context, webView);
 
         _cm = new ConfigManager(context);

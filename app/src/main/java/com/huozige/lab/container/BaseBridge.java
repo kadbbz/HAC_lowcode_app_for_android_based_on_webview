@@ -3,8 +3,6 @@ package com.huozige.lab.container;
 import android.content.Intent;
 import android.webkit.WebView;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 /**
  * JavaScript桥的抽象类
  * 未来可以做更多功能，但暂时没有具体的实现
@@ -14,7 +12,7 @@ public abstract class BaseBridge {
     /**
      * 操作的上下文
      */
-    protected AppCompatActivity ActivityContext;
+    protected HACBaseActivity ActivityContext;
 
     /**
      * 操作的浏览器内核
@@ -26,7 +24,7 @@ public abstract class BaseBridge {
      * @param context 上下文
      * @param webView 浏览器内核
      */
-    public BaseBridge(AppCompatActivity context, WebView webView) {
+    public BaseBridge(HACBaseActivity context, WebView webView) {
         ActivityContext = context;
         CurrentWebView = webView;
     }

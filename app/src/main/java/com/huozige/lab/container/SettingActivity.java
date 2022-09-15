@@ -3,15 +3,12 @@ package com.huozige.lab.container;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -30,7 +27,7 @@ import java.util.List;
 /**
  * 系统设置页面
  */
-public class SettingActivity extends BaseActivity {
+public class SettingActivity extends HACBaseActivity {
 
     static final String LOG_TAG = "SettingActivity";
 
