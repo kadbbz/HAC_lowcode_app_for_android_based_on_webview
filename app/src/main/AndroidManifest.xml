@@ -4,6 +4,8 @@
     package="com.huozige.lab.container">
 
     <uses-permission android:name="android.permission.INTERNET" /> <!-- 敏感权限 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 适配android 11无法唤起第三方apk 注意代码段在注册表里的位置 -->

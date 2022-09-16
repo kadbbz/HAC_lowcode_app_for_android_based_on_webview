@@ -13,8 +13,6 @@ import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.hjq.permissions.Permission;
-
 /**
  * 处理页面的事件，实现异常处理等功能
  */
@@ -74,6 +72,7 @@ public class HzgWebViewClient extends WebViewClient {
 
     /**
      * 处理页面加载异常
+     * 替代原有逻辑
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -95,7 +94,9 @@ public class HzgWebViewClient extends WebViewClient {
     }
 
     @Override
-    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+    public void onPageStarted(WebView view, String url,  Bitmap favicon) {
+        super.onPageStarted(view,url,favicon);
+
         Log.v(LOG_TAG, "页面加载开始：" + url);
     }
 
@@ -108,13 +109,6 @@ public class HzgWebViewClient extends WebViewClient {
         super.onPageFinished(view, url);
 
         Log.v(LOG_TAG, "页面加载完成：" + url);
-
-        if (url.equalsIgnoreCase(_cm.GetEntry())) {
-
-            // 首页加载完成后，提前申请权限
-            PermissionHelpers.RequirePermission(_context, Permission.CAMERA);
-            PermissionHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
-        }
     }
 
 }
