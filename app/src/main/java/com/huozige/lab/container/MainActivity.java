@@ -76,7 +76,7 @@ public class MainActivity extends HACBaseActivity {
         // 2.1 创建浏览器内核
 
         Log.v(LOG_TAG,"开始创建并初始化浏览器内核。");
-        _webView = new WebView(getApplicationContext());
+        _webView = new WebView(this);
         setContentView(_webView);
 
         // 2.2 通过WebSettings设置策略
