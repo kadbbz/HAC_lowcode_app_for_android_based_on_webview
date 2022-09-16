@@ -76,7 +76,7 @@ public class MainActivity extends HACBaseActivity {
         // 2.1 创建浏览器内核
 
         Log.v(LOG_TAG,"开始创建并初始化浏览器内核。");
-        _webView = new WebView(this);
+        _webView = new WebView(getApplicationContext());
         setContentView(_webView);
 
         // 2.2 通过WebSettings设置策略
@@ -161,6 +161,10 @@ public class MainActivity extends HACBaseActivity {
 
         // 取消广播监听
         getApplicationContext().unregisterReceiver(_configRev);
+
+        // 销毁浏览器
+        _webView.removeAllViews();
+        _webView.destroy();
 
         super.onDestroy();
     }
