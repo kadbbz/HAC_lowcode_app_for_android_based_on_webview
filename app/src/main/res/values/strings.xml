@@ -2,7 +2,7 @@
     <!--应用名称-->
     <string name="app_name">业务平台</string>
     <!--您需要承载的活字格应用的首页地址，您可通过修改这个值，实现”开箱即用-->
-    <string name="app_default_entry"></string>
+    <string name="app_default_entry" />
 
     <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置-->
     <string name="feature_scanner_broadcast_name">com.android.server.scan</string>
@@ -34,7 +34,7 @@
     <string name="ui_label_settings_action">扫描头广播名称（Action）</string>
     <string name="ui_label_settings_extra">扫描头广播键值（Extra）</string>
     <string name="ui_label_settings_dark_color">主题颜色</string>
-    <string name="ui_button_settings_scan">应用入口（点击扫描二维码）</string>
+    <string name="ui_button_settings_scan">应用入口（URL）</string>
     <string name="ui_label_settings_save">保存</string>
     <string name="ui_label_settings_restart">重启应用</string>
     <string name="ui_label_settings_ha">启用硬件加速</string>

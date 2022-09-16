@@ -57,9 +57,6 @@ public class SettingActivity extends HACBaseActivity {
         Button cmdSave = findViewById(R.id.cmdSave);
         cmdSave.setOnClickListener(Save);
 
-        Button cmdScan = findViewById(R.id.cmdUrlQrCode);
-        cmdScan.setOnClickListener(ScanForUrl);
-
         ImageButton imgScan = findViewById(R.id.imgScan);
         imgScan.setOnClickListener(ScanForUrl);
 

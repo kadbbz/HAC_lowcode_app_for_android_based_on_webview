@@ -14,4 +14,24 @@
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_overlay">#66000000</color>
+
+    <color name="colorPrimary">#ff555555</color>
+    <color name="colorPrimaryDark">#66000000</color>
+    <color name="colorAccent">#ff00a1e9</color>
+
+    <array name="text_colors">
+        <item>#ffffff</item>
+        <item>#607D8B</item>
+        <item>#F44336</item>
+        <item>#9C27B0</item>
+        <item>#3F51B5</item>
+        <item>#03A9F4</item>
+        <item>#009688</item>
+        <item>#8BC34A</item>
+        <item>#FFEB3B</item>
+        <item>#FF9800</item>
+        <item>#795548</item>
+        <item>#9E9E9E</item>
+        <item>#000000</item>
+    </array>
 </resources>
