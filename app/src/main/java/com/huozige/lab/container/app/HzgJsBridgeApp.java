@@ -13,9 +13,11 @@ import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.HzgWebInteropHelpers;
 
 /**
- * 让页面具备对APP壳子的感知能力
+ * 让页面能对APP壳子进行操作
  * app.getVersion(cell)：获取版本号
  * app.getPackageName(cell)：获取入口的包名
+ * app.getActionBarColor(cell)：获取标题栏颜色
+ * app.setActionBarColor(colorHex)：设置标题栏颜色
  */
 public class HzgJsBridgeApp extends BaseBridge {
 
@@ -100,7 +102,7 @@ public class HzgJsBridgeApp extends BaseBridge {
 
         // 记录参数
         _packageCell = cell;
-        Integer woTrans = _cm.GetTCD() - 0xFF000000;
+        int woTrans = _cm.GetTCD() - 0xFF000000;
         HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell,  Integer.toHexString(woTrans));
     }
 
@@ -147,7 +149,7 @@ public class HzgJsBridgeApp extends BaseBridge {
             PackageInfo pinfo = ActivityContext.getPackageManager().getPackageInfo(ActivityContext.getPackageName(), PackageManager.GET_CONFIGURATIONS);
             versionName = pinfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(LOG_TAG, "获取应用版本信息出错：" + e.toString());
+            Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
             e.printStackTrace();
         }
 

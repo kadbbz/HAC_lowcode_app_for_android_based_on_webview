@@ -16,6 +16,7 @@ import android.webkit.WebView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.Geo.HzgJsBridgeGeo;
 import com.huozige.lab.container.app.HzgJsBridgeApp;
 import com.huozige.lab.container.compatible.HzgJsBridgeIndex;
 import com.huozige.lab.container.pda.HzgJsBridgePDA;
@@ -123,7 +124,8 @@ public class MainActivity extends HACBaseActivity {
                 // 创建默认的JS桥
                 new HzgJsBridgeIndex(this, _webView),
                 new HzgJsBridgePDA(this, _webView),
-                new HzgJsBridgeApp(this, _webView)
+                new HzgJsBridgeApp(this, _webView),
+                new HzgJsBridgeGeo(this,_webView)
 
                 // 你可以在此定义和处理新的JS桥
         };
