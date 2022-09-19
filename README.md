@@ -6,6 +6,8 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 * 采用原生Java开发
 * 支持硬件加速（可配置）
 * 支持PDA扫码的广播模式
+* 支持获取设备的地理位置信息
+* 支持自定义状态栏颜色
 
 ## 技术能力
 * 加载活字格开发的Web应用
@@ -14,7 +16,7 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 * 提供支持预览的视频上传能力，适配活字格“附件单元格”
 * 提供文件上传能力，适配活字格“附件单元格”
 * 提供使用摄像头扫描二维码的能力，适配活字格[“手机扫码命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2104270020&productDetailID=D2206270041&tabName=Tabs_detail)
-* 提供调用PDA扫码（广播模式）的能力，支持单次扫描和持续扫描两种模式，适配活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005)
+* 提供调用PDA扫码（广播模式）的能力，支持单次扫描和持续扫描两种模式；支持获取地理位置。适配活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005)
 
 ## 兼容性
 * Android >= 8.0
