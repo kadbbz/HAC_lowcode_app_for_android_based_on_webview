@@ -1,6 +1,7 @@
 package com.huozige.lab.container;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.widget.Toast;
 
 import com.hjq.permissions.OnPermissionCallback;
@@ -8,7 +9,7 @@ import com.hjq.permissions.XXPermissions;
 
 import java.util.List;
 
-public class PermissionHelpers {
+public class AppLevelHelpers {
 
     public static void RequirePermission(Activity context, String permission){
         XXPermissions.with(context)
@@ -33,5 +34,17 @@ public class PermissionHelpers {
                         }
                     }
                 });
+    }
+
+    /**
+     * 重启应用
+     * @param context 该操作的上下文
+     */
+    public static void Restart(Activity context){
+        context.runOnUiThread(() -> {
+            Intent intentR = context.getBaseContext().getPackageManager().getLaunchIntentForPackage(context.getBaseContext().getPackageName());
+            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(intentR);
+        });
     }
 }

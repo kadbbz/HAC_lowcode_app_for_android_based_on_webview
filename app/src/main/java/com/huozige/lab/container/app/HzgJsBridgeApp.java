@@ -8,6 +8,7 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
+import com.huozige.lab.container.AppLevelHelpers;
 import com.huozige.lab.container.HACBaseActivity;
 import com.huozige.lab.container.BaseBridge;
 import com.huozige.lab.container.ConfigManager;
@@ -20,9 +21,10 @@ import com.huozige.lab.container.HzgWebInteropHelpers;
  * app.getActionBarColor(cell)：获取标题栏颜色
  * app.setActionBarColor(colorHex)：设置标题栏颜色
  * app.setScannerOptions(action,extra)：设置扫描头的参数
- * app.toggleSettingMenu(shouldShow)：是否隐藏设置菜单
- * app.setAboutUrl(url)：设置“关于”菜单的地址
- * app.setHelpUrl(url)：设置“帮助”菜单的地址
+ * app.toggleSettingMenu(shouldShow)：是否隐藏设置菜单，重启APP后生效
+ * app.setAboutUrl(url)：设置“关于”菜单的地址，重启APP后生效
+ * app.setHelpUrl(url)：设置“帮助”菜单的地址，重启APP后生效
+ * app.restartApp()：重启应用
  */
 public class HzgJsBridgeApp extends BaseBridge {
 
@@ -110,13 +112,23 @@ public class HzgJsBridgeApp extends BaseBridge {
     }
 
     /**
+     * 注册到页面的app.restartApp()方法
+     * 无需提示，直接重启应用
+     */
+    @JavascriptInterface
+    public void restartApp() {
+        // 直接重启
+        AppLevelHelpers.Restart(ActivityContext);
+    }
+
+    /**
      * 注册到页面的app.toggleSettingMenu(shouldShow)方法
-     * 设置是否显示设置菜单，传入空、0或者no意味着隐藏， 其他值都为显示
+     * 设置是否显示设置菜单，传入空、0、no或者false意味着隐藏， 其他值都为显示
      */
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
         
-        _cm.UpsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("no"));
+        _cm.UpsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
     }
 
     /**

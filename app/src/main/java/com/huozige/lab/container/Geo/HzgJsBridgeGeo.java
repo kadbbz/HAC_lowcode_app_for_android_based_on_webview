@@ -9,7 +9,7 @@ import com.hjq.permissions.Permission;
 import com.huozige.lab.container.BaseBridge;
 import com.huozige.lab.container.HACBaseActivity;
 import com.huozige.lab.container.HzgWebInteropHelpers;
-import com.huozige.lab.container.PermissionHelpers;
+import com.huozige.lab.container.AppLevelHelpers;
 
 
 import locationprovider.davidserrano.com.LocationProvider;
@@ -44,8 +44,8 @@ public class HzgJsBridgeGeo extends BaseBridge {
     @JavascriptInterface
     public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
 
-        PermissionHelpers.RequirePermission(ActivityContext, Permission.ACCESS_FINE_LOCATION);
-        PermissionHelpers.RequirePermission(ActivityContext, Permission.ACCESS_COARSE_LOCATION);
+        AppLevelHelpers.RequirePermission(ActivityContext, Permission.ACCESS_FINE_LOCATION);
+        AppLevelHelpers.RequirePermission(ActivityContext, Permission.ACCESS_COARSE_LOCATION);
 
         //create a callback
         LocationProvider.LocationCallback callback = new LocationProvider.LocationCallback() {

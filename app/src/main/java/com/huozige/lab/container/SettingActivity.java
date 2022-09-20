@@ -137,11 +137,8 @@ public class SettingActivity extends HACBaseActivity {
 
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
-
             // 重启应用
-            Intent intentR = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intentR);
+            AppLevelHelpers.Restart(SettingActivity.this);
         });
         ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
             // 什么都不干

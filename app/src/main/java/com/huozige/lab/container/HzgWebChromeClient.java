@@ -20,7 +20,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
-import com.hjq.permissions.XXPermissions;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.engine.impl.GlideEngine;
@@ -154,8 +153,8 @@ public class HzgWebChromeClient extends WebChromeClient {
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 
         // 首页加载完成后，提前申请权限
-        PermissionHelpers.RequirePermission(_context, Permission.CAMERA);
-        PermissionHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
+        AppLevelHelpers.RequirePermission(_context, Permission.CAMERA);
+        AppLevelHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
 
         _filePathCallback = filePathCallback; // 将参数缓存起来
 
@@ -247,7 +246,7 @@ public class HzgWebChromeClient extends WebChromeClient {
     @Override
     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 
-        PermissionHelpers.RequirePermission(_context, Permission.ACCESS_FINE_LOCATION);
+        AppLevelHelpers.RequirePermission(_context, Permission.ACCESS_FINE_LOCATION);
 
         Log.v(LOG_TAG,"GeolocationPermissionsShowPrompt invoked");
 
