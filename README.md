@@ -1,5 +1,5 @@
 # HAC（活字格安卓容器）
-HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/huozige)PDA解决方案的重要组成部分，能帮助开发者快速构建可运行于Android设备的原生应用，充分硬件设备的技术能力，提升最终用户体验。
+HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/huozige)[PDA解决方案](https://gcdn.grapecity.com.cn/forum.php?mod=viewthread&tid=153537&page=1&extra=#pid577272)的重要组成部分，能帮助开发者快速构建可运行于Android设备的原生应用，充分硬件设备的技术能力，提升最终用户体验。
 
 ## 应用场景
 相比于活字格官方Android APP，HAC的主要差异如下：
