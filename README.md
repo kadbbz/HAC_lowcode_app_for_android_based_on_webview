@@ -4,10 +4,12 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 ## 应用场景
 相比于活字格官方Android APP，HAC的主要差异如下：
 * 采用原生Java开发
-* 支持硬件加速（可配置）
+* 支持硬件加速
 * 支持PDA扫码的广播模式
 * 支持获取设备的地理位置信息
-* 支持自定义状态栏颜色
+* 支持自定义状态栏颜色，需配合活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005)
+* 支持自定义【帮助】和【关于】菜单，需配合活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005)
+
 
 ## 技术能力
 * 加载活字格开发的Web应用
