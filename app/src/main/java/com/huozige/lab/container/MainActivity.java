@@ -41,28 +41,30 @@ public class MainActivity extends HACBaseActivity {
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
-    static final int MENU_ID_SETTINGS = 9;
+    static final int MENU_ID_SETTINGS = 2;
+    static final int MENU_ID_HELP = 3;
+    static final int MENU_ID_ABOUT = 4;
 
     static final String LOG_TAG = "MainActivity"; // 日志的标识
 
     /**
      * 根据配置文件，重新加载浏览器内核
      */
-    private void refreshWebView(){
+    private void refreshWebView() {
 
         // 根据选项决定是否启用硬件加速
-        if(configManager.GetHA()){
+        if (configManager.GetHA()) {
             _webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
-            Log.v(LOG_TAG,"浏览器加速模式：硬件加速");
-        }else{
+            Log.v(LOG_TAG, "浏览器加速模式：硬件加速");
+        } else {
             _webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
-            Log.v(LOG_TAG,"浏览器加速模式：软件加速");
+            Log.v(LOG_TAG, "浏览器加速模式：软件加速");
         }
 
         String target = configManager.GetEntry();
         _webView.loadUrl(target);
 
-        Log.v(LOG_TAG,"浏览器加载完成，打开启动页面：" + target);
+        Log.v(LOG_TAG, "浏览器加载完成，打开启动页面：" + target);
     }
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
@@ -76,7 +78,7 @@ public class MainActivity extends HACBaseActivity {
         // Step 2. 初始化浏览器内核
         // 2.1 创建浏览器内核
 
-        Log.v(LOG_TAG,"开始创建并初始化浏览器内核。");
+        Log.v(LOG_TAG, "开始创建并初始化浏览器内核。");
         _webView = new WebView(this);
         setContentView(_webView);
 
@@ -125,7 +127,7 @@ public class MainActivity extends HACBaseActivity {
                 new HzgJsBridgeIndex(this, _webView),
                 new HzgJsBridgePDA(this, _webView),
                 new HzgJsBridgeApp(this, _webView),
-                new HzgJsBridgeGeo(this,_webView)
+                new HzgJsBridgeGeo(this, _webView)
 
                 // 你可以在此定义和处理新的JS桥
         };
@@ -137,7 +139,7 @@ public class MainActivity extends HACBaseActivity {
             _webView.addJavascriptInterface(br, br.GetName()); // 将JS桥嵌入页面
         }
 
-        Log.v(LOG_TAG,"浏览器内核初始化完成。");
+        Log.v(LOG_TAG, "浏览器内核初始化完成。");
 
         // Step 6. 加载页面
         refreshWebView();
@@ -179,7 +181,7 @@ public class MainActivity extends HACBaseActivity {
         super.onResume();
 
         // 如果没有设置入口，视同”未配置“
-        if(configManager.GetEntry().length() == 0){
+        if (configManager.GetEntry().length() == 0) {
             // 跳转到设置页面
             _arcSettings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
         }
@@ -212,10 +214,26 @@ public class MainActivity extends HACBaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        // 依次创建默认的菜单
-        menu.add(0, MENU_ID_HOME, 0, getString(R.string.ui_menu_home));
-        menu.add(0, MENU_ID_REFRESH, 1, getString(R.string.ui_menu_refresh));
-        menu.add(0, MENU_ID_SETTINGS, 2, getString(R.string.ui_menu_settings));
+        // 首页
+        menu.add(0, MENU_ID_HOME, MENU_ID_HOME, getString(R.string.ui_menu_home));
+
+        // 刷新
+        menu.add(0, MENU_ID_REFRESH, MENU_ID_REFRESH, getString(R.string.ui_menu_refresh));
+
+        // 设置
+        if (configManager.GetSettingMenuVisible()) {
+            menu.add(0, MENU_ID_SETTINGS, MENU_ID_SETTINGS, getString(R.string.ui_menu_settings));
+        }
+
+        // 帮助
+        if (configManager.GetHelpUrl().length() > 0) {
+            menu.add(0, MENU_ID_HELP, MENU_ID_HELP, getString(R.string.ui_menu_help));
+        }
+
+        // 关于
+        if (configManager.GetAboutUrl().length() > 0) {
+            menu.add(0, MENU_ID_ABOUT, MENU_ID_ABOUT, getString(R.string.ui_menu_about));
+        }
 
         // 你可以在这里创建新的菜单
 
@@ -229,17 +247,23 @@ public class MainActivity extends HACBaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                Log.v(LOG_TAG,"点击菜单【首页】");
-
+                Log.v(LOG_TAG, "点击菜单【首页】");
                 refreshWebView(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
-
-                Log.v(LOG_TAG,"点击菜单【刷新】");
+                Log.v(LOG_TAG, "点击菜单【刷新】");
                 _webView.reload(); // 仅刷新
                 break;
             case MENU_ID_SETTINGS:
                 _arcSettings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+                break;
+            case MENU_ID_HELP:
+                Log.v(LOG_TAG, "点击菜单【帮助】");
+                _webView.loadUrl(configManager.GetHelpUrl());
+                break;
+            case MENU_ID_ABOUT:
+                Log.v(LOG_TAG, "点击菜单【关于】");
+                _webView.loadUrl(configManager.GetAboutUrl());
                 break;
             // 你可以在这里处理新创建菜单的点击事件
         }

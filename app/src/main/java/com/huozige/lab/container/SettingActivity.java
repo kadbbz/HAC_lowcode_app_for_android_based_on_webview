@@ -20,7 +20,6 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
-import com.rtugeek.android.colorseekbar.ColorSeekBar;
 
 import java.util.List;
 
@@ -35,7 +34,6 @@ public class SettingActivity extends HACBaseActivity {
 
     EditText _txtUrl,_txtScanAction,_txtScanExtra;
     CheckBox _cboHa;
-    ColorSeekBar _colorSeek;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +47,6 @@ public class SettingActivity extends HACBaseActivity {
         _txtScanAction = findViewById(R.id.txtAction);
         _txtScanExtra = findViewById(R.id.txtExtra);
         _cboHa = findViewById(R.id.cboHa);
-        _colorSeek = findViewById(R.id.colorSeekBar);
 
         Button cmdRestart = findViewById(R.id.cmdRestart);
         cmdRestart.setOnClickListener(Restart);
@@ -77,7 +74,6 @@ public class SettingActivity extends HACBaseActivity {
         _txtScanAction.setText(configManager.GetScanAction());
         _txtScanExtra.setText(configManager.GetScanExtra());
         _cboHa.setChecked(configManager.GetHA());
-        _colorSeek.setColor(configManager.GetTCD());
 
         Log.v(LOG_TAG, "配置页面初始化完成。");
 
@@ -119,7 +115,6 @@ public class SettingActivity extends HACBaseActivity {
                 configManager.UpsertScanAction(_txtScanAction.getText().toString());
                 configManager.UpsertScanExtra(_txtScanExtra.getText().toString());
                 configManager.UpsertHA(_cboHa.isChecked());
-                configManager.UpsertTCD(_colorSeek.getColor());
 
                 Toast.makeText(SettingActivity.this, "设置保存成功，点击右上角【首页】菜单即可生效。", Toast.LENGTH_LONG).show();
 

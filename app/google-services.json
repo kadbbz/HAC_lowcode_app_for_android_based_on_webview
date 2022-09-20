@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1059191839515",
+    "project_id": "hac-app-4ad45",
+    "storage_bucket": "hac-app-4ad45.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059191839515:android:2a25bd25ea4ff2881d11be",
+        "android_client_info": {
+          "package_name": "com.huozige.lab.container"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1059191839515-89bm00uik1dtq958da5o1fihv06d4gir.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF0AjVxeV6WiieGrxqq9rpdTyJ3TvGmpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1059191839515-89bm00uik1dtq958da5o1fihv06d4gir.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/default_dark_background"
+    android:background="@color/huozige_blue"
     tools:context=".pda.WaitForScannerBroadcastActivity">
 
     <Button
@@ -14,7 +14,7 @@
         android:layout_marginStart="150dp"
         android:layout_marginEnd="150dp"
         android:layout_marginBottom="32dp"
-        android:background="@color/grapecity_purple"
+        android:background="@color/white"
         android:text="@string/ui_barscanner_cancel_button"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
