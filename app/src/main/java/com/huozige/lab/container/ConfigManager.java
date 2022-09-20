@@ -8,7 +8,8 @@ import android.content.SharedPreferences;
  */
 public class ConfigManager {
 
-    static  final int DEFAULT_ACTIONBAR_COLOR=0x555555;
+    static  final int DEFAULT_ACTIONBAR_COLOR=0xFF555555; // 默认颜色为中性灰
+
     static final String PREFERENCE_NAME = "HAC";
     static final String PREFERENCE_KEY_ENTRY = "E"; // 页面入口的地址
     static final String PREFERENCE_KEY_SCAN_ACTION = "SA"; // 扫描广播的Action
