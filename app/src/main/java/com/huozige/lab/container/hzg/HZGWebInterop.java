@@ -33,7 +33,7 @@ public class HZGWebInterop extends BaseHTMLInterop {
         // 直接转换为字符串
         rawValue = rawValue.toString();
 
-        WebView.ExecuteJavaScript("Forguncy.Page.getCellByLocation(" + cellLocation + ").setValue('" +rawValue + "')");
+        WebView.executeJavaScript("Forguncy.Page.getCellByLocation(" + cellLocation + ").setValue('" +rawValue + "')");
     }
 
     /**
@@ -56,7 +56,7 @@ public class HZGWebInterop extends BaseHTMLInterop {
         WebView.addJavascriptInterface(proxy,jsoName);
 
         // 4. 执行JS代码，获取单元格的值，然后传给桥
-        WebView.ExecuteJavaScript("window."+jsoName+".SetValue(Forguncy.Page.getCellByLocation(" + cellLocation + ").getValue())");
+        WebView.executeJavaScript("window."+jsoName+".SetValue(Forguncy.Page.getCellByLocation(" + cellLocation + ").getValue())");
 
         // 5. 执行完成后，需要从浏览器中注销桥
         WebView.removeJavascriptInterface(jsoName);

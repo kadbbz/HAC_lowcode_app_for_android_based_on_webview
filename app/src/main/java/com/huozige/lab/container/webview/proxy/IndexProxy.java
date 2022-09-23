@@ -70,10 +70,10 @@ public class IndexProxy extends BaseProxy {
 
             if( null != data ){
                 resultS=CameraScan.parseScanResult(data);
-                CurrentWebView.WriteLogIntoConsole("ZXing scan completed. Result is : "+ resultS);
+                CurrentWebView.writeLogIntoConsole("ZXing scan completed. Result is : "+ resultS);
             }else{
                 // 记录日志
-                CurrentWebView.WriteLogIntoConsole("ZXing scan canceled or failed.");
+                CurrentWebView.writeLogIntoConsole("ZXing scan canceled or failed.");
             }
 
             // 将结果写回到单元格

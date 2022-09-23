@@ -84,7 +84,7 @@ public class HACWebView extends WebView {
     public void refreshWebView() {
 
         // 根据选项决定是否启用硬件加速
-        if (_configManager.GetHA()) {
+        if (_configManager.getHA()) {
             this.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
             Log.v(LOG_TAG, "Init：浏览器采用硬件加速" );
         } else {
@@ -92,7 +92,7 @@ public class HACWebView extends WebView {
             Log.v(LOG_TAG, "Init：浏览器采用软件加速" );
         }
 
-        String target = _configManager.GetEntry();
+        String target = _configManager.getEntry();
         this.loadUrl(target);
     }
 
@@ -117,8 +117,8 @@ public class HACWebView extends WebView {
      *
      * @param logContent 日志的内容
      */
-    public void WriteLogIntoConsole( String logContent) {
-        ExecuteJavaScript("console.log('" + removeJSKeyWords(logContent) + "')");
+    public void writeLogIntoConsole(String logContent) {
+        executeJavaScript("console.log('" + removeJSKeyWords(logContent) + "')");
 
         Log.v(LOG_TAG,"写入浏览器日志："+logContent);
     }
@@ -128,8 +128,8 @@ public class HACWebView extends WebView {
      *
      * @param logContent 日志的内容
      */
-    public void WriteErrorIntoConsole(String logContent) {
-        ExecuteJavaScript("console.error('" + removeJSKeyWords(logContent) + "')");
+    public void writeErrorIntoConsole(String logContent) {
+        executeJavaScript("console.error('" + removeJSKeyWords(logContent) + "')");
 
         Log.v(LOG_TAG,"写入浏览器错误日志："+logContent);
     }
@@ -139,7 +139,7 @@ public class HACWebView extends WebView {
      *
      * @param jsSegment 自定义脚本
      */
-    public void ExecuteJavaScript(String jsSegment) {
+    public void executeJavaScript(String jsSegment) {
         ((Activity) this.getContext()).runOnUiThread(() -> this.loadUrl("javascript:"+jsSegment));
 
         Log.v(LOG_TAG,"在浏览器执行脚本："+jsSegment);

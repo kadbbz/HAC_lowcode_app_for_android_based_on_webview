@@ -22,7 +22,7 @@ public class BaseActivity extends AppCompatActivity {
     /**
      * 配置管理操作接口
      */
-    protected ConfigManager configManager = new ConfigManager(this);
+    protected ConfigManager ConfigManager = new ConfigManager(this);
 
     /**
      * 刷新操作栏颜色
@@ -38,14 +38,14 @@ public class BaseActivity extends AppCompatActivity {
             if(null!=actionBar){
 
                 // 设置标题栏颜色
-                actionBar.setBackgroundDrawable(new ColorDrawable(configManager.GetTCD()));
+                actionBar.setBackgroundDrawable(new ColorDrawable(ConfigManager.getTCD()));
             }
 
             // 设置状态栏颜色，更美观
             Window window = this.getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            window.setStatusBarColor(configManager.GetTCD());
+            window.setStatusBarColor(ConfigManager.getTCD());
         });
 
     }
@@ -64,7 +64,7 @@ public class BaseActivity extends AppCompatActivity {
      * 申请特定的敏感权限
      * @param permission 敏感权限
      */
-    public  void RequirePermission( String permission){
+    public  void requirePermission(String permission){
         XXPermissions.with(this)
                 .permission(permission)
                 .request(new OnPermissionCallback() {

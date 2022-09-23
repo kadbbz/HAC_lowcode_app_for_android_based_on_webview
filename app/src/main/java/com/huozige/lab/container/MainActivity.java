@@ -62,7 +62,7 @@ public class MainActivity extends BaseActivity {
         _webChromeClient = new HACWebChromeClient(this);
 
         // 4. 创建浏览器
-        _webView = new HACWebView(this,_webViewClient,_webChromeClient,configManager);
+        _webView = new HACWebView(this,_webViewClient,_webChromeClient, ConfigManager);
 
         // 5. 将浏览器加载到页面
         setContentView(_webView);
@@ -79,7 +79,7 @@ public class MainActivity extends BaseActivity {
         };
 
         // 8. 初始化启动器
-        _webChromeClient.RegistryLaunchersOnCreated(); // ChromeClient的初始化
+        _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
         _arc4Settings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> _webView.refreshWebView()); // 打开设置页面，返回后刷新浏览器
 
 
@@ -116,7 +116,7 @@ public class MainActivity extends BaseActivity {
         super.onResume();
 
         // 如果没有设置入口，视同”未配置“
-        if (configManager.GetEntry().length() == 0) {
+        if (ConfigManager.getEntry().length() == 0) {
             // 跳转到设置页面
             _arc4Settings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
         }
@@ -156,17 +156,17 @@ public class MainActivity extends BaseActivity {
         menu.add(0, MENU_ID_REFRESH, MENU_ID_REFRESH, getString(R.string.ui_menu_refresh));
 
         // 设置
-        if (configManager.GetSettingMenuVisible()) {
+        if (ConfigManager.getSettingMenuVisible()) {
             menu.add(0, MENU_ID_SETTINGS, MENU_ID_SETTINGS, getString(R.string.ui_menu_settings));
         }
 
         // 帮助
-        if (configManager.GetHelpUrl().length() > 0) {
+        if (ConfigManager.getHelpUrl().length() > 0) {
             menu.add(0, MENU_ID_HELP, MENU_ID_HELP, getString(R.string.ui_menu_help));
         }
 
         // 关于
-        if (configManager.GetAboutUrl().length() > 0) {
+        if (ConfigManager.getAboutUrl().length() > 0) {
             menu.add(0, MENU_ID_ABOUT, MENU_ID_ABOUT, getString(R.string.ui_menu_about));
         }
 
@@ -194,11 +194,11 @@ public class MainActivity extends BaseActivity {
                 break;
             case MENU_ID_HELP:
                 Log.v(LOG_TAG, "点击菜单【帮助】");
-                _webView.loadUrl(configManager.GetHelpUrl());
+                _webView.loadUrl(ConfigManager.getHelpUrl());
                 break;
             case MENU_ID_ABOUT:
                 Log.v(LOG_TAG, "点击菜单【关于】");
-                _webView.loadUrl(configManager.GetAboutUrl());
+                _webView.loadUrl(ConfigManager.getAboutUrl());
                 break;
             // 你可以在这里处理新创建菜单的点击事件
         }
@@ -217,7 +217,7 @@ public class MainActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         // 优先分发给浏览器内核事件
-        if (_webChromeClient.ProcessActivityResult(requestCode, resultCode, data)) {
+        if (_webChromeClient.processActivityResult(requestCode, resultCode, data)) {
             return;
         }
 

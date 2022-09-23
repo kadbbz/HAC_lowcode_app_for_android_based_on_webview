@@ -32,31 +32,31 @@ public class ConfigManager {
      * 获取应用入口页面
      * @return 默认为空字符串
      */
-    public  String GetEntry(){
-        return GetStringValue(_context, PREFERENCE_KEY_ENTRY, R.string.app_default_entry);
+    public  String getEntry(){
+        return getStringValue(_context, PREFERENCE_KEY_ENTRY, R.string.app_default_entry);
     }
 
     /**
      * 获取扫描头的广播名称（Action）
      * @return 默认为com.android.server.scan
      */
-    public  String GetScanAction(){
-        return GetStringValue(_context, PREFERENCE_KEY_SCAN_ACTION, R.string.feature_scanner_broadcast_name);
+    public  String getScanAction(){
+        return getStringValue(_context, PREFERENCE_KEY_SCAN_ACTION, R.string.feature_scanner_broadcast_name);
     }
 
     /**
      * 获取广播的键值名称
      * @return 默认为scannerdata
      */
-    public  String GetScanExtra(){
-        return GetStringValue(_context, PREFERENCE_KEY_SCAN_EXTRA, R.string.feature_scanner_extra_key_barcode_broadcast);
+    public  String getScanExtra(){
+        return getStringValue(_context, PREFERENCE_KEY_SCAN_EXTRA, R.string.feature_scanner_extra_key_barcode_broadcast);
     }
 
     /**
      * 获取是否开启硬件加速
      * @return 默认为软件加速
      */
-    public  Boolean GetHA(){
+    public  Boolean getHA(){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -69,7 +69,7 @@ public class ConfigManager {
      * 获取动作栏和状态栏的颜色
      * @return 默认为深灰色
      */
-    public  int GetTCD(){
+    public  int getTCD(){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -78,7 +78,7 @@ public class ConfigManager {
         return sharedPref.getInt(PREFERENCE_KEY_TCD, DEFAULT_ACTIONBAR_COLOR);
     }
 
-    public Boolean GetSettingMenuVisible(){
+    public Boolean getSettingMenuVisible(){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -87,17 +87,17 @@ public class ConfigManager {
         return sharedPref.getBoolean(PREFERENCE_KEY_MENU_SETTING_V, true);
     }
 
-    public String GetAboutUrl(){
-        return GetStringValue(_context, PREFERENCE_KEY_ULR_ABOUT, R.string.app_default_entry);
+    public String getAboutUrl(){
+        return getStringValue(_context, PREFERENCE_KEY_ULR_ABOUT, R.string.app_default_entry);
     }
 
-    public String GetHelpUrl(){
-        return GetStringValue(_context, PREFERENCE_KEY_ULR_HELP, R.string.app_default_entry);
+    public String getHelpUrl(){
+        return getStringValue(_context, PREFERENCE_KEY_ULR_HELP, R.string.app_default_entry);
     }
 
     //==================== 下面是设置
 
-    public  void UpsertSettingMenuVisible(Boolean value){
+    public  void upsertSettingMenuVisible(Boolean value){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -106,27 +106,27 @@ public class ConfigManager {
         sharedPref.edit().putBoolean(PREFERENCE_KEY_MENU_SETTING_V, value).apply();
     }
 
-    public  void UpsertAboutUrl(String value){
-        UpsertStringValue(_context,PREFERENCE_KEY_ULR_ABOUT,value);
+    public  void upsertAboutUrl(String value){
+        upsertStringValue(_context,PREFERENCE_KEY_ULR_ABOUT,value);
     }
 
-    public  void UpsertHelpUrl(String value){
-        UpsertStringValue(_context,PREFERENCE_KEY_ULR_HELP,value);
+    public  void upsertHelpUrl(String value){
+        upsertStringValue(_context,PREFERENCE_KEY_ULR_HELP,value);
     }
 
-    public  void UpsertEntry(String value){
-        UpsertStringValue(_context,PREFERENCE_KEY_ENTRY,value);
+    public  void upsertEntry(String value){
+        upsertStringValue(_context,PREFERENCE_KEY_ENTRY,value);
     }
 
-    public  void UpsertScanAction(String value){
-        UpsertStringValue(_context,PREFERENCE_KEY_SCAN_ACTION,value);
+    public  void upsertScanAction(String value){
+        upsertStringValue(_context,PREFERENCE_KEY_SCAN_ACTION,value);
     }
 
-    public  void UpsertScanExtra(String value){
-        UpsertStringValue(_context,PREFERENCE_KEY_SCAN_EXTRA,value);
+    public  void upsertScanExtra(String value){
+        upsertStringValue(_context,PREFERENCE_KEY_SCAN_EXTRA,value);
     }
 
-    public  void UpsertHA(Boolean enabled){
+    public  void upsertHA(Boolean enabled){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -136,7 +136,7 @@ public class ConfigManager {
     }
 
 
-    public  void UpsertTCD(int colorValue){
+    public  void upsertTCD(int colorValue){
         // 打开配置库
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -148,7 +148,7 @@ public class ConfigManager {
     /**
      * 读取配置
      */
-    private static String GetStringValue(Activity context, String key, int defaultValueStringId) {
+    private static String getStringValue(Activity context, String key, int defaultValueStringId) {
         // 从配置库中读取启动地址
         SharedPreferences sharedPref = context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
@@ -159,7 +159,7 @@ public class ConfigManager {
     /**
      * 写入配置
      */
-    private static void UpsertStringValue(Activity context, String key, String value){
+    private static void upsertStringValue(Activity context, String key, String value){
         // 打开配置库
         SharedPreferences sharedPref = context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);

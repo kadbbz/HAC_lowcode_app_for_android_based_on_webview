@@ -41,8 +41,8 @@ public class GeoProxy extends BaseProxy {
     @JavascriptInterface
     public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
 
-        CurrentWebView.getActivityContext().RequirePermission(Permission.ACCESS_FINE_LOCATION);
-        CurrentWebView.getActivityContext().RequirePermission(Permission.ACCESS_COARSE_LOCATION);
+        CurrentWebView.getActivityContext().requirePermission(Permission.ACCESS_FINE_LOCATION);
+        CurrentWebView.getActivityContext().requirePermission(Permission.ACCESS_COARSE_LOCATION);
 
         //create a callback
         LocationProvider.LocationCallback callback = new LocationProvider.LocationCallback() {
@@ -72,20 +72,20 @@ public class GeoProxy extends BaseProxy {
             @Override
             public void onNewLocationAvailable(float lat, float lon) {
 
-                CurrentWebView.WriteLogIntoConsole( "getLocation NewLocationAvailable : lat " + lat + " lon " + lon +" (WGS84).");
+                CurrentWebView.writeLogIntoConsole( "getLocation NewLocationAvailable : lat " + lat + " lon " + lon +" (WGS84).");
                 returnWithWGS84(lat,lon);
             }
 
             @Override
             public void locationServicesNotEnabled() {
-                CurrentWebView.WriteErrorIntoConsole("getLocation Location Services Not Enabled");
+                CurrentWebView.writeErrorIntoConsole("getLocation Location Services Not Enabled");
                 CurrentHTMLInterop.setInputValue( cellErr, "LocationServicesNotEnabled");
             }
 
             @Override
             public void updateLocationInBackground(float lat, float lon) {
                 //if a listener returns after the main locationAvailable callback, it will go here
-                CurrentWebView.WriteLogIntoConsole( "getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon +" (WGS84).");
+                CurrentWebView.writeLogIntoConsole( "getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon +" (WGS84).");
 
                 returnWithWGS84(lat,lon);
             }
@@ -93,12 +93,12 @@ public class GeoProxy extends BaseProxy {
             @Override
             public void networkListenerInitialised() {
                 //when the library switched from GPS only to GPS & network
-                CurrentWebView.WriteLogIntoConsole("getLocation Network Listener Initialised");
+                CurrentWebView.writeLogIntoConsole("getLocation Network Listener Initialised");
             }
 
             @Override
             public void locationRequestStopped() {
-                CurrentWebView.WriteLogIntoConsole("getLocation location Request Stopped");
+                CurrentWebView.writeLogIntoConsole("getLocation location Request Stopped");
             }
         };
 

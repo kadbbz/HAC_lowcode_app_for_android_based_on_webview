@@ -104,8 +104,8 @@ public class AppProxy extends BaseProxy {
     public void setScannerOptions(String action, String extra) {
 
         // 更新配置项
-        _cm.UpsertScanAction(action);
-        _cm.UpsertScanExtra(extra);
+        _cm.upsertScanAction(action);
+        _cm.upsertScanExtra(extra);
     }
 
     /**
@@ -129,7 +129,7 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
         
-        _cm.UpsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
+        _cm.upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
     }
 
     /**
@@ -140,7 +140,7 @@ public class AppProxy extends BaseProxy {
     public void setAboutUrl(String url) {
 
         // 更新配置项
-        _cm.UpsertAboutUrl(url);
+        _cm.upsertAboutUrl(url);
     }
 
     /**
@@ -151,7 +151,7 @@ public class AppProxy extends BaseProxy {
     public void setHelpUrl(String url) {
 
         // 更新配置项
-        _cm.UpsertHelpUrl(url);
+        _cm.upsertHelpUrl(url);
     }
 
     /**
@@ -164,7 +164,7 @@ public class AppProxy extends BaseProxy {
 
         // 记录参数
         _packageCell = cell;
-        int tcdColor = _cm.GetTCD();
+        int tcdColor = _cm.getTCD();
 
         // 兼容Web的常规做法，不返回A，仅返回RGB
         String R, G, B;
@@ -197,7 +197,7 @@ public class AppProxy extends BaseProxy {
         colorInteger = colorInteger.replace("0x", "");
 
         // 更新配置项
-        _cm.UpsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
+        _cm.upsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
 
         // 刷新ActionBar
         CurrentWebView.getActivityContext().refreshActionBarsColor();

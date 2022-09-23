@@ -49,13 +49,13 @@ public class SettingActivity extends BaseActivity {
         _cboHa = findViewById(R.id.cboHa);
 
         Button cmdRestart = findViewById(R.id.cmdRestart);
-        cmdRestart.setOnClickListener(Restart);
+        cmdRestart.setOnClickListener(restart);
 
         Button cmdSave = findViewById(R.id.cmdSave);
-        cmdSave.setOnClickListener(Save);
+        cmdSave.setOnClickListener(save);
 
         ImageButton imgScan = findViewById(R.id.imgScan);
-        imgScan.setOnClickListener(ScanForUrl);
+        imgScan.setOnClickListener(scanForUrl);
 
         // 创建到ZXingLite的调用器
         _arcZxingLite = this.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -70,16 +70,16 @@ public class SettingActivity extends BaseActivity {
         });
 
         // 设置初始值
-        _txtUrl.setText(configManager.GetEntry());
-        _txtScanAction.setText(configManager.GetScanAction());
-        _txtScanExtra.setText(configManager.GetScanExtra());
-        _cboHa.setChecked(configManager.GetHA());
+        _txtUrl.setText(ConfigManager.getEntry());
+        _txtScanAction.setText(ConfigManager.getScanAction());
+        _txtScanExtra.setText(ConfigManager.getScanExtra());
+        _cboHa.setChecked(ConfigManager.getHA());
 
         Log.v(LOG_TAG, "配置页面初始化完成。");
 
     }
 
-    View.OnClickListener ScanForUrl = new View.OnClickListener() {
+    View.OnClickListener scanForUrl = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
 
@@ -103,7 +103,7 @@ public class SettingActivity extends BaseActivity {
         }
     };
 
-    View.OnClickListener Save = view -> {
+    View.OnClickListener save = view -> {
 
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok),new DialogInterface.OnClickListener(){
@@ -111,10 +111,10 @@ public class SettingActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // 保存配置
-                configManager.UpsertEntry(_txtUrl.getText().toString());
-                configManager.UpsertScanAction(_txtScanAction.getText().toString());
-                configManager.UpsertScanExtra(_txtScanExtra.getText().toString());
-                configManager.UpsertHA(_cboHa.isChecked());
+                ConfigManager.upsertEntry(_txtUrl.getText().toString());
+                ConfigManager.upsertScanAction(_txtScanAction.getText().toString());
+                ConfigManager.upsertScanExtra(_txtScanExtra.getText().toString());
+                ConfigManager.upsertHA(_cboHa.isChecked());
 
                 Toast.makeText(SettingActivity.this, "设置保存成功，点击右上角【首页】菜单即可生效。", Toast.LENGTH_LONG).show();
 
@@ -133,7 +133,7 @@ public class SettingActivity extends BaseActivity {
 
     };
 
-    View.OnClickListener Restart = view -> {
+    View.OnClickListener restart = view -> {
 
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {

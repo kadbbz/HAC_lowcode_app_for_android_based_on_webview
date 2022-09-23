@@ -154,8 +154,8 @@ public class HACWebChromeClient extends WebChromeClient {
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 
         // 首页加载完成后，提前申请权限
-        _context.RequirePermission( Permission.CAMERA);
-        _context.RequirePermission( Permission.WRITE_EXTERNAL_STORAGE);
+        _context.requirePermission( Permission.CAMERA);
+        _context.requirePermission( Permission.WRITE_EXTERNAL_STORAGE);
 
         _filePathCallback = filePathCallback; // 将参数缓存起来
 
@@ -199,7 +199,7 @@ public class HACWebChromeClient extends WebChromeClient {
      * 在上下文的OnCreate中，创建启动器。
      * 其他时机会出错。
      */
-    public void RegistryLaunchersOnCreated() {
+    public void registryLaunchersOnCreated() {
 
         // 创建文件选择页面启动器
         _contentChooser = _context.registerForActivityResult(new ActivityResultContracts.GetContent(),
@@ -220,7 +220,7 @@ public class HACWebChromeClient extends WebChromeClient {
     /**
      * 在上下文中，处理转发来的返回结果
      */
-    public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
 
         // 先处理Matisse的照片和视频请求
         if (requestCode == REQUEST_CODE_PICK_PHOTO_VIDEO) {
@@ -247,7 +247,7 @@ public class HACWebChromeClient extends WebChromeClient {
     @Override
     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 
-        _context.RequirePermission( Permission.ACCESS_FINE_LOCATION);
+        _context.requirePermission( Permission.ACCESS_FINE_LOCATION);
 
         Log.v(LOG_TAG,"GeolocationPermissionsShowPrompt invoked");
 

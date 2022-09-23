@@ -37,7 +37,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
             Log.v(LOG_TAG, "收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra( (null == _cm.GetScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):_cm.GetScanExtra());
+            String result = intent.getStringExtra( (null == _cm.getScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):_cm.getScanExtra());
 
             Log.v(LOG_TAG, "扫码结果是：" + result);
 
@@ -83,7 +83,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
 
         super.onResume();
 
-        String intentF = (_cm.GetScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):_cm.GetScanAction();
+        String intentF = (_cm.getScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):_cm.getScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);

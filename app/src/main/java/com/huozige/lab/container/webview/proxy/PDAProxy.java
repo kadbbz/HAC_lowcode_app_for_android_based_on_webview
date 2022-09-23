@@ -79,20 +79,20 @@ public class PDAProxy extends BaseProxy {
                     String resultS = data.getStringExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    CurrentWebView.WriteLogIntoConsole( "PDA scan completed. Result is : " + resultS);
+                    CurrentWebView.writeLogIntoConsole( "PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
                     CurrentHTMLInterop.setInputValue( _cell, resultS);
                 } else {
                     // 记录日志
-                    CurrentWebView.WriteLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
+                    CurrentWebView.writeLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
                     CurrentHTMLInterop.setInputValue( _cell, "");
                 }
             } else {
                 // 记录日志
-                CurrentWebView.WriteErrorIntoConsole( "PDA scan failed.");
+                CurrentWebView.writeErrorIntoConsole( "PDA scan failed.");
 
                 // 重置单元格
                 CurrentHTMLInterop.setInputValue( _cell, "");
@@ -152,7 +152,7 @@ public class PDAProxy extends BaseProxy {
             Log.v(LOG_TAG, "收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra((null == _cm.GetScanExtra()) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_extra_key_barcode_broadcast) : _cm.GetScanExtra());
+            String result = intent.getStringExtra((null == _cm.getScanExtra()) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_extra_key_barcode_broadcast) : _cm.getScanExtra());
 
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
@@ -166,7 +166,7 @@ public class PDAProxy extends BaseProxy {
                 String rc = _cscanResultCache.endsWith(",") ? _cscanResultCache.substring(0, _cscanResultCache.length() - 1) : _cscanResultCache;
 
                 // 记录日志
-                CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
+                CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
                 CurrentHTMLInterop.setInputValue( _cscanCell, rc);
@@ -178,7 +178,7 @@ public class PDAProxy extends BaseProxy {
                     stopReceiver();
 
                     // 记录日志
-                    CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
+                    CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
 
                 }
 
@@ -206,7 +206,7 @@ public class PDAProxy extends BaseProxy {
         _arcScanner.launch(new Intent(CurrentWebView.getActivityContext(), WaitForScannerBroadcastActivity.class));
 
         // 记录日志
-        CurrentWebView.WriteLogIntoConsole( "PDA scan (Single Mode) started.");
+        CurrentWebView.writeLogIntoConsole( "PDA scan (Single Mode) started.");
 
     }
 
@@ -247,7 +247,7 @@ public class PDAProxy extends BaseProxy {
     private void startReceiver() {
 
         // 按照名称来过滤出需要处理的广播
-        String intentF = (_cm.GetScanAction() == null) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_broadcast_name) : _cm.GetScanAction();
+        String intentF = (_cm.getScanAction() == null) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_broadcast_name) : _cm.getScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);
@@ -258,7 +258,7 @@ public class PDAProxy extends BaseProxy {
         CurrentWebView.getActivityContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) started.");
+        CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) started.");
 
     }
 
@@ -273,7 +273,7 @@ public class PDAProxy extends BaseProxy {
             _cscanOn = false;
 
             // 记录日志
-            CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) stopped.");
+            CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) stopped.");
 
         }
     }
