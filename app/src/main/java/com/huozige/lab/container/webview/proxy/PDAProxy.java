@@ -1,4 +1,4 @@
-package com.huozige.lab.container.pda;
+package com.huozige.lab.container.webview.proxy;
 
 
 import android.content.BroadcastReceiver;
@@ -7,22 +7,24 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-import com.huozige.lab.container.HACBaseActivity;
-import com.huozige.lab.container.BaseBridge;
-import com.huozige.lab.container.ConfigManager;
-import com.huozige.lab.container.HzgWebInteropHelpers;
+import com.huozige.lab.container.webview.BaseHTMLInterop;
+import com.huozige.lab.container.webview.BaseProxy;
+import com.huozige.lab.container.webview.ConfigManager;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.webview.HACWebView;
 
 /**
  * 让页面具备操作扫码枪硬件的能力
- * pda.scan(cell)：Broadcast模式扫码
+ * pda.modal_scan(cell): 带模态窗口的单次扫码
+ * pda.continuous_scan(cell): 开始持续扫码
+ * pda.continuous_scan_stop()： 停止持续扫码
+ *
  */
-public class HzgJsBridgePDA extends BaseBridge {
+public class PDAProxy extends BaseProxy {
 
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
     ConfigManager _cm;
@@ -38,14 +40,13 @@ public class HzgJsBridgePDA extends BaseBridge {
 
     /**
      * 基础的构造函数
-     *
-     * @param context 上下文
      * @param webView 浏览器内核
+     * @param interop HTML内容操作接口
      */
-    public HzgJsBridgePDA(HACBaseActivity context, WebView webView) {
-        super(context, webView);
+    public PDAProxy(HACWebView webView, BaseHTMLInterop interop) {
+        super(webView, interop);
 
-        _cm = new ConfigManager(context);
+        _cm = new ConfigManager(webView.getActivityContext());
     }
 
 
@@ -53,7 +54,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 注册的名称为：pda
      */
     @Override
-    public String GetName() {
+    public String getName() {
         return "pda";
     }
 
@@ -61,10 +62,10 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 初始化过程：创建调用器
      */
     @Override
-    public void OnActivityCreated() {
+    public void onActivityCreated() {
 
         // 创建Broadcast模式扫码页面
-        _arcScanner = ActivityContext.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcScanner = CurrentWebView.getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
             // 获取页面返回的结果
             Intent data = result.getData();
@@ -78,23 +79,23 @@ public class HzgJsBridgePDA extends BaseBridge {
                     String resultS = data.getStringExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan completed. Result is : " + resultS);
+                    CurrentWebView.WriteLogIntoConsole( "PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, resultS);
+                    CurrentHTMLInterop.setInputValue( _cell, resultS);
                 } else {
                     // 记录日志
-                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan canceled or failed. Return code is : " + code);
+                    CurrentWebView.WriteLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, "");
+                    CurrentHTMLInterop.setInputValue( _cell, "");
                 }
             } else {
                 // 记录日志
-                HzgWebInteropHelpers.WriteErrorIntoConsole(CurrentWebView, "PDA scan failed.");
+                CurrentWebView.WriteErrorIntoConsole( "PDA scan failed.");
 
                 // 重置单元格
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cell, "");
+                CurrentHTMLInterop.setInputValue( _cell, "");
             }
         });
     }
@@ -103,7 +104,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void BeforeActivityDestroy() {
+    public void beforeActivityDestroy() {
 
     }
 
@@ -111,7 +112,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 停止监听器
      */
     @Override
-    public void BeforeActivityPause() {
+    public void beforeActivityPause() {
         stopReceiver();
     }
 
@@ -119,7 +120,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * 如果处在持续扫描状态，恢复监听器
      */
     @Override
-    public void OnActivityResumed() {
+    public void onActivityResumed() {
         if (_cscanOn) {
             startReceiver();
         }
@@ -134,7 +135,7 @@ public class HzgJsBridgePDA extends BaseBridge {
      * @return 否，无需中断
      */
     @Override
-    public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
         // 没有用到Activity调用，无需处理，自然无需中断
         return false;
     }
@@ -151,7 +152,7 @@ public class HzgJsBridgePDA extends BaseBridge {
             Log.v(LOG_TAG, "收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra((null == _cm.GetScanExtra()) ? ActivityContext.getString(R.string.feature_scanner_extra_key_barcode_broadcast) : _cm.GetScanExtra());
+            String result = intent.getStringExtra((null == _cm.GetScanExtra()) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_extra_key_barcode_broadcast) : _cm.GetScanExtra());
 
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
@@ -165,10 +166,10 @@ public class HzgJsBridgePDA extends BaseBridge {
                 String rc = _cscanResultCache.endsWith(",") ? _cscanResultCache.substring(0, _cscanResultCache.length() - 1) : _cscanResultCache;
 
                 // 记录日志
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
+                CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _cscanCell, rc);
+                CurrentHTMLInterop.setInputValue( _cscanCell, rc);
 
                 _cscanCount++;
 
@@ -177,7 +178,7 @@ public class HzgJsBridgePDA extends BaseBridge {
                     stopReceiver();
 
                     // 记录日志
-                    HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
+                    CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
 
                 }
 
@@ -190,7 +191,8 @@ public class HzgJsBridgePDA extends BaseBridge {
     };
 
     /**
-     * 注册到页面的pda.scan(cell)方法
+     * 注册到页面的pda.modal_scan(cell)方法
+     * 单次扫码
      *
      * @param cellLocation 单元格的位置（为空意味着不需要写入单元格），如：{"Row":31,"Column":1,"PageID":"p","PageName":"兼容官方APP"}
      */
@@ -201,13 +203,19 @@ public class HzgJsBridgePDA extends BaseBridge {
         _cell = cellLocation;
 
         // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(ActivityContext, WaitForScannerBroadcastActivity.class));
+        _arcScanner.launch(new Intent(CurrentWebView.getActivityContext(), WaitForScannerBroadcastActivity.class));
 
         // 记录日志
-        HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Single Mode) started.");
+        CurrentWebView.WriteLogIntoConsole( "PDA scan (Single Mode) started.");
 
     }
 
+    /**
+     * 注册到页面的pda.continuous_scan(cell)方法
+     * 开始连续扫码
+     *
+     * @param cellLocation 单元格的位置（为空意味着不需要写入单元格），如：{"Row":31,"Column":1,"PageID":"p","PageName":"兼容官方APP"}
+     */
     @JavascriptInterface
     public void continuous_scan(String cellLocation, String limit) {
 
@@ -224,6 +232,10 @@ public class HzgJsBridgePDA extends BaseBridge {
         startReceiver();
     }
 
+    /**
+     * 注册到页面的pda.continuous_scan_stop()方法
+     * 停止连续扫码
+     */
     @JavascriptInterface
     public void continuous_scan_stop() {
         stopReceiver();
@@ -235,7 +247,7 @@ public class HzgJsBridgePDA extends BaseBridge {
     private void startReceiver() {
 
         // 按照名称来过滤出需要处理的广播
-        String intentF = (_cm.GetScanAction() == null) ? ActivityContext.getString(R.string.feature_scanner_broadcast_name) : _cm.GetScanAction();
+        String intentF = (_cm.GetScanAction() == null) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_broadcast_name) : _cm.GetScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);
@@ -243,10 +255,10 @@ public class HzgJsBridgePDA extends BaseBridge {
         intentFilter.setPriority(Integer.MAX_VALUE);
 
         // 注册广播监听
-        ActivityContext.registerReceiver(_scanReceiver, intentFilter);
+        CurrentWebView.getActivityContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) started.");
+        CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) started.");
 
     }
 
@@ -256,12 +268,12 @@ public class HzgJsBridgePDA extends BaseBridge {
     private void stopReceiver() {
         if (_cscanOn) {
 
-            ActivityContext.unregisterReceiver(_scanReceiver);
+            CurrentWebView.getActivityContext().unregisterReceiver(_scanReceiver);
 
             _cscanOn = false;
 
             // 记录日志
-            HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "PDA scan (Continues Mode) stopped.");
+            CurrentWebView.WriteLogIntoConsole( "PDA scan (Continues Mode) stopped.");
 
         }
     }

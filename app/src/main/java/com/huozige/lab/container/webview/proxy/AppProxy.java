@@ -1,4 +1,4 @@
-package com.huozige.lab.container.app;
+package com.huozige.lab.container.webview.proxy;
 
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -6,13 +6,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
-import com.huozige.lab.container.AppLevelHelpers;
-import com.huozige.lab.container.HACBaseActivity;
-import com.huozige.lab.container.BaseBridge;
-import com.huozige.lab.container.ConfigManager;
-import com.huozige.lab.container.HzgWebInteropHelpers;
+import com.huozige.lab.container.webview.BaseHTMLInterop;
+import com.huozige.lab.container.webview.BaseProxy;
+import com.huozige.lab.container.webview.ConfigManager;
+import com.huozige.lab.container.webview.HACWebView;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -26,31 +24,30 @@ import com.huozige.lab.container.HzgWebInteropHelpers;
  * app.setHelpUrl(url)：设置“帮助”菜单的地址，重启APP后生效
  * app.restartApp()：重启应用
  */
-public class HzgJsBridgeApp extends BaseBridge {
+public class AppProxy extends BaseProxy {
 
     String _versionCell, _packageCell; // 单元格位置缓存
 
     ConfigManager _cm;
 
-    static final String LOG_TAG = "HzgJsBridgeApp";
+    static final String LOG_TAG = "AppProxy";
 
     /**
      * 基础的构造函数
-     *
-     * @param context 上下文
      * @param webView 浏览器内核
+     * @param interop HTML内容操作接口
      */
-    public HzgJsBridgeApp(HACBaseActivity context, WebView webView) {
-        super(context, webView);
+    public AppProxy(HACWebView webView, BaseHTMLInterop interop) {
+        super(webView, interop);
 
-        _cm = new ConfigManager(context);
+        _cm = new ConfigManager(webView.getActivityContext()); // 初始化配置操作器
     }
 
     /**
      * 注册的名称为：app
      */
     @Override
-    public String GetName() {
+    public String getName() {
         return "app";
     }
 
@@ -58,7 +55,7 @@ public class HzgJsBridgeApp extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void OnActivityCreated() {
+    public void onActivityCreated() {
 
     }
 
@@ -66,7 +63,7 @@ public class HzgJsBridgeApp extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void BeforeActivityDestroy() {
+    public void beforeActivityDestroy() {
 
     }
 
@@ -74,7 +71,7 @@ public class HzgJsBridgeApp extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void BeforeActivityPause() {
+    public void beforeActivityPause() {
 
     }
 
@@ -82,7 +79,7 @@ public class HzgJsBridgeApp extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void OnActivityResumed() {
+    public void onActivityResumed() {
 
     }
 
@@ -95,7 +92,7 @@ public class HzgJsBridgeApp extends BaseBridge {
      * @return 跳过这个JS桥，处理下一个
      */
     @Override
-    public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
         return false;
     }
 
@@ -118,7 +115,11 @@ public class HzgJsBridgeApp extends BaseBridge {
     @JavascriptInterface
     public void restartApp() {
         // 直接重启
-        AppLevelHelpers.Restart(ActivityContext);
+        CurrentWebView.getActivityContext().runOnUiThread(() -> {
+            Intent intentR = CurrentWebView.getActivityContext().getBaseContext().getPackageManager().getLaunchIntentForPackage(CurrentWebView.getActivityContext().getBaseContext().getPackageName());
+            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            CurrentWebView.getActivityContext().startActivity(intentR);
+        });
     }
 
     /**
@@ -180,7 +181,7 @@ public class HzgJsBridgeApp extends BaseBridge {
         sb.append(G);
         sb.append(B);
 
-        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell, sb.toString());
+        CurrentHTMLInterop.setInputValue( _packageCell, sb.toString());
     }
 
     /**
@@ -199,7 +200,7 @@ public class HzgJsBridgeApp extends BaseBridge {
         _cm.UpsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
 
         // 刷新ActionBar
-        ActivityContext.refreshActionBarsColor();
+        CurrentWebView.getActivityContext().refreshActionBarsColor();
     }
 
     /**
@@ -211,7 +212,7 @@ public class HzgJsBridgeApp extends BaseBridge {
 
         // 记录参数
         _packageCell = cell;
-        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _packageCell, ActivityContext.getPackageName());
+        CurrentHTMLInterop.setInputValue(_packageCell, CurrentWebView.getActivityContext().getPackageName());
     }
 
     /**
@@ -227,7 +228,7 @@ public class HzgJsBridgeApp extends BaseBridge {
         String versionName = "";
 
         try {
-            PackageInfo pinfo = ActivityContext.getPackageManager().getPackageInfo(ActivityContext.getPackageName(), PackageManager.GET_CONFIGURATIONS);
+            PackageInfo pinfo = CurrentWebView.getActivityContext().getPackageManager().getPackageInfo(CurrentWebView.getActivityContext().getPackageName(), PackageManager.GET_CONFIGURATIONS);
             versionName = pinfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
@@ -236,6 +237,6 @@ public class HzgJsBridgeApp extends BaseBridge {
 
         // 需要调度回主线程操作
         String finalVersionName = versionName;
-        HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, _versionCell, finalVersionName);
+        CurrentHTMLInterop.setInputValue( _versionCell, finalVersionName);
     }
 }

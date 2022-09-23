@@ -1,7 +1,9 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.webview;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+
+import com.huozige.lab.container.R;
 
 /**
  * 配置相关的帮助类

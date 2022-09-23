@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.webview;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -16,10 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 /**
  * 处理页面的事件，实现异常处理等功能
  */
-public class HzgWebViewClient extends WebViewClient {
+public class HACWebViewClient extends WebViewClient {
 
     AppCompatActivity _context; // 包含有浏览器内核的上下文
-    static final String LOG_TAG = "HzgWebViewClient"; // 日志的标识
+    static final String LOG_TAG = "HAC_WebViewClient"; // 日志的标识
 
     ConfigManager _cm;
 
@@ -28,7 +28,7 @@ public class HzgWebViewClient extends WebViewClient {
      *
      * @param activity 上下文
      */
-    HzgWebViewClient(AppCompatActivity activity) {
+    public HACWebViewClient(AppCompatActivity activity) {
         _context = activity;
         _cm = new ConfigManager(_context);
     }

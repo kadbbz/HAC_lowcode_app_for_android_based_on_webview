@@ -1,58 +1,57 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.webview;
 
 import android.content.Intent;
-import android.webkit.WebView;
 
 /**
  * JavaScript桥的抽象类
  * 未来可以做更多功能，但暂时没有具体的实现
  */
-public abstract class BaseBridge {
+public abstract class BaseProxy {
 
     /**
-     * 操作的上下文
+     * 注册到的浏览器
      */
-    protected HACBaseActivity ActivityContext;
+    protected HACWebView CurrentWebView;
 
     /**
-     * 操作的浏览器内核
+     * 用来操作HTML内容的接口
      */
-    protected WebView CurrentWebView;
+    protected BaseHTMLInterop CurrentHTMLInterop;
 
     /**
      * 基础的构造函数
-     * @param context 上下文
      * @param webView 浏览器内核
+     * @param interop HTML内容操作接口
      */
-    public BaseBridge(HACBaseActivity context, WebView webView) {
-        ActivityContext = context;
+    public BaseProxy(HACWebView webView, BaseHTMLInterop interop) {
         CurrentWebView = webView;
+        CurrentHTMLInterop = interop;
     }
 
     /**
      * 获取JS桥注册到页面时使用的名称
      */
-    public abstract String GetName();
+    public abstract String getName();
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void OnActivityCreated();
+    public abstract void onActivityCreated();
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void BeforeActivityDestroy();
+    public abstract void beforeActivityDestroy();
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void BeforeActivityPause();
+    public abstract void beforeActivityPause();
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void OnActivityResumed();
+    public abstract void onActivityResumed();
 
     /**
      * 处理上下文转发来的Activity调用返回结果
@@ -61,7 +60,7 @@ public abstract class BaseBridge {
      * @param data 同onActivityResult
      * @return 返回true意味着不再调用后续的处理器
      */
-    public  abstract Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data);
+    public  abstract Boolean processActivityResult(int requestCode, int resultCode, Intent data);
 
 
 }

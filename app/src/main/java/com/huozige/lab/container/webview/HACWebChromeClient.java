@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.webview;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -17,9 +17,10 @@ import android.widget.EditText;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.R;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.engine.impl.GlideEngine;
@@ -32,23 +33,23 @@ import java.util.List;
 /**
  * 处理浏览器的事件，实现弹出消息和文件上传等功能
  */
-public class HzgWebChromeClient extends WebChromeClient {
+public class HACWebChromeClient extends WebChromeClient {
 
     String _title; // 当前页面标题，用于弹出消息等场景
-    AppCompatActivity _context; // 关联的上下文，即拥有浏览器内核的页面
+    BaseActivity _context; // 关联的上下文，即拥有浏览器内核的页面
 
     ValueCallback<Uri[]> _filePathCallback; // 文件选择器用的缓存
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
-    static final String LOG_TAG="HzgWebChromeClient";
+    static final String LOG_TAG="HAC_WebChromeClient";
 
     /**
      * 简单的构造函数
      *
      * @param activity 上下文
      */
-    HzgWebChromeClient(AppCompatActivity activity) {
+    public HACWebChromeClient(BaseActivity activity) {
         _context = activity;
     }
 
@@ -153,8 +154,8 @@ public class HzgWebChromeClient extends WebChromeClient {
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 
         // 首页加载完成后，提前申请权限
-        AppLevelHelpers.RequirePermission(_context, Permission.CAMERA);
-        AppLevelHelpers.RequirePermission(_context, Permission.WRITE_EXTERNAL_STORAGE);
+        _context.RequirePermission( Permission.CAMERA);
+        _context.RequirePermission( Permission.WRITE_EXTERNAL_STORAGE);
 
         _filePathCallback = filePathCallback; // 将参数缓存起来
 
@@ -246,7 +247,7 @@ public class HzgWebChromeClient extends WebChromeClient {
     @Override
     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 
-        AppLevelHelpers.RequirePermission(_context, Permission.ACCESS_FINE_LOCATION);
+        _context.RequirePermission( Permission.ACCESS_FINE_LOCATION);
 
         Log.v(LOG_TAG,"GeolocationPermissionsShowPrompt invoked");
 

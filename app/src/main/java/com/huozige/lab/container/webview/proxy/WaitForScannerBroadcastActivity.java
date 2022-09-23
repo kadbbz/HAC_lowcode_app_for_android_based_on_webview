@@ -1,4 +1,4 @@
-package com.huozige.lab.container.pda;
+package com.huozige.lab.container.webview.proxy;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.huozige.lab.container.ConfigManager;
+import com.huozige.lab.container.webview.ConfigManager;
 import com.huozige.lab.container.R;
 
 /**

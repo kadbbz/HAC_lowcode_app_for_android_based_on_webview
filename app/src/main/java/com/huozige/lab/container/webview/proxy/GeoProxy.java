@@ -1,15 +1,13 @@
-package com.huozige.lab.container.Geo;
+package com.huozige.lab.container.webview.proxy;
 
 import android.content.Intent;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
 
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.BaseBridge;
-import com.huozige.lab.container.HACBaseActivity;
-import com.huozige.lab.container.HzgWebInteropHelpers;
-import com.huozige.lab.container.AppLevelHelpers;
+import com.huozige.lab.container.webview.BaseHTMLInterop;
+import com.huozige.lab.container.webview.BaseProxy;
+import com.huozige.lab.container.webview.HACWebView;
 
 
 import locationprovider.davidserrano.com.LocationProvider;
@@ -18,19 +16,18 @@ import locationprovider.davidserrano.com.LocationProvider;
  * 让页面能获取当前的地理位置
  * geo.getLocation(coordinateSystem,cellLat,cellLon,cellError)：获取地理位置
  */
-public class HzgJsBridgeGeo extends BaseBridge {
+public class GeoProxy extends BaseProxy {
 
     static final  String CS_WGS84 = "wgs84";
     static final  String CS_BD09 = "bd09";
 
     /**
      * 基础的构造函数
-     *
-     * @param context 上下文
      * @param webView 浏览器内核
+     * @param interop HTML内容操作接口
      */
-    public HzgJsBridgeGeo(HACBaseActivity context, WebView webView) {
-        super(context, webView);
+    public GeoProxy(HACWebView webView, BaseHTMLInterop interop) {
+        super(webView,interop);
     }
 
     /**
@@ -44,8 +41,8 @@ public class HzgJsBridgeGeo extends BaseBridge {
     @JavascriptInterface
     public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
 
-        AppLevelHelpers.RequirePermission(ActivityContext, Permission.ACCESS_FINE_LOCATION);
-        AppLevelHelpers.RequirePermission(ActivityContext, Permission.ACCESS_COARSE_LOCATION);
+        CurrentWebView.getActivityContext().RequirePermission(Permission.ACCESS_FINE_LOCATION);
+        CurrentWebView.getActivityContext().RequirePermission(Permission.ACCESS_COARSE_LOCATION);
 
         //create a callback
         LocationProvider.LocationCallback callback = new LocationProvider.LocationCallback() {
@@ -55,40 +52,40 @@ public class HzgJsBridgeGeo extends BaseBridge {
                 if(CS_BD09.equalsIgnoreCase(coordinateSystem)){
                     // 优先百度坐标，可配套百度地图使用
                     double[] bd09= CoordinateSystemHelpers.wgs84_bd09(lat,lon);
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLat, String.valueOf( bd09[0]));
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLon, String.valueOf( bd09[1]));
+                    CurrentHTMLInterop.setInputValue(cellLat, String.valueOf( bd09[0]));
+                    CurrentHTMLInterop.setInputValue(cellLon, String.valueOf( bd09[1]));
                 }else if(CS_WGS84.equalsIgnoreCase(coordinateSystem)){
                     // 然后是GPS坐标
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLat, String.valueOf( lat));
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLon, String.valueOf( lon));
+                    CurrentHTMLInterop.setInputValue( cellLat, String.valueOf( lat));
+                    CurrentHTMLInterop.setInputValue( cellLon, String.valueOf( lon));
                 }else{
                     // 默认为国内火星坐标
                     double[] gcj02= CoordinateSystemHelpers.wgs84_gcj02(lat,lon);
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLat, String.valueOf( gcj02[0]));
-                    HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellLon, String.valueOf( gcj02[1]));
+                    CurrentHTMLInterop.setInputValue(cellLat, String.valueOf( gcj02[0]));
+                    CurrentHTMLInterop.setInputValue( cellLon, String.valueOf( gcj02[1]));
                 }
 
                 // 重置错误信息
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellErr, "");
+                CurrentHTMLInterop.setInputValue( cellErr, "");
             }
 
             @Override
             public void onNewLocationAvailable(float lat, float lon) {
 
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "getLocation NewLocationAvailable : lat " + lat + " lon " + lon +" (WGS84).");
+                CurrentWebView.WriteLogIntoConsole( "getLocation NewLocationAvailable : lat " + lat + " lon " + lon +" (WGS84).");
                 returnWithWGS84(lat,lon);
             }
 
             @Override
             public void locationServicesNotEnabled() {
-                HzgWebInteropHelpers.WriteErrorIntoConsole(CurrentWebView,"getLocation Location Services Not Enabled");
-                HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView, cellErr, "LocationServicesNotEnabled");
+                CurrentWebView.WriteErrorIntoConsole("getLocation Location Services Not Enabled");
+                CurrentHTMLInterop.setInputValue( cellErr, "LocationServicesNotEnabled");
             }
 
             @Override
             public void updateLocationInBackground(float lat, float lon) {
                 //if a listener returns after the main locationAvailable callback, it will go here
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView, "getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon +" (WGS84).");
+                CurrentWebView.WriteLogIntoConsole( "getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon +" (WGS84).");
 
                 returnWithWGS84(lat,lon);
             }
@@ -96,18 +93,18 @@ public class HzgJsBridgeGeo extends BaseBridge {
             @Override
             public void networkListenerInitialised() {
                 //when the library switched from GPS only to GPS & network
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"getLocation Network Listener Initialised");
+                CurrentWebView.WriteLogIntoConsole("getLocation Network Listener Initialised");
             }
 
             @Override
             public void locationRequestStopped() {
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"getLocation location Request Stopped");
+                CurrentWebView.WriteLogIntoConsole("getLocation location Request Stopped");
             }
         };
 
         //initialise an instance with the two required parameters
         LocationProvider provider = new LocationProvider.Builder()
-                .setContext(ActivityContext)
+                .setContext(CurrentWebView.getActivityContext())
                 .setListener(callback)
                 .create();
 
@@ -117,32 +114,32 @@ public class HzgJsBridgeGeo extends BaseBridge {
     }
 
     @Override
-    public String GetName() {
+    public String getName() {
         return "geo";
     }
 
     @Override
-    public void OnActivityCreated() {
+    public void onActivityCreated() {
 
     }
 
     @Override
-    public void BeforeActivityDestroy() {
+    public void beforeActivityDestroy() {
 
     }
 
     @Override
-    public void BeforeActivityPause() {
+    public void beforeActivityPause() {
 
     }
 
     @Override
-    public void OnActivityResumed() {
+    public void onActivityResumed() {
 
     }
 
     @Override
-    public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
         return false;
     }
 }

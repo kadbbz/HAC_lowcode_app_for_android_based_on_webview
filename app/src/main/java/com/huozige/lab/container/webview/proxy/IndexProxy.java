@@ -1,26 +1,25 @@
-package com.huozige.lab.container.compatible;
+package com.huozige.lab.container.webview.proxy;
 
 import android.content.Intent;
 
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-import com.huozige.lab.container.HzgWebInteropHelpers;
+import com.huozige.lab.container.webview.BaseHTMLInterop;
+import com.huozige.lab.container.webview.HACWebView;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
 
 
-import com.huozige.lab.container.BaseBridge;
-import com.huozige.lab.container.MainActivity;
+import com.huozige.lab.container.webview.BaseProxy;
 
 /**
  * 兼容官方APP的页面端能力
  * index.ScanCode(cell)：调用手机摄像头实现扫码
  */
-public class HzgJsBridgeIndex extends BaseBridge {
+public class IndexProxy extends BaseProxy {
 
     ActivityResultLauncher<Intent> _arcZxingLite; // 用来弹出ZXingLite扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
 
@@ -29,9 +28,9 @@ public class HzgJsBridgeIndex extends BaseBridge {
     /**
      * 构造函数，无需额外操作
      */
-    public HzgJsBridgeIndex(MainActivity activity,WebView webView)
+    public IndexProxy(HACWebView webView, BaseHTMLInterop interop)
     {
-        super(activity,webView);
+        super(webView,interop);
     }
 
     /**
@@ -40,21 +39,19 @@ public class HzgJsBridgeIndex extends BaseBridge {
      */
     @JavascriptInterface
     public void ScanCode(String cellLocation) {
-        // 兼容官方版的做法
-        // webview.loadUrl("javascript:Forguncy.Page.getCell('result').setValue('" + result + "')");
 
         // 存储单元格位置
         _scanResultCell = cellLocation;
 
         // 调用ZXingLite的扫码页面
-        _arcZxingLite.launch(new Intent(ActivityContext, CaptureActivity.class));
+        _arcZxingLite.launch(new Intent(CurrentWebView.getActivityContext(), CaptureActivity.class));
     }
 
     /**
      * 注册的名称为：index
      */
     @Override
-    public String GetName() {
+    public String getName() {
         return "index";
     }
 
@@ -62,10 +59,10 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * 初始化过程：创建调用器
      */
     @Override
-    public void OnActivityCreated(){
+    public void onActivityCreated(){
 
         // 创建到ZXingLite的调用器
-        _arcZxingLite= ActivityContext.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcZxingLite= CurrentWebView.getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
             // 按照ZXingLite文档获取和解析扫码结果数据，如果出错或者取消，默认为空字符串，同官方APP
             Intent data = result.getData();
@@ -73,14 +70,14 @@ public class HzgJsBridgeIndex extends BaseBridge {
 
             if( null != data ){
                 resultS=CameraScan.parseScanResult(data);
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"ZXing scan completed. Result is : "+ resultS);
+                CurrentWebView.WriteLogIntoConsole("ZXing scan completed. Result is : "+ resultS);
             }else{
                 // 记录日志
-                HzgWebInteropHelpers.WriteLogIntoConsole(CurrentWebView,"ZXing scan canceled or failed.");
+                CurrentWebView.WriteLogIntoConsole("ZXing scan canceled or failed.");
             }
 
             // 将结果写回到单元格
-            HzgWebInteropHelpers.WriteStringValueIntoCell(CurrentWebView,_scanResultCell,resultS);
+            CurrentHTMLInterop.setInputValue(_scanResultCell,resultS);
         });
     }
 
@@ -88,7 +85,7 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void BeforeActivityDestroy() {
+    public void beforeActivityDestroy() {
 
     }
 
@@ -96,7 +93,7 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void BeforeActivityPause() {
+    public void beforeActivityPause() {
 
     }
 
@@ -104,7 +101,7 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * 无需操作
      */
     @Override
-    public void OnActivityResumed() {
+    public void onActivityResumed() {
 
     }
 
@@ -116,7 +113,7 @@ public class HzgJsBridgeIndex extends BaseBridge {
      * @return 跳过这个JS桥，处理下一个
      */
     @Override
-    public Boolean ProcessActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
         return false;
     }
 

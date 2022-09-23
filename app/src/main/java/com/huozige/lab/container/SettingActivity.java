@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * 系统设置页面
  */
-public class SettingActivity extends HACBaseActivity {
+public class SettingActivity extends BaseActivity {
 
     static final String LOG_TAG = "SettingActivity";
 
@@ -138,7 +138,11 @@ public class SettingActivity extends HACBaseActivity {
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
             // 重启应用
-            AppLevelHelpers.Restart(SettingActivity.this);
+            SettingActivity.this.runOnUiThread(() -> {
+                Intent intentR = SettingActivity.this.getPackageManager().getLaunchIntentForPackage(SettingActivity.this.getBaseContext().getPackageName());
+                intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                SettingActivity.this.startActivity(intentR);
+            });
         });
         ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
             // 什么都不干
