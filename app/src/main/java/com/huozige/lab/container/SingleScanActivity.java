@@ -1,4 +1,4 @@
-package com.huozige.lab.container.webview.proxy;
+package com.huozige.lab.container;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,18 +10,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.huozige.lab.container.ConfigManager;
-import com.huozige.lab.container.R;
-
 /**
- * 等待PDA扫码广播的页面，该页面支持用户自行取消
+ * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
  */
-public class WaitForScannerBroadcastActivity extends AppCompatActivity {
+public class SingleScanActivity extends AppCompatActivity {
 
-    final static int SCAN_STATUS_OK = 0;
-    final static int SCAN_STATUS_CANCEL = -1;
-    final static String BUNDLE_EXTRA_RESULT = "result";
-    final static String LOG_TAG = "WaitForScannerBroadcastActivity";
+    public final static int SCAN_STATUS_OK = 0;
+    public final static int SCAN_STATUS_CANCEL = -1;
+    public final static String BUNDLE_EXTRA_RESULT = "result";
+    public final static String LOG_TAG = "SingleScanActivity";
 
     ConfigManager _cm = new ConfigManager(this);
 
@@ -44,10 +41,10 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
             // 将其打包发给调用者
             Intent res = new Intent();
             res.putExtra(BUNDLE_EXTRA_RESULT, result);
-            WaitForScannerBroadcastActivity.this.setResult(SCAN_STATUS_OK, res);
+            SingleScanActivity.this.setResult(SCAN_STATUS_OK, res);
 
             // 关闭当前页面
-            WaitForScannerBroadcastActivity.this.finish();
+            SingleScanActivity.this.finish();
         }
     };
 
@@ -70,7 +67,7 @@ public class WaitForScannerBroadcastActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // 初始化界面
-        setContentView(R.layout.activity_wait_for_bar_scanner_broadcast);
+        setContentView(R.layout.activity_single_scan);
         setTitle(getString(R.string.ui_title_scanner_activity));
         findViewById(R.id.button_cancel).setOnClickListener(_cancelButtonClick);
     }

@@ -78,7 +78,10 @@ public class QuickConfigActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_init);
+
+        setTitle(getString(R.string.ui_title_quick_config));
+
+        setContentView(R.layout.activity_quick_config);
 
         ImageButton imgScan = findViewById(R.id.imgScanner);
         imgScan.setOnClickListener(scanForConfig);

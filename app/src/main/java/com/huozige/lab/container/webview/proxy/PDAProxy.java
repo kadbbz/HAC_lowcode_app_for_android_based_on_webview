@@ -11,6 +11,7 @@ import android.webkit.JavascriptInterface;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.SingleScanActivity;
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.BaseProxy;
 import com.huozige.lab.container.ConfigManager;
@@ -73,10 +74,10 @@ public class PDAProxy extends BaseProxy {
             if (null != data) {
                 // 获取并判断返回码
                 int code = result.getResultCode();
-                if (code == WaitForScannerBroadcastActivity.SCAN_STATUS_OK) {
+                if (code == SingleScanActivity.SCAN_STATUS_OK) {
 
                     // 成功接收到返回的扫码结果
-                    String resultS = data.getStringExtra(WaitForScannerBroadcastActivity.BUNDLE_EXTRA_RESULT);
+                    String resultS = data.getStringExtra(SingleScanActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
                     CurrentWebView.writeLogIntoConsole( "PDA scan completed. Result is : " + resultS);
@@ -203,7 +204,7 @@ public class PDAProxy extends BaseProxy {
         _cell = cellLocation;
 
         // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(CurrentWebView.getActivityContext(), WaitForScannerBroadcastActivity.class));
+        _arcScanner.launch(new Intent(CurrentWebView.getActivityContext(), SingleScanActivity.class));
 
         // 记录日志
         CurrentWebView.writeLogIntoConsole( "PDA scan (Single Mode) started.");

@@ -19,18 +19,20 @@ import com.huozige.lab.container.webview.HACWebView;
 
 /**
  * 让页面能对APP壳子进行操作
+ * 1.1.0
  * app.getVersion(cell)：获取版本号
  * app.getPackageName(cell)：获取入口的包名
  * app.getActionBarColor(cell)：获取标题栏颜色
  * app.setActionBarColor(colorHex)：设置标题栏颜色
  * app.setScannerOptions(action,extra)：设置扫描头的参数
  * app.toggleSettingMenu(shouldShow)：是否隐藏设置菜单，重启APP后生效
- * app.toggleActionBar(shouldShow)：是否隐藏ActionBar，重启APP后生效
  * app.setAboutUrl(url)：设置“关于”菜单的地址，重启APP后生效
  * app.setHelpUrl(url)：设置“帮助”菜单的地址，重启APP后生效
+ * app.restartApp()：重启应用
+ * 1.2.0
+ * app.toggleActionBar(shouldShow)：是否隐藏ActionBar，重启APP后生效
  * app.openSettingPage()：打开设置页面
  * app.openQuickConfigPage()：打开快速配置页面
- * app.restartApp()：重启应用
  */
 public class AppProxy extends BaseProxy {
 

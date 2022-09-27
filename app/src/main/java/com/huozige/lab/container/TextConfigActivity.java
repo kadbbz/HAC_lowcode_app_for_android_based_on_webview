@@ -25,6 +25,8 @@ public class TextConfigActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_config);
 
+        setTitle(getString(R.string.ui_title_quick_config));
+
         _txtConfig = findViewById(R.id.editTextConfig);
 
         Button cmdSave = findViewById(R.id.cmdTCSave);

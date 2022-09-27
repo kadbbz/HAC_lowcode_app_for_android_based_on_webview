@@ -1,6 +1,7 @@
 package com.huozige.lab.container.hzg;
 
-import com.huozige.lab.container.webview.proxy.ValueBundleProxy;
+import android.webkit.JavascriptInterface;
+
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.HACWebView;
 
@@ -56,13 +57,30 @@ public class HZGWebInterop extends BaseHTMLInterop {
         WebView.addJavascriptInterface(proxy,jsoName);
 
         // 4. 执行JS代码，获取单元格的值，然后传给桥
-        WebView.executeJavaScript("window."+jsoName+".SetValue(Forguncy.Page.getCellByLocation(" + cellLocation + ").getValue())");
+        WebView.executeJavaScript("window."+jsoName+".setValue(Forguncy.Page.getCellByLocation(" + cellLocation + ").getValue())");
 
         // 5. 执行完成后，需要从浏览器中注销桥
         WebView.removeJavascriptInterface(jsoName);
 
         // 6. 从桥中获取单元格的值
         return proxy.Value;
+    }
+
+    /**
+     * 用于从HTML中传回字符串值的JS代理
+     */
+    static class ValueBundleProxy {
+
+        public String Value;
+
+        /**
+         * 将JS的值传递到Java中。
+         * @param value 需要传回的值
+         */
+        @JavascriptInterface
+        public void setValue(String value){
+            this.Value = value;
+        }
     }
 
 }

@@ -64,7 +64,7 @@
             android:value="false" />
 
         <activity
-            android:name=".webview.proxy.WaitForScannerBroadcastActivity"
+            android:name=".SingleScanActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
