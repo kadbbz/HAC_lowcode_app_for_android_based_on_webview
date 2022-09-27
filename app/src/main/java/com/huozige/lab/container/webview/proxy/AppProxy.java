@@ -7,6 +7,11 @@ import android.graphics.Color;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.huozige.lab.container.QuickConfigActivity;
+import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.BaseProxy;
 import com.huozige.lab.container.ConfigManager;
@@ -23,11 +28,15 @@ import com.huozige.lab.container.webview.HACWebView;
  * app.toggleActionBar(shouldShow)：是否隐藏ActionBar，重启APP后生效
  * app.setAboutUrl(url)：设置“关于”菜单的地址，重启APP后生效
  * app.setHelpUrl(url)：设置“帮助”菜单的地址，重启APP后生效
+ * app.openSettingPage()：打开设置页面
+ * app.openQuickConfigPage()：打开快速配置页面
  * app.restartApp()：重启应用
  */
 public class AppProxy extends BaseProxy {
 
     String _versionCell, _packageCell; // 单元格位置缓存
+
+    ActivityResultLauncher<Intent> _arcWoCallback; // 用来弹出页面
 
     ConfigManager _cm;
 
@@ -35,6 +44,7 @@ public class AppProxy extends BaseProxy {
 
     /**
      * 基础的构造函数
+     *
      * @param webView 浏览器内核
      * @param interop HTML内容操作接口
      */
@@ -57,7 +67,8 @@ public class AppProxy extends BaseProxy {
      */
     @Override
     public void onActivityCreated() {
-
+        _arcWoCallback = CurrentWebView.getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        });
     }
 
     /**
@@ -124,13 +135,36 @@ public class AppProxy extends BaseProxy {
     }
 
     /**
+     * 注册到页面的app.openSettingPage()方法
+     * 导航到设置页面
+     */
+    @JavascriptInterface
+    public void openSettingPage() {
+
+        CurrentWebView.getActivityContext().runOnUiThread(() ->
+                _arcWoCallback.launch(new Intent(CurrentWebView.getActivityContext(), SettingActivity.class))
+        );
+    }
+
+    /**
+     * 注册到页面的app.openQuickConfigPage()方法
+     * 导航到快速配置页面
+     */
+    @JavascriptInterface
+    public void openQuickConfigPage() {
+        CurrentWebView.getActivityContext().runOnUiThread(() ->
+                _arcWoCallback.launch(new Intent(CurrentWebView.getActivityContext(), QuickConfigActivity.class))
+        );
+    }
+
+    /**
      * 注册到页面的app.toggleSettingMenu(shouldShow)方法
      * 设置是否显示设置菜单，传入空、0、no或者false意味着隐藏， 其他值都为显示
      */
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
-        
-        _cm.upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
+
+        _cm.upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
     }
 
     /**
@@ -140,7 +174,7 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void toggleActionBar(String shouldShow) {
 
-        _cm.upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
+        _cm.upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
     }
 
     /**
@@ -192,7 +226,7 @@ public class AppProxy extends BaseProxy {
         sb.append(G);
         sb.append(B);
 
-        CurrentHTMLInterop.setInputValue( _packageCell, sb.toString());
+        CurrentHTMLInterop.setInputValue(_packageCell, sb.toString());
     }
 
     /**
@@ -248,6 +282,6 @@ public class AppProxy extends BaseProxy {
 
         // 需要调度回主线程操作
         String finalVersionName = versionName;
-        CurrentHTMLInterop.setInputValue( _versionCell, finalVersionName);
+        CurrentHTMLInterop.setInputValue(_versionCell, finalVersionName);
     }
 }

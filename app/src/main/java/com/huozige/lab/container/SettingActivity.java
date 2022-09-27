@@ -32,7 +32,7 @@ public class SettingActivity extends BaseActivity {
 
     ActivityResultLauncher<Intent> _arcZxingLite; // 用来弹出ZXingLite扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
 
-    EditText _txtUrl,_txtScanAction,_txtScanExtra;
+    EditText _txtUrl, _txtScanAction, _txtScanExtra;
     CheckBox _cboHa;
 
     @Override
@@ -106,7 +106,7 @@ public class SettingActivity extends BaseActivity {
     View.OnClickListener save = view -> {
 
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
-        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok),new DialogInterface.OnClickListener(){
+        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -116,19 +116,22 @@ public class SettingActivity extends BaseActivity {
                 ConfigManager.upsertScanExtra(_txtScanExtra.getText().toString());
                 ConfigManager.upsertHA(_cboHa.isChecked());
 
-                Toast.makeText(SettingActivity.this, "设置保存成功，点击右上角【首页】菜单即可生效。", Toast.LENGTH_LONG).show();
+                Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 
                 Log.v(LOG_TAG, "配置更新完成。");
 
-                finish();
+                // 重启生效
+                ConfigManager.restartApp();
             }
         });
+
         ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
             // 什么都不干
         });
 
         ab.setMessage(R.string.ui_message_setting_save);
         ab.setTitle(R.string.ui_menu_settings);
+
         ab.show();
 
     };
@@ -138,18 +141,16 @@ public class SettingActivity extends BaseActivity {
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
             // 重启应用
-            SettingActivity.this.runOnUiThread(() -> {
-                Intent intentR = SettingActivity.this.getPackageManager().getLaunchIntentForPackage(SettingActivity.this.getBaseContext().getPackageName());
-                intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                SettingActivity.this.startActivity(intentR);
-            });
+            ConfigManager.restartApp();
         });
+
         ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
             // 什么都不干
         });
 
         ab.setMessage(R.string.ui_message_setting_restart);
         ab.setTitle(R.string.ui_menu_settings);
+
         ab.show();
 
     };

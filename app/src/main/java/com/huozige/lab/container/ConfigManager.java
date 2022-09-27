@@ -1,6 +1,7 @@
 package com.huozige.lab.container;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.Toast;
@@ -67,6 +68,14 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * 重启应用
+     */
+    public void restartApp(){
+        Intent intentR = _context.getPackageManager().getLaunchIntentForPackage(_context.getBaseContext().getPackageName());
+        intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        _context.startActivity(intentR);
+    }
     /**
      * 获取应用入口页面
      *
