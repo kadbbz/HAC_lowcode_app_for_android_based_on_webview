@@ -69,6 +69,8 @@ public class HACWebChromeClient extends WebChromeClient {
             _title = _context.getString(R.string.ui_title_loading);
             _context.setTitle(_title);
         }
+
+        ((HACWebView)view).setProgress(newProgress);
     }
 
     /**

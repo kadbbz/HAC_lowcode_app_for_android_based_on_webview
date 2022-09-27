@@ -9,6 +9,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.ConfigManager;
@@ -22,6 +24,8 @@ public class HACWebView extends WebView {
 
     BaseActivity _context;
     ConfigManager _configManager;
+
+    ProgressBar _progressBar;
 
     /**
      * 只是为了避免出现Warning，没用上。
@@ -45,6 +49,18 @@ public class HACWebView extends WebView {
         _configManager = cm;
         _context = context;
 
+        // 先配置进度条
+        _progressBar = new ProgressBar(context, null,
+                android.R.attr.progressBarStyleHorizontal);
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 8);
+
+        _progressBar.setLayoutParams(layoutParams);
+
+        addView(_progressBar);
+
+        // 关联两个Client接口
         this.setWebViewClient(wvc);
         this.setWebChromeClient(wcc);
 
@@ -77,6 +93,29 @@ public class HACWebView extends WebView {
         // 启用Debug（全局设置）
         WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
+    }
+
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        LayoutParams lp = (LayoutParams) _progressBar.getLayoutParams();
+        lp.x = l;
+        lp.y = t;
+        _progressBar.setLayoutParams(lp);
+        super.onScrollChanged(l, t, oldl, oldt);
+    }
+
+    /**
+     * 设置加载进度
+     * @param progressIn100 进度：0-100
+     */
+    public void setProgress(int progressIn100){
+        if (progressIn100 == 100) {
+            _progressBar.setVisibility(GONE);
+        } else {
+            if (_progressBar.getVisibility() == GONE)
+                _progressBar.setVisibility(VISIBLE);
+            _progressBar.setProgress(progressIn100);
+        }
     }
 
     /**
