@@ -11,6 +11,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.ConfigManager;
 
 /**
  * HAC定制化的WebView控件，内置配置选项和浏览器控制台（Console）操作能力

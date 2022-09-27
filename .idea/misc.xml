@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/CODE/HAC/app/src/main/res/layout/activity_init.xml" value="0.3625" />
         <entry key="..\:/CODE/HAC/app/src/main/res/layout/activity_setting.xml" value="0.3625" />
+        <entry key="..\:/CODE/HAC/app/src/main/res/layout/activity_text_config.xml" value="0.2296195652173913" />
         <entry key="..\:/CODE/HAC/app/src/main/res/layout/activity_wait_for_bar_scanner_broadcast.xml" value="0.18541666666666667" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.157" />
         <entry key="..\:/CODE/huozige_morden_android_lowcode_app/app/src/main/res/drawable/ic_______________svg_____aigei_com.xml" value="0.1935" />

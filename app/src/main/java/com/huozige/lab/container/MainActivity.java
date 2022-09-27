@@ -12,16 +12,16 @@ import android.view.MenuItem;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.hzg.HZGWebInterop;
 import com.huozige.lab.container.webview.BaseHTMLInterop;
-import com.huozige.lab.container.webview.proxy.GeoProxy;
-import com.huozige.lab.container.webview.proxy.AppProxy;
-import com.huozige.lab.container.webview.proxy.IndexProxy;
 import com.huozige.lab.container.webview.BaseProxy;
 import com.huozige.lab.container.webview.HACWebChromeClient;
 import com.huozige.lab.container.webview.HACWebView;
 import com.huozige.lab.container.webview.HACWebViewClient;
+import com.huozige.lab.container.webview.proxy.AppProxy;
+import com.huozige.lab.container.webview.proxy.GeoProxy;
+import com.huozige.lab.container.webview.proxy.IndexProxy;
 import com.huozige.lab.container.webview.proxy.PDAProxy;
-import com.huozige.lab.container.hzg.HZGWebInterop;
 
 /**
  * 主Activity，主要负责加载浏览器内核
@@ -118,7 +118,7 @@ public class MainActivity extends BaseActivity {
         // 如果没有设置入口，视同”未配置“
         if (ConfigManager.getEntry().length() == 0) {
             // 跳转到设置页面
-            _arc4Settings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+            _arc4Settings.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
         }
 
     }

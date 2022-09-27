@@ -9,7 +9,7 @@ import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.BaseProxy;
-import com.huozige.lab.container.webview.ConfigManager;
+import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.webview.HACWebView;
 
 /**
@@ -20,6 +20,7 @@ import com.huozige.lab.container.webview.HACWebView;
  * app.setActionBarColor(colorHex)：设置标题栏颜色
  * app.setScannerOptions(action,extra)：设置扫描头的参数
  * app.toggleSettingMenu(shouldShow)：是否隐藏设置菜单，重启APP后生效
+ * app.toggleActionBar(shouldShow)：是否隐藏ActionBar，重启APP后生效
  * app.setAboutUrl(url)：设置“关于”菜单的地址，重启APP后生效
  * app.setHelpUrl(url)：设置“帮助”菜单的地址，重启APP后生效
  * app.restartApp()：重启应用
@@ -133,6 +134,16 @@ public class AppProxy extends BaseProxy {
     }
 
     /**
+     * 注册到页面的app.toggleActionBar(shouldShow)方法
+     * 设置是否显示ActionBar，传入空、0、no或者false意味着隐藏， 其他值都为显示
+     */
+    @JavascriptInterface
+    public void toggleActionBar(String shouldShow) {
+
+        _cm.upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false")&& !shouldShow.equalsIgnoreCase("no"));
+    }
+
+    /**
      * 注册到页面的app.setAboutUrl(url)方法
      * 设置关于菜单的跳转地址，传入空字符串则自动隐藏该菜单
      */
@@ -200,7 +211,7 @@ public class AppProxy extends BaseProxy {
         _cm.upsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
 
         // 刷新ActionBar
-        CurrentWebView.getActivityContext().refreshActionBarsColor();
+        CurrentWebView.getActivityContext().refreshActionBar();
     }
 
     /**

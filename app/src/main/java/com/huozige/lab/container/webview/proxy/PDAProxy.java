@@ -13,7 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.BaseProxy;
-import com.huozige.lab.container.webview.ConfigManager;
+import com.huozige.lab.container.ConfigManager;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.webview.HACWebView;
 

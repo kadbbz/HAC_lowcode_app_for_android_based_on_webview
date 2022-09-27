@@ -36,6 +36,12 @@
     <string name="ui_label_settings_restart">重启应用</string>
     <string name="ui_label_settings_ha">启用硬件加速</string>
     <string name="ui_message_setting_save">你确认要保存和应用应用配置吗？</string>
+    <string name="ui_message_quick_config_confirm">确定要使用当前的配置启动APP吗？</string>
+    <string name="ui_message_quick_config_broken">配置信息的格式不正确，请再次确认</string>
+    <string name="ui_message_quick_config_done">APP配置完成，可以正常使用</string>
     <string name="ui_message_setting_restart">你确认要重启应用吗？</string>
+    <string name="ui_lable_textconfig">请输入JSON格式的配置信息</string>
+    <string name="ui_lable_quick_config_help">如需帮助，请联系系统管理员</string>
+    <string name="ui_lable_quick_config_scan">点击扫描配置码，快速完成APP设置</string>
 
 </resources>

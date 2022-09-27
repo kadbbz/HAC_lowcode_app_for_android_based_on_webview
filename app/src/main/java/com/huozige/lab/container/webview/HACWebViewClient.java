@@ -13,6 +13,8 @@ import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.huozige.lab.container.ConfigManager;
+
 /**
  * 处理页面的事件，实现异常处理等功能
  */

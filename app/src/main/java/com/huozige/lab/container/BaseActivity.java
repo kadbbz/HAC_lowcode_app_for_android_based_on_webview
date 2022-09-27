@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.XXPermissions;
-import com.huozige.lab.container.webview.ConfigManager;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class BaseActivity extends AppCompatActivity {
     /**
      * 刷新操作栏颜色
      */
-    public void refreshActionBarsColor(){
+    public void refreshActionBar(){
 
         // 需要支持跨线程调用
         this.runOnUiThread(() -> {
@@ -35,17 +34,23 @@ public class BaseActivity extends AppCompatActivity {
             // 设置动作栏
             ActionBar actionBar = getSupportActionBar();
 
-            if(null!=actionBar){
+            if(actionBar!=null){
+                if(!ConfigManager.getActionBarVisible()){
+                    // 隐藏ActionBar
+                    actionBar.hide();
+                }else{
 
-                // 设置标题栏颜色
-                actionBar.setBackgroundDrawable(new ColorDrawable(ConfigManager.getTCD()));
+                    // 设置ActionBar的颜色
+                    actionBar.setBackgroundDrawable(new ColorDrawable(ConfigManager.getTCD()));
+
+                    // 设置状态栏颜色，做沉浸式体验
+                    Window window = this.getWindow();
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                    window.setStatusBarColor(ConfigManager.getTCD());
+                }
             }
 
-            // 设置状态栏颜色，更美观
-            Window window = this.getWindow();
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            window.setStatusBarColor(ConfigManager.getTCD());
         });
 
     }
@@ -57,7 +62,7 @@ public class BaseActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        refreshActionBarsColor();
+        refreshActionBar();
     }
 
     /**
