@@ -37,7 +37,7 @@ public class MainActivity extends BaseActivity {
 
     HACWebChromeClient _webChromeClient; // 浏览器事件处理器
 
-    ActivityResultLauncher<Intent> _arc4Settings; // 用来弹出配置页面。
+    ActivityResultLauncher<Intent> _arc4QuickConfig; // 用来弹出配置页面。
 
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
@@ -80,8 +80,7 @@ public class MainActivity extends BaseActivity {
 
         // 8. 初始化启动器
         _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
-        _arc4Settings = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> _webView.refreshWebView()); // 打开设置页面，返回后刷新浏览器
-
+        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> ConfigManager.restartApp()); // 打开设置页面，返回后重启应用
 
         // 9. 初始化JS代理
         for (BaseProxy br : _bridges
@@ -118,7 +117,7 @@ public class MainActivity extends BaseActivity {
         // 如果没有设置入口，视同”未配置“
         if (ConfigManager.getEntry().length() == 0) {
             // 跳转到设置页面
-            _arc4Settings.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
+            _arc4QuickConfig.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
         }
 
     }
@@ -190,7 +189,7 @@ public class MainActivity extends BaseActivity {
                 _webView.reload(); // 仅刷新
                 break;
             case MENU_ID_SETTINGS:
-                _arc4Settings.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+                _arc4QuickConfig.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
                 break;
             case MENU_ID_HELP:
                 Log.v(LOG_TAG, "点击菜单【帮助】");

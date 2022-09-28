@@ -25,12 +25,13 @@ import java.util.List;
 
 /**
  * 系统设置页面
+ * 不包含APP个性化配置（通过JS接口设置）
  */
 public class SettingActivity extends BaseActivity {
 
     static final String LOG_TAG = "SettingActivity";
 
-    ActivityResultLauncher<Intent> _arcZxingLite; // 用来弹出ZXingLite扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
+    ActivityResultLauncher<Intent> _arcZxingLite,_arc4QuickConfig;
 
     EditText _txtUrl, _txtScanAction, _txtScanExtra;
     CheckBox _cboHa;
@@ -48,8 +49,8 @@ public class SettingActivity extends BaseActivity {
         _txtScanExtra = findViewById(R.id.txtExtra);
         _cboHa = findViewById(R.id.cboHa);
 
-        Button cmdRestart = findViewById(R.id.cmdRestart);
-        cmdRestart.setOnClickListener(restart);
+        Button cmdReset = findViewById(R.id.cmdReset);
+        cmdReset.setOnClickListener(reset);
 
         Button cmdSave = findViewById(R.id.cmdSave);
         cmdSave.setOnClickListener(save);
@@ -68,6 +69,8 @@ public class SettingActivity extends BaseActivity {
                 _txtUrl.setText(resultS);
             }
         });
+
+        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> ConfigManager.restartApp()); // 打开设置页面，返回后重启应用
 
         // 设置初始值
         _txtUrl.setText(ConfigManager.getEntry());
@@ -136,22 +139,10 @@ public class SettingActivity extends BaseActivity {
 
     };
 
-    View.OnClickListener restart = view -> {
+    View.OnClickListener reset = view -> {
 
-        AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
-        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
-            // 重启应用
-            ConfigManager.restartApp();
-        });
-
-        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
-            // 什么都不干
-        });
-
-        ab.setMessage(R.string.ui_message_setting_restart);
-        ab.setTitle(R.string.ui_menu_settings);
-
-        ab.show();
+        // 重新开始
+        _arc4QuickConfig.launch(new Intent(SettingActivity.this, QuickConfigActivity.class));
 
     };
 

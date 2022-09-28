@@ -75,7 +75,7 @@
             app:layout_constraintHorizontal_bias="0.445"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cmdUrlQrCode"
-            tools:ignore="SpeakableTextPresentCheck" />
+            tools:ignore="SpeakableTextPresentCheck,DuplicateSpeakableTextCheck" />
 
         <EditText
             android:id="@+id/txtAction"
@@ -93,7 +93,7 @@
             app:layout_constraintHorizontal_bias="0.476"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView"
-            tools:ignore="SpeakableTextPresentCheck" />
+            tools:ignore="SpeakableTextPresentCheck,DuplicateSpeakableTextCheck" />
 
         <EditText
             android:id="@+id/txtExtra"
@@ -111,7 +111,7 @@
             app:layout_constraintHorizontal_bias="0.447"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView3"
-            tools:ignore="SpeakableTextPresentCheck" />
+            tools:ignore="SpeakableTextPresentCheck,DuplicateSpeakableTextCheck" />
 
         <CheckBox
             android:id="@+id/cboHa"
@@ -141,18 +141,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cboHa" />
+            app:layout_constraintTop_toBottomOf="@+id/cboHa"
+            tools:ignore="TextContrastCheck" />
 
         <Button
-            android:id="@+id/cmdRestart"
+            android:id="@+id/cmdReset"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="113dp"
             android:layout_height="48dp"
             android:layout_marginStart="100dp"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="100dp"
-            android:text="@string/ui_label_settings_restart"
-            android:textColor="?android:attr/colorFocusedHighlight"
+            android:text="@string/ui_label_settings_reset"
+            android:textColor="#DD2C00"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
