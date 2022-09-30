@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.hzg.HZGCacheFilter;
 import com.huozige.lab.container.hzg.HZGWebInterop;
 import com.huozige.lab.container.webview.BaseHTMLInterop;
 import com.huozige.lab.container.webview.BaseProxy;
@@ -56,7 +57,7 @@ public class MainActivity extends BaseActivity {
         setTitle(getString(R.string.app_name));
 
         // 2. 创建WebViewClient，处理页面事件
-        _webViewClient = new HACWebViewClient(this);
+        _webViewClient = new HACWebViewClient(this, new HZGCacheFilter());
 
         // 3. 创建WebChromeClient，处理浏览器事件
         _webChromeClient = new HACWebChromeClient(this);

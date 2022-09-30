@@ -1,0 +1,92 @@
+package com.huozige.lab.container.hzg;
+
+import android.net.Uri;
+import android.util.Log;
+
+import com.huozige.lab.container.webview.ICacheFilter;
+
+/**
+ * 活字格专用的缓存过滤器
+ */
+public class HZGCacheFilter implements ICacheFilter {
+
+    final static String LOG_TAG = "HZGCacheFilter";
+
+    /**
+     * 支持的活字格版本
+     */
+    final static String[] SUPPORTED_VERSIONS = {
+            "8.0.6.0"};
+
+    /**
+     * 执行缓存检查
+     * @param url 原始URL
+     * @return 命中的缓存或空引用
+     */
+    @Override
+    public CacheHint filter(Uri url) {
+
+        CacheHint bundle = filterByType(url, "/%s/Resources/Bundle/", "hzg_bundle_cache_%s/");
+        if (bundle != null) return bundle;
+
+        CacheHint scripts = filterByType(url, "/%s/Resources/Scripts/", "hzg_scripts_cache_%s/");
+        if (scripts != null) return scripts;
+
+        CacheHint images = filterByType(url, "/%s/Resources/Images/", "hzg_images_cache_%s/");
+        if (images != null) return images;
+
+        return filterByType(url, "https://cdn.hzgcloud.cn/%s/Resources/Themes/", "hzg_themes_cache_%s/");
+    }
+
+    /**
+     * 检查特定PATH的文件请求是否有可用缓存
+     * @param url 请求URL
+     * @param originalTpl URL的PATH模板
+     * @param cacheTpl 本地缓存文件的PATH模板
+     * @return 缓存信息或空引用
+     */
+    CacheHint filterByType(Uri url, String originalTpl, String cacheTpl) {
+
+        // 依次处理各个版本
+        for (String version : SUPPORTED_VERSIONS
+        ) {
+            // 拼接出该版本的路径
+            String url_path_prefix = String.format(originalTpl, version);
+            String cache_prefix = String.format(cacheTpl, version);
+
+            if (url.getPath().startsWith(url_path_prefix)) {
+
+                // 获取文件名
+                String fileName = url.getLastPathSegment();
+                Log.v(LOG_TAG, "Local cache matched for : " + fileName);
+
+                // 构建返回对象
+                CacheHint result = new CacheHint();
+                result.FileName = fileName;
+                result.LocalFilePath = url.getPath().replace(url_path_prefix,cache_prefix); // 通过Path进行替换，可以避免Query的影响
+                result.Encoding = "UTF-8";
+
+                if (fileName.toLowerCase().endsWith("css")) {
+                    result.MIME = "text/css";
+                } else if (fileName.toLowerCase().endsWith("js")) {
+                    result.MIME = "application/x-javascript";
+                } else if (fileName.toLowerCase().endsWith("json")) {
+                    result.MIME = "application/json";
+                } else if (fileName.toLowerCase().endsWith("xml")) {
+                    result.MIME = "text/xml";
+                } else if (fileName.toLowerCase().endsWith("jpg") || fileName.toLowerCase().endsWith("jpeg")) {
+                    result.MIME = "image/jpeg";
+                } else if (fileName.toLowerCase().endsWith("png")) {
+                    result.MIME = "image/png";
+                } else {
+                    result.MIME = "text/plain"; // 默认值
+                }
+
+                return result;
+            }
+        }
+
+        // 没有匹配的话，返回空引用
+        return null;
+    }
+}
