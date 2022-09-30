@@ -26,16 +26,12 @@ public class HZGCacheFilter implements ICacheFilter {
     @Override
     public CacheHint filter(Uri url) {
 
+        // Bundle
         CacheHint bundle = filterByType(url, "/%s/Resources/Bundle/", "hzg_bundle_cache_%s/");
         if (bundle != null) return bundle;
 
-        CacheHint scripts = filterByType(url, "/%s/Resources/Scripts/", "hzg_scripts_cache_%s/");
-        if (scripts != null) return scripts;
-
-        CacheHint images = filterByType(url, "/%s/Resources/Images/", "hzg_images_cache_%s/");
-        if (images != null) return images;
-
-        return filterByType(url, "https://cdn.hzgcloud.cn/%s/Resources/Themes/", "hzg_themes_cache_%s/");
+        // Scripts
+        return filterByType(url, "/%s/Resources/Scripts/", "hzg_scripts_cache_%s/");
     }
 
     /**
