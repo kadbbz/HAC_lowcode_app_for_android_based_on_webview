@@ -1,0 +1,36 @@
+{
+  "FontFamily": "@FontFamily",
+  "ThemeColors": {
+    "Name": "Technic",
+    "Colors": {
+      "Name": "",
+      "ColorList": [
+        "#FFFFFFFF",
+        "#FFD4D2D0",
+        "#FF000000",
+        "#FF3B3B3B",
+        "#FF6EA0B0",
+        "#FFCCAF0A",
+        "#FF8D89A4",
+        "#FF748560",
+        "#FF9E9273",
+        "#FF7E848D",
+        "#00FFFFFF",
+        "#00FFFFFF"
+      ],
+      "BackgroundColor1": "#FFFFFFFF",
+      "BackgroundColor2": "#FFD4D2D0",
+      "TextColor1": "#FF000000",
+      "TextColor2": "#FF3B3B3B",
+      "Accent1": "#FF6EA0B0",
+      "Accent2": "#FFCCAF0A",
+      "Accent3": "#FF8D89A4",
+      "Accent4": "#FF748560",
+      "Accent5": "#FF9E9273",
+      "Accent6": "#FF7E848D",
+      "Hyperlink": "#00FFFFFF",
+      "FollowedHyperlink": "#00FFFFFF"
+    },
+    "Category": "内建"
+  }
+}

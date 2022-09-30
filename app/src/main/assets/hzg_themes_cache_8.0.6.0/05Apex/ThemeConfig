@@ -1,0 +1,36 @@
+{
+  "FontFamily": "@FontFamily",
+  "ThemeColors": {
+    "Name": "Apex",
+    "Colors": {
+      "Name": "",
+      "ColorList": [
+        "#FFFFFFFF",
+        "#FFC9C2D1",
+        "#FF000000",
+        "#FF69676D",
+        "#FFCEB966",
+        "#FF9CB084",
+        "#FF6BB1C9",
+        "#FF6585CF",
+        "#FF7E6BC9",
+        "#FFA379BB",
+        "#00FFFFFF",
+        "#00FFFFFF"
+      ],
+      "BackgroundColor1": "#FFFFFFFF",
+      "BackgroundColor2": "#FFC9C2D1",
+      "TextColor1": "#FF000000",
+      "TextColor2": "#FF69676D",
+      "Accent1": "#FFCEB966",
+      "Accent2": "#FF9CB084",
+      "Accent3": "#FF6BB1C9",
+      "Accent4": "#FF6585CF",
+      "Accent5": "#FF7E6BC9",
+      "Accent6": "#FFA379BB",
+      "Hyperlink": "#00FFFFFF",
+      "FollowedHyperlink": "#00FFFFFF"
+    },
+    "Category": "ビルトイン"
+  }
+}

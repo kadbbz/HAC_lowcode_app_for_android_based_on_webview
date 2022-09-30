@@ -1,0 +1,36 @@
+{
+  "FontFamily": "@FontFamily",
+  "ThemeColors": {
+    "Name": "Foundry",
+    "Colors": {
+      "Name": "",
+      "ColorList": [
+        "#FFFFFFFF",
+        "#FFEAEBDE",
+        "#FF000000",
+        "#FF676A55",
+        "#FF72A376",
+        "#FFB0CCB0",
+        "#FFA8CDD7",
+        "#FFC0BEAF",
+        "#FFCEC597",
+        "#FFE8B7B7",
+        "#00FFFFFF",
+        "#00FFFFFF"
+      ],
+      "BackgroundColor1": "#FFFFFFFF",
+      "BackgroundColor2": "#FFEAEBDE",
+      "TextColor1": "#FF000000",
+      "TextColor2": "#FF676A55",
+      "Accent1": "#FF72A376",
+      "Accent2": "#FFB0CCB0",
+      "Accent3": "#FFA8CDD7",
+      "Accent4": "#FFC0BEAF",
+      "Accent5": "#FFCEC597",
+      "Accent6": "#FFE8B7B7",
+      "Hyperlink": "#00FFFFFF",
+      "FollowedHyperlink": "#00FFFFFF"
+    },
+    "Category": "内建"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "FontFamily": "@FontFamily",
+  "ThemeColors": {
+    "Name": "Civic",
+    "Colors": {
+      "Name": "",
+      "ColorList": [
+        "#FFFFFFFF",
+        "#FFC5D1D7",
+        "#FF000000",
+        "#FF646B86",
+        "#FFD16349",
+        "#FFCCB400",
+        "#FF8CADAE",
+        "#FF8C7B70",
+        "#FF8FB08C",
+        "#FFD19049",
+        "#00FFFFFF",
+        "#00FFFFFF"
+      ],
+      "BackgroundColor1": "#FFFFFFFF",
+      "BackgroundColor2": "#FFC5D1D7",
+      "TextColor1": "#FF000000",
+      "TextColor2": "#FF646B86",
+      "Accent1": "#FFD16349",
+      "Accent2": "#FFCCB400",
+      "Accent3": "#FF8CADAE",
+      "Accent4": "#FF8C7B70",
+      "Accent5": "#FF8FB08C",
+      "Accent6": "#FFD19049",
+      "Hyperlink": "#00FFFFFF",
+      "FollowedHyperlink": "#00FFFFFF"
+    },
+    "Category": "内建"
+  }
+}
