@@ -3,6 +3,8 @@ package com.huozige.lab.container.webview;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebChromeClient;
@@ -92,6 +94,18 @@ public class HACWebView extends WebView {
 
         // 启用Debug（全局设置）
         WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
+
+        // UA
+        try {
+            PackageInfo pinfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_CONFIGURATIONS);
+            String versionName = pinfo.versionName;
+
+            String ua = settings.getUserAgentString();//原来获取的UA
+            settings.setUserAgentString(ua+ " HAC/" +versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
+            e.printStackTrace();
+        }
 
     }
 
