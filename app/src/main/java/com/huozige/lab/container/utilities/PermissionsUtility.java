@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class PermissionsUtility {
 
-    static final String LOG_TAG="HAC_LifecycleUtility";
+    static final String LOG_TAG="HAC_PermissionsUtility";
 
     /**
      * 申请特定的敏感权限
