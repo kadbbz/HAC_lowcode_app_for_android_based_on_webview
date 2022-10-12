@@ -1,4 +1,4 @@
-package com.huozige.lab.container.webview.proxy;
+package com.huozige.lab.container.proxy;
 
 
 import android.content.BroadcastReceiver;
@@ -11,13 +11,6 @@ import android.webkit.JavascriptInterface;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-import com.huozige.lab.container.SingleScanActivity;
-import com.huozige.lab.container.webview.BaseHTMLInterop;
-import com.huozige.lab.container.webview.BaseProxy;
-import com.huozige.lab.container.ConfigManager;
-import com.huozige.lab.container.R;
-import com.huozige.lab.container.webview.HACWebView;
-
 /**
  * 让页面具备操作扫码枪硬件的能力
  * pda.modal_scan(cell): 带模态窗口的单次扫码
@@ -25,10 +18,9 @@ import com.huozige.lab.container.webview.HACWebView;
  * pda.continuous_scan_stop()： 停止持续扫码
  *
  */
-public class PDAProxy extends BaseProxy {
+public class PDAProxy extends AbstractProxy {
 
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
-    ConfigManager _cm;
     String _cell; // 用来接收扫码结果的单元格位置信息
 
     Boolean _cscanOn = false;
@@ -37,19 +29,7 @@ public class PDAProxy extends BaseProxy {
     Integer _cscanLimit, _cscanCount;
 
 
-    static final String LOG_TAG = "HzgJsBridgePDA";
-
-    /**
-     * 基础的构造函数
-     * @param webView 浏览器内核
-     * @param interop HTML内容操作接口
-     */
-    public PDAProxy(HACWebView webView, BaseHTMLInterop interop) {
-        super(webView, interop);
-
-        _cm = new ConfigManager(webView.getActivityContext());
-    }
-
+    static final String LOG_TAG = "HAC_HzgJsBridgePDA";
 
     /**
      * 注册的名称为：pda
@@ -66,7 +46,7 @@ public class PDAProxy extends BaseProxy {
     public void onActivityCreated() {
 
         // 创建Broadcast模式扫码页面
-        _arcScanner = CurrentWebView.getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcScanner = getInterop().getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
             // 获取页面返回的结果
             Intent data = result.getData();
@@ -74,39 +54,31 @@ public class PDAProxy extends BaseProxy {
             if (null != data) {
                 // 获取并判断返回码
                 int code = result.getResultCode();
-                if (code == SingleScanActivity.SCAN_STATUS_OK) {
+                if (code == PDAProxy_SingleScanActivity.SCAN_STATUS_OK) {
 
                     // 成功接收到返回的扫码结果
-                    String resultS = data.getStringExtra(SingleScanActivity.BUNDLE_EXTRA_RESULT);
+                    String resultS = data.getStringExtra(PDAProxy_SingleScanActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    CurrentWebView.writeLogIntoConsole( "PDA scan completed. Result is : " + resultS);
+                    getInterop().writeLogIntoConsole( "PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
-                    CurrentHTMLInterop.setInputValue( _cell, resultS);
+                    getInterop().setInputValue( _cell, resultS);
                 } else {
                     // 记录日志
-                    CurrentWebView.writeLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
+                    getInterop().writeLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    CurrentHTMLInterop.setInputValue( _cell, "");
+                    getInterop().setInputValue( _cell, "");
                 }
             } else {
                 // 记录日志
-                CurrentWebView.writeErrorIntoConsole( "PDA scan failed.");
+                getInterop().writeErrorIntoConsole( "PDA scan failed.");
 
                 // 重置单元格
-                CurrentHTMLInterop.setInputValue( _cell, "");
+                getInterop().setInputValue( _cell, "");
             }
         });
-    }
-
-    /**
-     * 无需操作
-     */
-    @Override
-    public void beforeActivityDestroy() {
-
     }
 
     /**
@@ -153,8 +125,7 @@ public class PDAProxy extends BaseProxy {
             Log.v(LOG_TAG, "收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra((null == _cm.getScanExtra()) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_extra_key_barcode_broadcast) : _cm.getScanExtra());
-
+            String result = intent.getStringExtra(getConfigManager().getScanExtra());
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
@@ -167,10 +138,10 @@ public class PDAProxy extends BaseProxy {
                 String rc = _cscanResultCache.endsWith(",") ? _cscanResultCache.substring(0, _cscanResultCache.length() - 1) : _cscanResultCache;
 
                 // 记录日志
-                CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
+                getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
-                CurrentHTMLInterop.setInputValue( _cscanCell, rc);
+                getInterop().setInputValue( _cscanCell, rc);
 
                 _cscanCount++;
 
@@ -179,7 +150,7 @@ public class PDAProxy extends BaseProxy {
                     stopReceiver();
 
                     // 记录日志
-                    CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
+                    getInterop().writeLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
 
                 }
 
@@ -204,10 +175,10 @@ public class PDAProxy extends BaseProxy {
         _cell = cellLocation;
 
         // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(CurrentWebView.getActivityContext(), SingleScanActivity.class));
+        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
 
         // 记录日志
-        CurrentWebView.writeLogIntoConsole( "PDA scan (Single Mode) started.");
+        getInterop().writeLogIntoConsole( "PDA scan (Single Mode) started.");
 
     }
 
@@ -248,7 +219,7 @@ public class PDAProxy extends BaseProxy {
     private void startReceiver() {
 
         // 按照名称来过滤出需要处理的广播
-        String intentF = (_cm.getScanAction() == null) ? CurrentWebView.getActivityContext().getString(R.string.feature_scanner_broadcast_name) : _cm.getScanAction();
+        String intentF = getConfigManager().getScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);
@@ -256,10 +227,10 @@ public class PDAProxy extends BaseProxy {
         intentFilter.setPriority(Integer.MAX_VALUE);
 
         // 注册广播监听
-        CurrentWebView.getActivityContext().registerReceiver(_scanReceiver, intentFilter);
+        getInterop().getActivityContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) started.");
+        getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) started.");
 
     }
 
@@ -269,12 +240,12 @@ public class PDAProxy extends BaseProxy {
     private void stopReceiver() {
         if (_cscanOn) {
 
-            CurrentWebView.getActivityContext().unregisterReceiver(_scanReceiver);
+            getInterop().getActivityContext().unregisterReceiver(_scanReceiver);
 
             _cscanOn = false;
 
             // 记录日志
-            CurrentWebView.writeLogIntoConsole( "PDA scan (Continues Mode) stopped.");
+            getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) stopped.");
 
         }
     }

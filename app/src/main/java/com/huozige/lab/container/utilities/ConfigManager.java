@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.utilities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -16,7 +16,7 @@ import com.huozige.lab.container.R;
  */
 public class ConfigManager {
 
-    static final String LOG_TAG = "ConfigManager";
+    static final String LOG_TAG = "HAC_ConfigManager";
     static final int DEFAULT_ACTIONBAR_COLOR = 0xFF555555; // 默认颜色为中性灰
 
     static final String PREFERENCE_NAME = "HAC";
@@ -68,14 +68,6 @@ public class ConfigManager {
         }
     }
 
-    /**
-     * 重启应用
-     */
-    public void restartApp(){
-        Intent intentR = _context.getPackageManager().getLaunchIntentForPackage(_context.getBaseContext().getPackageName());
-        intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        _context.startActivity(intentR);
-    }
     /**
      * 获取应用入口页面
      *

@@ -1,17 +1,12 @@
 package com.huozige.lab.container;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.king.zxing.CameraScan;
+import androidx.appcompat.app.AlertDialog;
 
 /**
  * 扫码配置的替代页面：输入JSON文本实现配置
@@ -41,7 +36,7 @@ public class TextConfigActivity extends BaseActivity {
         ab.setPositiveButton(TextConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
             // 执行配置过程
-            Boolean isOk= ConfigManager.quickConfig(json);
+            Boolean isOk= getConfigManager().quickConfig(json);
 
             if(isOk){
 

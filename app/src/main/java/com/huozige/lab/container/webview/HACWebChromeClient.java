@@ -17,10 +17,11 @@ import android.widget.EditText;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.engine.impl.GlideEngine;
@@ -36,20 +37,20 @@ import java.util.List;
 public class HACWebChromeClient extends WebChromeClient {
 
     String _title; // 当前页面标题，用于弹出消息等场景
-    BaseActivity _context; // 关联的上下文，即拥有浏览器内核的页面
+    AppCompatActivity _context; // 关联的上下文，即拥有浏览器内核的页面
 
     ValueCallback<Uri[]> _filePathCallback; // 文件选择器用的缓存
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
-    static final String LOG_TAG="HAC_WebChromeClient";
+    static final String LOG_TAG = "HAC_WebChromeClient";
 
     /**
      * 简单的构造函数
      *
      * @param activity 上下文
      */
-    public HACWebChromeClient(BaseActivity activity) {
+    public HACWebChromeClient(AppCompatActivity activity) {
         _context = activity;
     }
 
@@ -70,7 +71,7 @@ public class HACWebChromeClient extends WebChromeClient {
             _context.setTitle(_title);
         }
 
-        ((HACWebView)view).setProgress(newProgress);
+        ((HACWebView) view).setProgress(newProgress);
     }
 
     /**
@@ -155,45 +156,51 @@ public class HACWebChromeClient extends WebChromeClient {
     @Override
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 
-        // 首页加载完成后，提前申请权限
-        _context.requirePermission( Permission.CAMERA);
-        _context.requirePermission( Permission.WRITE_EXTERNAL_STORAGE);
+        _filePathCallback = filePathCallback; // 将参数缓存起来，回调使用
 
-        _filePathCallback = filePathCallback; // 将参数缓存起来
+        if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("video/*") || Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
-        if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
+            // 需要调用摄像头，则先申请权限
+            PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
+                    Permission.CAMERA,
+                    Permission.WRITE_EXTERNAL_STORAGE
+            }, () -> {
 
-            // 照片采用知乎的Matisse库，支持拍摄
-            Matisse.from(_context)
-                    .choose(MimeType.ofImage(), false)
-                    .countable(true)
-                    .capture(true)
-                    .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
-                            new CaptureStrategy(true, "com.huozige.lab.container"))
-                    .maxSelectable(1)
-                    .thumbnailScale(0.85f)
-                    .imageEngine(new GlideEngine())
-                    .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
-        } else if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("video/*")) {
+                if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
-            // 视频也采用知乎的Matisse库，支持拍摄
-            Matisse.from(_context)
-                    .choose(MimeType.ofVideo(), false)
-                    .countable(true)
-                    .capture(true)
-                    .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
-                            new CaptureStrategy(true, "com.huozige.lab.container"))
-                    .maxSelectable(1)
-                    .thumbnailScale(0.85f)
-                    .imageEngine(new GlideEngine())
-                    .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
+                    // 照片采用知乎的Matisse库，支持拍摄
+                    Matisse.from(_context)
+                            .choose(MimeType.ofImage(), false)
+                            .countable(true)
+                            .capture(true)
+                            .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
+                                    new CaptureStrategy(true, "com.huozige.lab.container"))
+                            .maxSelectable(1)
+                            .thumbnailScale(0.85f)
+                            .imageEngine(new GlideEngine())
+                            .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
+                } else {
+
+                    // 视频也采用知乎的Matisse库，支持拍摄
+                    Matisse.from(_context)
+                            .choose(MimeType.ofVideo(), false)
+                            .countable(true)
+                            .capture(true)
+                            .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
+                                    new CaptureStrategy(true, "com.huozige.lab.container"))
+                            .maxSelectable(1)
+                            .thumbnailScale(0.85f)
+                            .imageEngine(new GlideEngine())
+                            .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
+                }
+            });
         } else {
 
-            // 其他类型的文件则采用默认的文件选择器
+            // 直接使用系统文件选择机制
             _contentChooser.launch("*/*");
-
         }
 
+        // 标记为已经处理
         return true;
     }
 
@@ -249,13 +256,15 @@ public class HACWebChromeClient extends WebChromeClient {
     @Override
     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 
-        _context.requirePermission( Permission.ACCESS_FINE_LOCATION);
+        PermissionsUtility.asyncRequirePermissions(_context, new String[]{
+                Permission.ACCESS_FINE_LOCATION
+        }, () -> {
+            Log.v(LOG_TAG, "GeolocationPermissionsShowPrompt invoked");
 
-        Log.v(LOG_TAG,"GeolocationPermissionsShowPrompt invoked");
-
-        // 第一个参数是whether or not the origin should be allowed to use the Geolocation API
-        // 第二个参数是 whether the permission should be retained beyond the lifetime of a page currently being displayed by a WebView
-        callback.invoke(origin, true, false);
+            // 第一个参数是whether or not the origin should be allowed to use the Geolocation API
+            // 第二个参数是 whether the permission should be retained beyond the lifetime of a page currently being displayed by a WebView
+            callback.invoke(origin, true, false);
+        });
     }
 
 }

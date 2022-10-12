@@ -8,10 +8,6 @@
     <string name="feature_scanner_broadcast_name">com.android.server.scan</string>
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
 
-    <!-- 内置参数，不建议修改 -->
-    <!--HAC配置广播的过滤器，如果在同一个手机上安装多个容器，需要使用该配置做区分-->
-    <string name="app_config_broadcast_filter">com.huozige.hac_config_default</string>
-
     <!-- 界面文字，修改前建议确认字符串长度-->
     <string name="ui_menu_home">首页</string>
     <string name="ui_menu_refresh">刷新</string>

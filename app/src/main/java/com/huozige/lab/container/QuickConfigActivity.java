@@ -12,20 +12,17 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
-import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
-import com.hjq.permissions.XXPermissions;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
-
-import java.util.List;
 
 /**
  * 通过二维码完成快速配置
  */
 public class QuickConfigActivity extends BaseActivity {
 
-    static final String LOG_TAG = "QuickConfigActivity";
+    static final String LOG_TAG = "HAC_QuickConfigActivity";
 
     ActivityResultLauncher<Intent> _arc4TCA; // 用来弹出配置页面。
 
@@ -44,7 +41,7 @@ public class QuickConfigActivity extends BaseActivity {
             ab.setPositiveButton(QuickConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
                 // 执行配置过程
-                Boolean isOk= ConfigManager.quickConfig(json);
+                Boolean isOk= getConfigManager().quickConfig(json);
 
                 if(isOk){
 
@@ -72,7 +69,7 @@ public class QuickConfigActivity extends BaseActivity {
             ab.show();
         }
 
-    }); // 用来弹出ZXingLite扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
+    });
 
 
     @Override
@@ -96,23 +93,13 @@ public class QuickConfigActivity extends BaseActivity {
 
     View.OnClickListener scanForConfig = view -> {
 
-        XXPermissions.with(QuickConfigActivity.this)
-                .permission(Permission.CAMERA)
-                .request(new OnPermissionCallback() {
-
-                    @Override
-                    public void onGranted(List<String> permissions, boolean all) {
-                    }
-
-                    @Override
-                    public void onDenied(List<String> permissions, boolean never) {
-                        Toast.makeText(QuickConfigActivity.this, "请允许应用利用摄像头扫描二维码", Toast.LENGTH_LONG).show();
-                    }
-                });
-
-        // 调用ZXingLite的扫码页面
-        _arcZxingLite.launch(new Intent(QuickConfigActivity.this, CaptureActivity.class));
-
+        // 申请摄像头权限，然后开始扫码
+        PermissionsUtility.asyncRequirePermissions(QuickConfigActivity.this, new String[]{
+                Permission.CAMERA
+        },()->{
+            // 调用ZXingLite的扫码页面
+            _arcZxingLite.launch(new Intent(QuickConfigActivity.this, CaptureActivity.class));
+        });
     };
 
     void restart(){

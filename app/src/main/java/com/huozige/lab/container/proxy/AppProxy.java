@@ -1,4 +1,4 @@
-package com.huozige.lab.container.webview.proxy;
+package com.huozige.lab.container.proxy;
 
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -12,10 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
-import com.huozige.lab.container.webview.BaseHTMLInterop;
-import com.huozige.lab.container.webview.BaseProxy;
-import com.huozige.lab.container.ConfigManager;
-import com.huozige.lab.container.webview.HACWebView;
+import com.huozige.lab.container.utilities.LifecycleUtility;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -34,27 +31,13 @@ import com.huozige.lab.container.webview.HACWebView;
  * app.openSettingPage()：打开设置页面
  * app.openQuickConfigPage()：打开快速配置页面
  */
-public class AppProxy extends BaseProxy {
+public class AppProxy extends AbstractProxy {
 
     String _versionCell, _packageCell; // 单元格位置缓存
 
     ActivityResultLauncher<Intent> _arcWoCallback; // 用来弹出页面
 
-    ConfigManager _cm;
-
-    static final String LOG_TAG = "AppProxy";
-
-    /**
-     * 基础的构造函数
-     *
-     * @param webView 浏览器内核
-     * @param interop HTML内容操作接口
-     */
-    public AppProxy(HACWebView webView, BaseHTMLInterop interop) {
-        super(webView, interop);
-
-        _cm = new ConfigManager(webView.getActivityContext()); // 初始化配置操作器
-    }
+    static final String LOG_TAG = "HAC_AppProxy";
 
     /**
      * 注册的名称为：app
@@ -69,16 +52,8 @@ public class AppProxy extends BaseProxy {
      */
     @Override
     public void onActivityCreated() {
-        _arcWoCallback = CurrentWebView.getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcWoCallback = getInterop().getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         });
-    }
-
-    /**
-     * 无需操作
-     */
-    @Override
-    public void beforeActivityDestroy() {
-
     }
 
     /**
@@ -118,8 +93,8 @@ public class AppProxy extends BaseProxy {
     public void setScannerOptions(String action, String extra) {
 
         // 更新配置项
-        _cm.upsertScanAction(action);
-        _cm.upsertScanExtra(extra);
+        getConfigManager().upsertScanAction(action);
+        getConfigManager().upsertScanExtra(extra);
     }
 
     /**
@@ -129,11 +104,7 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void restartApp() {
         // 直接重启
-        CurrentWebView.getActivityContext().runOnUiThread(() -> {
-            Intent intentR = CurrentWebView.getActivityContext().getBaseContext().getPackageManager().getLaunchIntentForPackage(CurrentWebView.getActivityContext().getBaseContext().getPackageName());
-            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            CurrentWebView.getActivityContext().startActivity(intentR);
-        });
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -143,8 +114,8 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void openSettingPage() {
 
-        CurrentWebView.getActivityContext().runOnUiThread(() ->
-                _arcWoCallback.launch(new Intent(CurrentWebView.getActivityContext(), SettingActivity.class))
+        getInterop().getActivityContext().runOnUiThread(() ->
+                _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), SettingActivity.class))
         );
     }
 
@@ -154,8 +125,8 @@ public class AppProxy extends BaseProxy {
      */
     @JavascriptInterface
     public void openQuickConfigPage() {
-        CurrentWebView.getActivityContext().runOnUiThread(() ->
-                _arcWoCallback.launch(new Intent(CurrentWebView.getActivityContext(), QuickConfigActivity.class))
+        getInterop().getActivityContext().runOnUiThread(() ->
+                _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), QuickConfigActivity.class))
         );
     }
 
@@ -166,7 +137,10 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
 
-        _cm.upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+        getConfigManager().upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -176,7 +150,10 @@ public class AppProxy extends BaseProxy {
     @JavascriptInterface
     public void toggleActionBar(String shouldShow) {
 
-        _cm.upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+        getConfigManager().upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -187,7 +164,10 @@ public class AppProxy extends BaseProxy {
     public void setAboutUrl(String url) {
 
         // 更新配置项
-        _cm.upsertAboutUrl(url);
+        getConfigManager().upsertAboutUrl(url);
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -198,7 +178,10 @@ public class AppProxy extends BaseProxy {
     public void setHelpUrl(String url) {
 
         // 更新配置项
-        _cm.upsertHelpUrl(url);
+        getConfigManager().upsertHelpUrl(url);
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -211,7 +194,7 @@ public class AppProxy extends BaseProxy {
 
         // 记录参数
         _packageCell = cell;
-        int tcdColor = _cm.getTCD();
+        int tcdColor = getConfigManager().getTCD();
 
         // 兼容Web的常规做法，不返回A，仅返回RGB
         String R, G, B;
@@ -228,7 +211,7 @@ public class AppProxy extends BaseProxy {
         sb.append(G);
         sb.append(B);
 
-        CurrentHTMLInterop.setInputValue(_packageCell, sb.toString());
+        getInterop().setInputValue(_packageCell, sb.toString());
     }
 
     /**
@@ -244,10 +227,10 @@ public class AppProxy extends BaseProxy {
         colorInteger = colorInteger.replace("0x", "");
 
         // 更新配置项
-        _cm.upsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
+        getConfigManager().upsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
 
-        // 刷新ActionBar
-        CurrentWebView.getActivityContext().refreshActionBar();
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
     /**
@@ -259,7 +242,7 @@ public class AppProxy extends BaseProxy {
 
         // 记录参数
         _packageCell = cell;
-        CurrentHTMLInterop.setInputValue(_packageCell, CurrentWebView.getActivityContext().getPackageName());
+        getInterop().setInputValue(_packageCell, getInterop().getActivityContext().getPackageName());
     }
 
     /**
@@ -275,7 +258,7 @@ public class AppProxy extends BaseProxy {
         String versionName = "";
 
         try {
-            PackageInfo pinfo = CurrentWebView.getActivityContext().getPackageManager().getPackageInfo(CurrentWebView.getActivityContext().getPackageName(), PackageManager.GET_CONFIGURATIONS);
+            PackageInfo pinfo = getInterop().getActivityContext().getPackageManager().getPackageInfo(getInterop().getActivityContext().getPackageName(), PackageManager.GET_CONFIGURATIONS);
             versionName = pinfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
@@ -284,6 +267,6 @@ public class AppProxy extends BaseProxy {
 
         // 需要调度回主线程操作
         String finalVersionName = versionName;
-        CurrentHTMLInterop.setInputValue(_versionCell, finalVersionName);
+        getInterop().setInputValue(_versionCell, finalVersionName);
     }
 }

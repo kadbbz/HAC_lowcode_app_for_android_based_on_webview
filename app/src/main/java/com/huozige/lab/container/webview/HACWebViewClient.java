@@ -8,12 +8,16 @@ import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.huozige.lab.container.ConfigManager;
+import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 处理页面的事件，实现异常处理等功能
@@ -22,8 +26,7 @@ public class HACWebViewClient extends WebViewClient {
 
     AppCompatActivity _context; // 包含有浏览器内核的上下文
     static final String LOG_TAG = "HAC_WebViewClient"; // 日志的标识
-
-    ConfigManager _cm;
+    private AbstractStaticFilesCacheFilter cacheFilter;
 
     /**
      * 简单的构造函数
@@ -32,7 +35,6 @@ public class HACWebViewClient extends WebViewClient {
      */
     public HACWebViewClient(AppCompatActivity activity) {
         _context = activity;
-        _cm = new ConfigManager(_context);
     }
 
     /**
@@ -96,8 +98,8 @@ public class HACWebViewClient extends WebViewClient {
     }
 
     @Override
-    public void onPageStarted(WebView view, String url,  Bitmap favicon) {
-        super.onPageStarted(view,url,favicon);
+    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        super.onPageStarted(view, url, favicon);
 
         Log.v(LOG_TAG, "页面加载开始：" + url);
     }
@@ -113,4 +115,54 @@ public class HACWebViewClient extends WebViewClient {
         Log.v(LOG_TAG, "页面加载完成：" + url);
     }
 
+
+    /**
+     * 处理离线缓存：从离线缓存中加载部分资源，提升响应速度
+     * @param view 浏览器
+     * @param request 请求信息
+     * @return 响应信息
+     */
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
+        if (request != null && request.getUrl() != null) {
+
+            // 仅处理HTTP和HTTPS
+            String scheme = request.getUrl().getScheme().trim();
+            if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
+                try {
+                    // 调用缓存处理器
+                    AbstractStaticFilesCacheFilter.CacheHint cacheFile = cacheFilter.filter(request.getUrl());
+
+                    // 判断是否有可用的缓存
+                    if (cacheFile != null) {
+
+                        // 打开本地缓存文件，获取流
+                        InputStream localCache = _context.getAssets().open(cacheFile.LocalFilePath);
+
+                        // 将本地文件返回给浏览器
+                        return new WebResourceResponse(cacheFile.MIME, cacheFile.Encoding, localCache);
+                    }
+                } catch (IOException e) {
+
+                    // 仅记录日志
+                    Log.e(LOG_TAG,"Error on loading cache for : " + request.getUrl().toString() +  " Error : "+ e);
+                }
+            }
+        }
+
+        // 不符合条件或没有命中缓存，则采用默认行为，从服务器获取
+        return super.shouldInterceptRequest(view, request);
+    }
+
+    public AbstractStaticFilesCacheFilter getStaticFilesCacheFilter() throws IllegalStateException {
+        if (null == cacheFilter) {
+            throw new IllegalStateException ("CacheFilter has not be initialized.");
+        }
+
+        return cacheFilter;
+    }
+
+    public void setStaticFilesCacheFilter(AbstractStaticFilesCacheFilter cacheFilter) {
+        this.cacheFilter = cacheFilter;
+    }
 }
