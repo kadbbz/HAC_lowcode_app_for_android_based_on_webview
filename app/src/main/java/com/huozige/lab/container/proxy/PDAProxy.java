@@ -29,7 +29,7 @@ public class PDAProxy extends AbstractProxy {
     Integer _cscanLimit, _cscanCount;
 
 
-    static final String LOG_TAG = "HzgJsBridgePDA";
+    static final String LOG_TAG = "HAC_HzgJsBridgePDA";
 
     /**
      * 注册的名称为：pda

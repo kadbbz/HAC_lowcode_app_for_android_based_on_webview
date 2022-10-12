@@ -37,7 +37,7 @@ public class AppProxy extends AbstractProxy {
 
     ActivityResultLauncher<Intent> _arcWoCallback; // 用来弹出页面
 
-    static final String LOG_TAG = "AppProxy";
+    static final String LOG_TAG = "HAC_AppProxy";
 
     /**
      * 注册的名称为：app

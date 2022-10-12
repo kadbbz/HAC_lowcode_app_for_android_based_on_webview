@@ -12,7 +12,7 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  */
 public abstract class AbstractWebInterop {
 
-    static final String LOG_TAG="AbstractWebInterop";
+    static final String LOG_TAG="HAC_AbstractWebInterop";
 
     protected WebView webView; // 浏览器内核
 
@@ -171,20 +171,6 @@ public abstract class AbstractWebInterop {
     public void requirePermission(String permission){
         PermissionsUtility.requirePermission(webView.getContext(), permission);
     }
-
-//    /**
-//     * 正在操作的WebView
-//     * @return WebView对象
-//     * @throws IllegalStateException WebView没有初始化
-//     */
-//    public WebView getWebView() throws IllegalStateException {
-//
-//        if (null == webView) {
-//            throw new IllegalStateException("WebView has not be initialized.");
-//        }
-//
-//        return webView;
-//    }
 
     public void setWebView(WebView webView) {
         this.webView = webView;

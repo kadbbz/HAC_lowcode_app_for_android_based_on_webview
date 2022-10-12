@@ -24,7 +24,7 @@ public class HACWebView extends WebView {
 
     private ConfigManager configManager;
 
-    static final String LOG_TAG = "HACWebView";
+    static final String LOG_TAG = "HAC_WebView";
 
     Context _context;
 

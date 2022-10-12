@@ -19,7 +19,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_CANCEL = -1;
     public final static String BUNDLE_EXTRA_RESULT = "result";
-    public final static String LOG_TAG = "SingleScanActivity";
+    public final static String LOG_TAG = "HAC_SingleScanActivity";
 
     /**
      * 定义广播接收器

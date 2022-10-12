@@ -10,7 +10,7 @@ import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
  */
 public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
-    final static String LOG_TAG = "HZGCacheFilter";
+    final static String LOG_TAG = "HAC_HZGCacheFilter";
 
     /**
      * 支持的活字格版本

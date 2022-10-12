@@ -25,7 +25,7 @@ import java.io.InputStream;
 public class HACWebViewClient extends WebViewClient {
 
     AppCompatActivity _context; // 包含有浏览器内核的上下文
-    static final String LOG_TAG = "HACWebViewClient"; // 日志的标识
+    static final String LOG_TAG = "HAC_WebViewClient"; // 日志的标识
     private AbstractStaticFilesCacheFilter cacheFilter;
 
     /**

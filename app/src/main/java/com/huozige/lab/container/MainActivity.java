@@ -52,7 +52,7 @@ public class MainActivity extends BaseActivity {
     static final int MENU_ID_HELP = 3;
     static final int MENU_ID_ABOUT = 4;
 
-    static final String LOG_TAG = "MainActivity"; // 日志的标识
+    static final String LOG_TAG = "HAC_MainActivity"; // 日志的标识
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override

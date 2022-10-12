@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class QuickConfigActivity extends BaseActivity {
 
-    static final String LOG_TAG = "QuickConfigActivity";
+    static final String LOG_TAG = "HAC_QuickConfigActivity";
 
     ActivityResultLauncher<Intent> _arc4TCA; // 用来弹出配置页面。
 

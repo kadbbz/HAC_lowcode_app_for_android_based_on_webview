@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class SettingActivity extends BaseActivity {
 
-    static final String LOG_TAG = "SettingActivity";
+    static final String LOG_TAG = "HAC_SettingActivity";
 
     ActivityResultLauncher<Intent> _arcZxingLite,_arc4QuickConfig;
 
