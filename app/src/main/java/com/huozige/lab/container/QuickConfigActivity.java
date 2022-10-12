@@ -44,7 +44,7 @@ public class QuickConfigActivity extends BaseActivity {
             ab.setPositiveButton(QuickConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
                 // 执行配置过程
-                Boolean isOk= ConfigManager.quickConfig(json);
+                Boolean isOk= getConfigManager().quickConfig(json);
 
                 if(isOk){
 

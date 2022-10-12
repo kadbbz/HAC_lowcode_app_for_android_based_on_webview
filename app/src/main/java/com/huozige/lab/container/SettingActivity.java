@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
+import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
 
@@ -70,13 +71,13 @@ public class SettingActivity extends BaseActivity {
             }
         });
 
-        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> ConfigManager.restartApp()); // 打开设置页面，返回后重启应用
+        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
 
         // 设置初始值
-        _txtUrl.setText(ConfigManager.getEntry());
-        _txtScanAction.setText(ConfigManager.getScanAction());
-        _txtScanExtra.setText(ConfigManager.getScanExtra());
-        _cboHa.setChecked(ConfigManager.getHA());
+        _txtUrl.setText(getConfigManager().getEntry());
+        _txtScanAction.setText(getConfigManager().getScanAction());
+        _txtScanExtra.setText(getConfigManager().getScanExtra());
+        _cboHa.setChecked(getConfigManager().getHA());
 
         Log.v(LOG_TAG, "配置页面初始化完成。");
 
@@ -114,17 +115,17 @@ public class SettingActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // 保存配置
-                ConfigManager.upsertEntry(_txtUrl.getText().toString());
-                ConfigManager.upsertScanAction(_txtScanAction.getText().toString());
-                ConfigManager.upsertScanExtra(_txtScanExtra.getText().toString());
-                ConfigManager.upsertHA(_cboHa.isChecked());
+                getConfigManager().upsertEntry(_txtUrl.getText().toString());
+                getConfigManager().upsertScanAction(_txtScanAction.getText().toString());
+                getConfigManager().upsertScanExtra(_txtScanExtra.getText().toString());
+                getConfigManager().upsertHA(_cboHa.isChecked());
 
                 Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 
                 Log.v(LOG_TAG, "配置更新完成。");
 
                 // 重启生效
-                ConfigManager.restartApp();
+                LifecycleUtility.restart(SettingActivity.this);
             }
         });
 

@@ -14,7 +14,7 @@ import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.huozige.lab.container.ConfigManager;
+import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,20 +25,16 @@ import java.io.InputStream;
 public class HACWebViewClient extends WebViewClient {
 
     AppCompatActivity _context; // 包含有浏览器内核的上下文
-    static final String LOG_TAG = "HAC_WebViewClient"; // 日志的标识
-    ICacheFilter _cacheFilter;
-
-    ConfigManager _cm;
+    static final String LOG_TAG = "HACWebViewClient"; // 日志的标识
+    private AbstractStaticFilesCacheFilter cacheFilter;
 
     /**
      * 简单的构造函数
      *
      * @param activity 上下文
      */
-    public HACWebViewClient(AppCompatActivity activity, ICacheFilter filter) {
+    public HACWebViewClient(AppCompatActivity activity) {
         _context = activity;
-        _cm = new ConfigManager(_context);
-        _cacheFilter = filter;
     }
 
     /**
@@ -135,7 +131,7 @@ public class HACWebViewClient extends WebViewClient {
             if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
                 try {
                     // 调用缓存处理器
-                    ICacheFilter.CacheHint cacheFile = _cacheFilter.filter(request.getUrl());
+                    AbstractStaticFilesCacheFilter.CacheHint cacheFile = cacheFilter.filter(request.getUrl());
 
                     // 判断是否有可用的缓存
                     if (cacheFile != null) {
@@ -158,4 +154,15 @@ public class HACWebViewClient extends WebViewClient {
         return super.shouldInterceptRequest(view, request);
     }
 
+    public AbstractStaticFilesCacheFilter getStaticFilesCacheFilter() throws IllegalStateException {
+        if (null == cacheFilter) {
+            throw new IllegalStateException ("CacheFilter has not be initialized.");
+        }
+
+        return cacheFilter;
+    }
+
+    public void setStaticFilesCacheFilter(AbstractStaticFilesCacheFilter cacheFilter) {
+        this.cacheFilter = cacheFilter;
+    }
 }

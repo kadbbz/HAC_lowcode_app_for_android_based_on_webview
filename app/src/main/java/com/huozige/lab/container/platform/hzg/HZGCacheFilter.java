@@ -1,14 +1,14 @@
-package com.huozige.lab.container.hzg;
+package com.huozige.lab.container.platform.hzg;
 
 import android.net.Uri;
 import android.util.Log;
 
-import com.huozige.lab.container.webview.ICacheFilter;
+import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 
 /**
  * 活字格专用的缓存过滤器
  */
-public class HZGCacheFilter implements ICacheFilter {
+public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
     final static String LOG_TAG = "HZGCacheFilter";
 

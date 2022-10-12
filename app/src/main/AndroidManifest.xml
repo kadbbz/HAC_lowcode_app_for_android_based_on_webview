@@ -63,7 +63,7 @@
             android:value="false" />
 
         <activity
-            android:name=".SingleScanActivity"
+            android:name=".proxy.PDAProxy_SingleScanActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

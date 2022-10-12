@@ -1,6 +1,4 @@
-package com.huozige.lab.container;
-
-import androidx.appcompat.app.AppCompatActivity;
+package com.huozige.lab.container.proxy;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,17 +8,18 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.R;
+
 /**
  * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
  */
-public class SingleScanActivity extends AppCompatActivity {
+public class PDAProxy_SingleScanActivity extends BaseActivity {
 
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_CANCEL = -1;
     public final static String BUNDLE_EXTRA_RESULT = "result";
     public final static String LOG_TAG = "SingleScanActivity";
-
-    ConfigManager _cm = new ConfigManager(this);
 
     /**
      * 定义广播接收器
@@ -34,17 +33,17 @@ public class SingleScanActivity extends AppCompatActivity {
             Log.v(LOG_TAG, "收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra( (null == _cm.getScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):_cm.getScanExtra());
+            String result = intent.getStringExtra( (null == getConfigManager().getScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):getConfigManager().getScanExtra());
 
             Log.v(LOG_TAG, "扫码结果是：" + result);
 
             // 将其打包发给调用者
             Intent res = new Intent();
             res.putExtra(BUNDLE_EXTRA_RESULT, result);
-            SingleScanActivity.this.setResult(SCAN_STATUS_OK, res);
+            PDAProxy_SingleScanActivity.this.setResult(SCAN_STATUS_OK, res);
 
             // 关闭当前页面
-            SingleScanActivity.this.finish();
+            PDAProxy_SingleScanActivity.this.finish();
         }
     };
 
@@ -76,11 +75,11 @@ public class SingleScanActivity extends AppCompatActivity {
      * 页面恢复时，启动监听
      */
     @Override
-    protected void onResume() {
+    public void onResume() {
 
         super.onResume();
 
-        String intentF = (_cm.getScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):_cm.getScanAction();
+        String intentF = (getConfigManager().getScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):getConfigManager().getScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);

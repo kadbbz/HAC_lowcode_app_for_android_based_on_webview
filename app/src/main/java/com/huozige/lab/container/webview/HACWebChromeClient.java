@@ -17,10 +17,11 @@ import android.widget.EditText;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.engine.impl.GlideEngine;
@@ -36,20 +37,20 @@ import java.util.List;
 public class HACWebChromeClient extends WebChromeClient {
 
     String _title; // 当前页面标题，用于弹出消息等场景
-    BaseActivity _context; // 关联的上下文，即拥有浏览器内核的页面
+    AppCompatActivity _context; // 关联的上下文，即拥有浏览器内核的页面
 
     ValueCallback<Uri[]> _filePathCallback; // 文件选择器用的缓存
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
-    static final String LOG_TAG="HAC_WebChromeClient";
+    static final String LOG_TAG = "HAC_WebChromeClient";
 
     /**
      * 简单的构造函数
      *
      * @param activity 上下文
      */
-    public HACWebChromeClient(BaseActivity activity) {
+    public HACWebChromeClient(AppCompatActivity activity) {
         _context = activity;
     }
 
@@ -70,7 +71,7 @@ public class HACWebChromeClient extends WebChromeClient {
             _context.setTitle(_title);
         }
 
-        ((HACWebView)view).setProgress(newProgress);
+        ((HACWebView) view).setProgress(newProgress);
     }
 
     /**
@@ -156,8 +157,8 @@ public class HACWebChromeClient extends WebChromeClient {
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 
         // 首页加载完成后，提前申请权限
-        _context.requirePermission( Permission.CAMERA);
-        _context.requirePermission( Permission.WRITE_EXTERNAL_STORAGE);
+        PermissionsUtility.requirePermission(webView.getContext(), Permission.CAMERA);
+        PermissionsUtility.requirePermission(webView.getContext(), Permission.WRITE_EXTERNAL_STORAGE);
 
         _filePathCallback = filePathCallback; // 将参数缓存起来
 
@@ -249,9 +250,9 @@ public class HACWebChromeClient extends WebChromeClient {
     @Override
     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 
-        _context.requirePermission( Permission.ACCESS_FINE_LOCATION);
+        PermissionsUtility.requirePermission(_context, Permission.ACCESS_FINE_LOCATION);
 
-        Log.v(LOG_TAG,"GeolocationPermissionsShowPrompt invoked");
+        Log.v(LOG_TAG, "GeolocationPermissionsShowPrompt invoked");
 
         // 第一个参数是whether or not the origin should be allowed to use the Geolocation API
         // 第二个参数是 whether the permission should be retained beyond the lifetime of a page currently being displayed by a WebView
