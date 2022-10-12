@@ -27,76 +27,78 @@ public class GeoProxy extends AbstractProxy {
     @JavascriptInterface
     public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
 
-        getInterop().requirePermission(Permission.ACCESS_FINE_LOCATION);
-        getInterop().requirePermission(Permission.ACCESS_COARSE_LOCATION);
+        // 获取地理位置，需要先申请权限
+        getInterop().requirePermission(new String[]{
+                Permission.ACCESS_FINE_LOCATION,
+                Permission.ACCESS_COARSE_LOCATION
+        }, () -> {
+            //create a callback
+            LocationProvider.LocationCallback callback = new LocationProvider.LocationCallback() {
 
-        //create a callback
-        LocationProvider.LocationCallback callback = new LocationProvider.LocationCallback() {
+                private void returnWithWGS84(float lat, float lon) {
 
-            private void returnWithWGS84(float lat, float lon) {
+                    if (CS_BD09.equalsIgnoreCase(coordinateSystem)) {
+                        // 优先百度坐标，可配套百度地图使用
+                        double[] bd09 = Geo_CoordinateSystemHelpers.wgs84_bd09(lat, lon);
+                        getInterop().setInputValue(cellLat, String.valueOf(bd09[0]));
+                        getInterop().setInputValue(cellLon, String.valueOf(bd09[1]));
+                    } else if (CS_WGS84.equalsIgnoreCase(coordinateSystem)) {
+                        // 然后是GPS坐标
+                        getInterop().setInputValue(cellLat, String.valueOf(lat));
+                        getInterop().setInputValue(cellLon, String.valueOf(lon));
+                    } else {
+                        // 默认为国内火星坐标
+                        double[] gcj02 = Geo_CoordinateSystemHelpers.wgs84_gcj02(lat, lon);
+                        getInterop().setInputValue(cellLat, String.valueOf(gcj02[0]));
+                        getInterop().setInputValue(cellLon, String.valueOf(gcj02[1]));
+                    }
 
-                if (CS_BD09.equalsIgnoreCase(coordinateSystem)) {
-                    // 优先百度坐标，可配套百度地图使用
-                    double[] bd09 = Geo_CoordinateSystemHelpers.wgs84_bd09(lat, lon);
-                    getInterop().setInputValue(cellLat, String.valueOf(bd09[0]));
-                    getInterop().setInputValue(cellLon, String.valueOf(bd09[1]));
-                } else if (CS_WGS84.equalsIgnoreCase(coordinateSystem)) {
-                    // 然后是GPS坐标
-                    getInterop().setInputValue(cellLat, String.valueOf(lat));
-                    getInterop().setInputValue(cellLon, String.valueOf(lon));
-                } else {
-                    // 默认为国内火星坐标
-                    double[] gcj02 = Geo_CoordinateSystemHelpers.wgs84_gcj02(lat, lon);
-                    getInterop().setInputValue(cellLat, String.valueOf(gcj02[0]));
-                    getInterop().setInputValue(cellLon, String.valueOf(gcj02[1]));
+                    // 重置错误信息
+                    getInterop().setInputValue(cellErr, "");
                 }
 
-                // 重置错误信息
-                getInterop().setInputValue(cellErr, "");
-            }
+                @Override
+                public void onNewLocationAvailable(float lat, float lon) {
 
-            @Override
-            public void onNewLocationAvailable(float lat, float lon) {
+                    getInterop().writeLogIntoConsole("getLocation NewLocationAvailable : lat " + lat + " lon " + lon + " (WGS84).");
+                    returnWithWGS84(lat, lon);
+                }
 
-                getInterop().writeLogIntoConsole("getLocation NewLocationAvailable : lat " + lat + " lon " + lon + " (WGS84).");
-                returnWithWGS84(lat, lon);
-            }
+                @Override
+                public void locationServicesNotEnabled() {
+                    getInterop().writeErrorIntoConsole("getLocation Location Services Not Enabled");
+                    getInterop().setInputValue(cellErr, "LocationServicesNotEnabled");
+                }
 
-            @Override
-            public void locationServicesNotEnabled() {
-                getInterop().writeErrorIntoConsole("getLocation Location Services Not Enabled");
-                getInterop().setInputValue(cellErr, "LocationServicesNotEnabled");
-            }
+                @Override
+                public void updateLocationInBackground(float lat, float lon) {
+                    //if a listener returns after the main locationAvailable callback, it will go here
+                    getInterop().writeLogIntoConsole("getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon + " (WGS84).");
 
-            @Override
-            public void updateLocationInBackground(float lat, float lon) {
-                //if a listener returns after the main locationAvailable callback, it will go here
-                getInterop().writeLogIntoConsole("getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon + " (WGS84).");
+                    returnWithWGS84(lat, lon);
+                }
 
-                returnWithWGS84(lat, lon);
-            }
+                @Override
+                public void networkListenerInitialised() {
+                    //when the library switched from GPS only to GPS & network
+                    getInterop().writeLogIntoConsole("getLocation Network Listener Initialised");
+                }
 
-            @Override
-            public void networkListenerInitialised() {
-                //when the library switched from GPS only to GPS & network
-                getInterop().writeLogIntoConsole("getLocation Network Listener Initialised");
-            }
+                @Override
+                public void locationRequestStopped() {
+                    getInterop().writeLogIntoConsole("getLocation location Request Stopped");
+                }
+            };
 
-            @Override
-            public void locationRequestStopped() {
-                getInterop().writeLogIntoConsole("getLocation location Request Stopped");
-            }
-        };
+            //initialise an instance with the two required parameters
+            LocationProvider provider = new LocationProvider.Builder()
+                    .setContext(getInterop().getActivityContext())
+                    .setListener(callback)
+                    .create();
 
-        //initialise an instance with the two required parameters
-        LocationProvider provider = new LocationProvider.Builder()
-                .setContext(getInterop().getActivityContext())
-                .setListener(callback)
-                .create();
-
-        //start getting location
-        provider.requestLocation();
-
+            //start getting location
+            provider.requestLocation();
+        });
     }
 
     @Override

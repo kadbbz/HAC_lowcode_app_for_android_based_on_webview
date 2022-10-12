@@ -165,11 +165,23 @@ public abstract class AbstractWebInterop {
     }
 
     /**
-     * 申请敏感权限
-     * @param permission 需要申请的权限
+     * 申请一个敏感权限
+     * @param permission 需要申请的权限（单个权限）
+     * @param successAction 申请成功后执行的动作
      */
-    public void requirePermission(String permission){
-        PermissionsUtility.requirePermission(webView.getContext(), permission);
+    public void requirePermission(String permission, Runnable successAction){
+        PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
+                permission
+        },successAction);
+    }
+
+    /**
+     * 申请多个敏感权限
+     * @param permissions 需要申请的权限
+     * @param successAction 申请成功后执行的动作
+     */
+    public void requirePermission(String[] permissions, Runnable successAction){
+        PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions,successAction);
     }
 
     public void setWebView(WebView webView) {
