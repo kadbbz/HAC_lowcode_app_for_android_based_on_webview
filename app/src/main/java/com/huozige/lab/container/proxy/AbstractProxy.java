@@ -22,17 +22,30 @@ public abstract class AbstractProxy {
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void onActivityCreated();
+    public void onActivityCreated(){
+
+    }
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void beforeActivityPause();
+    public void beforeActivityPause() {
+
+    }
 
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public abstract void onActivityResumed();
+    public void onActivityResumed() {
+
+    }
+
+    /**
+     * 需要注册到上下文中的初始化操作
+     */
+    public void onActivityDestroy() {
+
+    }
 
     /**
      * 处理上下文转发来的Activity调用返回结果
@@ -42,7 +55,9 @@ public abstract class AbstractProxy {
      * @param data        同onActivityResult
      * @return 返回true意味着不再调用后续的处理器
      */
-    public abstract Boolean processActivityResult(int requestCode, int resultCode, Intent data);
+    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
+        return false;
+    }
 
     public void setInterop(AbstractWebInterop interop) {
         this.interop = interop;

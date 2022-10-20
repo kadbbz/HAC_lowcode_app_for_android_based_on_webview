@@ -57,35 +57,6 @@ public class AppProxy extends AbstractProxy {
     }
 
     /**
-     * 无需操作
-     */
-    @Override
-    public void beforeActivityPause() {
-
-    }
-
-    /**
-     * 无需操作
-     */
-    @Override
-    public void onActivityResumed() {
-
-    }
-
-    /**
-     * 无需操作
-     *
-     * @param requestCode 同onActivityResult
-     * @param resultCode  同onActivityResult
-     * @param data        同onActivityResult
-     * @return 跳过这个JS桥，处理下一个
-     */
-    @Override
-    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
-        return false;
-    }
-
-    /**
      * 注册到页面的app.setScannerOptions(action,extra)方法
      * 设置扫描头的参数配置
      */

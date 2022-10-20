@@ -106,26 +106,6 @@ public class GeoProxy extends AbstractProxy {
         return "geo";
     }
 
-    @Override
-    public void onActivityCreated() {
-
-    }
-
-    @Override
-    public void beforeActivityPause() {
-
-    }
-
-    @Override
-    public void onActivityResumed() {
-
-    }
-
-    @Override
-    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
-        return false;
-    }
-
     /**
      * 转换坐标体系
      */

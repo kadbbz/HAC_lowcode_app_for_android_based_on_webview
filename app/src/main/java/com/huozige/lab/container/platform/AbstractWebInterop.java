@@ -1,5 +1,6 @@
 package com.huozige.lab.container.platform;
 
+import android.net.Uri;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -182,6 +183,23 @@ public abstract class AbstractWebInterop {
      */
     public void requirePermission(String[] permissions, Runnable successAction){
         PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions,successAction);
+    }
+
+    /**
+     * 获取当前页面的Host（主机名或IP地址）
+     * @return Host，如果当前没有页面则返回null
+     */
+    public String getCurrentHost(){
+
+        final Uri[] currentPage = new Uri[1];
+
+        getActivityContext().runOnUiThread(()-> currentPage[0] = Uri.parse(webView.getUrl()));
+
+        if(null!= currentPage[0]){
+            return currentPage[0].getHost();
+        }else{
+            return null;
+        }
     }
 
     public void setWebView(WebView webView) {
