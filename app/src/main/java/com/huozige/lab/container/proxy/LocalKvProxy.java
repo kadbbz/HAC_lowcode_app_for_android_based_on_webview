@@ -1,6 +1,10 @@
 package com.huozige.lab.container.proxy;
 
+import android.util.Log;
 import android.webkit.JavascriptInterface;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import io.realm.Realm;
 
@@ -14,11 +18,27 @@ import io.realm.Realm;
 public class LocalKvProxy extends AbstractProxy {
 
     private static final String VERSION_NA = "N/A";
+    private static final String VALUE_NA = "DATA_NOT_FOUND";
     private static final String KEY_TEMPLATE = "%s|%s";
+    static final String LOG_TAG="HAC_LocalKvProxy";
 
     @Override
     public String getName() {
         return "localKv";
+    }
+
+    /**
+     * 获取当前入口的主机名
+     * @return 主机名
+     */
+    private String getEntryHost(){
+
+        try {
+            return (new URI(getConfigManager().getEntry())).getHost();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     /**
@@ -55,10 +75,12 @@ public class LocalKvProxy extends AbstractProxy {
     public void upsertV(String key, String valueString, String version) {
         Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
             LocalKv_Bundle bundle = new LocalKv_Bundle();
-            bundle.key = String.format(KEY_TEMPLATE,getInterop().getCurrentHost(),  key);
+            bundle.key = String.format(KEY_TEMPLATE, getEntryHost(),  key);
             bundle.value = valueString;
             bundle.version= version;
             transactionRealm.insertOrUpdate(bundle);
+
+            Log.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost());
         });
     }
 
@@ -67,20 +89,22 @@ public class LocalKvProxy extends AbstractProxy {
      * 从本地数据库中查找值，并写入单元格
      * @param key Key，大小写敏感
      * @param version 版本号
-     * @param cell 目标单元格
+     * @param cell 目标单元格，没有找到键值+版本时返回DATA_NOT_FOUND
      */
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
         Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
-            String bKey = String.format(KEY_TEMPLATE,getInterop().getCurrentHost(), key);
+            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
             LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",version).findFirst();
 
             if(bundle !=null){
+                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
                 getInterop().setInputValue(cell,bundle.value);
             }else{
-                getInterop().setInputValue(cell,"");
+                getInterop().setInputValue(cell,VALUE_NA);
+                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
             }
         });
     }
