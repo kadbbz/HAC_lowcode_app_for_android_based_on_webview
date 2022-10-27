@@ -12,6 +12,7 @@ import io.realm.Realm;
  * 让页面存取本地KV数据库
  * localKv.upsert(key,value)：向本地数据库存入值
  * localKv.retrieve(key,cell)：从本地数据库中查找值，并写入单元格
+ * localKv.remove(key)：从本地数据库中删除特定值
  * localKv.upsertV(key,value,version)：向本地数据库存入值（含版本）
  * localKv.retrieveV(key,version,cell)：从本地数据库中查找特定版本的值，并写入单元格
  */
@@ -105,6 +106,25 @@ public class LocalKvProxy extends AbstractProxy {
             }else{
                 getInterop().setInputValue(cell,VALUE_NA);
                 Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+            }
+        });
+    }
+
+    /**
+     * 注册到页面的 localKv.remove(key)方法
+     * 删除特定键值的数据
+     * @param key Key，大小写敏感
+     */
+    @JavascriptInterface
+    public void remove(String key) {
+        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+
+            // 确保按照服务器隔离，在这里拼接出真实存储的Key
+            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).findFirst();
+            if (bundle != null) {
+                bundle.deleteFromRealm();
+                Log.v(LOG_TAG,"Data was deleted from LocalKV. Key: " + bKey);
             }
         });
     }
