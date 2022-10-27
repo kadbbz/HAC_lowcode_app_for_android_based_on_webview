@@ -16,6 +16,7 @@ import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.proxy.LocalKvProxy;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.webview.HACWebChromeClient;
@@ -88,7 +89,8 @@ public class MainActivity extends BaseActivity {
                 new IndexProxy(),
                 new PDAProxy(),
                 new AppProxy(),
-                new GeoProxy()
+                new GeoProxy(),
+                new LocalKvProxy()
         };
 
         for (AbstractProxy br : _bridges

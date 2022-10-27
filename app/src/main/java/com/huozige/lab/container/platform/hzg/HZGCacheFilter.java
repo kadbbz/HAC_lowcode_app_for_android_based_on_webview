@@ -16,10 +16,12 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
      * 支持的活字格版本
      */
     final static String[] SUPPORTED_VERSIONS = {
-            "8.0.6.0"};
+            "8.0.6.0",
+            "8.0.102.0"};
 
     /**
      * 执行缓存检查
+     *
      * @param url 原始URL
      * @return 命中的缓存或空引用
      */
@@ -36,9 +38,10 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
     /**
      * 检查特定PATH的文件请求是否有可用缓存
-     * @param url 请求URL
+     *
+     * @param url         请求URL
      * @param originalTpl URL的PATH模板
-     * @param cacheTpl 本地缓存文件的PATH模板
+     * @param cacheTpl    本地缓存文件的PATH模板
      * @return 缓存信息或空引用
      */
     CacheHint filterByType(Uri url, String originalTpl, String cacheTpl) {
@@ -59,7 +62,7 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
                 // 构建返回对象
                 CacheHint result = new CacheHint();
                 result.FileName = fileName;
-                result.LocalFilePath = url.getPath().replace(url_path_prefix,cache_prefix); // 通过Path进行替换，可以避免Query的影响
+                result.LocalFilePath = url.getPath().replace(url_path_prefix, cache_prefix); // 通过Path进行替换，可以避免Query的影响
                 result.Encoding = "UTF-8";
 
                 if (fileName.toLowerCase().endsWith("css")) {

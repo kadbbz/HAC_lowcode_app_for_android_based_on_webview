@@ -1,5 +1,6 @@
 package com.huozige.lab.container.platform;
 
+import android.net.Uri;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -7,17 +8,21 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * 与HTML元素直接交互的操作接口
  */
 public abstract class AbstractWebInterop {
 
-    static final String LOG_TAG="HAC_AbstractWebInterop";
+    static final String LOG_TAG = "HAC_AbstractWebInterop";
 
     protected WebView webView; // 浏览器内核
 
     /**
      * 设置某个输入类HTML元素的值
+     *
      * @param identity HTML元素的标识（如ID、名称等）
      * @param rawValue 需要设置的值
      */
@@ -25,6 +30,7 @@ public abstract class AbstractWebInterop {
 
     /**
      * 获取某个HTML元素的值
+     *
      * @param identity HTML元素的标识（如ID、名称等）
      * @return 该HTML元素的值
      */
@@ -38,7 +44,7 @@ public abstract class AbstractWebInterop {
     public void writeLogIntoConsole(String logContent) {
         executeJavaScript("console.log('" + removeJSKeyWords(logContent) + "')");
 
-        Log.v(LOG_TAG,"写入浏览器日志："+logContent);
+        Log.v(LOG_TAG, "写入浏览器日志：" + logContent);
     }
 
     /**
@@ -49,7 +55,7 @@ public abstract class AbstractWebInterop {
     public void writeErrorIntoConsole(String logContent) {
         executeJavaScript("console.error('" + removeJSKeyWords(logContent) + "')");
 
-        Log.v(LOG_TAG,"写入浏览器错误日志："+logContent);
+        Log.v(LOG_TAG, "写入浏览器错误日志：" + logContent);
     }
 
     /**
@@ -58,13 +64,14 @@ public abstract class AbstractWebInterop {
      * @param jsSegment 自定义脚本
      */
     public void executeJavaScript(String jsSegment) {
-        getActivityContext().runOnUiThread(() -> webView.loadUrl("javascript:"+jsSegment));
+        getActivityContext().runOnUiThread(() -> webView.loadUrl("javascript:" + jsSegment));
 
-        Log.v(LOG_TAG,"在浏览器执行脚本："+jsSegment);
+        Log.v(LOG_TAG, "在浏览器执行脚本：" + jsSegment);
     }
 
     /**
      * 去掉JavaScript的关键字，替换为HTML编码
+     *
      * @param str 原始字符串
      * @return 可以直接拼接到JS的字符串
      */
@@ -158,30 +165,33 @@ public abstract class AbstractWebInterop {
 
     /**
      * 获取当前浏览器所在的Activity
+     *
      * @return 可用的AppCompatActivity对象
      */
-    public AppCompatActivity getActivityContext(){
-        return  (AppCompatActivity)webView.getContext();
+    public AppCompatActivity getActivityContext() {
+        return (AppCompatActivity) webView.getContext();
     }
 
     /**
      * 申请一个敏感权限
-     * @param permission 需要申请的权限（单个权限）
+     *
+     * @param permission    需要申请的权限（单个权限）
      * @param successAction 申请成功后执行的动作
      */
-    public void requirePermission(String permission, Runnable successAction){
+    public void requirePermission(String permission, Runnable successAction) {
         PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
                 permission
-        },successAction);
+        }, successAction);
     }
 
     /**
      * 申请多个敏感权限
-     * @param permissions 需要申请的权限
+     *
+     * @param permissions   需要申请的权限
      * @param successAction 申请成功后执行的动作
      */
-    public void requirePermission(String[] permissions, Runnable successAction){
-        PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions,successAction);
+    public void requirePermission(String[] permissions, Runnable successAction) {
+        PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions, successAction);
     }
 
     public void setWebView(WebView webView) {

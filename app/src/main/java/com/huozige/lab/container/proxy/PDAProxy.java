@@ -86,6 +86,7 @@ public class PDAProxy extends AbstractProxy {
      */
     @Override
     public void beforeActivityPause() {
+
         stopReceiver();
     }
 
@@ -97,20 +98,6 @@ public class PDAProxy extends AbstractProxy {
         if (_cscanOn) {
             startReceiver();
         }
-    }
-
-    /**
-     * 无需操作
-     *
-     * @param requestCode 同onActivityResult
-     * @param resultCode  同onActivityResult
-     * @param data        同onActivityResult
-     * @return 否，无需中断
-     */
-    @Override
-    public Boolean processActivityResult(int requestCode, int resultCode, Intent data) {
-        // 没有用到Activity调用，无需处理，自然无需中断
-        return false;
     }
 
     /**
