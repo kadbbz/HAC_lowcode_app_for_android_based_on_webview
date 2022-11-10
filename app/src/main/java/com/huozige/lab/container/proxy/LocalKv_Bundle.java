@@ -1,6 +1,7 @@
 package com.huozige.lab.container.proxy;
 
 import io.realm.RealmObject;
+import io.realm.annotations.Index;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.Required;
 
@@ -14,5 +15,6 @@ public class LocalKv_Bundle extends RealmObject {
     @Required
     public String value;
     @Required
+    @Index
     public String version;
 }
