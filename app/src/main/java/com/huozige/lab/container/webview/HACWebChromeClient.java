@@ -1,9 +1,12 @@
 package com.huozige.lab.container.webview;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
 import android.webkit.GeolocationPermissions;
@@ -39,8 +42,12 @@ public class HACWebChromeClient extends WebChromeClient {
     String _title; // 当前页面标题，用于弹出消息等场景
     AppCompatActivity _context; // 关联的上下文，即拥有浏览器内核的页面
 
-    ValueCallback<Uri[]> _filePathCallback; // 文件选择器用的缓存
+    ValueCallback<Uri[]> _filePathCallback; // ChromeClient的文件选择器回调
+
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
+    ActivityResultLauncher<Intent> _imageCaptureChooser; // 拍摄照片的调用器
+
+    Uri _filePathForImageCapture;// 拍摄照片用的缓存
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
     static final String LOG_TAG = "HAC_WebChromeClient";
@@ -168,17 +175,27 @@ public class HACWebChromeClient extends WebChromeClient {
 
                 if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
-                    // 照片采用知乎的Matisse库，支持拍摄
-                    Matisse.from(_context)
-                            .choose(MimeType.ofImage(), false)
-                            .countable(true)
-                            .capture(true)
-                            .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
-                                    new CaptureStrategy(true, "com.huozige.lab.container"))
-                            .maxSelectable(1)
-                            .thumbnailScale(0.85f)
-                            .imageEngine(new GlideEngine())
-                            .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
+                    // 兼容活字格官方Vant插件，支持“直接调出摄像头拍照上传”功能
+                    if(fileChooserParams.isCaptureEnabled()){
+                        ContentValues values = new ContentValues();
+                        values.put(MediaStore.Images.Media.TITLE, this._title);
+                        _filePathForImageCapture = this._context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, _filePathForImageCapture);
+                        _imageCaptureChooser.launch(cameraIntent);
+                    }else{
+                        // 照片采用知乎的Matisse库，支持拍摄
+                        Matisse.from(_context)
+                                .choose(MimeType.ofImage(), false)
+                                .countable(true)
+                                .capture(true)
+                                .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
+                                        new CaptureStrategy(true, "com.huozige.lab.container"))
+                                .maxSelectable(1)
+                                .thumbnailScale(0.85f)
+                                .imageEngine(new GlideEngine())
+                                .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
+                    }
                 } else {
 
                     // 视频也采用知乎的Matisse库，支持拍摄
@@ -210,6 +227,24 @@ public class HACWebChromeClient extends WebChromeClient {
      */
     public void registryLaunchersOnCreated() {
 
+        // 拍摄照片页面的启动器
+        _imageCaptureChooser = _context.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // There are no request codes
+
+                        List<Uri> selectedFiles = new ArrayList<>();
+
+                        // GetContent是单选，如果用户取消时，会返回null
+                        if (null != _filePathForImageCapture) {
+                            selectedFiles.add(_filePathForImageCapture);
+                        }
+
+                        // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+                        _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    }
+                });
+
         // 创建文件选择页面启动器
         _contentChooser = _context.registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -238,7 +273,7 @@ public class HACWebChromeClient extends WebChromeClient {
             // 这里有可能是单个或多个
             List<Uri> selectedUris = new ArrayList<>();
 
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == RESULT_OK) {
                 // 根据文档的要求，获取用户选择的照片和视频
                 selectedUris = Matisse.obtainResult(data);
             }
