@@ -47,7 +47,7 @@ public class HACWebChromeClient extends WebChromeClient {
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
     ActivityResultLauncher<Intent> _imageCaptureChooser; // 拍摄照片的调用器
 
-    Uri _filePathForImageCapture;// 拍摄照片用的缓存
+    Uri _UriForImageCapture;// 拍摄照片用的缓存
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
     static final String LOG_TAG = "HAC_WebChromeClient";
@@ -179,9 +179,9 @@ public class HACWebChromeClient extends WebChromeClient {
                     if(fileChooserParams.isCaptureEnabled()){
                         ContentValues values = new ContentValues();
                         values.put(MediaStore.Images.Media.TITLE, this._title);
-                        _filePathForImageCapture = this._context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        _UriForImageCapture = this._context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, _filePathForImageCapture);
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, _UriForImageCapture);
                         _imageCaptureChooser.launch(cameraIntent);
                     }else{
                         // 照片采用知乎的Matisse库，支持拍摄
@@ -230,16 +230,17 @@ public class HACWebChromeClient extends WebChromeClient {
         // 拍摄照片页面的启动器
         _imageCaptureChooser = _context.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
+                    List<Uri> selectedFiles = new ArrayList<>();
+
                     if (result.getResultCode() == RESULT_OK) {
-                        // There are no request codes
 
-                        List<Uri> selectedFiles = new ArrayList<>();
-
-                        // GetContent是单选，如果用户取消时，会返回null
-                        if (null != _filePathForImageCapture) {
-                            selectedFiles.add(_filePathForImageCapture);
+                        if (null != _UriForImageCapture) {
+                            selectedFiles.add(_UriForImageCapture);
                         }
 
+                        // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+                        _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    }else{
                         // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
                         _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                     }
