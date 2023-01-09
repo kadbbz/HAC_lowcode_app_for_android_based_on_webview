@@ -11,7 +11,7 @@ public class DothanPrinterProxy extends AbstractProxy{
 
     @Override
     public String getName() {
-        return "DothanPrinter";
+        return "dothanPrinter";
     }
 
     @Override
@@ -27,11 +27,10 @@ public class DothanPrinterProxy extends AbstractProxy{
      * 2：打印机已连接的情况下，再次连接该打印机以测试连接是否有效。如果有效的话，会发出该状态消息；
      * 3：正在打印
      * 4：除打印之外的其他工作
-     * 5： 打印机已断开
-     * @param paraCode 用于存储打印机状态的变量
+     * 5：打印机已断开
      */
     @JavascriptInterface
-    public Integer getStatus(String paraCode) {
+    public Integer getStatus() {
         IDzPrinter.PrinterState status = _lpApi.getPrinterState();
         return status.ordinal();
     }
