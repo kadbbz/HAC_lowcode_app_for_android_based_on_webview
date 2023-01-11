@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 适配android 11无法唤起第三方apk 注意代码段在注册表里的位置 -->
+
+    <!-- 蓝牙相关 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <queries>
 
         <!-- &lt;!&ndash; com.blankj.utilcode SDK检测虚拟机 &ndash;&gt; -->
