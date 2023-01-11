@@ -194,7 +194,19 @@ public abstract class AbstractWebInterop {
         PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions, successAction);
     }
 
+    /**
+     * 初始化浏览器
+     * @param webView 浏览器实例
+     */
     public void setWebView(WebView webView) {
         this.webView = webView;
+    }
+
+    /**
+     * 获取当前运行的浏览器
+     * @return 浏览器实例
+     */
+    public WebView getWebView() {
+       return  this.webView ;
     }
 }

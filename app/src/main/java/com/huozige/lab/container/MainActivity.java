@@ -16,6 +16,7 @@ import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.proxy.DothanPrinterProxy;
 import com.huozige.lab.container.proxy.LocalKvProxy;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.proxy.AbstractProxy;
@@ -86,11 +87,12 @@ public class MainActivity extends BaseActivity {
 
         // 8. 创建和初始化JS代理
         _bridges = new AbstractProxy[]{
-                new IndexProxy(),
-                new PDAProxy(),
-                new AppProxy(),
-                new GeoProxy(),
-                new LocalKvProxy()
+                new IndexProxy(), // 兼容活字格官方APP插件
+                new PDAProxy(), // PDA扫码枪
+                new AppProxy(), // APP配置
+                new GeoProxy(), // 获取地理位置信息
+                new LocalKvProxy(), // 读写本地存储
+                new DothanPrinterProxy() // 操作蓝牙打印机（DothanTech方案）
         };
 
         for (AbstractProxy br : _bridges

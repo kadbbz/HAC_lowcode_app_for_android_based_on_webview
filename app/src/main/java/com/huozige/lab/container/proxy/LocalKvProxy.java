@@ -65,6 +65,15 @@ public class LocalKvProxy extends AbstractProxy {
         retrieveV(key,VERSION_NA,cell);
     }
 
+    /**
+     * 注册到页面的localKv.retrieve2(key,param)方法
+     * 从本地数据库中查找值，并写入变量
+     * @param key Key，大小写敏感
+     */
+    @JavascriptInterface
+    public String retrieve2(String key) {
+        return retrieveV2(key,VERSION_NA);
+    }
 
     /**
      * 注册到页面的 localKv.upsertV(key,value,version)方法
@@ -109,6 +118,35 @@ public class LocalKvProxy extends AbstractProxy {
                 Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
             }
         });
+    }
+
+    /**
+     * 注册到页面的 localKv.retrieveV(key,version,cell)方法
+     * 从本地数据库中查找值，并写入变量
+     * @param key Key，大小写敏感
+     * @param version 版本号
+     */
+    @JavascriptInterface
+    public String retrieveV2(String key, String version) {
+
+        final String[] result = new String[1];
+
+        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+
+            // 确保按照服务器隔离，在这里拼接出真实存储的Key
+            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",version).findFirst();
+
+            if(bundle !=null){
+                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
+                result[0] =  bundle.value;
+            }else{
+                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+                result[0] = VALUE_NA;
+            }
+        });
+
+        return result[0];
     }
 
     /**
