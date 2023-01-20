@@ -1,12 +1,19 @@
 <resources>
     <!--应用名称-->
     <string name="app_name">业务平台</string>
-    <!--您需要承载的活字格应用的首页地址，您可通过修改这个值，实现”开箱即用-->
-    <string name="app_default_entry" />
+    <!--您需要承载的活字格应用的首页地址，您可通过修改这个值，实现”开箱即用”-->
+    <string name="app_default_entry" ></string>
 
-    <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置-->
-    <string name="feature_scanner_broadcast_name">com.android.server.scan</string>
+    <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置，设置app_default_entry后才起效-->
+    <string name="feature_scanner_broadcast_name">com.android.server.scannerservice.broadcast</string>
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
+
+    <!--APP的默认配置，您可以通过修改这部分的值定制APP的样式和行为，设置app_default_entry后才起效-->
+    <string name="app_customize_should_show_action_bar">true</string>
+    <string name="app_customize_action_bar_color">#555555</string>
+    <string name="app_customize_should_show_setting_menu">true</string>
+    <string name="app_customize_url_for_help_menu" />
+    <string name="app_customize_url_for_about_menu" />
 
     <!-- 界面文字，修改前建议确认字符串长度-->
     <string name="ui_menu_home">首页</string>

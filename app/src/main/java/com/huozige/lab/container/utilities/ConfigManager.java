@@ -13,7 +13,6 @@ import com.huozige.lab.container.R;
 public class ConfigManager {
 
     static final String LOG_TAG = "HAC_ConfigManager";
-    static final int DEFAULT_ACTIONBAR_COLOR = 0xFF555555; // 默认颜色为中性灰
 
     static final String PREFERENCE_NAME = "HAC";
     static final String PREFERENCE_KEY_ENTRY = "E"; // 页面入口的地址
@@ -46,12 +45,7 @@ public class ConfigManager {
                 this.upsertHelpUrl(config.getString(PREFERENCE_KEY_ULR_HELP));
                 this.upsertSettingMenuVisible(config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("yes"));
                 this.upsertActionBarVisible(config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("yes"));
-
-                String tcd = config.getString(PREFERENCE_KEY_TCD);
-                tcd = tcd.replace("#", "");
-                tcd = tcd.replace("0x", "");
-
-                this.upsertTCD(Integer.parseInt(tcd, 16) + 0xFF000000);
+                this.upsertTCD(parseHexInteger(config.getString(PREFERENCE_KEY_TCD)));
 
                 return true;
             } else {
@@ -115,8 +109,10 @@ public class ConfigManager {
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
+        int defaultColor = parseHexInteger(_context.getString(R.string.app_customize_action_bar_color));
+
         // 从数据库中加载，默认为配置的主题色
-        return sharedPref.getInt(PREFERENCE_KEY_TCD, DEFAULT_ACTIONBAR_COLOR);
+        return sharedPref.getInt(PREFERENCE_KEY_TCD, defaultColor);
     }
 
     public Boolean getSettingMenuVisible() {
@@ -124,8 +120,11 @@ public class ConfigManager {
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
-        // 从数据库中加载，默认为显示菜单
-        return sharedPref.getBoolean(PREFERENCE_KEY_MENU_SETTING_V, true);
+        // 配置文件中的默认值
+        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_setting_menu));
+
+        // 从数据库中加载
+        return sharedPref.getBoolean(PREFERENCE_KEY_MENU_SETTING_V, defaultVisible);
     }
 
     public Boolean getActionBarVisible() {
@@ -133,16 +132,19 @@ public class ConfigManager {
         SharedPreferences sharedPref = _context.getSharedPreferences(
                 PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
-        // 从数据库中加载，默认为显示菜单
-        return sharedPref.getBoolean(PREFERENCE_KEY_ACTIONBAR_V, true);
+        // 配置文件中的默认值
+        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_action_bar));
+
+        // 从数据库中加载
+        return sharedPref.getBoolean(PREFERENCE_KEY_ACTIONBAR_V,defaultVisible );
     }
 
     public String getAboutUrl() {
-        return getStringValue(_context, PREFERENCE_KEY_ULR_ABOUT, R.string.app_default_entry);
+        return getStringValue(_context, PREFERENCE_KEY_ULR_ABOUT, R.string.app_customize_url_for_about_menu);
     }
 
     public String getHelpUrl() {
-        return getStringValue(_context, PREFERENCE_KEY_ULR_HELP, R.string.app_default_entry);
+        return getStringValue(_context, PREFERENCE_KEY_ULR_HELP, R.string.app_customize_url_for_help_menu);
     }
 
     //==================== 下面是设置
@@ -227,4 +229,11 @@ public class ConfigManager {
         sharedPref.edit().putString(key, value).apply();
     }
 
+    private int parseHexInteger(String tcd){
+
+        tcd = tcd.replace("#", "");
+        tcd = tcd.replace("0x", "");
+
+       return Integer.parseInt(tcd, 16) + 0xFF000000;
+    }
 }
