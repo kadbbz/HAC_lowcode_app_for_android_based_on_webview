@@ -11,6 +11,8 @@ import android.webkit.JavascriptInterface;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
+
 /**
  * 让页面具备操作扫码枪硬件的能力
  * pda.modal_scan(cell): 带模态窗口的单次扫码
@@ -23,10 +25,10 @@ public class PDAProxy extends AbstractProxy {
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
     String _cell; // 用来接收扫码结果的单元格位置信息
 
-    Boolean _cscanOn = false;
-    String _cscanCell;
-    String _cscanResultCache;
-    Integer _cscanLimit, _cscanCount;
+    Boolean _continueScanOn = false;
+    String continueScanCell;
+    String _continueScanResultCache;
+    Integer _continueScanLimit, _continueScanCount;
 
 
     static final String LOG_TAG = "HAC_HzgJsBridgePDA";
@@ -95,7 +97,7 @@ public class PDAProxy extends AbstractProxy {
      */
     @Override
     public void onActivityResumed() {
-        if (_cscanOn) {
+        if (_continueScanOn) {
             startReceiver();
         }
     }
@@ -116,23 +118,23 @@ public class PDAProxy extends AbstractProxy {
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
-            if (_cscanOn) {
+            if (_continueScanOn) {
 
                 // 将当次扫描结果拼接到累计结果上，一次刷新到页面，分割符为半角逗号，与活字格的内置数组保持一致
-                _cscanResultCache = _cscanResultCache + result + ",";
+                _continueScanResultCache = _continueScanResultCache + result + ",";
 
                 // 去掉多余的的逗号
-                String rc = _cscanResultCache.endsWith(",") ? _cscanResultCache.substring(0, _cscanResultCache.length() - 1) : _cscanResultCache;
+                String rc = _continueScanResultCache.endsWith(",") ? _continueScanResultCache.substring(0, _continueScanResultCache.length() - 1) : _continueScanResultCache;
 
                 // 记录日志
                 getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
-                getInterop().setInputValue( _cscanCell, rc);
+                getInterop().setInputValue(continueScanCell, rc);
 
-                _cscanCount++;
+                _continueScanCount++;
 
-                if (_cscanCount >= _cscanLimit) {
+                if (_continueScanCount >= _continueScanLimit) {
 
                     stopReceiver();
 
@@ -180,13 +182,13 @@ public class PDAProxy extends AbstractProxy {
 
         Log.v(LOG_TAG,"continuous_scan start with limit : "+limit);
         // 记录传入参数
-        _cscanCell = cellLocation;
-        _cscanLimit =(null==limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
+        continueScanCell = cellLocation;
+        _continueScanLimit =(null==limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
 
         // 重置临时变量
-        _cscanOn = true;
-        _cscanResultCache = ""; // 清空缓存
-        _cscanCount = 0;
+        _continueScanOn = true;
+        _continueScanResultCache = ""; // 清空缓存
+        _continueScanCount = 0;
 
         startReceiver();
     }
@@ -225,11 +227,11 @@ public class PDAProxy extends AbstractProxy {
      * 暂停监听
      */
     private void stopReceiver() {
-        if (_cscanOn) {
+        if (_continueScanOn) {
 
             getInterop().getActivityContext().unregisterReceiver(_scanReceiver);
 
-            _cscanOn = false;
+            _continueScanOn = false;
 
             // 记录日志
             getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) stopped.");

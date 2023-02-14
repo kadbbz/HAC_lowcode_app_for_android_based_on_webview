@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy;
+package com.huozige.lab.container.proxy.support.realm;
 
 import io.realm.RealmObject;
 import io.realm.annotations.Index;

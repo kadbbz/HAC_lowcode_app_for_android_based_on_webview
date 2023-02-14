@@ -6,6 +6,11 @@ import android.webkit.JavascriptInterface;
 import com.dothantech.lpapi.LPAPI;
 import com.dothantech.printer.IDzPrinter;
 
+/**
+ * 让页面能操作德佟封装的蓝牙打印机
+ * 1.7.0
+ * dothanPrinter.getStatus()：获取当前连接的打印机的状态
+ */
 public class DothanPrinterProxy extends AbstractProxy{
     static final String LOG_TAG = "HAC_DothanPrinterProxy";
     private LPAPI _lpApi;

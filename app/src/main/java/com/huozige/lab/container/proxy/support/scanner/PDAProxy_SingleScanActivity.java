@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy;
+package com.huozige.lab.container.proxy.support.scanner;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
