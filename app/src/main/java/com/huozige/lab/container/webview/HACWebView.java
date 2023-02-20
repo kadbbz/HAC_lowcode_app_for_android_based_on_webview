@@ -6,14 +6,10 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.View;
-import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.utilities.ConfigManager;
 
@@ -78,6 +74,9 @@ public class HACWebView extends WebView {
         settings.setBuiltInZoomControls(false); // 不显示缩放按钮
         settings.setSupportZoom(false); // 不允许缩放
 
+        // 兼容性
+        settings.setMediaPlaybackRequiresUserGesture(false); // 允许页面加载时自动播放音频
+
         // 启用Debug（全局设置）
         WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
@@ -135,10 +134,6 @@ public class HACWebView extends WebView {
 
         String target = configManager.getEntry();
         this.loadUrl(target);
-    }
-
-    public AppCompatActivity getActivityContext() {
-        return (AppCompatActivity)_context;
     }
 
     /**
