@@ -145,6 +145,22 @@
             tools:ignore="TextContrastCheck" />
 
         <Button
+            android:id="@+id/cmdClear"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="180dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="100dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="100dp"
+            android:text="@string/ui_label_settings_clear"
+            android:textColor="#DD2C00"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.52"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cmdSave" />
+
+        <Button
             android:id="@+id/cmdReset"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="113dp"
@@ -158,7 +174,9 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cmdSave" />
+            app:layout_constraintTop_toBottomOf="@+id/cmdClear" />
+
+
 
         <ImageButton
             android:id="@+id/imgScan"

@@ -1,5 +1,7 @@
 package com.huozige.lab.container.webview;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,6 +38,10 @@ public class HttpAuthActivity extends BaseActivity {
 
         Button cmdSave = findViewById(R.id.cmdSaveToken);
         cmdSave.setOnClickListener(save);
+
+        Button cmdGotoSetting = findViewById(R.id.cmdGotoSetting);
+        cmdGotoSetting.setOnClickListener(goSetting);
+
     }
 
     @Override
@@ -57,4 +63,6 @@ public class HttpAuthActivity extends BaseActivity {
         finish();
 
     };
+
+    View.OnClickListener goSetting = view -> startActivity(new Intent(HttpAuthActivity.this, SettingActivity.class));
 }

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -20,6 +21,8 @@ import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
+
+import io.realm.Realm;
 
 /**
  * 系统设置页面
@@ -52,6 +55,9 @@ public class SettingActivity extends BaseActivity {
 
         Button cmdSave = findViewById(R.id.cmdSave);
         cmdSave.setOnClickListener(save);
+
+        Button cmdClear = findViewById(R.id.cmdClear);
+        cmdClear.setOnClickListener(clear);
 
         ImageButton imgScan = findViewById(R.id.imgScan);
         imgScan.setOnClickListener(scanForUrl);
@@ -127,6 +133,44 @@ public class SettingActivity extends BaseActivity {
 
     };
 
+    View.OnClickListener clear = view -> {
+
+        AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
+        ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
+
+            Log.v(LOG_TAG, "开始清理数据。");
+
+            // 清理Realm数据库（异步）
+            Realm.getDefaultInstance(). executeTransactionAsync (transactionRealm -> transactionRealm.deleteAll());
+
+            // 用户信息
+            getConfigManager().upsertPassword("");
+            getConfigManager().upsertUserName("");
+
+            // 清理WebView的缓存
+            WebView op = new WebView(SettingActivity.this);
+            op.clearFormData();
+            op.clearCache(true);
+            op.destroy();
+
+            Toast.makeText(SettingActivity.this, "数据缓存清理成功，登录信息将在应用注销后被清除。", Toast.LENGTH_LONG).show();
+
+            Log.v(LOG_TAG, "数据清理完成。");
+
+            // 重启生效
+            LifecycleUtility.restart(SettingActivity.this);
+        });
+
+        ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {
+            // 什么都不干
+        });
+
+        ab.setMessage(R.string.ui_message_setting_clear);
+        ab.setTitle(R.string.ui_menu_settings);
+
+        ab.show();
+
+    };
     View.OnClickListener reset = view -> {
 
         // 重新开始
