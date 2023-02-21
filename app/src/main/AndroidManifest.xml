@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- 敏感权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 敏感权限 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 适配android 11无法唤起第三方apk 注意代码段在注册表里的位置 -->
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- 蓝牙相关 -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <!-- NFC相关 -->
+    <uses-permission android:name="android.permission.NFC" />
+
+    <!-- 适配android 11无法唤起第三方apk 注意代码段在注册表里的位置 -->
     <queries>
 
         <!-- &lt;!&ndash; com.blankj.utilcode SDK检测虚拟机 &ndash;&gt; -->
@@ -49,6 +53,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <activity
+            android:name=".proxy.support.scanner.NfcProxy_ReadingActivity"
+            android:exported="false" />
         <activity
             android:name=".TextConfigActivity"
             android:exported="false" />

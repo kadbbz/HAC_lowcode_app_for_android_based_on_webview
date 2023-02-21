@@ -18,6 +18,7 @@ import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.proxy.DothanPrinterProxy;
 import com.huozige.lab.container.proxy.LocalKvProxy;
+import com.huozige.lab.container.proxy.NfcProxy;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.webview.HACWebChromeClient;
@@ -89,6 +90,7 @@ public class MainActivity extends BaseActivity {
         _bridges = new AbstractProxy[]{
                 new IndexProxy(), // 兼容活字格官方APP插件
                 new PDAProxy(), // PDA扫码枪
+                new NfcProxy(), // NFC读取
                 new AppProxy(), // APP配置
                 new GeoProxy(), // 获取地理位置信息
                 new LocalKvProxy(), // 读写本地存储
