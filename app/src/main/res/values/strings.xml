@@ -50,5 +50,8 @@
     <string name="ui_lable_quick_config_help">如需帮助，请联系系统管理员</string>
     <string name="ui_lable_quick_config_scan">点击扫描配置码，快速完成APP设置</string>
     <string name="ui_message_nfc_not_available">NFC功能不可用，请确保该设备具有NFC功能，且在设置中没有被禁用。</string>
-
+    <string name="ui_title_auth">认证信息</string>
+    <string name="ui_button_user">用户名（域账户的格式为DOMAIN\\USER）</string>
+    <string name="ui_button_password">密码</string>
+    <string name="ui_message_authentication_cancel">认证操作被取消，页面无法打开。</string>
 </resources>

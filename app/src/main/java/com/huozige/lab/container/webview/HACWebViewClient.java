@@ -1,10 +1,12 @@
 package com.huozige.lab.container.webview;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.util.Log;
+import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -12,8 +14,10 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 
 import java.io.IOException;
@@ -24,17 +28,28 @@ import java.io.InputStream;
  */
 public class HACWebViewClient extends WebViewClient {
 
-    AppCompatActivity _context; // 包含有浏览器内核的上下文
+    BaseActivity _context; // 包含有浏览器内核的上下文
     static final String LOG_TAG = "HAC_WebViewClient"; // 日志的标识
     private AbstractStaticFilesCacheFilter cacheFilter;
+
+
+    private final ActivityResultLauncher<Intent> _arc;
+    private HttpAuthHandler _authHandler;
 
     /**
      * 简单的构造函数
      *
      * @param activity 上下文
      */
-    public HACWebViewClient(AppCompatActivity activity) {
+    public HACWebViewClient(BaseActivity activity) {
         _context = activity;
+
+        // 创建读取页面
+        _arc = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            Log.v(LOG_TAG, "Windows域认证开始");
+
+            _authHandler.proceed(this._context.getConfigManager().getUserName(), this._context.getConfigManager().getPassword());
+        });
     }
 
     /**
@@ -71,7 +86,6 @@ public class HACWebViewClient extends WebViewClient {
             Log.v(LOG_TAG, "导航到系统服务：" + reqUri);
             return true;
         }
-
     }
 
     /**
@@ -115,6 +129,12 @@ public class HACWebViewClient extends WebViewClient {
         Log.v(LOG_TAG, "页面加载完成：" + url);
     }
 
+    @Override
+    public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
+        Log.v(LOG_TAG,"本页面需要HTTP认证，即将弹出认证窗口");
+        _authHandler = handler;
+        _arc.launch(new Intent(_context, HttpAuthActivity.class));
+    }
 
     /**
      * 处理离线缓存：从离线缓存中加载部分资源，提升响应速度
@@ -152,14 +172,6 @@ public class HACWebViewClient extends WebViewClient {
 
         // 不符合条件或没有命中缓存，则采用默认行为，从服务器获取
         return super.shouldInterceptRequest(view, request);
-    }
-
-    public AbstractStaticFilesCacheFilter getStaticFilesCacheFilter() throws IllegalStateException {
-        if (null == cacheFilter) {
-            throw new IllegalStateException ("CacheFilter has not be initialized.");
-        }
-
-        return cacheFilter;
     }
 
     public void setStaticFilesCacheFilter(AbstractStaticFilesCacheFilter cacheFilter) {

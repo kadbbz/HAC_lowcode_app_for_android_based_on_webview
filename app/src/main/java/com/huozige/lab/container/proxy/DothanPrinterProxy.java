@@ -1,6 +1,5 @@
 package com.huozige.lab.container.proxy;
 
-import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import com.dothantech.lpapi.LPAPI;
@@ -12,7 +11,6 @@ import com.dothantech.printer.IDzPrinter;
  * dothanPrinter.getStatus()：获取当前连接的打印机的状态
  */
 public class DothanPrinterProxy extends AbstractProxy{
-    static final String LOG_TAG = "HAC_DothanPrinterProxy";
     private LPAPI _lpApi;
 
     @Override
@@ -23,8 +21,6 @@ public class DothanPrinterProxy extends AbstractProxy{
     @Override
     public void onActivityCreated(){
         _lpApi = LPAPI.Factory.createInstance(this.getInterop().getWebView());
-
-        Log.v(LOG_TAG,"DothanTech printer interface was injected.");
     }
 
     /**

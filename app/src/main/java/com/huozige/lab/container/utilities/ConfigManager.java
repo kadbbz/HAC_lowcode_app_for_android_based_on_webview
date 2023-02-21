@@ -25,6 +25,10 @@ public class ConfigManager {
     static final String PREFERENCE_KEY_ULR_ABOUT = "URLA"; // 关于页面的链接
     static final String PREFERENCE_KEY_ULR_HELP = "URLH"; // 帮助页面的链接
 
+    static final String PREFERENCE_KEY_USER = "USRN"; // 用户名
+
+    static final String PREFERENCE_KEY_PWD = "PWD"; // 用户密码
+
     final Activity _context;
 
     public ConfigManager(Activity context) {
@@ -147,6 +151,14 @@ public class ConfigManager {
         return getStringValue(_context, PREFERENCE_KEY_ULR_HELP, R.string.app_customize_url_for_help_menu);
     }
 
+    public String getUserName() {
+        return getStringValue(_context, PREFERENCE_KEY_USER, R.string.app_customize_url_for_help_menu);
+    }
+
+    public String getPassword() {
+        return getStringValue(_context, PREFERENCE_KEY_PWD, R.string.app_customize_url_for_help_menu);
+    }
+
     //==================== 下面是设置
 
     public void upsertActionBarVisible(Boolean value) {
@@ -173,6 +185,14 @@ public class ConfigManager {
 
     public void upsertHelpUrl(String value) {
         upsertStringValue(_context, PREFERENCE_KEY_ULR_HELP, value);
+    }
+
+    public void upsertUserName(String value) {
+        upsertStringValue(_context, PREFERENCE_KEY_USER, value);
+    }
+
+    public void upsertPassword(String value) {
+        upsertStringValue(_context, PREFERENCE_KEY_PWD, value);
     }
 
     public void upsertEntry(String value) {
