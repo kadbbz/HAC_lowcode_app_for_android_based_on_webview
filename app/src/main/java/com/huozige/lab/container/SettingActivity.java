@@ -5,7 +5,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebIconDatabase;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
+import android.webkit.WebViewDatabase;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -148,12 +153,15 @@ public class SettingActivity extends BaseActivity {
             getConfigManager().upsertUserName("");
 
             // 清理WebView的缓存
-            WebView op = new WebView(SettingActivity.this);
-            op.clearFormData();
-            op.clearCache(true);
-            op.destroy();
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().removeSessionCookies(null);
+            CookieManager.getInstance().flush();
+            WebStorage.getInstance().deleteAllData();
+            WebViewDatabase.getInstance(this).clearHttpAuthUsernamePassword();
 
-            Toast.makeText(SettingActivity.this, "数据缓存清理成功，登录信息将在应用注销后被清除。", Toast.LENGTH_LONG).show();
+            GeolocationPermissions.getInstance().clearAll();
+
+            Toast.makeText(SettingActivity.this, "APP的数据缓存已全部清理，请手动注销应用的用户。", Toast.LENGTH_LONG).show();
 
             Log.v(LOG_TAG, "数据清理完成。");
 

@@ -46,9 +46,19 @@ public class HACWebViewClient extends WebViewClient {
 
         // 创建读取页面
         _arc = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            Log.v(LOG_TAG, "Windows域认证开始");
 
-            _authHandler.proceed(this._context.getConfigManager().getUserName(), this._context.getConfigManager().getPassword());
+            // 获取页面返回的结果
+            Intent data = result.getData();
+            if(data!=null){
+                String usr = data.getStringExtra(HttpAuthActivity.BUNDLE_EXTRA_RESULT_USER);
+                String pwd = data.getStringExtra(HttpAuthActivity.BUNDLE_EXTRA_RESULT_PASSWORD);
+
+                Log.v(LOG_TAG, "HTTP Auth认证开始："+usr);
+                _authHandler.proceed(usr, pwd);
+            }else{
+                Log.e(LOG_TAG, "前页面传回的的用户认证信息为空，即将重试");
+            }
+
         });
     }
 
@@ -131,7 +141,7 @@ public class HACWebViewClient extends WebViewClient {
 
     @Override
     public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
-        Log.v(LOG_TAG,"本页面需要HTTP认证，即将弹出认证窗口");
+        Log.v(LOG_TAG,"本页面需要HTTP认证，当前没有认证或认证失败，即将弹出认证窗口");
         _authHandler = handler;
         _arc.launch(new Intent(_context, HttpAuthActivity.class));
     }

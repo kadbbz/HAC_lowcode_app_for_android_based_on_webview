@@ -1,30 +1,23 @@
 package com.huozige.lab.container.webview;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.huozige.lab.container.BaseActivity;
-import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.SettingActivity;
-import com.huozige.lab.container.utilities.LifecycleUtility;
 
 public class HttpAuthActivity extends BaseActivity {
-
     static final String LOG_TAG = "HAC_HttpAuthActivity";
-
+    static  final String BUNDLE_EXTRA_RESULT_USER="username";
+    static  final String BUNDLE_EXTRA_RESULT_PASSWORD="password";
     EditText _txtUser, _txtPassword;
+    CheckBox _chkRemember;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +28,7 @@ public class HttpAuthActivity extends BaseActivity {
 
         _txtUser = findViewById(R.id.txtUser);
         _txtPassword = findViewById(R.id.txtPwd);
+        _chkRemember = findViewById(R.id.chkRemember);
 
         Button cmdSave = findViewById(R.id.cmdSaveToken);
         cmdSave.setOnClickListener(save);
@@ -50,18 +44,28 @@ public class HttpAuthActivity extends BaseActivity {
         super.onResume();
 
         // 初始化
+        // 考虑到企业用移动设备的典型应用场景（设备与应用系统和用户绑定），同一设备上的用户名趋同，所以仅记录一份。
         _txtUser.setText(getConfigManager().getUserName());
         _txtPassword.setText(getConfigManager().getPassword());
     }
 
     View.OnClickListener save = view -> {
 
-        // 直接将用户输入的信息保存到配置中
-        getConfigManager().upsertUserName(_txtUser.getText().toString());
-        getConfigManager().upsertPassword(_txtPassword.getText().toString());
-        Log.v(LOG_TAG,"用户提供了认证信息，已更新到本地存储。");
-        finish();
+        Log.v(LOG_TAG,"用户提供了认证信息。");
 
+        if(_chkRemember.isChecked()){
+            // 将用户输入的信息保存到配置中
+            getConfigManager().upsertUserName(_txtUser.getText().toString());
+            getConfigManager().upsertPassword(_txtPassword.getText().toString());
+            Log.v(LOG_TAG,"认证信息已保存到本地存储。");
+        }
+        // 将其打包发给调用者
+        Intent res = new Intent();
+        res.putExtra(BUNDLE_EXTRA_RESULT_USER, _txtUser.getText().toString());
+        res.putExtra(BUNDLE_EXTRA_RESULT_PASSWORD, _txtPassword.getText().toString());
+        setResult(0, res);
+
+        finish();
     };
 
     View.OnClickListener goSetting = view -> startActivity(new Intent(HttpAuthActivity.this, SettingActivity.class));

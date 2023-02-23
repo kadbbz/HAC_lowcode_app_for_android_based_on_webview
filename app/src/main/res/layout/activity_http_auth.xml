@@ -91,9 +91,8 @@
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.505"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtPwd"
+            app:layout_constraintTop_toBottomOf="@+id/chkRemember"
             tools:ignore="TextContrastCheck" />
 
         <Button
@@ -105,12 +104,26 @@
             android:layout_marginTop="12dp"
             android:layout_marginEnd="20dp"
             android:text="@string/ui_label_goto_setting"
-            android:textColor="@color/colorAccent"
+            android:textColor="#0277BD"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cmdSaveToken" />
+
+        <CheckBox
+            android:id="@+id/chkRemember"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="20dp"
+            android:checked="true"
+            android:minHeight="48dp"
+            android:text="@string/ui_checkbox_remember"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txtPwd" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

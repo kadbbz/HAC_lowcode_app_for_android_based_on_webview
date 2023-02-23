@@ -53,6 +53,7 @@
     <string name="ui_title_auth">认证信息</string>
     <string name="ui_button_user">用户名（域账户的格式为DOMAIN\\USER）</string>
     <string name="ui_button_password">密码</string>
+    <string name="ui_checkbox_remember">记住用户名和密码</string>
     <string name="ui_label_goto_setting">前往【设置】页面</string>
     <string name="ui_message_authentication_cancel">认证操作被取消，页面无法打开。</string>
     <string name="ui_label_settings_clear">清理缓存和用户信息</string>
