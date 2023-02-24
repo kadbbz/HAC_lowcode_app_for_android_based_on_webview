@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 4
-        versionName '1.8.0-beta3'
+        versionName '1.8.0-release'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
