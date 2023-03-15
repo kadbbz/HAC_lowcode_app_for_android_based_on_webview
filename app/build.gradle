@@ -50,4 +50,8 @@ dependencies {
     implementation 'com.github.jenly1314:zxing-lite:2.1.1'
     implementation 'com.github.david-serrano:locationprovider:1.2'
     implementation 'com.alibaba:fastjson:1.1.72.android'
+    implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
+    implementation 'com.liulishuo.okdownload:okdownload:1.0.7'
+    implementation 'com.liulishuo.okdownload:okhttp:1.0.7'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
 }
