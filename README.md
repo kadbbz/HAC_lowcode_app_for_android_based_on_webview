@@ -12,6 +12,7 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 * 提供通过GPS等精确定位方式获取当前位置的能力
 * 提供调用蓝牙打印机（DothanTech方案）的能力
 * 提供读取NFC标签的能力
+* 自动下载和预览PDF文件的能力
 * 适配活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005) 和 [“手机扫码命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2104270020&productDetailID=D2206270041&tabName=Tabs_detail)
 
 ## 可供Web应用调用的JavaScript接口清单
