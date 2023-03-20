@@ -1,6 +1,10 @@
 package com.huozige.lab.container.proxy.support.pdf;
 
+import android.app.DownloadManager;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -8,204 +12,128 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.chiclaim.android.downloader.DownloadConstants;
+import com.chiclaim.android.downloader.DownloadListener;
+import com.chiclaim.android.downloader.DownloadRequest;
 import com.github.barteksc.pdfviewer.PDFView;
+import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
-import com.liulishuo.okdownload.DownloadTask;
-import com.liulishuo.okdownload.SpeedCalculator;
-import com.liulishuo.okdownload.core.breakpoint.BreakpointInfo;
-import com.liulishuo.okdownload.core.cause.EndCause;
-import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
-import com.liulishuo.okdownload.core.listener.DownloadListener2;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * 下载并预览PDF的页面
  */
 public class PDFPreviewActivity extends AppCompatActivity {
 
+    private String _url, _password, _fileName;
+
     private final String LOG_TAG = "HAC_PDFPreviewActivity";
-    private final String FILE_NAME_PREFIX = "hac_pdf_temp_";
-    private static final int MENU_ID_CLEAR = 3;
+    private static final int MENU_ID_DIR = 1;
     private static final int MENU_ID_CLOSE = 2;
 
     public static String EXTRA_KEY_URL = "url";
     public static String EXTRA_KEY_PASSWORD = "password";
+    public static String EXTRA_KEY_FILENAME = "fileName";
 
     PDFView _pdfView;
     ProgressBar _pbDownload;
-    DownloadTask _task;
 
     /**
-     * 初始化下载任务
-     * 使用okdownload，解决断点续传等问题
-     *
-     * @param url PDF的URL地址
+     * 启动下载
      */
-    private void initialDownloadTask(String url, String password) {
+    private void startDownload() {
+        setTitle(R.string.title_pdf_downloading);
 
-        // 创建下载任务，做降低进度刷新频率、重命名、强制刷新、5线程
-        // 为了避免文件名导致的错误，确保每次加载最新版的文件，需要重新设置文件名
-        String PDF_FILE_NAME_PREFIX = FILE_NAME_PREFIX + "%s.pdf";
-        _task = new DownloadTask.Builder(url, getTargetDir())
-                .setMinIntervalMillisCallbackProcess(100)
-                .setFilename(String.format(PDF_FILE_NAME_PREFIX, new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(new Date())))
-                .setPassIfAlreadyCompleted(false)
-                .setConnectionCount(5)
-                .build();
+        // 准备下载目录吗，确保其存在
+        boolean ready= Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .mkdirs();
 
-        // 加入下载队列，开始下载
-        // 不能在UI线程中直接调用execute
-        _task.enqueue(new DownloadListener2() {
+        Log.v(LOG_TAG, "Download target dir is ready: "+ ready);
 
-            // 参考：https://github.com/lingochamp/okdownload/blob/master/sample/src/main/java/com/liulishuo/okdownload/sample/ContentUriActivity.java
+        // 创建下载请求，使用推荐的下载引擎
+        DownloadRequest request = new DownloadRequest(this, _url, DownloadConstants.DOWNLOAD_ENGINE_EMBED);
 
-            // 并发控制，记录已经下载的Byte数
-            private final AtomicLong progress = new AtomicLong();
-
-            // 下载组件提供的速度计算器
-            private SpeedCalculator speedCalculator;
-
-            @Override
-            public void taskStart(@NonNull DownloadTask task) {
-
-                // 开始下载，需要重置Title和速度计算器
-                setTitle(R.string.title_pdf_downloading);
-                speedCalculator = new SpeedCalculator();
-            }
-
-            @Override
-            public void downloadFromBeginning(@NonNull DownloadTask task, @NonNull BreakpointInfo info, @NonNull ResumeFailedCause cause) {
-
-                // 重置进度，并更新
-                progress.set(0);
-                calcProgressToViewAndMark(0, info.getTotalLength());
-            }
-
-            @Override
-            public void downloadFromBreakpoint(@NonNull DownloadTask task, @NonNull BreakpointInfo info) {
-
-                // 重置进度，并更新
-                progress.set(info.getTotalOffset());
-                calcProgressToViewAndMark(info.getTotalOffset(),
-                        info.getTotalLength());
-            }
-
-            @Override
-            public void fetchProgress(@NonNull DownloadTask task, int blockIndex, long increaseBytes) {
-
-                // 更新速度计算器的数据
-                speedCalculator.downloading(increaseBytes);
-
-                // 更新下载速度
-                final String status = speedCalculator.speed();
-                setTitle(status);
-
-                // 更新下载进度
-                final long offset = progress.addAndGet(increaseBytes);
-
-                // 展示到界面
-                updateProgressToViewWithMark(offset);
-            }
-
-            @Override
-            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause) {
-
-                // 需要判断是否出错
-                if (cause.equals(EndCause.COMPLETED)) {
-
-                    if (task.getFile() != null && task.getFile().exists()) {
-                        // 更新标题
-                        setTitle(R.string.title_pdf_preview);
-
-                        Log.v(LOG_TAG, "PDF file was found at: " + task.getFile());
-
-                        try {
-                            // 初始化PDF预览组件，设置文件、默认打开第一页、渲染标注和表单
-                            PDFView.Configurator config = _pdfView.fromFile(task.getFile())
-                                    .defaultPage(0)
-                                    .enableAnnotationRendering(true);
-
-                            // 如果有传入密码，则设置密码
-                            if (password != null && !password.isEmpty()) {
-                                config.password(password);
-                            }
-
-                            // 开始展示PDF
-                            config.load();
-
-                            Log.v(LOG_TAG, "PDF file was rendered.");
-                        } catch (Exception ex) {
-                            Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
-                            Log.e(LOG_TAG, "Error on rendering PDF file: " + ex);
-                        }
-
-                    } else {
-                        Toast.makeText(PDFPreviewActivity.this, "下载的文件被删除或移动：" + task.getFile(), Toast.LENGTH_LONG).show();
-                        Log.e(LOG_TAG, "PDF file was not existed at: " + task.getFile());
+        // 配置下载选项
+        request.setIgnoreLocal(true)
+                .setNotificationTitle(this.getString(R.string.app_name))
+                .setNotificationContent(_fileName)
+                .setNeedInstall(false) // 这个组件是为了下载apk使用的，默认会提示安装，这里需要关闭这个选项
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
+                .setShowNotificationDisableTip(false)
+                .setDestinationUri(Uri.parse(FilenameUtils.concat(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getPath(), _fileName))) // 固定采用用户提供的文件名
+                .registerListener(new DownloadListener() {
+                    @Override
+                    public void onDownloadStart() {
+                        Log.v(LOG_TAG, "Download task started: " + _url);
                     }
 
-                } else {
-                    Toast.makeText(PDFPreviewActivity.this, "下载过程中发生错误：" + cause.name(), Toast.LENGTH_LONG).show();
-                    Log.e(LOG_TAG, "Error on downloading: " + cause.name() + " Exception is: " + realCause);
-                }
+                    @Override
+                    public void onProgressUpdate(int i) {
+                        setTitle(getString(R.string.title_pdf_downloading) + " （" + i + "/100）");
+                    }
 
-            }
+                    @Override
+                    public void onDownloadComplete(@NonNull Uri uri) {
+                        Log.v(LOG_TAG, "Download task completed: " + _url);
 
-            /**
-             * 更新下载进度
-             * @param currentOffset 已经下载的字节数
-             */
-            private void updateProgressToViewWithMark(long currentOffset) {
-                if (_pbDownload.getTag() == null) return;
+                        // 读取PDF之前需要先申请权限
+                        PermissionsUtility.asyncRequirePermissions(PDFPreviewActivity.this, new String[]{
+                                Permission.READ_EXTERNAL_STORAGE
+                        }, () -> renderPDF(uri));
+                    }
 
-                final int shrinkRate = (int) _pbDownload.getTag();
-                final int progress = (int) ((currentOffset) / shrinkRate);
+                    @Override
+                    public void onDownloadFailed(@NonNull Throwable throwable) {
+                        Log.e(LOG_TAG, "Download failed, Url: " + _url + " error: " + throwable);
 
-                _pbDownload.setProgress(progress, true);
-            }
-
-            /**
-             * 初始化下载进度条
-             * @param offset 已经下载的字节数（断点续传时使用）
-             * @param total 文件大小
-             */
-            private void calcProgressToViewAndMark(long offset, long total) {
-                final int contentLengthOnInt = reducePrecision(total);
-                final int shrinkRate = contentLengthOnInt == 0
-                        ? 1 : (int) (total / contentLengthOnInt);
-                _pbDownload.setTag(shrinkRate);
-                final int progress = (int) (offset / shrinkRate);
-
-                _pbDownload.setMax(contentLengthOnInt);
-                _pbDownload.setProgress(progress, true);
-            }
-
-            private int reducePrecision(long origin) {
-                if (origin <= Integer.MAX_VALUE) return (int) origin;
-
-                int shrinkRate = 10;
-                long result = origin;
-                while (result > Integer.MAX_VALUE) {
-                    result /= shrinkRate;
-                    shrinkRate *= 5;
-                }
-
-                return (int) result;
-            }
-        });
-
-        // 在下载的同时，删除昨天或更早的临时文件
-        clearCache(true);
+                        // 提示错误消息后关闭预览窗口
+                        Toast.makeText(PDFPreviewActivity.this, "下载过程中发生错误：" + throwable.getMessage(), Toast.LENGTH_LONG).show();
+                        PDFPreviewActivity.this.finish();
+                    }
+                }).startDownload();
     }
 
+    /**
+     * 渲染PDF文件。
+     * 该控件不支持直接加载远程的PDF，需要先拉回本地
+     *
+     * @param pdfFile 已经下载的PDF
+     */
+    private void renderPDF(Uri pdfFile) {
+
+        // 使用文件名做标题，去掉后缀
+        setTitle(FilenameUtils.getBaseName(_fileName));
+
+        try {
+
+            // 初始化PDF预览组件，设置文件、默认打开第一页、渲染标注和表单
+            PDFView.Configurator config = _pdfView.fromUri(pdfFile)
+                    .defaultPage(0)
+                    .enableAnnotationRendering(true);
+
+            // 如果有传入密码，则设置密码
+            if (_password != null && !_password.isEmpty()) {
+                config.password(_password);
+            }
+
+            // 开始展示PDF
+            config.load();
+
+            Log.v(LOG_TAG, "PDF file was rendered.");
+
+        } catch (Exception ex) {
+
+            // 提示错误消息后关闭窗口
+            Log.e(LOG_TAG, "Error on rendering PDF file: " + ex);
+            Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
+            this.finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,23 +142,29 @@ public class PDFPreviewActivity extends AppCompatActivity {
 
         _pdfView = this.findViewById(R.id.pdfView);
         _pbDownload = this.findViewById(R.id.pbDownloading);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        String url = this.getIntent().getStringExtra(EXTRA_KEY_URL);
-        String pwd = this.getIntent().getStringExtra(EXTRA_KEY_PASSWORD);
+        _url = this.getIntent().getStringExtra(EXTRA_KEY_URL);
+        _password = this.getIntent().getStringExtra(EXTRA_KEY_PASSWORD);
+        _fileName = this.getIntent().getStringExtra(EXTRA_KEY_FILENAME);
 
-        initialDownloadTask(url, pwd);
+        if (_fileName == null || _fileName.isEmpty()) {
+            _fileName = getString(R.string.title_pdf_preview) + ".pdf";
+        }
+
+        startDownload();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
         menu.add(0, MENU_ID_CLOSE, MENU_ID_CLOSE, getString(R.string.menu_pdf_close));
-        menu.add(0, MENU_ID_CLEAR, MENU_ID_CLEAR, getString(R.string.menu_pdf_clean_dir));
+        menu.add(0, MENU_ID_DIR, MENU_ID_DIR, getString(R.string.menu_pdf_open_dir));
 
         return true;
     }
@@ -238,8 +172,8 @@ public class PDFPreviewActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case MENU_ID_CLEAR:
-                clearCache(false);
+            case MENU_ID_DIR:
+                startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
                 break;
             case MENU_ID_CLOSE:
                 this.finish();
@@ -247,49 +181,6 @@ public class PDFPreviewActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private File getTargetDir() {
-        File saveToDir = this.getExternalCacheDir();
-        if (saveToDir == null) {
-            saveToDir = this.getCacheDir();
-        }
-
-        return saveToDir;
-    }
-
-    /**
-     * 删除临时文件中的PDF文件
-     *
-     * @param shouldKeepToday 是否保留当天下载的文件
-     */
-    private void clearCache(boolean shouldKeepToday) {
-
-        // 读取临时文件列表
-        File target = getTargetDir();
-        File[] files = target.listFiles();
-
-        if (files != null) {
-
-            // 遍历文件
-            for (File f : files
-            ) {
-                // 先判断前缀
-                if (f.getName().startsWith(FILE_NAME_PREFIX)) {
-
-                    // 再看变更时间
-                    if (!shouldKeepToday || (new Date().getTime() - f.lastModified()) > 24 * 60 * 60 * 1000) {
-                        try {
-                            if (f.delete()) {
-                                Log.v(LOG_TAG, "Cache file was removed: " + f.getName());
-                            }
-                        } catch (Exception ex) {
-                            // 啥都不需要做
-                        }
-                    }
-                }
-            }
-        }
     }
 
 }

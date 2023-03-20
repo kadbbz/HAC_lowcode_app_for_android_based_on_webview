@@ -59,8 +59,8 @@
     <string name="ui_message_authentication_cancel">认证操作被取消，页面无法打开。</string>
     <string name="ui_label_settings_clear">清理缓存和用户信息</string>
     <string name="ui_message_setting_clear">你确认要彻底删除全部数据缓存和已登录的用户信息吗？</string>
-    <string name="title_pdf_downloading">下载中，请稍等…</string>
+    <string name="title_pdf_downloading">下载中，请稍等</string>
     <string name="title_pdf_preview">PDF预览</string>
-    <string name="menu_pdf_clean_dir">清理缓存文件</string>
+    <string name="menu_pdf_open_dir">浏览已下载的文件</string>
     <string name="menu_pdf_close">关闭预览</string>
 </resources>

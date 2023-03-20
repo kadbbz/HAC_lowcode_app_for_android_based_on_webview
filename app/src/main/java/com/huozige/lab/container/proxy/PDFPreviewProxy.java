@@ -20,11 +20,13 @@ public class PDFPreviewProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
-    public void preview(String url, String password) {
+    public void preview(String url, String fileName , String password) {
         Log.v(LOG_TAG, "使用本地组件下载和预览PDF文件：" + url);
 
         Intent intent = new Intent(this.getInterop().getActivityContext(), PDFPreviewActivity.class);
         intent.putExtra(PDFPreviewActivity.EXTRA_KEY_URL, url);
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, fileName);
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_PASSWORD, password);
         this.getInterop().getActivityContext().startActivity(intent);
     }
 }
