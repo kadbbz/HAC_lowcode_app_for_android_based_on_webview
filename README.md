@@ -12,7 +12,7 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 * 提供通过GPS等精确定位方式获取当前位置的能力
 * 提供调用蓝牙打印机（DothanTech方案）的能力
 * 提供读取NFC标签的能力
-* 自动下载和预览PDF文件的能力
+* 提供下载和预览PDF文件的能力
 * 适配活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004&productDetailID=D2209070005) 和 [“手机扫码命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2104270020&productDetailID=D2206270041&tabName=Tabs_detail)
 
 ## 可供Web应用调用的JavaScript接口清单
@@ -24,7 +24,7 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 
 ## 使用方法
 - Step 1：在Android手机上安装HAC（业务平台）APP
-- Step 2：打开HAC，扫码包含有Web应用URL、扫描头配置和其他个性化配置信息的“配置码”（推荐使用 [配置码生成器](https://hzgcclass.app.hzgcloud.cn/hac_config) 快速生成）
+- Step 2：打开HAC，扫码包含有Web应用URL、扫描头配置和其他个性化配置信息的“配置码”（推荐使用 [配置码生成器](https://hac.app.hzgcloud.cn/config) 快速生成）
 - Step 3：配置完成，登录Web应用，开始使用
 
 [了解详情](https://gcdn.grapecity.com.cn/forum.php?mod=viewthread&tid=153537&extra=page%3D1)
