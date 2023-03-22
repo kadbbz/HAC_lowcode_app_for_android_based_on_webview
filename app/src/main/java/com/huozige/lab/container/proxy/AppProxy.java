@@ -30,6 +30,8 @@ import com.huozige.lab.container.utilities.LifecycleUtility;
  * app.toggleActionBar(shouldShow)：是否隐藏ActionBar，重启APP后生效
  * app.openSettingPage()：打开设置页面
  * app.openQuickConfigPage()：打开快速配置页面
+ * 1.9.0
+ * app.closeApp()：关闭应用
  */
 public class AppProxy extends AbstractProxy {
 
@@ -66,6 +68,16 @@ public class AppProxy extends AbstractProxy {
         // 更新配置项
         getConfigManager().upsertScanAction(action);
         getConfigManager().upsertScanExtra(extra);
+    }
+
+
+    /**
+     * 注册到页面的app.closeApp()方法
+     * 无需提示，直接关闭应用
+     */
+    @JavascriptInterface
+    public void closeApp() {
+        LifecycleUtility.close();
     }
 
     /**

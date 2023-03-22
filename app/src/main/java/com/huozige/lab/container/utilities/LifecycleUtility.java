@@ -23,4 +23,14 @@ public class LifecycleUtility {
         intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         context.startActivity(intentR);
     }
+
+    /**
+     * 关闭app
+     */
+    public static void close(){
+
+        Log.v(LOG_TAG,"调用关闭应用的方法");
+
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
 }

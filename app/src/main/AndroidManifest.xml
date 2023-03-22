@@ -49,6 +49,9 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".proxy.support.pdf.PDFPreviewActivity"
+            android:exported="false" />
+        <activity
             android:name=".webview.HttpAuthActivity"
             android:exported="false" />
         <activity

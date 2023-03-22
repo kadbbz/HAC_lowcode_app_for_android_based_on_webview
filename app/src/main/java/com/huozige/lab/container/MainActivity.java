@@ -19,8 +19,10 @@ import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.proxy.DothanPrinterProxy;
 import com.huozige.lab.container.proxy.LocalKvProxy;
 import com.huozige.lab.container.proxy.NfcProxy;
+import com.huozige.lab.container.proxy.PDFPreviewProxy;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.proxy.AbstractProxy;
+import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
 import com.huozige.lab.container.webview.HACWebView;
 import com.huozige.lab.container.webview.HACWebViewClient;
@@ -46,6 +48,8 @@ public class MainActivity extends BaseActivity {
     HACWebViewClient _webViewClient; // 页面事件处理器
 
     HACWebChromeClient _webChromeClient; // 浏览器事件处理器
+
+    HACDownloadListener _downloadListener; // 下载分流处理器
 
     ActivityResultLauncher<Intent> _arc4QuickConfig; // 用来弹出配置页面。
 
@@ -80,13 +84,17 @@ public class MainActivity extends BaseActivity {
         _webChromeClient = new HACWebChromeClient(this);
         _webView.setWebChromeClient(_webChromeClient);
 
-        // 6. 将浏览器加载到页面
+        // 6. 注册下载分流处理器
+        _downloadListener = new HACDownloadListener(_webView);
+        _webView.setDownloadListener(_downloadListener);
+
+        // 7. 将准备就绪的浏览器加载到页面
         setContentView(_webView);
 
-        // 7. 使用WebView初始化WebInterop，处理和HTML的交互
+        // 8. 使用WebView初始化WebInterop，处理和HTML的交互
         _webInterop.setWebView(_webView);
 
-        // 8. 创建和初始化JS代理
+        // 9. 创建和初始化JS代理
         _bridges = new AbstractProxy[]{
                 new IndexProxy(), // 兼容活字格官方APP插件
                 new PDAProxy(), // PDA扫码枪
@@ -94,7 +102,8 @@ public class MainActivity extends BaseActivity {
                 new AppProxy(), // APP配置
                 new GeoProxy(), // 获取地理位置信息
                 new LocalKvProxy(), // 读写本地存储
-                new DothanPrinterProxy() // 操作蓝牙打印机（DothanTech方案）
+                new DothanPrinterProxy(), // 操作蓝牙打印机（DothanTech方案）
+                new PDFPreviewProxy()
         };
 
         for (AbstractProxy br : _bridges
@@ -105,12 +114,11 @@ public class MainActivity extends BaseActivity {
             br.onActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
         }
 
-        // 9. 初始化启动器
+        // 10. 初始化启动器
         _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
         _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
 
-
-        // 10. 加载页面
+        // 11. 加载页面
         _webView.refreshWebView();
 
     }
