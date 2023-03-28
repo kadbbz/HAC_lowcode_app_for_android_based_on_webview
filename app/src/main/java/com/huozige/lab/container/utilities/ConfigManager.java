@@ -50,6 +50,7 @@ public class ConfigManager {
                 this.upsertSettingMenuVisible(config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_MENU_SETTING_V).equalsIgnoreCase("yes"));
                 this.upsertActionBarVisible(config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("yes"));
                 this.upsertTCD(parseHexInteger(config.getString(PREFERENCE_KEY_TCD)));
+                this.upsertHA(config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("yes"));
 
                 return true;
             } else {
