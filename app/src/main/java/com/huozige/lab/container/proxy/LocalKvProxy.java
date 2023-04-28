@@ -24,6 +24,9 @@ public class LocalKvProxy extends AbstractProxy {
     private static final String VERSION_NA = "N/A";
     private static final String VALUE_NA = "DATA_NOT_FOUND";
     private static final String KEY_TEMPLATE = "%s|%s";
+
+    private static final String VERSION_DEFAULT="default";
+
     static final String LOG_TAG="HAC_LocalKvProxy";
 
     @Override
@@ -86,14 +89,21 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void upsertV(String key, String valueString, String version) {
+
+        if(null == version){
+            version = VERSION_DEFAULT;
+        }
+
+        String finalVersion = version;
+
         Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
             LocalKv_Bundle bundle = new LocalKv_Bundle();
             bundle.key = String.format(KEY_TEMPLATE, getEntryHost(),  key);
             bundle.value = valueString;
-            bundle.version= version;
+            bundle.version= finalVersion;
             transactionRealm.insertOrUpdate(bundle);
 
-            Log.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost());
+            Log.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost() +" value: "+ valueString);
         });
     }
 
@@ -106,11 +116,18 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
+
+        if(null == version){
+            version = VERSION_DEFAULT;
+        }
+
+        String finalVersion = version;
+
         Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
             String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
-            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",version).findFirst();
+            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
 
             if(bundle !=null){
                 Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
@@ -133,14 +150,20 @@ public class LocalKvProxy extends AbstractProxy {
 
         final String[] result = new String[1];
 
+        if(null == version){
+            version = VERSION_DEFAULT;
+        }
+
+        String finalVersion = version;
+
         Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
             String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
-            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",version).findFirst();
+            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
 
             if(bundle !=null){
-                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
+                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey+" value: "+ bundle.value);
                 result[0] =  bundle.value;
             }else{
                 Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);

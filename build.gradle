@@ -7,14 +7,14 @@ buildscript {
         google()  // Google's Maven repository
     }
     dependencies {
-        classpath 'com.google.gms:google-services:4.3.14'
-        classpath "io.realm:realm-gradle-plugin:10.11.1"
+        classpath 'com.google.gms:google-services:4.3.15'
+        classpath "io.realm:realm-gradle-plugin:10.15.1"
     }
 }
 
 plugins {
-    id 'com.android.application' version '7.3.0' apply false
-    id 'com.android.library' version '7.3.0' apply false
+    id 'com.android.application' version '7.4.0' apply false
+    id 'com.android.library' version '7.4.0' apply false
 }
 
 task clean(type: Delete) {

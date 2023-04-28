@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 4
-        versionName '1.9.0-release'
+        versionName '1.9.1-release'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,7 +38,7 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: "realm-android"
 
 dependencies {
-    implementation 'com.google.firebase:firebase-analytics:21.2.0'
+    implementation 'com.google.firebase:firebase-analytics:21.2.2'
     implementation 'com.github.getActivity:XXPermissions:16.6'
     //noinspection GradleDependency
     implementation 'androidx.appcompat:appcompat:1.5.1'
