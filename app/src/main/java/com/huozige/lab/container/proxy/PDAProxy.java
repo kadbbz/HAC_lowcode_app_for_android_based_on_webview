@@ -12,13 +12,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
+import com.huozige.lab.container.utilities.MiscUtilities;
 
 /**
  * 让页面具备操作扫码枪硬件的能力
  * pda.modal_scan(cell): 带模态窗口的单次扫码
  * pda.continuous_scan(cell): 开始持续扫码
  * pda.continuous_scan_stop()： 停止持续扫码
- *
  */
 public class PDAProxy extends AbstractProxy {
 
@@ -62,23 +62,23 @@ public class PDAProxy extends AbstractProxy {
                     String resultS = data.getStringExtra(PDAProxy_SingleScanActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "PDA scan completed. Result is : " + resultS);
+                    getInterop().writeLogIntoConsole("PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
-                    getInterop().setInputValue( _cell, resultS);
+                    getInterop().setInputValue(_cell, resultS);
                 } else {
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "PDA scan canceled or failed. Return code is : " + code);
+                    getInterop().writeLogIntoConsole("PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    getInterop().setInputValue( _cell, "");
+                    getInterop().setInputValue(_cell, "");
                 }
             } else {
                 // 记录日志
-                getInterop().writeErrorIntoConsole( "PDA scan failed.");
+                getInterop().writeErrorIntoConsole("PDA scan failed.");
 
                 // 重置单元格
-                getInterop().setInputValue( _cell, "");
+                getInterop().setInputValue(_cell, "");
             }
         });
     }
@@ -118,6 +118,9 @@ public class PDAProxy extends AbstractProxy {
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
+            // 去除非ASCII字符
+            result = MiscUtilities.removeNonASCIIChars(result);
+
             if (_continueScanOn) {
 
                 // 将当次扫描结果拼接到累计结果上，一次刷新到页面，分割符为半角逗号，与活字格的内置数组保持一致
@@ -127,7 +130,7 @@ public class PDAProxy extends AbstractProxy {
                 String rc = _continueScanResultCache.endsWith(",") ? _continueScanResultCache.substring(0, _continueScanResultCache.length() - 1) : _continueScanResultCache;
 
                 // 记录日志
-                getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
+                getInterop().writeLogIntoConsole("PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
                 // 输出到界面
                 getInterop().setInputValue(continueScanCell, rc);
@@ -139,7 +142,7 @@ public class PDAProxy extends AbstractProxy {
                     stopReceiver();
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
+                    getInterop().writeLogIntoConsole("PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
 
                 }
 
@@ -167,7 +170,7 @@ public class PDAProxy extends AbstractProxy {
         _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
 
         // 记录日志
-        getInterop().writeLogIntoConsole( "PDA scan (Single Mode) started.");
+        getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
 
     }
 
@@ -180,10 +183,10 @@ public class PDAProxy extends AbstractProxy {
     @JavascriptInterface
     public void continuous_scan(String cellLocation, String limit) {
 
-        Log.v(LOG_TAG,"continuous_scan start with limit : "+limit);
+        Log.v(LOG_TAG, "continuous_scan start with limit : " + limit);
         // 记录传入参数
         continueScanCell = cellLocation;
-        _continueScanLimit =(null==limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
+        _continueScanLimit = (null == limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
 
         // 重置临时变量
         _continueScanOn = true;
@@ -219,7 +222,7 @@ public class PDAProxy extends AbstractProxy {
         getInterop().getActivityContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) started.");
+        getInterop().writeLogIntoConsole("PDA scan (Continues Mode) started.");
 
     }
 
@@ -234,7 +237,7 @@ public class PDAProxy extends AbstractProxy {
             _continueScanOn = false;
 
             // 记录日志
-            getInterop().writeLogIntoConsole( "PDA scan (Continues Mode) stopped.");
+            getInterop().writeLogIntoConsole("PDA scan (Continues Mode) stopped.");
 
         }
     }

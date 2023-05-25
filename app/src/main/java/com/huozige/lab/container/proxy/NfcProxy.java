@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.huozige.lab.container.proxy.support.scanner.NfcProxy_ReadingActivity;
+import com.huozige.lab.container.utilities.MiscUtilities;
 
 /**
  * 让页面能读取NFC标签
@@ -58,6 +59,9 @@ public class NfcProxy extends AbstractProxy {
 
                     // 记录日志
                     getInterop().writeLogIntoConsole( "NFC Reading completed. Tag is : " + tag );
+
+                    // 去除非ASCII字符
+                    tag= MiscUtilities.removeNonASCIIChars(tag);
 
                     // 将结果写入单元格
                     getInterop().setInputValue( _cellTag, tag);

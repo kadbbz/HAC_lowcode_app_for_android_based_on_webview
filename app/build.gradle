@@ -11,9 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 4
-        versionName '1.9.1-release'
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionName '1.10.0-release'
     }
 
     buildTypes {
@@ -23,8 +21,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     buildFeatures {
         viewBinding true
@@ -42,7 +40,7 @@ dependencies {
     implementation 'com.github.getActivity:XXPermissions:16.6'
     //noinspection GradleDependency
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation files('libs/LPAPI-2021-02-02-R.jar')
     implementation 'com.zhihu.android:matisse:0.5.3-beta3'

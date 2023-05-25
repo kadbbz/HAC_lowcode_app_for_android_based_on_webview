@@ -16,6 +16,7 @@ import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.proxy.DeviceInfoProxy;
 import com.huozige.lab.container.proxy.DothanPrinterProxy;
 import com.huozige.lab.container.proxy.LocalKvProxy;
 import com.huozige.lab.container.proxy.NfcProxy;
@@ -103,7 +104,8 @@ public class MainActivity extends BaseActivity {
                 new GeoProxy(), // 获取地理位置信息
                 new LocalKvProxy(), // 读写本地存储
                 new DothanPrinterProxy(), // 操作蓝牙打印机（DothanTech方案）
-                new PDFPreviewProxy()
+                new PDFPreviewProxy(),
+                new DeviceInfoProxy()
         };
 
         for (AbstractProxy br : _bridges
