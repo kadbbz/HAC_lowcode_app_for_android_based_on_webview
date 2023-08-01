@@ -11,6 +11,7 @@
 
     <!--APP的默认配置，您可以通过修改这部分的值定制APP的样式和行为，设置app_default_entry后才起效-->
     <string name="app_customize_should_show_action_bar">true</string>
+    <string name="app_customize_should_bypass_compatible_check">false</string>
     <string name="app_customize_action_bar_color">#555555</string>
     <string name="app_customize_should_show_setting_menu">true</string>
     <string name="app_customize_url_for_help_menu" />

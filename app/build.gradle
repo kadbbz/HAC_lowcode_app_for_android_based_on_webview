@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 4
-        versionName '1.10.0-release'
+        versionName '1.11.0-release'
     }
 
     buildTypes {
@@ -36,7 +36,7 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: "realm-android"
 
 dependencies {
-    implementation 'com.google.firebase:firebase-analytics:21.2.2'
+    implementation 'com.google.firebase:firebase-analytics:21.3.0'
     implementation 'com.github.getActivity:XXPermissions:16.6'
     //noinspection GradleDependency
     implementation 'androidx.appcompat:appcompat:1.5.1'
@@ -51,4 +51,5 @@ dependencies {
     implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
     implementation 'commons-io:commons-io:2.6'
     implementation 'io.github.chiclaim:downloader:1.0.2'
+    implementation 'com.sunmi:printerx:1.0.11'
 }

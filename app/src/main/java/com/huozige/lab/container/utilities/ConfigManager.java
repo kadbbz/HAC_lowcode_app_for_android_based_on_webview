@@ -29,6 +29,8 @@ public class ConfigManager {
 
     static final String PREFERENCE_KEY_PWD = "PWD"; // 用户密码
 
+    static final String PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK = "BCC"; // 是否忽略兼容性检查
+
     final Activity _context;
 
     public ConfigManager(Activity context) {
@@ -51,7 +53,7 @@ public class ConfigManager {
                 this.upsertActionBarVisible(config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_ACTIONBAR_V).equalsIgnoreCase("yes"));
                 this.upsertTCD(parseHexInteger(config.getString(PREFERENCE_KEY_TCD)));
                 this.upsertHA(config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_HA).equalsIgnoreCase("yes"));
-
+                this.upsertBypassCompatibleCheck(config.getString(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK).equalsIgnoreCase("1") || config.getString(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK).equalsIgnoreCase("true") || config.getString(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK).equalsIgnoreCase("yes"));
                 return true;
             } else {
                 return false;
@@ -144,6 +146,18 @@ public class ConfigManager {
         return sharedPref.getBoolean(PREFERENCE_KEY_ACTIONBAR_V,defaultVisible );
     }
 
+    public Boolean getBypassCompatibleCheck() {
+        // 打开配置库
+        SharedPreferences sharedPref = _context.getSharedPreferences(
+                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+
+        // 配置文件中的默认值
+        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_bypass_compatible_check));
+
+        // 从数据库中加载
+        return sharedPref.getBoolean(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK,defaultVisible );
+    }
+
     public String getAboutUrl() {
         return getStringValue(_context, PREFERENCE_KEY_ULR_ABOUT, R.string.app_customize_url_for_about_menu);
     }
@@ -178,6 +192,15 @@ public class ConfigManager {
 
         // 保存到配置库
         sharedPref.edit().putBoolean(PREFERENCE_KEY_MENU_SETTING_V, value).apply();
+    }
+
+    public void upsertBypassCompatibleCheck(Boolean value) {
+        // 打开配置库
+        SharedPreferences sharedPref = _context.getSharedPreferences(
+                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+
+        // 保存到配置库
+        sharedPref.edit().putBoolean(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, value).apply();
     }
 
     public void upsertAboutUrl(String value) {

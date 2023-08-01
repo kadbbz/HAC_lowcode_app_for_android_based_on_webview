@@ -18,6 +18,8 @@ import com.huozige.lab.container.utilities.ConfigManager;
  */
 public class HACWebView extends WebView {
 
+    static final int SUPPORT_WEBVIEW_MAJOR_VERSION =87; // 参照管理控制台的测试结果，将兼容线定为87。版本号形如103.0.5060.73，取103为主版本
+
     private ConfigManager configManager;
 
     static final String LOG_TAG = "HAC_WebView";
@@ -25,6 +27,21 @@ public class HACWebView extends WebView {
     Context _context;
 
     ProgressBar _progressBar;
+
+    /**
+     * 获取WebView的主版本
+     * @return 主版本
+     */
+    private int getMajorVersion(){
+        PackageInfo pinfo = WebView.getCurrentWebViewPackage();
+        Log.v(LOG_TAG,"Init：检测到WebView的PackageName: " + pinfo.packageName);
+        Log.v(LOG_TAG,"Init：检测到WebView的VersionName: " + pinfo.versionName);
+        Log.v(LOG_TAG,"Init：检测到WebView的VersionCode: " + pinfo.versionCode);
+
+        String major = pinfo.versionName.split("\\.")[0];
+
+        return Integer.parseInt(major);
+    }
 
     /**
      * 初始化配置选项
@@ -149,11 +166,17 @@ public class HACWebView extends WebView {
         Log.v(LOG_TAG, "导航到页面或执行脚本：" + url);
     }
 
-    public ConfigManager getConfigManager() throws IllegalStateException {
+    public ConfigManager getConfigManager() throws Exception {
 
         if (null == configManager) {
             throw new IllegalStateException ("ConfigManager has not be initialized.");
         }
+
+        // 根据配置要求，检查版本兼容
+        if(!configManager.getBypassCompatibleCheck() &&  getMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION){
+            throw new Exception("系统中的WebView组件版本过低。最低兼容版本为："+ SUPPORT_WEBVIEW_MAJOR_VERSION +"，当前设备为："+ getMajorVersion()+"。\r\n您可以在应用市场中搜索“Chrome”，安装这个浏览器后，系统会自动将WebView升级到最新版。");
+        }
+
         return configManager;
     }
 

@@ -71,57 +71,75 @@ public class MainActivity extends BaseActivity {
         setTitle(getString(R.string.app_name));
 
         // 2. 创建浏览器
-        _webView = new HACWebView(this);
+        try{
 
-        // 3. 注册配置操作接口
-        _webView.setConfigManager(getConfigManager());
+            _webView = new HACWebView(this);
 
-        // 4. 创建并注册WebViewClient，处理页面事件
-        _webViewClient = new HACWebViewClient(this);
-        _webViewClient.setStaticFilesCacheFilter(_cacheFilter);
-        _webView.setWebViewClient(_webViewClient);
+            // 3. 注册配置操作接口
+            _webView.setConfigManager(getConfigManager());
 
-        // 5. 创建并注册WebChromeClient，处理浏览器事件
-        _webChromeClient = new HACWebChromeClient(this);
-        _webView.setWebChromeClient(_webChromeClient);
+            // 4. 创建并注册WebViewClient，处理页面事件
+            _webViewClient = new HACWebViewClient(this);
+            _webViewClient.setStaticFilesCacheFilter(_cacheFilter);
+            _webView.setWebViewClient(_webViewClient);
 
-        // 6. 注册下载分流处理器
-        _downloadListener = new HACDownloadListener(_webView);
-        _webView.setDownloadListener(_downloadListener);
+            // 5. 创建并注册WebChromeClient，处理浏览器事件
+            _webChromeClient = new HACWebChromeClient(this);
+            _webView.setWebChromeClient(_webChromeClient);
 
-        // 7. 将准备就绪的浏览器加载到页面
-        setContentView(_webView);
+            // 6. 注册下载分流处理器
+            _downloadListener = new HACDownloadListener(_webView);
+            _webView.setDownloadListener(_downloadListener);
 
-        // 8. 使用WebView初始化WebInterop，处理和HTML的交互
-        _webInterop.setWebView(_webView);
+            // 7. 将准备就绪的浏览器加载到页面
+            setContentView(_webView);
 
-        // 9. 创建和初始化JS代理
-        _bridges = new AbstractProxy[]{
-                new IndexProxy(), // 兼容活字格官方APP插件
-                new PDAProxy(), // PDA扫码枪
-                new NfcProxy(), // NFC读取
-                new AppProxy(), // APP配置
-                new GeoProxy(), // 获取地理位置信息
-                new LocalKvProxy(), // 读写本地存储
-                new DothanPrinterProxy(), // 操作蓝牙打印机（DothanTech方案）
-                new PDFPreviewProxy(),
-                new DeviceInfoProxy()
-        };
+            // 8. 使用WebView初始化WebInterop，处理和HTML的交互
+            _webInterop.setWebView(_webView);
 
-        for (AbstractProxy br : _bridges
-        ) {
-            br.setConfigManager(getConfigManager()); // 配置接口
-            br.setInterop(_webInterop); // WebInterop
-            _webView.addJavascriptInterface(br,br.getName()); // 注册到浏览器
-            br.onActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+            // 9. 创建和初始化JS代理
+            _bridges = new AbstractProxy[]{
+                    new IndexProxy(), // 兼容活字格官方APP插件
+                    new PDAProxy(), // PDA扫码枪
+                    new NfcProxy(), // NFC读取
+                    new AppProxy(), // APP配置
+                    new GeoProxy(), // 获取地理位置信息
+                    new LocalKvProxy(), // 读写本地存储
+                    new DothanPrinterProxy(), // 操作蓝牙打印机（DothanTech方案）
+                    new PDFPreviewProxy(),
+                    new DeviceInfoProxy()
+            };
+
+            for (AbstractProxy br : _bridges
+            ) {
+                br.setConfigManager(getConfigManager()); // 配置接口
+                br.setInterop(_webInterop); // WebInterop
+                _webView.addJavascriptInterface(br,br.getName()); // 注册到浏览器
+                br.onActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+            }
+
+            // 10. 初始化启动器
+            _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
+            _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
+
+            // 11. 加载页面
+            _webView.refreshWebView();
+        }catch (Exception ex){
+
+            Log.e(LOG_TAG,"Webview init failed: " + ex);
+
+            String message = "应用初始化失败，这通常是操作系统和运行环境的故障导致的，请拍摄本界面或截屏后，与技术支持人员联系。";
+            message+="\r\n\n";
+            message+=ex.getMessage();
+            message+="\r\n";
+            message+=ex.toString();
+
+            Intent intent = new Intent(this, ShowErrorActivity.class);
+            intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);
+
+            this.startActivity(intent);
         }
 
-        // 10. 初始化启动器
-        _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
-        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
-
-        // 11. 加载页面
-        _webView.refreshWebView();
 
     }
 

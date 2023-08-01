@@ -21,11 +21,12 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 
 ## 兼容性
 * Android >= 8.0
+* WebView（Chrome）版本 >= 87
 * 运行内存 >= 2GB
 
 ## 使用方法
 - Step 1：在Android手机上安装HAC（业务平台）APP
-- Step 2：打开HAC，扫码包含有Web应用URL、扫描头配置和其他个性化配置信息的“配置码”（推荐使用 [配置码生成器](https://hac.app.hzgcloud.cn/config) 快速生成）
+- Step 2：打开APP，按照界面提示，点击并扫描包含有Web应用URL、扫描头配置和其他个性化配置信息的“配置码”（推荐使用 [配置码生成器](https://hac.app.hzgcloud.cn/config) 快速生成）
 - Step 3：配置完成，登录Web应用，开始使用
 
 [了解详情](https://gcdn.grapecity.com.cn/forum.php?mod=viewthread&tid=153537&extra=page%3D1)

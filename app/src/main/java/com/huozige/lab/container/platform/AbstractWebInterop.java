@@ -1,15 +1,11 @@
 package com.huozige.lab.container.platform;
 
-import android.net.Uri;
 import android.util.Log;
 import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.utilities.PermissionsUtility;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * 与HTML元素直接交互的操作接口
@@ -27,14 +23,6 @@ public abstract class AbstractWebInterop {
      * @param rawValue 需要设置的值
      */
     public abstract void setInputValue(String identity, Object rawValue) throws IllegalStateException;
-
-    /**
-     * 获取某个HTML元素的值
-     *
-     * @param identity HTML元素的标识（如ID、名称等）
-     * @return 该HTML元素的值
-     */
-    public abstract String getElementValue(String identity) throws IllegalStateException;
 
     /**
      * 向浏览器输出日志，供调试使用
@@ -64,9 +52,9 @@ public abstract class AbstractWebInterop {
      * @param jsSegment 自定义脚本
      */
     public void executeJavaScript(String jsSegment) {
-        getActivityContext().runOnUiThread(() -> webView.loadUrl("javascript:" + jsSegment));
+        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> Log.v(LOG_TAG, "在浏览器执行脚本完成：" + result)));
 
-        Log.v(LOG_TAG, "在浏览器执行脚本：" + jsSegment);
+        Log.v(LOG_TAG, "开始在浏览器中执行脚本：" + jsSegment);
     }
 
     /**
@@ -170,18 +158,6 @@ public abstract class AbstractWebInterop {
      */
     public AppCompatActivity getActivityContext() {
         return (AppCompatActivity) webView.getContext();
-    }
-
-    /**
-     * 申请一个敏感权限
-     *
-     * @param permission    需要申请的权限（单个权限）
-     * @param successAction 申请成功后执行的动作
-     */
-    public void requirePermission(String permission, Runnable successAction) {
-        PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
-                permission
-        }, successAction);
     }
 
     /**
