@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 4
-        versionName '1.10.0-release'
+        versionName '1.11.0-release'
     }
 
     buildTypes {
@@ -51,4 +51,5 @@ dependencies {
     implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
     implementation 'commons-io:commons-io:2.6'
     implementation 'io.github.chiclaim:downloader:1.0.2'
+    implementation 'com.sunmi:printerx:1.0.11'
 }
