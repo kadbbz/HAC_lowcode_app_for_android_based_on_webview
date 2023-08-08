@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.XXPermissions;
 import com.huozige.lab.container.R;
@@ -32,7 +34,7 @@ public class PermissionsUtility {
                 .request(new OnPermissionCallback() {
 
                     @Override
-                    public void onGranted(List<String> permissions, boolean all) {
+                    public void onGranted(@NonNull List<String> permissions, boolean all) {
                         if (!all) {
                             Log.w(LOG_TAG,"申请的权限中部分成功，部分失败，已提示给用户");
 
@@ -45,7 +47,7 @@ public class PermissionsUtility {
                     }
 
                     @Override
-                    public void onDenied(List<String> permissions, boolean never) {
+                    public void onDenied(@NonNull List<String> permissions, boolean never) {
                         if (never) {
 
                             Log.e(LOG_TAG,"权限申请被拒绝且勾选为never，即将导航到系统的权限设置页面");

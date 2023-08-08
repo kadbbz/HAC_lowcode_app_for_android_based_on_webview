@@ -4,15 +4,18 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.hjq.permissions.Permission;
 import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -32,6 +35,8 @@ import com.huozige.lab.container.utilities.LifecycleUtility;
  * app.openQuickConfigPage()：打开快速配置页面
  * 1.9.0
  * app.closeApp()：关闭应用
+ * 1.12.0
+ * app.dial(phoneNumber)：拨打电话
  */
 public class AppProxy extends AbstractProxy {
 
@@ -40,6 +45,16 @@ public class AppProxy extends AbstractProxy {
     ActivityResultLauncher<Intent> _arcWoCallback; // 用来弹出页面
 
     static final String LOG_TAG = "HAC_AppProxy";
+
+    /**
+     * 根据传递过来的字符串判断是否为true
+     *
+     * @param text 用来判断的字符串，如1、true、yes均被视为true
+     * @return 判断结果
+     */
+    private boolean assertSwitch(String text) {
+        return text != null && text.length() > 0 && !text.equalsIgnoreCase("0") && !text.equalsIgnoreCase("false") && !text.equalsIgnoreCase("no");
+    }
 
     /**
      * 注册的名称为：app
@@ -103,6 +118,22 @@ public class AppProxy extends AbstractProxy {
     }
 
     /**
+     * 拨打电话
+     */
+    @JavascriptInterface
+    public void dial(String phoneNumber) {
+
+        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), new String[]{
+                Permission.CALL_PHONE
+        }, () -> {
+            Intent intent = new Intent();
+            intent.setAction("android.intent.action.CALL");
+            intent.setData(Uri.parse("tel:" + phoneNumber));
+            this.getInterop().getActivityContext().startActivity(intent);
+        });
+    }
+
+    /**
      * 注册到页面的app.openQuickConfigPage()方法
      * 导航到快速配置页面
      */
@@ -120,7 +151,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
 
-        getConfigManager().upsertSettingMenuVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+        getConfigManager().upsertSettingMenuVisible(assertSwitch(shouldShow));
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -133,7 +164,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void toggleActionBar(String shouldShow) {
 
-        getConfigManager().upsertActionBarVisible(shouldShow != null && shouldShow.length() > 0 && !shouldShow.equalsIgnoreCase("0") && !shouldShow.equalsIgnoreCase("false") && !shouldShow.equalsIgnoreCase("no"));
+        getConfigManager().upsertActionBarVisible(assertSwitch(shouldShow));
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());

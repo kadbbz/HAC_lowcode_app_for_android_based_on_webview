@@ -3,6 +3,7 @@ package com.huozige.lab.container;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -11,6 +12,7 @@ import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 
 import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
@@ -189,6 +191,18 @@ public class MainActivity extends BaseActivity {
         }
 
         return super.onKeyDown(keyCode, event);
+    }
+
+    /**
+     * 处理配置变更的事件，这里仅做日志记录
+     * @param newConfig The new device configuration.
+     */
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        Log.v("HAC_BaseActivity","Config changed: "+ newConfig);
+
     }
 
     /**

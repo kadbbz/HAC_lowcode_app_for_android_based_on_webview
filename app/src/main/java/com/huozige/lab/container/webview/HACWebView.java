@@ -11,6 +11,8 @@ import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
+import androidx.annotation.NonNull;
+
 import com.huozige.lab.container.utilities.ConfigManager;
 
 /**
@@ -34,13 +36,20 @@ public class HACWebView extends WebView {
      */
     private int getMajorVersion(){
         PackageInfo pinfo = WebView.getCurrentWebViewPackage();
-        Log.v(LOG_TAG,"Init：检测到WebView的PackageName: " + pinfo.packageName);
-        Log.v(LOG_TAG,"Init：检测到WebView的VersionName: " + pinfo.versionName);
-        Log.v(LOG_TAG,"Init：检测到WebView的VersionCode: " + pinfo.versionCode);
 
-        String major = pinfo.versionName.split("\\.")[0];
+        if(pinfo == null){
+            Log.e(LOG_TAG,"无法获取浏览器的版本号，跳过了版本检查。");
+            return Integer.MAX_VALUE; // 如果无法获取版本号，按照可以使用来处理
+        }else{
+            Log.v(LOG_TAG,"Init：检测到WebView的PackageName: " + pinfo.packageName);
+            Log.v(LOG_TAG,"Init：检测到WebView的VersionName: " + pinfo.versionName);
+            Log.v(LOG_TAG,"Init：检测到WebView的VersionCode: " + pinfo.versionCode);
 
-        return Integer.parseInt(major);
+            String major = pinfo.versionName.split("\\.")[0];
+
+            return Integer.parseInt(major);
+        }
+
     }
 
     /**
@@ -80,9 +89,7 @@ public class HACWebView extends WebView {
 
         // 缓存
         settings.setDomStorageEnabled(true); // DOM缓存
-        settings.setAppCacheEnabled(true); // 数据缓存（活字格采用的本地库就是这个）
-        settings.setAppCachePath(context.getApplicationContext().getCacheDir().getAbsolutePath()); // 数据缓存路径
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT); // 采用默认的缓存策略
 
         // 布局
         settings.setUseWideViewPort(true); // 默认全屏
@@ -109,15 +116,6 @@ public class HACWebView extends WebView {
             e.printStackTrace();
         }
 
-    }
-
-    @Override
-    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-        LayoutParams lp = (LayoutParams) _progressBar.getLayoutParams();
-        lp.x = l;
-        lp.y = t;
-        _progressBar.setLayoutParams(lp);
-        super.onScrollChanged(l, t, oldl, oldt);
     }
 
     /**
@@ -160,7 +158,7 @@ public class HACWebView extends WebView {
      * @param url URL地址或JS脚本
      */
     @Override
-    public void loadUrl(String url) {
+    public void loadUrl(@NonNull String url) {
         super.loadUrl(url);
 
         Log.v(LOG_TAG, "导航到页面或执行脚本：" + url);
