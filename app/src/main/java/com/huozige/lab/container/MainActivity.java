@@ -14,25 +14,17 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
-import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
-import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
-import com.huozige.lab.container.proxy.DeviceInfoProxy;
-import com.huozige.lab.container.proxy.DothanPrinterProxy;
-import com.huozige.lab.container.proxy.LocalKvProxy;
-import com.huozige.lab.container.proxy.NfcProxy;
-import com.huozige.lab.container.proxy.PDFPreviewProxy;
-import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
+import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
+import com.huozige.lab.container.proxy.ProxyRegister;
+import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
 import com.huozige.lab.container.webview.HACWebView;
 import com.huozige.lab.container.webview.HACWebViewClient;
-import com.huozige.lab.container.proxy.AppProxy;
-import com.huozige.lab.container.proxy.GeoProxy;
-import com.huozige.lab.container.proxy.IndexProxy;
-import com.huozige.lab.container.proxy.PDAProxy;
 
 /**
  * 主Activity，主要负责加载浏览器内核
@@ -45,8 +37,6 @@ public class MainActivity extends BaseActivity {
     AbstractStaticFilesCacheFilter _cacheFilter = new HZGCacheFilter();
 
     HACWebView _webView; // 浏览器内核
-
-    AbstractProxy[] _bridges; // 需要嵌入页面的JS桥
 
     HACWebViewClient _webViewClient; // 页面事件处理器
 
@@ -100,19 +90,7 @@ public class MainActivity extends BaseActivity {
             _webInterop.setWebView(_webView);
 
             // 9. 创建和初始化JS代理
-            _bridges = new AbstractProxy[]{
-                    new IndexProxy(), // 兼容活字格官方APP插件
-                    new PDAProxy(), // PDA扫码枪
-                    new NfcProxy(), // NFC读取
-                    new AppProxy(), // APP配置
-                    new GeoProxy(), // 获取地理位置信息
-                    new LocalKvProxy(), // 读写本地存储
-                    new DothanPrinterProxy(), // 操作蓝牙打印机（DothanTech方案）
-                    new PDFPreviewProxy(),
-                    new DeviceInfoProxy()
-            };
-
-            for (AbstractProxy br : _bridges
+            for (AbstractProxy br : ProxyRegister.getInstance().getAllProxies()
             ) {
                 br.setConfigManager(getConfigManager()); // 配置接口
                 br.setInterop(_webInterop); // WebInterop
@@ -285,7 +263,7 @@ public class MainActivity extends BaseActivity {
 
         // 依次分发给所有JS桥
         for (AbstractProxy br :
-                _bridges) {
+                ProxyRegister.getInstance().getAllProxies()) {
             if (br.processActivityResult(requestCode, resultCode, data)) {
                 break;
             }
