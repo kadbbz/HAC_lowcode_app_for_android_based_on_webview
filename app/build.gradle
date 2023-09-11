@@ -9,7 +9,7 @@ android {
         applicationId "com.huozige.lab.container"
         minSdk 26
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 26
+        targetSdk 33
         versionCode 4
         versionName '1.12.0-beta1'
     }
@@ -36,13 +36,14 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: "realm-android"
 
 dependencies {
+    implementation fileTree(include: ['*.aar', '*.jar'], exclude: [], dir: 'libs')
     implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    implementation 'org.apache.commons:commons-lang3:3.6'
     implementation 'com.github.getActivity:XXPermissions:18.2'
     //noinspection GradleDependency
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation files('libs/LPAPI-2021-02-02-R.jar')
     implementation 'com.zhihu.android:matisse:0.5.3-beta3'
     implementation 'com.github.bumptech.glide:glide:4.11.0'
     implementation 'com.github.jenly1314:zxing-lite:2.4.0'
@@ -52,4 +53,5 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation 'io.github.chiclaim:downloader:1.0.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0'
 }
