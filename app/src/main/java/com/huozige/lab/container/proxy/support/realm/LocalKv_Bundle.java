@@ -10,6 +10,10 @@ import io.realm.annotations.Required;
  */
 public class LocalKv_Bundle extends RealmObject {
 
+    public LocalKv_Bundle(){
+
+    }
+
     @PrimaryKey
     public String key;
     @Required

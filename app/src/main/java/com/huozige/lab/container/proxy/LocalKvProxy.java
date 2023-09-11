@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 
 /**
  * 让页面存取本地KV数据库
@@ -191,20 +190,6 @@ public class LocalKvProxy extends AbstractProxy {
                 Log.v(LOG_TAG,"Data was deleted from LocalKV. Key: " + bKey);
             }
         });
-    }
-
-    @Override
-    public void onActivityCreated() {
-
-        // 在UI线程中初始化Realm
-        Realm.init(getInterop().getActivityContext());
-
-        // 升级数据结构时，丢弃原有数据
-        RealmConfiguration config = new RealmConfiguration.Builder()
-                .deleteRealmIfMigrationNeeded()
-                .build();
-        Realm.setDefaultConfiguration(config);
-
     }
 
     @Override
