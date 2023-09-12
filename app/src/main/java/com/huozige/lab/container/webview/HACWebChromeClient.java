@@ -169,7 +169,8 @@ public class HACWebChromeClient extends WebChromeClient {
 
             // 需要调用摄像头，则先申请权限
             PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
-                    Permission.CAMERA
+                    Permission.CAMERA,
+                    Permission.WRITE_EXTERNAL_STORAGE
             }, () -> {
 
                 if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
