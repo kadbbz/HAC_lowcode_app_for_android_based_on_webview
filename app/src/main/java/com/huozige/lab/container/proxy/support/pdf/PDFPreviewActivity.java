@@ -1,7 +1,6 @@
 package com.huozige.lab.container.proxy.support.pdf;
 
 import android.app.DownloadManager;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,11 +17,11 @@ import com.chiclaim.android.downloader.DownloadConstants;
 import com.chiclaim.android.downloader.DownloadListener;
 import com.chiclaim.android.downloader.DownloadRequest;
 import com.github.barteksc.pdfviewer.PDFView;
-import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.utilities.PermissionsUtility;
 
 import org.apache.commons.io.FilenameUtils;
+
+import java.util.Objects;
 
 /**
  * 下载并预览PDF的页面
@@ -32,7 +31,6 @@ public class PDFPreviewActivity extends AppCompatActivity {
     private String _url, _password, _fileName;
 
     private final String LOG_TAG = "HAC_PDFPreviewActivity";
-    private static final int MENU_ID_DIR = 1;
     private static final int MENU_ID_CLOSE = 2;
 
     public static String EXTRA_KEY_URL = "url";
@@ -65,7 +63,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
                 .setNeedInstall(false) // 这个组件是为了下载apk使用的，默认会提示安装，这里需要关闭这个选项
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
                 .setShowNotificationDisableTip(false)
-                .setDestinationUri(Uri.parse(FilenameUtils.concat(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getPath(), _fileName))) // 固定采用用户提供的文件名
+                .setDestinationUri(Uri.parse(FilenameUtils.concat(Objects.requireNonNull(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getPath(), _fileName))) // 固定采用用户提供的文件名
                 .registerListener(new DownloadListener() {
                     @Override
                     public void onDownloadStart() {
@@ -82,9 +80,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
                         Log.v(LOG_TAG, "Download task completed: " + _url);
 
                         // 读取PDF之前需要先申请权限
-                        PermissionsUtility.asyncRequirePermissions(PDFPreviewActivity.this, new String[]{
-                                Permission.READ_EXTERNAL_STORAGE
-                        }, () -> renderPDF(uri));
+                        renderPDF(uri);
                     }
 
                     @Override
@@ -164,22 +160,15 @@ public class PDFPreviewActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
 
         menu.add(0, MENU_ID_CLOSE, MENU_ID_CLOSE, getString(R.string.menu_pdf_close));
-        menu.add(0, MENU_ID_DIR, MENU_ID_DIR, getString(R.string.menu_pdf_open_dir));
 
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_ID_DIR:
-                startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                break;
-            case MENU_ID_CLOSE:
-                this.finish();
-                break;
+        if (item.getItemId() == MENU_ID_CLOSE) {
+            this.finish();
         }
-
         return super.onOptionsItemSelected(item);
     }
 
