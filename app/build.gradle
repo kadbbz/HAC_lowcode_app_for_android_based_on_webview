@@ -8,8 +8,8 @@ android {
     defaultConfig {
         applicationId "com.huozige.lab.container"
         minSdk 26
-        //noinspection ExpiredTargetSdkVersion,OldTargetApi
-        targetSdk 26
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk 29
         versionCode 4
         versionName '1.12.0-release'
     }
