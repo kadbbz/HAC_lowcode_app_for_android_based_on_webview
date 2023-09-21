@@ -14,6 +14,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
+import java.util.ArrayList;
+
 /**
  * 让页面具备操作扫码枪硬件的能力
  * pda.modal_scan(cell): 带模态窗口的单次扫码
@@ -27,8 +29,8 @@ public class PDAProxy extends AbstractProxy {
 
     Boolean _continueScanOn = false;
     String continueScanCell;
-    String _continueScanResultCache;
-    Integer _continueScanLimit, _continueScanCount;
+    ArrayList<String> _resultCache = new ArrayList<>();
+    Integer continueScanLimit;
 
 
     static final String LOG_TAG = "HAC_HzgJsBridgePDA";
@@ -118,16 +120,18 @@ public class PDAProxy extends AbstractProxy {
 
             Log.v(LOG_TAG, "当次扫码结果是：" + result);
 
+            if(result == null) result="";
+
             // 去除非ASCII字符
             result = MiscUtilities.removeNonASCIIChars(result);
 
-            if (_continueScanOn) {
+            if (_continueScanOn && !result.isEmpty()) {
 
-                // 将当次扫描结果拼接到累计结果上，一次刷新到页面，分割符为半角逗号，与活字格的内置数组保持一致
-                _continueScanResultCache = _continueScanResultCache + result + ",";
+                // 将当次扫描结果拼接到累计结果上
+                _resultCache.add(result);
 
-                // 去掉多余的的逗号
-                String rc = _continueScanResultCache.endsWith(",") ? _continueScanResultCache.substring(0, _continueScanResultCache.length() - 1) : _continueScanResultCache;
+                // 返回到页面，分割符为半角逗号，与活字格的内置数组保持一致
+                String rc = String.join(",", _resultCache);
 
                 // 记录日志
                 getInterop().writeLogIntoConsole("PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
@@ -135,9 +139,7 @@ public class PDAProxy extends AbstractProxy {
                 // 输出到界面
                 getInterop().setInputValue(continueScanCell, rc);
 
-                _continueScanCount++;
-
-                if (_continueScanCount >= _continueScanLimit) {
+                if (_resultCache.size() >= continueScanLimit) {
 
                     stopReceiver();
 
@@ -184,15 +186,16 @@ public class PDAProxy extends AbstractProxy {
     public void continuous_scan(String cellLocation, String limit) {
 
         Log.v(LOG_TAG, "continuous_scan start with limit : " + limit);
+
         // 记录传入参数
         continueScanCell = cellLocation;
-        _continueScanLimit = (null == limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
+        continueScanLimit = (null == limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
 
-        // 重置临时变量
+        // 清空缓存，仅在启动扫描时重置
         _continueScanOn = true;
-        _continueScanResultCache = ""; // 清空缓存
-        _continueScanCount = 0;
+        _resultCache.clear();
 
+        // 开始监听
         startReceiver();
     }
 
