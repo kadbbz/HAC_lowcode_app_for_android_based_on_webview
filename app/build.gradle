@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29
         versionCode 4
-        versionName '1.13.0-beta1'
+        versionName '1.13.0-beta2'
     }
 
     buildTypes {

@@ -31,8 +31,6 @@ public abstract class AbstractWebInterop {
      */
     public void writeLogIntoConsole(String logContent) {
         executeJavaScript("console.log('" + removeJSKeyWords(logContent) + "')");
-
-        Log.v(LOG_TAG, "写入浏览器日志：" + logContent);
     }
 
     /**
@@ -42,8 +40,6 @@ public abstract class AbstractWebInterop {
      */
     public void writeErrorIntoConsole(String logContent) {
         executeJavaScript("console.error('" + removeJSKeyWords(logContent) + "')");
-
-        Log.v(LOG_TAG, "写入浏览器错误日志：" + logContent);
     }
 
     /**
@@ -52,7 +48,7 @@ public abstract class AbstractWebInterop {
      * @param jsSegment 自定义脚本
      */
     public void executeJavaScript(String jsSegment) {
-        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> Log.v(LOG_TAG, "在浏览器执行脚本完成：" + result)));
+        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> Log.v(LOG_TAG, "在浏览器执行脚本完成：" + jsSegment +" >> "+ result)));
 
         Log.v(LOG_TAG, "开始在浏览器中执行脚本：" + jsSegment);
     }
