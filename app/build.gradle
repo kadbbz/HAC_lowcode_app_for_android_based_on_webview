@@ -12,6 +12,12 @@ android {
         targetSdk 29
         versionCode 4
         versionName '1.13.0-beta2'
+
+        manifestPlaceholders = [
+                JPUSH_PKGNAME : applicationId,
+                JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush 上注册的包名对应的 Appkey.
+                JPUSH_CHANNEL : "developer-default", //暂时填写默认值即可.
+        ]
     }
 
     buildTypes {
@@ -27,7 +33,7 @@ android {
     buildFeatures {
         viewBinding true
     }
-    namespace 'com.huozige.lab.container'
+    namespace "com.huozige.lab.container"
 }
 
 
@@ -51,4 +57,5 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation 'io.github.chiclaim:downloader:1.0.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'cn.jiguang.sdk:jpush:5.2.0'
 }
