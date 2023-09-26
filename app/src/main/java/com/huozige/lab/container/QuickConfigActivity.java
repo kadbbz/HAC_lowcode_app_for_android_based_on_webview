@@ -95,7 +95,8 @@ public class QuickConfigActivity extends BaseActivity {
 
         // 申请摄像头权限，然后开始扫码
         PermissionsUtility.asyncRequirePermissions(QuickConfigActivity.this, new String[]{
-                Permission.CAMERA
+                Permission.CAMERA,
+                Permission.NOTIFICATION_SERVICE
         },()->{
             // 调用ZXingLite的扫码页面
             _arcZxingLite.launch(new Intent(QuickConfigActivity.this, CaptureActivity.class));
@@ -104,7 +105,10 @@ public class QuickConfigActivity extends BaseActivity {
 
     void restart(){
         Intent intentR = getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-        intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intentR);
+        if(intentR != null)
+        {
+            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intentR);
+        }
     }
 }

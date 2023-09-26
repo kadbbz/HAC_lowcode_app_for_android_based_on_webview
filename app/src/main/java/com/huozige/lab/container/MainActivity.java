@@ -4,6 +4,7 @@ package com.huozige.lab.container;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -106,7 +107,7 @@ public class MainActivity extends BaseActivity {
             _webView.refreshWebView();
         }catch (Exception ex){
 
-            Log.e(LOG_TAG,"Webview init failed: " + ex);
+            Log.e(LOG_TAG,"WebView init failed: " + ex);
 
             String message = "应用初始化失败，这通常是操作系统和运行环境的故障导致的，请拍摄本界面或截屏后，与技术支持人员联系。";
             message+="\r\n\n";
@@ -147,7 +148,29 @@ public class MainActivity extends BaseActivity {
         if (getConfigManager().getEntry().length() == 0) {
             // 跳转到设置页面
             _arc4QuickConfig.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
+        }else{
+
+            // 判断是否需要自动跳转到特定页面
+            Intent intent = getIntent();
+
+            // Action：com.huozige.lab.container.navigate
+            // Extra：url
+            if(intent!=null && intent.getAction()!=null && intent.getAction().equalsIgnoreCase("com.huozige.lab.container.navigate")){
+                String url = intent.getStringExtra("url");
+
+                if(url!=null){
+                    Uri u = Uri.parse(url);
+
+                    if(u!=null){
+
+                        Log.v(LOG_TAG,"收到带跳转的Intent请求，URL："+url);
+                        this._webView.loadUrl(url);
+                    }
+                }
+            }
+
         }
+
 
     }
 
