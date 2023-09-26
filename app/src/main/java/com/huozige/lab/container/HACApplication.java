@@ -3,6 +3,7 @@ package com.huozige.lab.container;
 import android.app.Application;
 import android.util.Log;
 
+import cn.jpush.android.api.JPushInterface;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
@@ -34,5 +35,10 @@ public class HACApplication extends Application {
         Realm.setDefaultConfiguration(config);
 
         Log.v(LOG_TAG,"Realm初始化完成");
+
+        JPushInterface.init(this);
+
+        Log.v(LOG_TAG,"JPush初始化完成");
+
     }
 }

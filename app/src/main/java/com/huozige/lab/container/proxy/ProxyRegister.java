@@ -51,6 +51,8 @@ public class ProxyRegister {
 
         this._proxies.add(new DothanPrinterProxy()); // 操作德佟打印机
 
+        this._proxies.add(new JPushProxy()); // 操作极光推送
+
         __instance = this;
     }
 }
