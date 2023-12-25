@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.huozige.lab.container"
         minSdk 26
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 29
+        targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.13.0-beta2'
+        versionName '1.14.0-beta1'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
@@ -42,10 +42,10 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: "realm-android"
 
 dependencies {
-    implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    implementation 'com.google.firebase:firebase-analytics:21.5.0'
     implementation 'com.github.getActivity:XXPermissions:18.2'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation files('libs/LPAPI-2021-02-02-R.jar')
     implementation 'com.zhihu.android:matisse:0.5.3-beta3'
@@ -55,7 +55,6 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.1.72.android'
     implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
     implementation 'commons-io:commons-io:2.6'
-    implementation 'io.github.chiclaim:downloader:1.0.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'cn.jiguang.sdk:jpush:5.2.0'
 }

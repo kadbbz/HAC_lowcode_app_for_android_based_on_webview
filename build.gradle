@@ -7,8 +7,8 @@ buildscript {
         google()  // Google's Maven repository
     }
     dependencies {
-        classpath 'com.google.gms:google-services:4.3.15'
-        classpath "io.realm:realm-gradle-plugin:10.16.1"
+        classpath 'com.google.gms:google-services:4.4.0'
+        classpath "io.realm:realm-gradle-plugin:10.17.0"
     }
 }
 
