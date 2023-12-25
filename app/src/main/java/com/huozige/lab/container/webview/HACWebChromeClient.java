@@ -303,4 +303,17 @@ public class HACWebChromeClient extends WebChromeClient {
         });
     }
 
+    /**
+     * h5向app申请录音和相机权限
+     * */
+    @Override
+    public void onPermissionRequest(PermissionRequest request) {
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+
+            request.grant(request.getResources());
+            request.getOrigin();
+        }
+    }
+	
 }
