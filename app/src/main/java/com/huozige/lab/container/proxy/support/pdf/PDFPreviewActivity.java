@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.utilities.HACDownloadManager;
+import com.huozige.lab.container.utilities.HACDownloadTask;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -43,17 +44,19 @@ public class PDFPreviewActivity extends AppCompatActivity {
     private void startDownload() {
         setTitle(R.string.title_pdf_downloading);
 
-        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, new HACDownloadManager.IHACDownloadHandler() {
+        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf",new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(File targetFile) {
-                Log.v(LOG_TAG, "Download task completed: " + _url);
+                Log.v(LOG_TAG, "Download task completed: " + _url +" to: "+targetFile);
+                Toast.makeText(PDFPreviewActivity.this,"PDF文件已成功下载，即将打开："+targetFile, Toast.LENGTH_LONG).show();
                 _uri = Uri.fromFile(targetFile);
                 renderPDF(_uri);
             }
 
             @Override
             public void onError(String fileName, String url) {
-                Log.v(LOG_TAG, "Download task failed: " + _url);
+                Log.v(LOG_TAG, "Download task failed: " + url +" name: "+ fileName);
+                Toast.makeText(PDFPreviewActivity.this,"PDF文件无法下载，请稍后重试："+fileName, Toast.LENGTH_LONG).show();
                 PDFPreviewActivity.this.finish();
             }
         });

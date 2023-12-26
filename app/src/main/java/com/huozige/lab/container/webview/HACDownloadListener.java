@@ -5,6 +5,7 @@ import android.webkit.DownloadListener;
 import android.widget.Toast;
 
 import com.huozige.lab.container.utilities.HACDownloadManager;
+import com.huozige.lab.container.utilities.HACDownloadTask;
 
 import java.io.File;
 
@@ -25,7 +26,7 @@ public class HACDownloadListener implements DownloadListener {
         ((Activity) this._webView.getContext()).setTitle("文件下载中，请稍等……");
 
         // 执行下载
-        HACDownloadManager.getInstance(this._webView.getContext()).startDownloadTask(this._webView.getContext(), url, new HACDownloadManager.IHACDownloadHandler() {
+        HACDownloadManager.getInstance(this._webView.getContext()).startDownloadTask(this._webView.getContext(), url,mimetype, new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(File targetFile) {
                 Toast.makeText(_webView.getContext(), "文件下载成功，保存到" + targetFile, Toast.LENGTH_LONG).show();

@@ -29,21 +29,12 @@ public class MiscUtilities {
     /**
      * 获取附件类URL的文件名
      * @param url URL地址
+     * @param mimeType MIME
      * @return 如果是普通地址，则调用UrlUtil的算法，否则按照活字格的规则获取
      */
-    public static String guessFileName(String url){
-        return guessFileName(url,"");
-    }
+    public static String guessFileName(String url, String mimeType){
 
-    /**
-     * 获取附件类URL的文件名
-     * @param url URL地址
-     * @param contentDisposition Content-Disposition的内容
-     * @return 如果是普通地址，则调用UrlUtil的算法，否则按照活字格的规则获取
-     */
-    public static String guessFileName(String url, String contentDisposition){
-
-        String fileName = URLUtil.guessFileName(url, contentDisposition, "application/octet-stream");
+        String fileName = URLUtil.guessFileName(url, "", mimeType);
 
         // 活字格的附件名存放在download的file参数中，如https://hac.app.hzgcloud.cn/demo/FileDownloadUpload/Download?file=47916819-f90e-47f8-8079-72df4fce78ac_AppLevelSecurityProvider.zip
         if(url.toLowerCase().contains("/filedownloadupload/download?")){
