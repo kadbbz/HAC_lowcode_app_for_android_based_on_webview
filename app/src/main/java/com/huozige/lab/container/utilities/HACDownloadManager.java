@@ -24,10 +24,6 @@ public class HACDownloadManager {
         return __taskList;
     }
 
-    public static DownloadManager getDownloadManager(){
-        return __instance._innerManager;
-    }
-
     static final String LOG_TAG = "HAC_DownloadManager"; // 日志的标识
 
     static HACDownloadManager __instance;
@@ -41,7 +37,6 @@ public class HACDownloadManager {
         }
 
         __instance = new HACDownloadManager();
-        __instance._innerManager = (android.app.DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
         __instance._receiver = new HACFileDownloadedReceiver();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -52,8 +47,6 @@ public class HACDownloadManager {
 
         return __instance;
     }
-
-    private DownloadManager _innerManager;
 
     private HACFileDownloadedReceiver _receiver;
 
@@ -72,32 +65,29 @@ public class HACDownloadManager {
         task.url = url;
         task.registryHandler(callback);
 
-        // 0. 准备下载文件夹
-        boolean isReady = Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs();
-
         // 1. 处理文件名
-        task.fileName = MiscUtilities.guessFileName(url,mimeType);
-        task.targetFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), task.fileName);
-
-        Log.v(LOG_TAG, "下载目录准备就绪：" + task.targetFile + "文件夹是否为本次新建：" + isReady);
+        FileNameInfo fileInfo =  MiscUtilities.guessFileName(url,mimeType);
+        task.fileName = fileInfo.fileName;
+        mimeType = fileInfo.mimeType;
+        File tempFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), task.fileName);
+        tempFile.deleteOnExit();
 
         // 2. 配置下载选项
         android.app.DownloadManager.Request request = new android.app.DownloadManager.Request(Uri.parse(url))
                 .setTitle(task.fileName)
-                .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setVisibleInDownloadsUi(true)
-                .setMimeType(mimeType)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, task.fileName)
                 .setAllowedOverMetered(true)
+                .addRequestHeader("Accept-Content", mimeType)
+                .setMimeType(mimeType)
                 .setAllowedOverRoaming(true);
 
         request.allowScanningByMediaScanner();
 
         // 3. 处理授权
         String cookieString = CookieManager.getInstance().getCookie(url);
-        request.addRequestHeader("cookie", cookieString);
+        request.addRequestHeader("Cookie", cookieString);
 
         // 4. 启动下载
         android.app.DownloadManager downloadManager = (android.app.DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);

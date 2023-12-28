@@ -1,18 +1,18 @@
 package com.huozige.lab.container.utilities;
 
-import java.io.File;
+import android.net.Uri;
 
 public class HACDownloadTask {
 
     public interface IHACDownloadHandler{
-        void onSuccess(File targetFile);
+        void onSuccess(Uri localFileUri);
         void onError(String fileName, String url);
     }
 
     public long taskId;
     public String url;
     public String fileName;
-    public File targetFile;
+
     public int statusCode;
     public IHACDownloadHandler handler;
 

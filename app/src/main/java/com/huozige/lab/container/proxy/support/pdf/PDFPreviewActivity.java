@@ -17,8 +17,6 @@ import com.huozige.lab.container.utilities.HACDownloadTask;
 
 import org.apache.commons.io.FilenameUtils;
 
-import java.io.File;
-
 /**
  * 下载并预览PDF的页面
  */
@@ -36,8 +34,6 @@ public class PDFPreviewActivity extends AppCompatActivity {
     PDFView _pdfView;
     ProgressBar _pbDownload;
 
-    Uri _uri;
-
     /**
      * 启动下载
      */
@@ -46,17 +42,16 @@ public class PDFPreviewActivity extends AppCompatActivity {
 
         HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf",new HACDownloadTask.IHACDownloadHandler() {
             @Override
-            public void onSuccess(File targetFile) {
-                Log.v(LOG_TAG, "Download task completed: " + _url +" to: "+targetFile);
-                Toast.makeText(PDFPreviewActivity.this,"PDF文件已成功下载，即将打开："+targetFile, Toast.LENGTH_LONG).show();
-                _uri = Uri.fromFile(targetFile);
-                renderPDF(_uri);
+            public void onSuccess(Uri localFileUri) {
+                Log.v(LOG_TAG, "Download task completed: " + _url +" to: "+ localFileUri);
+                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_downloaded+ _fileName, Toast.LENGTH_LONG).show();
+                renderPDF(localFileUri);
             }
 
             @Override
             public void onError(String fileName, String url) {
                 Log.v(LOG_TAG, "Download task failed: " + url +" name: "+ fileName);
-                Toast.makeText(PDFPreviewActivity.this,"PDF文件无法下载，请稍后重试："+fileName, Toast.LENGTH_LONG).show();
+                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_download_failed+fileName, Toast.LENGTH_LONG).show();
                 PDFPreviewActivity.this.finish();
             }
         });
@@ -88,12 +83,12 @@ public class PDFPreviewActivity extends AppCompatActivity {
             // 开始展示PDF
             config.load();
 
-            Log.v(LOG_TAG, "PDF file was rendered.");
+            Log.v(LOG_TAG, "PDF file was rendered:" + pdfFile);
 
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            Log.e(LOG_TAG, "Error on rendering PDF file: " + ex);
+            Log.e(LOG_TAG, "Error on rendering PDF file: " + pdfFile +" >> "+ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }
