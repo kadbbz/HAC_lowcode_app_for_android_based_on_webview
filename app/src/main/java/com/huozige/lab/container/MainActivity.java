@@ -96,7 +96,7 @@ public class MainActivity extends BaseActivity {
                 br.setConfigManager(getConfigManager()); // 配置接口
                 br.setInterop(_webInterop); // WebInterop
                 _webView.addJavascriptInterface(br,br.getName()); // 注册到浏览器
-                br.onActivityCreated(); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+                br.onActivityCreated(MainActivity.this); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
             }
 
             // 10. 初始化启动器

@@ -6,6 +6,7 @@ import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
@@ -46,10 +47,10 @@ public class IndexProxy extends AbstractProxy {
      * 初始化过程：创建调用器
      */
     @Override
-    public void onActivityCreated(){
+    public void onActivityCreated(AppCompatActivity activity){
 
         // 创建到ZXingLite的调用器
-        _arcZxingLite= getInterop().getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcZxingLite= activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
             // 按照ZXingLite文档获取和解析扫码结果数据，如果出错或者取消，默认为空字符串，同官方APP
             Intent data = result.getData();
