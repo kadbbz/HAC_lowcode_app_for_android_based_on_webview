@@ -62,6 +62,9 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
+        <activity
+            android:name=".proxy.support.scanner.BleProxy_ReadingActivity"
+            android:exported="false" />
 
         <receiver
             android:name=".utilities.HACFileDownloadedReceiver"
