@@ -27,6 +27,8 @@ public class BLEProxy extends AbstractProxy {
         cellPayload = payloadLocation;
         cellError = errorLocation;
 
+        getInterop().writeLogIntoConsole( "Start BLE scanning." );
+
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_SCAN);
         _scanner.launch(request);
@@ -37,6 +39,8 @@ public class BLEProxy extends AbstractProxy {
         cellPayload = payloadLocation;
         cellRaw= rawLocation;
         cellError = errorLocation;
+
+        getInterop().writeLogIntoConsole( "Start reading via BLE device " + mac +" service: " + uuid_service +" characteristic: " + uuid_characteristic );
 
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_READ);
@@ -52,6 +56,8 @@ public class BLEProxy extends AbstractProxy {
         cellRaw= rawLocation;
         cellError = errorLocation;
 
+        getInterop().writeLogIntoConsole( "Start subscribe notify from BLE device " + mac +" service: " + uuid_service +" characteristic: " + uuid_characteristic );
+
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_NOTIFY);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
@@ -66,6 +72,8 @@ public class BLEProxy extends AbstractProxy {
         cellRaw= rawLocation;
         cellError = errorLocation;
 
+        getInterop().writeLogIntoConsole( "Start subscribe indicate from BLE device " + mac +" service: " + uuid_service +" characteristic: " + uuid_characteristic );
+
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_INDICATE);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
@@ -77,6 +85,8 @@ public class BLEProxy extends AbstractProxy {
     @JavascriptInterface
     public void write(String mac, String uuid_service, String uuid_characteristic, String base64Value, String errorLocation) {
         cellError = errorLocation;
+
+        getInterop().writeLogIntoConsole( "Start write data "+ base64Value+" to BLE device " + mac +" service: " + uuid_service +" characteristic: " + uuid_characteristic );
 
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_WRITE);
@@ -99,6 +109,12 @@ public class BLEProxy extends AbstractProxy {
                 String raw = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_RAW_PAYLOAD);
                 String error = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_ERROR);
 
+                if(error==null || error.isEmpty()){
+                    getInterop().writeLogIntoConsole("Data received from device: " + payload +" ("+ raw+")");
+                }else{
+                    getInterop().writeLogIntoConsole("Error occurred during data exchanging: " + error);
+                }
+
                 Log.v(LOG_TAG, "code -> " + code + " payload - > " + payload + " err -> " + error);
 
                 if (cellError != null && !cellError.isEmpty()) {
@@ -111,6 +127,9 @@ public class BLEProxy extends AbstractProxy {
                     getInterop().setInputValue(cellRaw, raw);
                 }
             }else{
+
+                getInterop().writeLogIntoConsole("App error! Return without intent, code is " + code);
+
                 Log.e(LOG_TAG, "App error! Return without intent, code is " + code);
 
                 if (cellError != null && !cellError.isEmpty()) {
