@@ -23,6 +23,7 @@ import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
 import java.util.ArrayList;
@@ -383,7 +384,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                             Log.v(LOG_TAG, "Data retrieved.");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + stringifyByteArray(data));
+                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
                                                 Log.v(LOG_TAG, "Reading completed, no data retrieved.");
@@ -463,7 +464,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                             Log.v(LOG_TAG, "Notify Data retrieved.");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + stringifyByteArray(data));
+                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
                                                 Log.v(LOG_TAG, "Reading completed, no data retrieved.");
@@ -549,7 +550,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                             Log.v(LOG_TAG, "Indicate Data retrieved.");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + stringifyByteArray(data));
+                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
                                                 Log.v(LOG_TAG, "Reading completed, no data retrieved.");
@@ -580,18 +581,33 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
         );
     }
 
-    private void startWrite(String mac, String uuid_service, String uuid_characteristic, String payload) {
+    private void startWrite(String mac, String uuid_service, String uuid_characteristic, String stringValue) {
 
         final String[] realServiceCharacterUuid = new String[2];
         realServiceCharacterUuid[0] = uuid_service;
         realServiceCharacterUuid[1] = uuid_characteristic;
 
         // 解析写入蓝牙的负载
-        if (payload == null) {
+        if(stringValue==null || stringValue.isEmpty()){
             sendResultAndFinish(new BleError(-110, "PAYLOAD_IS_EMPTY"));
+            return;
         }
 
-        byte[] data = Base64.getDecoder().decode(payload);
+        byte[] parsedData;
+
+        // 解析时，优先判断十六进制，然后再处理base64.如果都不是则直接报错
+        if (stringValue.toLowerCase().startsWith("0x")) {
+            parsedData = MiscUtilities.hexToByteArray(stringValue);
+        }else{
+            try {
+                parsedData = Base64.getDecoder().decode(stringValue);
+            }catch(IllegalArgumentException ex){
+                sendResultAndFinish(new BleError(-110, "PAYLOAD_IS_NOT_HEX_OR_BASE64"));
+                return;
+            }
+        }
+
+        byte[] data = parsedData;
 
         PermissionsUtility.asyncRequirePermissions(this, new String[]{
                         Permission.ACCESS_FINE_LOCATION,
@@ -628,7 +644,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                             fillDefaultServiceAndCharacters(gatt, realServiceCharacterUuid, uuid_service, uuid_characteristic);
 
-                            Log.v(LOG_TAG, "Start writing to " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1] + ", payload: " + payload);
+                            Log.v(LOG_TAG, "Start writing to " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1] + ", payload: " + stringValue);
 
                             BleManager.getInstance().write(
                                     bleDevice,
