@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.14.0-release'
+        versionName '1.14.1-release'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
