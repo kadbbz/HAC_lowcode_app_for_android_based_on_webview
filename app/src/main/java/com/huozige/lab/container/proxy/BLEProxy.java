@@ -13,7 +13,7 @@ import com.huozige.lab.container.proxy.support.scanner.BleProxy_ReadingActivity;
 public class BLEProxy extends AbstractProxy {
 
     ActivityResultLauncher<Intent> _scanner;
-    String cellPayload, cellError;
+    String cellPayload, cellError,cellRaw;
 
     static final String LOG_TAG = "HAC_BLEProxy";
 
@@ -33,12 +33,41 @@ public class BLEProxy extends AbstractProxy {
     }
 
     @JavascriptInterface
-    public void read(String mac, String uuid_service, String uuid_characteristic, String payloadLocation, String errorLocation) {
+    public void read(String mac, String uuid_service, String uuid_characteristic, String payloadLocation,String rawLocation,  String errorLocation) {
         cellPayload = payloadLocation;
+        cellRaw= rawLocation;
         cellError = errorLocation;
 
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_READ);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_CHARACTER, uuid_characteristic);
+        _scanner.launch(request);
+    }
+
+    @JavascriptInterface
+    public void notify(String mac, String uuid_service, String uuid_characteristic, String payloadLocation,String rawLocation,  String errorLocation) {
+        cellPayload = payloadLocation;
+        cellRaw= rawLocation;
+        cellError = errorLocation;
+
+        Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_NOTIFY);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_CHARACTER, uuid_characteristic);
+        _scanner.launch(request);
+    }
+
+    @JavascriptInterface
+    public void indicate(String mac, String uuid_service, String uuid_characteristic, String payloadLocation, String rawLocation, String errorLocation) {
+        cellPayload = payloadLocation;
+        cellRaw= rawLocation;
+        cellError = errorLocation;
+
+        Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
+        request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_INDICATE);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_CHARACTER, uuid_characteristic);
@@ -65,19 +94,31 @@ public class BLEProxy extends AbstractProxy {
             int code = result.getResultCode();
             Intent resp = result.getData();
 
-            Log.v(LOG_TAG,"Result received with extras: "+ String.join(",", resp.getExtras().keySet().stream().toArray(String[]::new)));
+            if(resp!=null){
+                String payload = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_PAYLOAD);
+                String raw = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_RAW_PAYLOAD);
+                String error = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_ERROR);
 
-            String payload = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_PAYLOAD);
-            String error = resp.getStringExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_ERROR);
+                Log.v(LOG_TAG, "code -> " + code + " payload - > " + payload + " err -> " + error);
 
-            Log.v(LOG_TAG, "code -> " + code + " payload - > " + payload + " err -> " + error);
+                if (cellError != null && !cellError.isEmpty()) {
+                    getInterop().setInputValue(cellError, error);
+                }
+                if (cellPayload != null && !cellPayload.isEmpty()) {
+                    getInterop().setInputValue(cellPayload, payload);
+                }
+                if (cellRaw != null && !cellRaw.isEmpty()) {
+                    getInterop().setInputValue(cellRaw, raw);
+                }
+            }else{
+                Log.e(LOG_TAG, "App error! Return without intent, code is " + code);
 
-            if (cellError != null && !cellError.isEmpty()) {
-                getInterop().setInputValue(cellError, error);
+                if (cellError != null && !cellError.isEmpty()) {
+                    getInterop().setInputValue(cellError, code);
+                }
             }
-            if (cellPayload != null && !cellPayload.isEmpty()) {
-                getInterop().setInputValue(cellPayload, payload);
-            }
+
+
 
         });
     }
