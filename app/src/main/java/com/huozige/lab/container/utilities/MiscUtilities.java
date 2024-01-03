@@ -1,5 +1,11 @@
 package com.huozige.lab.container.utilities;
 
+import android.webkit.URLUtil;
+
+import java.net.URL;
+import java.net.URLConnection;
+
+
 public class MiscUtilities {
 
     /**
@@ -19,5 +25,57 @@ public class MiscUtilities {
         text = text.replaceAll("\\p{C}", "");
 
         return text.trim();
+    }
+
+
+    /**
+     * 获取附件类URL的文件名
+     * @param url URL地址
+     * @param mimeType MIME
+     * @return 如果是普通地址，则调用UrlUtil的算法，否则按照活字格的规则获取
+     */
+    public static FileNameInfo guessFileName(String url, String mimeType){
+
+        // 默认实现
+        String fileName = URLUtil.guessFileName(url, "", mimeType);
+
+        // 活字格的附件名存放在download的file参数中，如https://hac.app.hzgcloud.cn/demo/FileDownloadUpload/Download?file=47916819-f90e-47f8-8079-72df4fce78ac_AppLevelSecurityProvider.zip
+        if(url.toLowerCase().contains("/filedownloadupload/download?")){
+            String hzgFileName = MiscUtilities.getUrlparameter(url,"file");
+            if(hzgFileName!=null && hzgFileName.split("_").length>1){
+                fileName = hzgFileName.replace(hzgFileName.split("_")[0]+"_","");
+                mimeType = URLConnection.guessContentTypeFromName(fileName);
+            }
+        }
+
+        FileNameInfo result = new FileNameInfo();
+        result.fileName= fileName;
+        result.mimeType = mimeType;
+        return  result;
+    }
+
+    public static String getUrlparameter(String urlString, String paraName) {
+        URL url;
+        try {
+            url = new URL(urlString);
+            String query = url.getQuery();
+            String decodedQuery = java.net.URLDecoder.decode(query, "UTF-8");
+            String[] params = decodedQuery.split("&");
+
+            for (String param : params) {
+                String[] keyValue = param.split("="); // 将参数拆分为 ["param1", "value1"] 或者 ["param2", "value2"]
+
+                String key = keyValue[0]; // 参数的键
+                String value = keyValue[1]; // 参数的值
+
+                if(key.equalsIgnoreCase(paraName)){
+                    return  value;
+                }
+            }
+        } catch (Exception e) {
+            return  null;
+        }
+
+        return null;
     }
 }

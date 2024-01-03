@@ -3,6 +3,7 @@ package com.huozige.lab.container;
 import android.app.Application;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -29,6 +30,8 @@ public class HACCrashHandler implements Thread.UncaughtExceptionHandler {
         message+=throwable.getMessage();
         message+="\r\n";
         message+=throwable.toString();
+
+        Toast.makeText(this._context,message,Toast.LENGTH_LONG).show();
 
         Intent intent = new Intent(_context, ShowErrorActivity.class);
         intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);

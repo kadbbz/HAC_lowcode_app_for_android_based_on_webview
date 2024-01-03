@@ -1,27 +1,21 @@
 package com.huozige.lab.container.proxy.support.pdf;
 
-import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.chiclaim.android.downloader.DownloadConstants;
-import com.chiclaim.android.downloader.DownloadListener;
-import com.chiclaim.android.downloader.DownloadRequest;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.utilities.HACDownloadManager;
+import com.huozige.lab.container.utilities.HACDownloadTask;
 
 import org.apache.commons.io.FilenameUtils;
-
-import java.util.Objects;
 
 /**
  * 下载并预览PDF的页面
@@ -46,52 +40,21 @@ public class PDFPreviewActivity extends AppCompatActivity {
     private void startDownload() {
         setTitle(R.string.title_pdf_downloading);
 
-        // 准备下载目录吗，确保其存在
-        boolean ready= Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs();
+        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf",new HACDownloadTask.IHACDownloadHandler() {
+            @Override
+            public void onSuccess(Uri localFileUri) {
+                Log.v(LOG_TAG, "Download task completed: " + _url +" to: "+ localFileUri);
+                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_downloaded+ _fileName, Toast.LENGTH_LONG).show();
+                renderPDF(localFileUri);
+            }
 
-        Log.v(LOG_TAG, "Download target dir is ready: "+ ready);
-
-        // 创建下载请求，使用推荐的下载引擎
-        DownloadRequest request = new DownloadRequest(this, _url, DownloadConstants.DOWNLOAD_ENGINE_EMBED);
-
-        // 配置下载选项
-        request.setIgnoreLocal(true)
-                .setNotificationTitle(this.getString(R.string.app_name))
-                .setNotificationContent(_fileName)
-                .setNeedInstall(false) // 这个组件是为了下载apk使用的，默认会提示安装，这里需要关闭这个选项
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
-                .setShowNotificationDisableTip(false)
-                .setDestinationUri(Uri.parse(FilenameUtils.concat(Objects.requireNonNull(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getPath(), _fileName))) // 固定采用用户提供的文件名
-                .registerListener(new DownloadListener() {
-                    @Override
-                    public void onDownloadStart() {
-                        Log.v(LOG_TAG, "Download task started: " + _url);
-                    }
-
-                    @Override
-                    public void onProgressUpdate(int i) {
-                        setTitle(getString(R.string.title_pdf_downloading) + " （" + i + "/100）");
-                    }
-
-                    @Override
-                    public void onDownloadComplete(@NonNull Uri uri) {
-                        Log.v(LOG_TAG, "Download task completed: " + _url);
-
-                        // 读取PDF之前需要先申请权限
-                        renderPDF(uri);
-                    }
-
-                    @Override
-                    public void onDownloadFailed(@NonNull Throwable throwable) {
-                        Log.e(LOG_TAG, "Download failed, Url: " + _url + " error: " + throwable);
-
-                        // 提示错误消息后关闭预览窗口
-                        Toast.makeText(PDFPreviewActivity.this, "下载过程中发生错误：" + throwable.getMessage(), Toast.LENGTH_LONG).show();
-                        PDFPreviewActivity.this.finish();
-                    }
-                }).startDownload();
+            @Override
+            public void onError(String fileName, String url) {
+                Log.v(LOG_TAG, "Download task failed: " + url +" name: "+ fileName);
+                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_download_failed+fileName, Toast.LENGTH_LONG).show();
+                PDFPreviewActivity.this.finish();
+            }
+        });
     }
 
     /**
@@ -120,12 +83,12 @@ public class PDFPreviewActivity extends AppCompatActivity {
             // 开始展示PDF
             config.load();
 
-            Log.v(LOG_TAG, "PDF file was rendered.");
+            Log.v(LOG_TAG, "PDF file was rendered:" + pdfFile);
 
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            Log.e(LOG_TAG, "Error on rendering PDF file: " + ex);
+            Log.e(LOG_TAG, "Error on rendering PDF file: " + pdfFile +" >> "+ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }

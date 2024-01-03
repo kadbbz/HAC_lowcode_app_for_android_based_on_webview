@@ -2,6 +2,8 @@ package com.huozige.lab.container.proxy;
 
 import android.webkit.JavascriptInterface;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.dothantech.lpapi.LPAPI;
 import com.dothantech.printer.IDzPrinter;
 
@@ -19,13 +21,12 @@ public class DothanPrinterProxy extends AbstractProxy{
     }
 
     @Override
-    public void onActivityCreated(){
+    public void onActivityCreated(AppCompatActivity activity){
         _lpApi = LPAPI.Factory.createInstance(this.getInterop().getWebView());
     }
 
     /**
      * 获取打印机的状态
-     *
      * 0：正在连接打印机
      * 1：打印机已连接
      * 2：打印机已连接的情况下，再次连接该打印机以测试连接是否有效。如果有效的话，会发出该状态消息；

@@ -12,6 +12,7 @@ import android.util.Log;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -176,14 +177,14 @@ public class HACWebChromeClient extends WebChromeClient {
                 if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
                     // 兼容活字格官方Vant插件，支持“直接调出摄像头拍照上传”功能
-                    if(fileChooserParams.isCaptureEnabled()){
+                    if (fileChooserParams.isCaptureEnabled()) {
                         ContentValues values = new ContentValues();
                         values.put(MediaStore.Images.Media.TITLE, this._title);
                         _UriForImageCapture = this._context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, _UriForImageCapture);
                         _imageCaptureChooser.launch(cameraIntent);
-                    }else{
+                    } else {
                         // 照片采用知乎的Matisse库，支持拍摄
                         Matisse.from(_context)
                                 .choose(MimeType.ofImage(), false)
@@ -240,7 +241,7 @@ public class HACWebChromeClient extends WebChromeClient {
 
                         // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
                         _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
-                    }else{
+                    } else {
                         // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
                         _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                     }
@@ -304,16 +305,15 @@ public class HACWebChromeClient extends WebChromeClient {
     }
 
     /**
-     * h5向app申请录音和相机权限
-     * */
+     * 允许H5使用设备资源
+     * @param request 权限请求
+     */
     @Override
     public void onPermissionRequest(PermissionRequest request) {
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-        {
 
-            request.grant(request.getResources());
-            request.getOrigin();
-        }
+        // 不阻拦权限申请
+        request.grant(request.getResources());
+        request.getOrigin();
     }
-	
+
 }

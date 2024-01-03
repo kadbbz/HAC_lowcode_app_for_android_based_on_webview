@@ -53,6 +53,8 @@ public class ProxyRegister {
 
         this._proxies.add(new JPushProxy()); // 操作极光推送
 
+        this._proxies.add(new BLEProxy()); // BLE设备
+
         __instance = this;
     }
 }

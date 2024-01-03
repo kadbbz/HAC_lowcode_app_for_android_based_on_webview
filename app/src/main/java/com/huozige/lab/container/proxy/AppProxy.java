@@ -10,6 +10,7 @@ import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.QuickConfigActivity;
@@ -68,8 +69,8 @@ public class AppProxy extends AbstractProxy {
      * 无需操作
      */
     @Override
-    public void onActivityCreated() {
-        _arcWoCallback = getInterop().getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+    public void onActivityCreated(AppCompatActivity activity) {
+        _arcWoCallback = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         });
     }
 

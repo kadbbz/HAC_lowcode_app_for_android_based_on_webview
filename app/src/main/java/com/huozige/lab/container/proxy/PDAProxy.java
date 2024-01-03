@@ -10,6 +10,7 @@ import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
 import com.huozige.lab.container.utilities.MiscUtilities;
@@ -47,10 +48,10 @@ public class PDAProxy extends AbstractProxy {
      * 初始化过程：创建调用器
      */
     @Override
-    public void onActivityCreated() {
+    public void onActivityCreated(AppCompatActivity activity) {
 
         // 创建Broadcast模式扫码页面
-        _arcScanner = getInterop().getActivityContext().registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        _arcScanner = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
             // 获取页面返回的结果
             Intent data = result.getData();
