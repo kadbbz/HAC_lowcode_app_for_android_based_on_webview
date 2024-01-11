@@ -2,7 +2,9 @@ package com.huozige.lab.container.proxy.support.pdf;
 
 import android.net.Uri;
 import android.os.Bundle;
+
 import com.elvishew.xlog.XLog;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
@@ -24,7 +26,6 @@ public class PDFPreviewActivity extends AppCompatActivity {
 
     private String _url, _password, _fileName;
 
-    private final String LOG_TAG = "HAC_PDFPreviewActivity";
     private static final int MENU_ID_CLOSE = 2;
 
     public static String EXTRA_KEY_URL = "url";
@@ -40,18 +41,18 @@ public class PDFPreviewActivity extends AppCompatActivity {
     private void startDownload() {
         setTitle(R.string.title_pdf_downloading);
 
-        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf",new HACDownloadTask.IHACDownloadHandler() {
+        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf", new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(Uri localFileUri) {
-                XLog.v("["+LOG_TAG+ "]Download task completed: " + _url +" to: "+ localFileUri);
-                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_downloaded+ _fileName, Toast.LENGTH_LONG).show();
+                XLog.v("Download task completed: " + _url + " to: " + localFileUri);
+                Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_downloaded + _fileName, Toast.LENGTH_LONG).show();
                 renderPDF(localFileUri);
             }
 
             @Override
             public void onError(String fileName, String url) {
-                XLog.v("["+LOG_TAG+ "]Download task failed: " + url +" name: "+ fileName);
-                Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_download_failed+fileName, Toast.LENGTH_LONG).show();
+                XLog.v("Download task failed: " + url + " name: " + fileName);
+                Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_download_failed + fileName, Toast.LENGTH_LONG).show();
                 PDFPreviewActivity.this.finish();
             }
         });
@@ -83,12 +84,12 @@ public class PDFPreviewActivity extends AppCompatActivity {
             // 开始展示PDF
             config.load();
 
-            XLog.v("["+LOG_TAG+ "]PDF file was rendered:" + pdfFile);
+            XLog.v("PDF file was rendered:" + pdfFile);
 
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            XLog.e("["+LOG_TAG+ "]渲染PDF文件时出错，文件: " + pdfFile,ex);
+            XLog.e("渲染PDF文件时出错，文件: " + pdfFile, ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }

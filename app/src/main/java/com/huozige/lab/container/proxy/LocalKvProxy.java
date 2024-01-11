@@ -12,6 +12,7 @@ import io.realm.Realm;
 
 /**
  * 让页面存取本地KV数据库
+ * 1.4.0
  * localKv.upsert(key,value)：向本地数据库存入值
  * localKv.retrieve(key,cell)：从本地数据库中查找值，并写入单元格
  * localKv.remove(key)：从本地数据库中删除特定值

@@ -36,16 +36,15 @@ import io.realm.Realm;
  */
 public class SettingActivity extends BaseActivity {
 
-    static final String LOG_TAG = "HAC_SettingActivity";
 
     ActivityResultLauncher<Intent> _arcZxingLite, _arc4QuickConfig;
 
     EditText _txtUrl, _txtScanAction, _txtScanExtra;
-    CheckBox _cboHa,_cboLAE;
+    CheckBox _cboHa, _cboLAE;
     TextView _lblInfo;
 
-    private String getVersionInfo(){
-        return "SSAID: "+ MiscUtilities.getSSAID(this) +" \r\nPackage Version: " + MiscUtilities.getPackageVersionName(this) + " \r\nWebView Version: "+ MiscUtilities.getWebViewVersionName();
+    private String getVersionInfo() {
+        return "SSAID: " + MiscUtilities.getSSAID(this) + " \r\nPackage Version: " + MiscUtilities.getPackageVersionName(this) + " \r\nWebView Version: " + MiscUtilities.getWebViewVersionName();
     }
 
     @Override
@@ -97,7 +96,7 @@ public class SettingActivity extends BaseActivity {
         _cboLAE.setChecked(ConfigManager.getInstance().getShouldLogAllEntry());
 
         _lblInfo.setText(getVersionInfo());
-        XLog.v("["+LOG_TAG+ "]配置页面初始化完成。");
+        XLog.v("配置页面初始化完成。");
 
     }
 
@@ -124,14 +123,14 @@ public class SettingActivity extends BaseActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 // 保存配置
                 ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_APP_ENTRY_URL, _txtUrl.getText().toString());
-                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_ACTION ,_txtScanAction.getText().toString());
-                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA ,_txtScanExtra.getText().toString());
-                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, _cboHa.isChecked()?"true":"false");
-                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, _cboLAE.isChecked()?"true":"false");
+                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_ACTION, _txtScanAction.getText().toString());
+                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA, _txtScanExtra.getText().toString());
+                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, _cboHa.isChecked() ? "true" : "false");
+                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, _cboLAE.isChecked() ? "true" : "false");
 
                 Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 
-                XLog.v("["+LOG_TAG+ "]配置更新完成。");
+                XLog.v("配置更新完成。");
 
                 // 重启生效
                 LifecycleUtility.restart(SettingActivity.this);
@@ -154,14 +153,14 @@ public class SettingActivity extends BaseActivity {
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
-            XLog.v("["+LOG_TAG+ "]开始清理数据。");
+            XLog.v("开始清理数据。");
 
             // 清理Realm数据库（异步）
-            Realm.getDefaultInstance(). executeTransactionAsync (transactionRealm -> transactionRealm.deleteAll());
+            Realm.getDefaultInstance().executeTransactionAsync(transactionRealm -> transactionRealm.deleteAll());
 
             // 用户信息
-            ConfigManager.getInstance().upsertStringEntry (ConfigManager.PREFERENCE_KEY_CURRENT_USER,"");
-            ConfigManager.getInstance().upsertStringEntry (ConfigManager.PREFERENCE_KEY_CURRENT_PWD,"");
+            ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_CURRENT_USER, "");
+            ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_CURRENT_PWD, "");
 
             // 清理WebView的缓存
             CookieManager.getInstance().removeAllCookies(null);
@@ -174,7 +173,7 @@ public class SettingActivity extends BaseActivity {
 
             Toast.makeText(SettingActivity.this, "APP的数据缓存已全部清理，请手动注销应用的用户。", Toast.LENGTH_LONG).show();
 
-            XLog.v("["+LOG_TAG+ "]数据清理完成。");
+            XLog.v("数据清理完成。");
 
             // 重启生效
             LifecycleUtility.restart(SettingActivity.this);

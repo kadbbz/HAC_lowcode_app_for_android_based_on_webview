@@ -113,7 +113,7 @@ public class MainActivity extends BaseActivity {
             _webView.refreshWebView();
         }catch (Exception ex){
 
-            XLog.e("["+LOG_TAG+ "]WebView组件初始化失败",ex);
+            XLog.e("WebView组件初始化失败",ex);
 
             String message = "应用初始化失败，这通常是操作系统和运行环境的故障导致的，请拍摄本界面或截屏后，与技术支持人员联系。";
             message+="\r\n\n";
@@ -251,22 +251,22 @@ public class MainActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                XLog.v("["+LOG_TAG+ "]点击菜单【首页】");
+                XLog.v("点击菜单【首页】");
                 _webView.refreshWebView(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
-                XLog.v("["+LOG_TAG+ "]点击菜单【刷新】");
+                XLog.v("点击菜单【刷新】");
                 _webView.reload(); // 仅刷新
                 break;
             case MENU_ID_SETTINGS:
                 _arc4QuickConfig.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
                 break;
             case MENU_ID_HELP:
-                XLog.v("["+LOG_TAG+ "]点击菜单【帮助】");
+                XLog.v("点击菜单【帮助】");
                 _webView.loadUrl(ConfigManager.getInstance().getHelpUrl());
                 break;
             case MENU_ID_ABOUT:
-                XLog.v("["+LOG_TAG+ "]点击菜单【关于】");
+                XLog.v("点击菜单【关于】");
                 _webView.loadUrl(ConfigManager.getInstance().getAboutUrl());
                 break;
             // 你可以在这里处理新创建菜单的点击事件

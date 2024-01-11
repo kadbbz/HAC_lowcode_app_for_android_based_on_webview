@@ -1,6 +1,7 @@
 package com.huozige.lab.container.platform;
 
 import com.elvishew.xlog.XLog;
+
 import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +13,6 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  */
 public abstract class AbstractWebInterop {
 
-    static final String LOG_TAG = "HAC_AbstractWebInterop";
 
     protected WebView webView; // 浏览器内核
 
@@ -48,9 +48,9 @@ public abstract class AbstractWebInterop {
      * @param jsSegment 自定义脚本
      */
     public void executeJavaScript(String jsSegment) {
-        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> XLog.v("["+LOG_TAG+ "]在浏览器执行脚本完成：" + jsSegment +" >> "+ result)));
+        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment, (result) -> XLog.v("在浏览器执行脚本完成：" + jsSegment + " >> " + result)));
 
-        XLog.v("["+LOG_TAG+ "]开始在浏览器中执行脚本：" + jsSegment);
+        XLog.v("开始在浏览器中执行脚本：" + jsSegment);
     }
 
     /**
@@ -168,6 +168,7 @@ public abstract class AbstractWebInterop {
 
     /**
      * 初始化浏览器
+     *
      * @param webView 浏览器实例
      */
     public void setWebView(WebView webView) {
@@ -176,9 +177,10 @@ public abstract class AbstractWebInterop {
 
     /**
      * 获取当前运行的浏览器
+     *
      * @return 浏览器实例
      */
     public WebView getWebView() {
-       return  this.webView ;
+        return this.webView;
     }
 }

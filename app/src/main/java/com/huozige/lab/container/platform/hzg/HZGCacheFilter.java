@@ -10,7 +10,6 @@ import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
  */
 public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
-    final static String LOG_TAG = "HAC_HZGCacheFilter";
 
     /**
      * 支持的活字格版本
@@ -59,7 +58,7 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
                 // 获取文件名
                 String fileName = url.getLastPathSegment();
-                XLog.v("["+LOG_TAG+ "]Local cache matched for : " + fileName);
+                XLog.v("Local cache matched for : " + fileName);
 
                 // 构建返回对象
                 CacheHint result = new CacheHint();

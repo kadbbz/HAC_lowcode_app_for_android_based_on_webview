@@ -31,12 +31,12 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            XLog.v("["+LOG_TAG+ "]收到单次扫码结果的广播");
+            XLog.v("收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra( (null == ConfigManager.getInstance().getScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):ConfigManager.getInstance().getScanExtra());
 
-            XLog.v("["+LOG_TAG+ "]扫码结果是：" + result);
+            XLog.v("扫码结果是：" + result);
 
             // 将其打包发给调用者
             Intent res = new Intent();
@@ -89,7 +89,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
         // 注册广播监听
         registerReceiver(_scanReceiver, intentFilter);
 
-        XLog.v("["+LOG_TAG+ "]扫码结果广播已注册");
+        XLog.v("扫码结果广播已注册");
     }
 
     /**
@@ -100,7 +100,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
         // 取消监听
         unregisterReceiver(_scanReceiver);
 
-        XLog.v("["+LOG_TAG+ "]已取消注册扫码结果广播");
+        XLog.v("已取消注册扫码结果广播");
 
         super.onPause();
     }

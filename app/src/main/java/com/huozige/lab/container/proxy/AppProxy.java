@@ -1,11 +1,8 @@
 package com.huozige.lab.container.proxy;
 
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,6 +14,7 @@ import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
@@ -39,14 +37,14 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  * app.closeApp()：关闭应用
  * 1.12.0
  * app.dial(phoneNumber)：拨打电话
+ * 1.14.2
+ * app.toggleHardwareAccelerate(shouldEnable)：是否启用硬件加速，重启APP后生效
+ * app.toggleBypassCompatibleCheck(shouldBypass)：是否跳过WebView版本检查，重启APP后生效
+ * app.toggleLogAllEntries(shouldLog)：是否记录全部诊断日志，重启APP后生效
  */
 public class AppProxy extends AbstractProxy {
 
-    String _versionCell, _packageCell; // 单元格位置缓存
-
     ActivityResultLauncher<Intent> _arcWoCallback; // 用来弹出页面
-
-    static final String LOG_TAG = "HAC_AppProxy";
 
     /**
      * 注册的名称为：app
@@ -71,8 +69,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void setScannerOptions(String action, String extra) {
-        getConfigManager().upsertStringEntry (ConfigManager.PREFERENCE_KEY_SCANNER_ACTION, action);
-        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA,extra);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_ACTION, action);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA, extra);
     }
 
 
@@ -141,7 +139,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
 
-        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_SETTING_MENU,shouldShow);
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_SETTING_MENU, shouldShow);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -194,7 +192,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setAboutUrl(String url) {
 
-        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ABOUT_URL,url);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ABOUT_URL, url);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -207,7 +205,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setHelpUrl(String url) {
 
-        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_HELP_URL,url);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_HELP_URL, url);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -221,8 +219,6 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void getActionBarColor(String cell) {
 
-        // 记录参数
-        _packageCell = cell;
         int tcdColor = getConfigManager().getTCD();
 
         // 兼容Web的常规做法，不返回A，仅返回RGB
@@ -240,7 +236,7 @@ public class AppProxy extends AbstractProxy {
         sb.append(G);
         sb.append(B);
 
-        getInterop().setInputValue(_packageCell, sb.toString());
+        getInterop().setInputValue(cell, sb.toString());
     }
 
     /**
@@ -251,7 +247,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setActionBarColor(String colorInteger) {
 
-        getConfigManager().upsertHexIntEntry(ConfigManager.PREFERENCE_KEY_ACTION_BAR_COLOR,colorInteger);
+        getConfigManager().upsertHexIntEntry(ConfigManager.PREFERENCE_KEY_ACTION_BAR_COLOR, colorInteger);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -263,10 +259,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getPackageName(String cell) {
-
-        // 记录参数
-        _packageCell = cell;
-        getInterop().setInputValue(_packageCell, getInterop().getActivityContext().getPackageName());
+        getInterop().setInputValue(cell, getInterop().getActivityContext().getPackageName());
     }
 
     /**
@@ -275,22 +268,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getVersion(String cell) {
-
-        // 记录参数
-        _versionCell = cell;
-
-        String versionName = "";
-
-        try {
-            PackageInfo pinfo = getInterop().getActivityContext().getPackageManager().getPackageInfo(getInterop().getActivityContext().getPackageName(), PackageManager.GET_CONFIGURATIONS);
-            versionName = pinfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            XLog.e("["+LOG_TAG+ "]获取应用版本信息出错" ,e);
-            e.printStackTrace();
-        }
-
-        // 需要调度回主线程操作
-        String finalVersionName = versionName;
-        getInterop().setInputValue(_versionCell, finalVersionName);
+        String finalVersionName = MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
+        getInterop().setInputValue(cell, finalVersionName);
     }
 }

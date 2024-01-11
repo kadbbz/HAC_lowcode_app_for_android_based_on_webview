@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.elvishew.xlog.XLog;
+
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -20,9 +21,8 @@ import com.huozige.lab.container.utilities.MiscUtilities;
  */
 public class HACWebView extends WebView {
 
-    static final int SUPPORT_WEBVIEW_MAJOR_VERSION =87; // 参照管理控制台的测试结果，将兼容线定为87。版本号形如103.0.5060.73，取103为主版本
+    static final int SUPPORT_WEBVIEW_MAJOR_VERSION = 87; // 参照管理控制台的测试结果，将兼容线定为87。版本号形如103.0.5060.73，取103为主版本
 
-    static final String LOG_TAG = "HAC_WebView";
 
     Context _context;
 
@@ -39,8 +39,8 @@ public class HACWebView extends WebView {
 
         _context = context;
 
-        if(!ConfigManager.getInstance().getBypassCompatibleCheck() && MiscUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION){
-            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为："+ SUPPORT_WEBVIEW_MAJOR_VERSION +"，当前设备为："+ MiscUtilities.getWebViewVersionName()+"。\r\n您可以在应用市场中搜索“Chrome”，安装这个浏览器后，系统会自动将WebView升级到最新版。");
+        if (!ConfigManager.getInstance().getBypassCompatibleCheck() && MiscUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION) {
+            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为：" + SUPPORT_WEBVIEW_MAJOR_VERSION + "，当前设备为：" + MiscUtilities.getWebViewVersionName() + "。\r\n您可以在应用市场中搜索“Chrome”，安装这个浏览器后，系统会自动将WebView升级到最新版。");
         }
 
         // 先配置进度条
@@ -85,9 +85,9 @@ public class HACWebView extends WebView {
         WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
         // UA
-       String versionName =MiscUtilities.getPackageVersionName(this.getContext());
-       String ua = settings.getUserAgentString();//原来获取的UA
-       settings.setUserAgentString(ua + " HAC/" + versionName);
+        String versionName = MiscUtilities.getPackageVersionName(this.getContext());
+        String ua = settings.getUserAgentString();//原来获取的UA
+        settings.setUserAgentString(ua + " HAC/" + versionName);
     }
 
     /**
@@ -113,10 +113,10 @@ public class HACWebView extends WebView {
         // 根据选项决定是否启用硬件加速
         if (ConfigManager.getInstance().getHA()) {
             this.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
-            XLog.v("["+LOG_TAG+ "]浏览器采用硬件加速");
+            XLog.v("浏览器采用硬件加速");
         } else {
             this.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
-            XLog.v("["+LOG_TAG+ "]浏览器采用软件加速");
+            XLog.v("浏览器采用软件加速");
         }
 
         String target = ConfigManager.getInstance().getEntry();
@@ -133,7 +133,7 @@ public class HACWebView extends WebView {
     public void loadUrl(@NonNull String url) {
         super.loadUrl(url);
 
-        XLog.v("["+LOG_TAG+ "]导航到页面或执行脚本：" + url);
+        XLog.v("导航到页面或执行脚本：" + url);
     }
 
 }

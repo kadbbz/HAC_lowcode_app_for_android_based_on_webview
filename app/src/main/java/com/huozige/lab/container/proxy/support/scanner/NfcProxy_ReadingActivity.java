@@ -86,7 +86,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
                     }
             };
             mNfcAdapter.enableForegroundDispatch(this, pIntent, filters, techList);
-            XLog.v("["+LOG_TAG+ "]NFC读取已启动");
+            XLog.v("NFC读取已启动");
         }
     }
 
@@ -98,7 +98,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
 
         if (mNfcAdapter != null) {
             mNfcAdapter.disableForegroundDispatch(this);
-            XLog.v("["+LOG_TAG+ "]已停止读取NFC");
+            XLog.v("已停止读取NFC");
         }
 
         super.onPause();

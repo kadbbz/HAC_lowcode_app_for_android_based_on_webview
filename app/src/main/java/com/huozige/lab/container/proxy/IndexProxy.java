@@ -13,6 +13,7 @@ import com.king.zxing.CaptureActivity;
 
 /**
  * 兼容官方APP的页面端能力
+ * 1.0.0
  * index.ScanCode(cell)：调用手机摄像头实现扫码
  */
 public class IndexProxy extends AbstractProxy {

@@ -9,7 +9,9 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+
 import com.elvishew.xlog.XLog;
+
 import android.webkit.CookieManager;
 
 import java.io.File;
@@ -20,19 +22,18 @@ import java.util.HashMap;
  */
 public class HACDownloadManager {
 
-    public static HashMap<Long,HACDownloadTask> getTasks(){
+    public static HashMap<Long, HACDownloadTask> getTasks() {
         return __taskList;
     }
 
-    static final String LOG_TAG = "HAC_DownloadManager"; // 日志的标识
 
     static HACDownloadManager __instance;
 
-    static final HashMap<Long,HACDownloadTask> __taskList = new HashMap<>();
+    static final HashMap<Long, HACDownloadTask> __taskList = new HashMap<>();
 
     public static HACDownloadManager getInstance(Context context) {
 
-        if(__instance !=null){
+        if (__instance != null) {
             return __instance;
         }
 
@@ -53,20 +54,20 @@ public class HACDownloadManager {
     /**
      * 执行下载
      *
-     * @param context     操作上下文
-     * @param url         需要被下载的URL
-     * @param callback    下载成功的回调
+     * @param context  操作上下文
+     * @param url      需要被下载的URL
+     * @param callback 下载成功的回调
      */
     public void startDownloadTask(Context context, String url, String mimeType, HACDownloadTask.IHACDownloadHandler callback) {
 
-        XLog.v("["+LOG_TAG+ "]即将开始下载：" + url);
+        XLog.v("即将开始下载：" + url);
 
         HACDownloadTask task = new HACDownloadTask();
         task.url = url;
         task.registryHandler(callback);
 
         // 1. 处理文件名
-        FileNameInfo fileInfo =  MiscUtilities.guessFileName(url,mimeType);
+        FileNameInfo fileInfo = MiscUtilities.guessFileName(url, mimeType);
         task.fileName = fileInfo.fileName;
         mimeType = fileInfo.mimeType;
         File tempFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), task.fileName);
@@ -97,6 +98,6 @@ public class HACDownloadManager {
         __taskList.put(task.taskId, task);
 
         // 6. 记录日志
-        XLog.v("["+LOG_TAG+ "]文件下载启动，本次下载的标识为" + task.taskId);
+        XLog.v("文件下载启动，本次下载的标识为" + task.taskId);
     }
 }

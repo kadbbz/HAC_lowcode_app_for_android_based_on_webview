@@ -8,7 +8,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.InputType;
+
 import com.elvishew.xlog.XLog;
+
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
@@ -51,7 +53,7 @@ public class HACWebChromeClient extends WebChromeClient {
     Uri _UriForImageCapture;// 拍摄照片用的缓存
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
-    static final String LOG_TAG = "HAC_WebChromeClient";
+
 
     /**
      * 简单的构造函数
@@ -296,7 +298,7 @@ public class HACWebChromeClient extends WebChromeClient {
         PermissionsUtility.asyncRequirePermissions(_context, new String[]{
                 Permission.ACCESS_FINE_LOCATION
         }, () -> {
-            XLog.v("["+LOG_TAG+ "]GeolocationPermissionsShowPrompt invoked");
+            XLog.v("GeolocationPermissionsShowPrompt invoked");
 
             // 第一个参数是whether or not the origin should be allowed to use the Geolocation API
             // 第二个参数是 whether the permission should be retained beyond the lifetime of a page currently being displayed by a WebView
@@ -306,6 +308,7 @@ public class HACWebChromeClient extends WebChromeClient {
 
     /**
      * 允许H5使用设备资源
+     *
      * @param request 权限请求
      */
     @Override
