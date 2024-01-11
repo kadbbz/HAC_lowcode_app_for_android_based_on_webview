@@ -2,7 +2,7 @@ package com.huozige.lab.container.utilities;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
@@ -60,7 +60,7 @@ public class ConfigManager {
             }
 
         } catch (Exception ex) {
-            Log.e(LOG_TAG, String.valueOf(ex));
+            XLog.e("["+LOG_TAG+ "]存储配置信息时出错",ex);
             return false;
         }
     }

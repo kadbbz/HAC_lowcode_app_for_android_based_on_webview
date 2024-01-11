@@ -1,6 +1,6 @@
 package com.huozige.lab.container.platform;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,9 +48,9 @@ public abstract class AbstractWebInterop {
      * @param jsSegment 自定义脚本
      */
     public void executeJavaScript(String jsSegment) {
-        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> Log.v(LOG_TAG, "在浏览器执行脚本完成：" + jsSegment +" >> "+ result)));
+        getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment,(result)-> XLog.v("["+LOG_TAG+ "]在浏览器执行脚本完成：" + jsSegment +" >> "+ result)));
 
-        Log.v(LOG_TAG, "开始在浏览器中执行脚本：" + jsSegment);
+        XLog.v("["+LOG_TAG+ "]开始在浏览器中执行脚本：" + jsSegment);
     }
 
     /**

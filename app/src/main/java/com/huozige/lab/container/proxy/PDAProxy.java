@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -114,12 +114,12 @@ public class PDAProxy extends AbstractProxy {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            Log.v(LOG_TAG, "收到持续扫码结果的广播");
+            XLog.v("["+LOG_TAG+ "]收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra(getConfigManager().getScanExtra());
 
-            Log.v(LOG_TAG, "当次扫码结果是：" + result);
+            XLog.v("["+LOG_TAG+ "]当次扫码结果是：" + result);
 
             if(result == null) result="";
 
@@ -152,7 +152,7 @@ public class PDAProxy extends AbstractProxy {
             } else {
 
                 // 预期外场景需要记录日志
-                Log.e(LOG_TAG, "当前没有处在持续扫描模式，但监听器仍在运行。");
+                XLog.e("["+LOG_TAG+ "]应用运行异常，当前没有处在持续扫描模式，但监听器仍在运行。");
             }
         }
     };
@@ -186,7 +186,7 @@ public class PDAProxy extends AbstractProxy {
     @JavascriptInterface
     public void continuous_scan(String cellLocation, String limit) {
 
-        Log.v(LOG_TAG, "continuous_scan start with limit : " + limit);
+        XLog.v("["+LOG_TAG+ "]continuous_scan start with limit : " + limit);
 
         // 记录传入参数
         continueScanCell = cellLocation;

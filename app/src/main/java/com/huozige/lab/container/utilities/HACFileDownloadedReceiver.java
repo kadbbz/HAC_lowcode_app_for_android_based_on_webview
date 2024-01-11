@@ -9,7 +9,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 
 import java.util.Map;
 
@@ -43,13 +43,13 @@ public class HACFileDownloadedReceiver extends BroadcastReceiver {
                             HACDownloadManager.getTasks().remove(task.taskId);
                             switch (status) {
                                 case DownloadManager.STATUS_FAILED:
-                                    Log.e(LOG_TAG, "文件下载失败："+ task.fileName+"，标识为"+task.taskId+"，原因是"+reason);
+                                    XLog.e("["+LOG_TAG+ "]文件下载失败："+ task.fileName+"，标识为"+task.taskId+"，原因是"+reason);
                                     //下载失败
                                     task.handler.onError(task.fileName, task.url);
 
                                     break;
                                 case DownloadManager.STATUS_SUCCESSFUL:
-                                    Log.v(LOG_TAG, "文件下载成功：" + task.fileName +"，标识为"+task.taskId);
+                                    XLog.v("["+LOG_TAG+ "]文件下载成功：" + task.fileName +"，标识为"+task.taskId);
                                     //下载成功
 
                                     Uri target = dm.getUriForDownloadedFile(task.taskId);

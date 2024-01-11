@@ -1,6 +1,6 @@
 package com.huozige.lab.container.proxy;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
@@ -102,7 +102,7 @@ public class LocalKvProxy extends AbstractProxy {
             bundle.version= finalVersion;
             transactionRealm.insertOrUpdate(bundle);
 
-            Log.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost() +" value: "+ valueString);
+            XLog.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost() +" value: "+ valueString);
         });
     }
 
@@ -129,11 +129,11 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
 
             if(bundle !=null){
-                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
+                XLog.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
                 getInterop().setInputValue(cell,bundle.value);
             }else{
                 getInterop().setInputValue(cell,VALUE_NA);
-                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+                XLog.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
             }
         });
     }
@@ -162,10 +162,10 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
 
             if(bundle !=null){
-                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey+" value: "+ bundle.value);
+                XLog.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey+" value: "+ bundle.value);
                 result[0] =  bundle.value;
             }else{
-                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+                XLog.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
                 result[0] = VALUE_NA;
             }
         });
@@ -187,7 +187,7 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).findFirst();
             if (bundle != null) {
                 bundle.deleteFromRealm();
-                Log.v(LOG_TAG,"Data was deleted from LocalKV. Key: " + bKey);
+                XLog.v(LOG_TAG,"Data was deleted from LocalKV. Key: " + bKey);
             }
         });
     }

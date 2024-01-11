@@ -1,7 +1,7 @@
 package com.huozige.lab.container.proxy;
 
 import android.content.Intent;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -115,7 +115,7 @@ public class BLEProxy extends AbstractProxy {
                     getInterop().writeLogIntoConsole("Error occurred during data exchanging: " + error);
                 }
 
-                Log.v(LOG_TAG, "code -> " + code + " payload - > " + payload + " err -> " + error);
+                XLog.v("["+LOG_TAG+ "]code -> " + code + " payload - > " + payload + " err -> " + error);
 
                 if (cellError != null && !cellError.isEmpty()) {
                     getInterop().setInputValue(cellError, error);
@@ -130,7 +130,7 @@ public class BLEProxy extends AbstractProxy {
 
                 getInterop().writeLogIntoConsole("App error! Return without intent, code is " + code);
 
-                Log.e(LOG_TAG, "App error! Return without intent, code is " + code);
+                XLog.e("["+LOG_TAG+ "]应用运行异常，蓝牙返回的结果中没有Intent数据，返回码为：" + code);
 
                 if (cellError != null && !cellError.isEmpty()) {
                     getInterop().setInputValue(cellError, code);

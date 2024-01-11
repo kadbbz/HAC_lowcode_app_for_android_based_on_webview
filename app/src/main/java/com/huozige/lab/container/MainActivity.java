@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +15,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
+import com.hjq.permissions.Permission;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
@@ -22,6 +23,7 @@ import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
 import com.huozige.lab.container.webview.HACWebView;
@@ -59,6 +61,11 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 0. 申请权限
+        PermissionsUtility.asyncRequirePermissions(this,new String[]{
+                Permission.WRITE_EXTERNAL_STORAGE
+        },()->XLog.v("["+LOG_TAG+"]日志记录的权限申请成功。"));
 
         // 1. 设置页面标题
         setTitle(getString(R.string.app_name));
@@ -107,7 +114,7 @@ public class MainActivity extends BaseActivity {
             _webView.refreshWebView();
         }catch (Exception ex){
 
-            Log.e(LOG_TAG,"WebView init failed: " + ex);
+            XLog.e("["+LOG_TAG+ "]WebView组件初始化失败",ex);
 
             String message = "应用初始化失败，这通常是操作系统和运行环境的故障导致的，请拍摄本界面或截屏后，与技术支持人员联系。";
             message+="\r\n\n";
@@ -163,7 +170,7 @@ public class MainActivity extends BaseActivity {
 
                     if(u!=null){
 
-                        Log.v(LOG_TAG,"收到带跳转的Intent请求，URL："+url);
+                        XLog.v(LOG_TAG,"收到带跳转的Intent请求，URL："+url);
                         this._webView.loadUrl(url);
                     }
                 }
@@ -202,7 +209,7 @@ public class MainActivity extends BaseActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        Log.v("HAC_BaseActivity","Config changed: "+ newConfig);
+        XLog.v("HAC_BaseActivity","Config changed: "+ newConfig);
 
     }
 
@@ -245,22 +252,22 @@ public class MainActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                Log.v(LOG_TAG, "点击菜单【首页】");
+                XLog.v("["+LOG_TAG+ "]点击菜单【首页】");
                 _webView.refreshWebView(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
-                Log.v(LOG_TAG, "点击菜单【刷新】");
+                XLog.v("["+LOG_TAG+ "]点击菜单【刷新】");
                 _webView.reload(); // 仅刷新
                 break;
             case MENU_ID_SETTINGS:
                 _arc4QuickConfig.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
                 break;
             case MENU_ID_HELP:
-                Log.v(LOG_TAG, "点击菜单【帮助】");
+                XLog.v("["+LOG_TAG+ "]点击菜单【帮助】");
                 _webView.loadUrl(getConfigManager().getHelpUrl());
                 break;
             case MENU_ID_ABOUT:
-                Log.v(LOG_TAG, "点击菜单【关于】");
+                XLog.v("["+LOG_TAG+ "]点击菜单【关于】");
                 _webView.loadUrl(getConfigManager().getAboutUrl());
                 break;
             // 你可以在这里处理新创建菜单的点击事件

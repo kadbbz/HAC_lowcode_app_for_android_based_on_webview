@@ -1,8 +1,8 @@
 package com.huozige.lab.container.platform.hzg;
 
 import android.net.Uri;
-import android.util.Log;
 
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 
 /**
@@ -59,7 +59,7 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
 
                 // 获取文件名
                 String fileName = url.getLastPathSegment();
-                Log.v(LOG_TAG, "Local cache matched for : " + fileName);
+                XLog.v("["+LOG_TAG+ "]Local cache matched for : " + fileName);
 
                 // 构建返回对象
                 CacheHint result = new CacheHint();

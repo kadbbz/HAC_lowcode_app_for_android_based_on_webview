@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -38,12 +38,12 @@ public class HACWebView extends WebView {
         PackageInfo pinfo = WebView.getCurrentWebViewPackage();
 
         if(pinfo == null){
-            Log.e(LOG_TAG,"无法获取浏览器的版本号，跳过了版本检查。");
+            XLog.e("["+LOG_TAG+ "]无法获取浏览器的版本号，跳过了版本检查。");
             return Integer.MAX_VALUE; // 如果无法获取版本号，按照可以使用来处理
         }else{
-            Log.v(LOG_TAG,"Init：检测到WebView的PackageName: " + pinfo.packageName);
-            Log.v(LOG_TAG,"Init：检测到WebView的VersionName: " + pinfo.versionName);
-            Log.v(LOG_TAG,"Init：检测到WebView的VersionCode: " + pinfo.versionCode);
+            XLog.v(LOG_TAG,"Init：检测到WebView的PackageName: " + pinfo.packageName);
+            XLog.v(LOG_TAG,"Init：检测到WebView的VersionName: " + pinfo.versionName);
+            XLog.v(LOG_TAG,"Init：检测到WebView的VersionCode: " + pinfo.versionCode);
 
             String major = pinfo.versionName.split("\\.")[0];
 
@@ -112,7 +112,7 @@ public class HACWebView extends WebView {
             String ua = settings.getUserAgentString();//原来获取的UA
             settings.setUserAgentString(ua + " HAC/" + versionName);
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
+            XLog.e("["+LOG_TAG+ "]获取应用版本信息出错",e);
             e.printStackTrace();
         }
 
@@ -141,10 +141,10 @@ public class HACWebView extends WebView {
         // 根据选项决定是否启用硬件加速
         if (configManager.getHA()) {
             this.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
-            Log.v(LOG_TAG, "Init：浏览器采用硬件加速");
+            XLog.v("["+LOG_TAG+ "]Init：浏览器采用硬件加速");
         } else {
             this.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
-            Log.v(LOG_TAG, "Init：浏览器采用软件加速");
+            XLog.v("["+LOG_TAG+ "]Init：浏览器采用软件加速");
         }
 
         String target = configManager.getEntry();
@@ -161,7 +161,7 @@ public class HACWebView extends WebView {
     public void loadUrl(@NonNull String url) {
         super.loadUrl(url);
 
-        Log.v(LOG_TAG, "导航到页面或执行脚本：" + url);
+        XLog.v("["+LOG_TAG+ "]导航到页面或执行脚本：" + url);
     }
 
     public ConfigManager getConfigManager() throws Exception {

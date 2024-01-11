@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
@@ -57,10 +57,10 @@ public class HACWebViewClient extends WebViewClient {
             in.close();
             fromFile.close();
 
-            Log.v(LOG_TAG, "hac_inject_before_loaded.js文件读取完毕，长度为" + _hacJsContent.length());
+            XLog.v("["+LOG_TAG+ "]hac_inject_before_loaded.js文件读取完毕，长度为" + _hacJsContent.length());
 
         } catch (IOException e) {
-            Log.e(LOG_TAG, e.toString());
+            XLog.e("["+LOG_TAG+ "]读取本地资源hac_inject_before_loaded.js时出错", e);
         }
     }
 
@@ -81,10 +81,10 @@ public class HACWebViewClient extends WebViewClient {
                 String usr = data.getStringExtra(HttpAuthActivity.BUNDLE_EXTRA_RESULT_USER);
                 String pwd = data.getStringExtra(HttpAuthActivity.BUNDLE_EXTRA_RESULT_PASSWORD);
 
-                Log.v(LOG_TAG, "HTTP Auth认证开始：" + usr);
+                XLog.v("["+LOG_TAG+ "]HTTP Auth认证开始：" + usr);
                 _authHandler.proceed(usr, pwd);
             } else {
-                Log.e(LOG_TAG, "前页面传回的的用户认证信息为空，即将重试");
+                XLog.v("["+LOG_TAG+ "]用户没有按照页面提示输入用户信息，前页面传回的的用户认证信息为空，即将重试");
             }
 
         });
@@ -100,7 +100,7 @@ public class HACWebViewClient extends WebViewClient {
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
-        Log.e(LOG_TAG, "SSL验证出错，应用将跳过：" + error.toString());
+        XLog.e("["+LOG_TAG+ "]SSL验证出错，这不是错误，应用将跳过该请求：" + error.toString());
 
         // 对SSL错误不予处理
         handler.proceed();
@@ -113,7 +113,7 @@ public class HACWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
-        Log.v(LOG_TAG, "请求地址：" + request.getUrl());
+        XLog.v("["+LOG_TAG+ "]请求地址：" + request.getUrl());
 
         // 获取请求地址
         String reqUriSchema = request.getUrl().getScheme();
@@ -128,7 +128,7 @@ public class HACWebViewClient extends WebViewClient {
             return false;
         } else {
             // 其他协议使用系统服务打开
-            Log.v(LOG_TAG, "导航到系统服务：" + request.getUrl());
+            XLog.v("["+LOG_TAG+ "]导航到系统服务：" + request.getUrl());
             return true;
         }
     }
@@ -139,7 +139,7 @@ public class HACWebViewClient extends WebViewClient {
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-        Log.e(LOG_TAG, "页面加载出错：" + request.getUrl() + " ，错误：" + error.getDescription());
+        XLog.e("["+LOG_TAG+ "]页面加载出错，Url：" + request.getUrl() ,error);
 
         // 对超时错误做特殊处理
         if (error.getErrorCode() == WebViewClient.ERROR_CONNECT || error.getErrorCode() == WebViewClient.ERROR_TIMEOUT || error.getErrorCode() == WebViewClient.ERROR_HOST_LOOKUP) {
@@ -160,7 +160,7 @@ public class HACWebViewClient extends WebViewClient {
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
         _alreadyInjected = false;
-        Log.v(LOG_TAG, "页面加载开始：" + url);
+        XLog.v("["+LOG_TAG+ "]页面加载开始：" + url);
     }
 
     /**
@@ -170,12 +170,12 @@ public class HACWebViewClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-        Log.v(LOG_TAG, "页面加载完成：" + url);
+        XLog.v("["+LOG_TAG+ "]页面加载完成：" + url);
     }
 
     @Override
     public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
-        Log.v(LOG_TAG, "本页面需要HTTP认证，当前没有认证或认证失败，即将弹出认证窗口");
+        XLog.v("["+LOG_TAG+ "]本页面需要HTTP认证，当前没有认证或认证失败，即将弹出认证窗口");
         _authHandler = handler;
         _arc.launch(new Intent(_context, HttpAuthActivity.class));
     }
@@ -193,7 +193,7 @@ public class HACWebViewClient extends WebViewClient {
         String path = request.getUrl().getPath();
         String schema = request.getUrl().getScheme();
         if (!_alreadyInjected && path!=null && path.toLowerCase().contains(".js") && _hacJsContent != null && !_hacJsContent.isEmpty()) {
-            ((AppCompatActivity)view.getContext()).runOnUiThread(()-> view.evaluateJavascript(_hacJsContent, value -> Log.v(LOG_TAG, "JS资源文件已注入页面：" + value)));
+            ((AppCompatActivity)view.getContext()).runOnUiThread(()-> view.evaluateJavascript(_hacJsContent, value -> XLog.v("["+LOG_TAG+ "]JS资源文件已注入页面：" + value)));
             _alreadyInjected = true;
         }
 
@@ -218,7 +218,7 @@ public class HACWebViewClient extends WebViewClient {
                 } catch (IOException e) {
 
                     // 仅记录日志
-                    Log.e(LOG_TAG, "Error on loading cache for : " + request.getUrl().toString() + " Error : " + e);
+                    XLog.e("["+LOG_TAG+ "]读取本地缓存文件资源是出错，Url：" + request.getUrl().toString() , e);
                 }
             }
         }

@@ -2,7 +2,7 @@ package com.huozige.lab.container;
 
 import android.app.Application;
 import android.content.Intent;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,7 +23,7 @@ public class HACCrashHandler implements Thread.UncaughtExceptionHandler {
     @Override
     public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
 
-        Log.e(LOG_TAG,"出现未捕获的异常："+ throwable);
+        XLog.e("["+LOG_TAG+ "]出现未捕获的异常："+ throwable.getMessage(),throwable);
 
         String message = "应用出现严重错误，请拍摄本界面或截屏后，与技术支持人员联系。";
         message+="\r\n\n";

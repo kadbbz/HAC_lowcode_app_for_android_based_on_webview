@@ -2,7 +2,7 @@ package com.huozige.lab.container;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -35,7 +35,7 @@ public class QuickConfigActivity extends BaseActivity {
         if (null != data) {
             String json = CameraScan.parseScanResult(data);
 
-            Log.v(LOG_TAG,"Load config from QRCode : "+json);
+            XLog.v(LOG_TAG,"Load config from QRCode : "+json);
 
             AlertDialog.Builder ab = new AlertDialog.Builder(QuickConfigActivity.this);
             ab.setPositiveButton(QuickConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
@@ -45,7 +45,7 @@ public class QuickConfigActivity extends BaseActivity {
 
                 if(isOk){
 
-                    Log.v(LOG_TAG,"QRCode config applied.");
+                    XLog.v(LOG_TAG,"QRCode config applied.");
 
                     // 提示正确的信息
                     Toast.makeText(QuickConfigActivity.this, getString(R.string.ui_message_quick_config_done), Toast.LENGTH_LONG).show();
@@ -54,7 +54,7 @@ public class QuickConfigActivity extends BaseActivity {
                     restart();
                 }else{
 
-                    Log.v(LOG_TAG,"QRCode config is broken.");
+                    XLog.v(LOG_TAG,"QRCode config is broken.");
 
                     // 仅提示错误信息
                     Toast.makeText(QuickConfigActivity.this, getString(R.string.ui_message_quick_config_broken), Toast.LENGTH_LONG).show();

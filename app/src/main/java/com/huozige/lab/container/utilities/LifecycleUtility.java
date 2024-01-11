@@ -2,7 +2,7 @@ package com.huozige.lab.container.utilities;
 
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 
 /**
  * 生命周期相关帮助类
@@ -17,7 +17,7 @@ public class LifecycleUtility {
      */
     public static void restart(Context context){
 
-        Log.v(LOG_TAG,"调用重启应用的方法");
+        XLog.v(LOG_TAG,"调用重启应用的方法");
 
         Intent intentR = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -29,7 +29,7 @@ public class LifecycleUtility {
      */
     public static void close(){
 
-        Log.v(LOG_TAG,"调用关闭应用的方法");
+        XLog.v(LOG_TAG,"调用关闭应用的方法");
 
         android.os.Process.killProcess(android.os.Process.myPid());
     }

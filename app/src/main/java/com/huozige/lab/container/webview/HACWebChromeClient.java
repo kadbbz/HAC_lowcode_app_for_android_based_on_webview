@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.InputType;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
@@ -296,7 +296,7 @@ public class HACWebChromeClient extends WebChromeClient {
         PermissionsUtility.asyncRequirePermissions(_context, new String[]{
                 Permission.ACCESS_FINE_LOCATION
         }, () -> {
-            Log.v(LOG_TAG, "GeolocationPermissionsShowPrompt invoked");
+            XLog.v("["+LOG_TAG+ "]GeolocationPermissionsShowPrompt invoked");
 
             // 第一个参数是whether or not the origin should be allowed to use the Geolocation API
             // 第二个参数是 whether the permission should be retained beyond the lifetime of a page currently being displayed by a WebView

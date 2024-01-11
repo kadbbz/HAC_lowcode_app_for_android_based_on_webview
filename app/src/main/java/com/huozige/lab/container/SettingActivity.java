@@ -3,13 +3,10 @@ package com.huozige.lab.container;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
-import android.webkit.WebIconDatabase;
 import android.webkit.WebStorage;
-import android.webkit.WebView;
 import android.webkit.WebViewDatabase;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -21,6 +18,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
@@ -87,7 +85,7 @@ public class SettingActivity extends BaseActivity {
         _txtScanExtra.setText(getConfigManager().getScanExtra());
         _cboHa.setChecked(getConfigManager().getHA());
 
-        Log.v(LOG_TAG, "配置页面初始化完成。");
+        XLog.v("["+LOG_TAG+ "]配置页面初始化完成。");
 
     }
 
@@ -120,7 +118,7 @@ public class SettingActivity extends BaseActivity {
 
                 Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 
-                Log.v(LOG_TAG, "配置更新完成。");
+                XLog.v("["+LOG_TAG+ "]配置更新完成。");
 
                 // 重启生效
                 LifecycleUtility.restart(SettingActivity.this);
@@ -143,7 +141,7 @@ public class SettingActivity extends BaseActivity {
         AlertDialog.Builder ab = new AlertDialog.Builder(SettingActivity.this);
         ab.setPositiveButton(SettingActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
-            Log.v(LOG_TAG, "开始清理数据。");
+            XLog.v("["+LOG_TAG+ "]开始清理数据。");
 
             // 清理Realm数据库（异步）
             Realm.getDefaultInstance(). executeTransactionAsync (transactionRealm -> transactionRealm.deleteAll());
@@ -163,7 +161,7 @@ public class SettingActivity extends BaseActivity {
 
             Toast.makeText(SettingActivity.this, "APP的数据缓存已全部清理，请手动注销应用的用户。", Toast.LENGTH_LONG).show();
 
-            Log.v(LOG_TAG, "数据清理完成。");
+            XLog.v("["+LOG_TAG+ "]数据清理完成。");
 
             // 重启生效
             LifecycleUtility.restart(SettingActivity.this);

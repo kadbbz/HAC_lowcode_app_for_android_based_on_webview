@@ -5,7 +5,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -276,7 +276,7 @@ public class AppProxy extends AbstractProxy {
             PackageInfo pinfo = getInterop().getActivityContext().getPackageManager().getPackageInfo(getInterop().getActivityContext().getPackageName(), PackageManager.GET_CONFIGURATIONS);
             versionName = pinfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(LOG_TAG, "获取应用版本信息出错：" + e);
+            XLog.e("["+LOG_TAG+ "]获取应用版本信息出错" ,e);
             e.printStackTrace();
         }
 

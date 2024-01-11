@@ -1,7 +1,7 @@
 package com.huozige.lab.container.proxy;
 
 import android.content.Intent;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
@@ -21,7 +21,7 @@ public class PDFPreviewProxy extends AbstractProxy{
 
     @JavascriptInterface
     public void preview(String url, String fileName , String password) {
-        Log.v(LOG_TAG, "使用本地组件下载和预览PDF文件：" + url);
+        XLog.v("["+LOG_TAG+ "]使用本地组件下载和预览PDF文件：" + url);
 
         Intent intent = new Intent(this.getInterop().getActivityContext(), PDFPreviewActivity.class);
         intent.putExtra(PDFPreviewActivity.EXTRA_KEY_URL, url);

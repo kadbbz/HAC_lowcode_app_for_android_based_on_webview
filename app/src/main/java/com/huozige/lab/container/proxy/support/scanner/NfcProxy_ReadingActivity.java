@@ -9,7 +9,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.View;
 import android.widget.Toast;
 
@@ -86,7 +86,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
                     }
             };
             mNfcAdapter.enableForegroundDispatch(this, pIntent, filters, techList);
-            Log.v(LOG_TAG, "NFC读取已启动");
+            XLog.v("["+LOG_TAG+ "]NFC读取已启动");
         }
     }
 
@@ -98,7 +98,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
 
         if (mNfcAdapter != null) {
             mNfcAdapter.disableForegroundDispatch(this);
-            Log.v(LOG_TAG, "已停止读取NFC");
+            XLog.v("["+LOG_TAG+ "]已停止读取NFC");
         }
 
         super.onPause();
@@ -110,18 +110,18 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
         //这里必须setIntent，set NFC事件响应后的intent才能拿到数据
         setIntent(intent);
 
-        Log.v(LOG_TAG,"扫描到NFC标签，即将读取");
+        XLog.v(LOG_TAG,"扫描到NFC标签，即将读取");
         Intent data = getIntent();
         Tag tag = data.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         String tagInHex = bytesToHex(tag.getId());
 
-        Log.v(LOG_TAG,"NFC标签的TAG ID为：" + tagInHex);
+        XLog.v(LOG_TAG,"NFC标签的TAG ID为：" + tagInHex);
 
         ArrayList<String> processedMessages = new ArrayList<>();
         Parcelable[] rawMessages = data.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 
         if (rawMessages != null) {
-            Log.v(LOG_TAG,"扫描到NFC标签的NDEF消息，共："+ rawMessages.length+"条");
+            XLog.v(LOG_TAG,"扫描到NFC标签的NDEF消息，共："+ rawMessages.length+"条");
 
             for (Parcelable rawMessage : rawMessages) {
                 NdefMessage msg = (NdefMessage) rawMessage;
@@ -129,7 +129,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
                 processedMessages.add(new String(bytes));
             }
         }else{
-            Log.v(LOG_TAG,"NFC标签的NDEF消息为空");
+            XLog.v(LOG_TAG,"NFC标签的NDEF消息为空");
         }
 
         // 将其打包发给调用者
@@ -147,13 +147,13 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
     @SuppressLint("UnspecifiedImmutableFlag")
     private void initNfc(){
 
-        Log.v(LOG_TAG,"开始初始化NFC适配器");
+        XLog.v(LOG_TAG,"开始初始化NFC适配器");
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
         // 检查NFC是否可用
         if(mNfcAdapter == null){
-            Log.v(LOG_TAG,"NFC不可用：getDefaultAdapter返回为空");
+            XLog.v(LOG_TAG,"NFC不可用：getDefaultAdapter返回为空");
             Toast.makeText(this,getString(R.string.ui_message_nfc_not_available),  Toast.LENGTH_SHORT).show();
 
             // 设置状态后，关闭当前页面
@@ -161,7 +161,7 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
             setResult(SCAN_STATUS_NA, intentR);
             finish();
         }else{
-            Log.v(LOG_TAG,"NFC就绪，设置Intent响应");
+            XLog.v(LOG_TAG,"NFC就绪，设置Intent响应");
             pIntent = PendingIntent.getActivity(this, 0,
                     //在Manifest里或者这里设置当前activity启动模式，否则每次向阳NFC事件，activity会重复创建
                     // 当然也要按照具体情况来，你设置成singleTask也不是不行，

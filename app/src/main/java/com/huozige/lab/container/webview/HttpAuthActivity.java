@@ -2,7 +2,7 @@ package com.huozige.lab.container.webview;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -51,13 +51,13 @@ public class HttpAuthActivity extends BaseActivity {
 
     View.OnClickListener save = view -> {
 
-        Log.v(LOG_TAG,"用户提供了认证信息。");
+        XLog.v(LOG_TAG,"用户提供了认证信息。");
 
         if(_chkRemember.isChecked()){
             // 将用户输入的信息保存到配置中
             getConfigManager().upsertUserName(_txtUser.getText().toString());
             getConfigManager().upsertPassword(_txtPassword.getText().toString());
-            Log.v(LOG_TAG,"认证信息已保存到本地存储。");
+            XLog.v(LOG_TAG,"认证信息已保存到本地存储。");
         }
         // 将其打包发给调用者
         Intent res = new Intent();

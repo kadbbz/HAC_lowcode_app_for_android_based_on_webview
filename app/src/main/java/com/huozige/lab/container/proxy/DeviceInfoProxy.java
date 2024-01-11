@@ -2,7 +2,7 @@ package com.huozige.lab.container.proxy;
 
 import android.annotation.SuppressLint;
 import android.provider.Settings;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 /**
@@ -29,7 +29,7 @@ public class DeviceInfoProxy extends AbstractProxy {
         @SuppressLint("HardwareIds") String id = Settings.Secure.getString(this.getInterop().getActivityContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID);
 
-        Log.v(LOG_TAG,"SSAID: " + id);
+        XLog.v(LOG_TAG,"SSAID: " + id);
 
        return id;
     }

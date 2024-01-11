@@ -2,7 +2,7 @@ package com.huozige.lab.container.proxy.support.pdf;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
@@ -43,14 +43,14 @@ public class PDFPreviewActivity extends AppCompatActivity {
         HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf",new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(Uri localFileUri) {
-                Log.v(LOG_TAG, "Download task completed: " + _url +" to: "+ localFileUri);
+                XLog.v("["+LOG_TAG+ "]Download task completed: " + _url +" to: "+ localFileUri);
                 Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_downloaded+ _fileName, Toast.LENGTH_LONG).show();
                 renderPDF(localFileUri);
             }
 
             @Override
             public void onError(String fileName, String url) {
-                Log.v(LOG_TAG, "Download task failed: " + url +" name: "+ fileName);
+                XLog.v("["+LOG_TAG+ "]Download task failed: " + url +" name: "+ fileName);
                 Toast.makeText(PDFPreviewActivity.this,R.string.ui_message_pdf_download_failed+fileName, Toast.LENGTH_LONG).show();
                 PDFPreviewActivity.this.finish();
             }
@@ -83,12 +83,12 @@ public class PDFPreviewActivity extends AppCompatActivity {
             // 开始展示PDF
             config.load();
 
-            Log.v(LOG_TAG, "PDF file was rendered:" + pdfFile);
+            XLog.v("["+LOG_TAG+ "]PDF file was rendered:" + pdfFile);
 
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            Log.e(LOG_TAG, "Error on rendering PDF file: " + pdfFile +" >> "+ex);
+            XLog.e("["+LOG_TAG+ "]渲染PDF文件时出错，文件: " + pdfFile,ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }

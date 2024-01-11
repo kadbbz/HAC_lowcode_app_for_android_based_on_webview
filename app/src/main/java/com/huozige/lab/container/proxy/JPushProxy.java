@@ -1,6 +1,6 @@
 package com.huozige.lab.container.proxy;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.JavascriptInterface;
 
 import cn.jpush.android.api.JPushInterface;
@@ -24,7 +24,7 @@ public class JPushProxy extends AbstractProxy {
 
         String rid = JPushInterface.getRegistrationID(this.getInterop().getActivityContext());
 
-        Log.v(LOG_TAG, "RegistrationId was found: " + rid);
+        XLog.v("["+LOG_TAG+ "]RegistrationId was found: " + rid);
         return rid;
     }
 

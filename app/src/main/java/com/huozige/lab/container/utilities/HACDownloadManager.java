@@ -9,7 +9,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 import android.webkit.CookieManager;
 
 import java.io.File;
@@ -59,7 +59,7 @@ public class HACDownloadManager {
      */
     public void startDownloadTask(Context context, String url, String mimeType, HACDownloadTask.IHACDownloadHandler callback) {
 
-        Log.v(LOG_TAG, "即将开始下载：" + url);
+        XLog.v("["+LOG_TAG+ "]即将开始下载：" + url);
 
         HACDownloadTask task = new HACDownloadTask();
         task.url = url;
@@ -97,6 +97,6 @@ public class HACDownloadManager {
         __taskList.put(task.taskId, task);
 
         // 6. 记录日志
-        Log.v(LOG_TAG, "文件下载启动，本次下载的标识为" + task.taskId);
+        XLog.v("["+LOG_TAG+ "]文件下载启动，本次下载的标识为" + task.taskId);
     }
 }
