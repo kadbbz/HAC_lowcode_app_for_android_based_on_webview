@@ -9,7 +9,6 @@ import com.elvishew.xlog.LogLevel;
 import com.elvishew.xlog.XLog;
 import com.elvishew.xlog.flattener.ClassicFlattener;
 import com.elvishew.xlog.printer.AndroidPrinter;
-import com.elvishew.xlog.printer.ConsolePrinter;
 import com.elvishew.xlog.printer.Printer;
 import com.elvishew.xlog.printer.file.FilePrinter;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
@@ -66,7 +65,6 @@ public class HACApplication extends Application {
                 .enableBorder()                                        // Enable border, disabled by default
                 .build();
         Printer androidPrinter = new AndroidPrinter(true);         // Printer that print the log using android.util.Log
-        Printer consolePrinter = new ConsolePrinter();             // Printer that print the log to console using System.out
         Printer filePrinter = new FilePrinter                      // Printer that print(save) the log to file
                 .Builder(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath())
                 .fileNameGenerator(new HACFileNameGenerator())
@@ -92,7 +90,6 @@ public class HACApplication extends Application {
         XLog.init(
                 logConfig,
                 androidPrinter,
-                consolePrinter,
                 filePrinter);
     }
 
