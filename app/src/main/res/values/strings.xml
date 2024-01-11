@@ -33,8 +33,8 @@
     <string name="ui_barscanner_wait_content">准备就绪\n请按扫码键</string>
     <string name="ui_nfc_wait_content">准备就绪\n请靠近NFC标签</string>
     <string name="ui_ble_wait_content">数据读写中\n请靠近蓝牙设备</string>
-    <string name="ui_toast_permissions_denied_never">您选择了永久拒绝授权，应用很可能无法正常运行。应用将自动导航到系统设置页面，请手动为应用授权。</string>
-    <string name="ui_toast_permissions_denied">您没有为应用授权这些权限，应用很可能无法正常运行。如需授权，可彻底关闭应用或重启设备后重试。</string>
+    <string name="ui_toast_permissions_denied_never">您选择了永久拒绝授权，应用无法正常运行。应用将自动导航到系统设置页面，请手动为应用授权。</string>
+    <string name="ui_toast_permissions_denied">您没有为应用授权这些权限，应用无法正常运行。如授权过程中发生错误，请重启设备后重试。</string>
     <string name="ui_notification_config_changed">系统设置已经更新。</string>
     <string name="ui_notification_channel_config_changed">系统设置更新</string>
     <string name="ui_label_settings_action">扫描头广播名称（Action）</string>
