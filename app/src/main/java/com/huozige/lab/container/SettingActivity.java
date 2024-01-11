@@ -40,7 +40,7 @@ public class SettingActivity extends BaseActivity {
     ActivityResultLauncher<Intent> _arcZxingLite, _arc4QuickConfig;
 
     EditText _txtUrl, _txtScanAction, _txtScanExtra;
-    CheckBox _cboHa, _cboLAE;
+    CheckBox _cboHa, _cboLAE, _cboBCC;
     TextView _lblInfo;
 
     private String getVersionInfo() {
@@ -60,6 +60,7 @@ public class SettingActivity extends BaseActivity {
         _txtScanExtra = findViewById(R.id.txtExtra);
         _cboHa = findViewById(R.id.cboHa);
         _cboLAE = findViewById(R.id.cboLAE);
+        _cboBCC = findViewById(R.id.cboBCC);
         _lblInfo = findViewById(R.id.lblVersionInfo);
 
         Button cmdReset = findViewById(R.id.cmdReset);
@@ -94,6 +95,7 @@ public class SettingActivity extends BaseActivity {
         _txtScanExtra.setText(ConfigManager.getInstance().getScanExtra());
         _cboHa.setChecked(ConfigManager.getInstance().getHA());
         _cboLAE.setChecked(ConfigManager.getInstance().getShouldLogAllEntry());
+        _cboBCC.setChecked(ConfigManager.getInstance().getBypassCompatibleCheck());
 
         _lblInfo.setText(getVersionInfo());
         XLog.v("配置页面初始化完成。");
@@ -127,6 +129,7 @@ public class SettingActivity extends BaseActivity {
                 ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA, _txtScanExtra.getText().toString());
                 ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, _cboHa.isChecked() ? "true" : "false");
                 ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, _cboLAE.isChecked() ? "true" : "false");
+                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, _cboBCC.isChecked() ? "true" : "false");
 
                 Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 

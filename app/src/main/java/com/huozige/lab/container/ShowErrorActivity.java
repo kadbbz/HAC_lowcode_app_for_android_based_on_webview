@@ -14,7 +14,7 @@ public class ShowErrorActivity extends AppCompatActivity {
     public final static String EXTRA_KEY_MESSAGE ="message";
 
     TextView _text;
-    Button _btn;
+    Button _btn,_btnSetting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,8 +23,10 @@ public class ShowErrorActivity extends AppCompatActivity {
 
         _text = this.findViewById(R.id.txtErrorDetail);
         _btn = this.findViewById(R.id.btnCloseApp);
+        _btnSetting = this.findViewById(R.id.btnGotoSettings);
 
         _btn.setOnClickListener((l)-> LifecycleUtility.close());
+        _btnSetting.setOnClickListener((l)-> startActivity(new Intent( ShowErrorActivity.this, SettingActivity.class)));
     }
 
     @Override

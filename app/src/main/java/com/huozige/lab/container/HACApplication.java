@@ -15,8 +15,11 @@ import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.MiscUtilities;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import cn.jpush.android.api.JPushInterface;
 import io.realm.Realm;
@@ -79,8 +82,8 @@ public class HACApplication extends Application {
                                 "\nDevice Model       : " + Build.MODEL +
                                 "\nAndroid Version    : " + Build.VERSION.RELEASE +
                                 "\nAndroid SDK        : " + Build.VERSION.SDK_INT +
-                                "\nApp VersionName    : " + BuildConfig.VERSION_NAME +
-                                "\nApp VersionCode    : " + BuildConfig.VERSION_CODE +
+                                "\nApp VersionName    : " + MiscUtilities.getPackageVersionName(HACApplication.this) +
+                                "\nWebView Version    : " + MiscUtilities.getWebViewVersionName() +
                                 "\n<<<<<<<<<<<<<<<< File Header <<<<<<<<<<<<<<<<\n\n";
                         appendLog(header);
                     }
@@ -121,7 +124,7 @@ public class HACApplication extends Application {
          */
         @Override
         public String generateFileName(int logLevel, long timestamp) {
-            return "HAC_Log_" + LogLevel.getLevelName(logLevel) + ".txt";
+            return "HAC_Log_" + LogLevel.getLevelName(logLevel) + "_"+ LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".txt";
         }
     }
 }

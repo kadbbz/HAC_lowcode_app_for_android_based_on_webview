@@ -112,11 +112,9 @@ public class MainActivity extends BaseActivity {
 
             XLog.e("WebView组件初始化失败",ex);
 
-            String message = "应用初始化失败，这通常是操作系统和运行环境的故障导致的，请拍摄本界面或截屏后，与技术支持人员联系。";
+            String message = "应用初始化失败，这通常是操作系统和运行环境不兼容导致的，请按照下方提示操作。如果遇到困难，可拍摄本界面或截屏后，与技术支持人员联系。";
             message+="\r\n\n";
             message+=ex.getMessage();
-            message+="\r\n";
-            message+=ex.toString();
 
             Intent intent = new Intent(this, ShowErrorActivity.class);
             intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);
@@ -134,8 +132,10 @@ public class MainActivity extends BaseActivity {
     public void onDestroy() {
 
         // 销毁浏览器
-        _webView.removeAllViews();
-        _webView.destroy();
+        if(_webView!=null){
+            _webView.removeAllViews();
+            _webView.destroy();
+        }
 
         super.onDestroy();
     }

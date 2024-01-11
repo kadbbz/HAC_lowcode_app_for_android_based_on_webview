@@ -39,10 +39,6 @@ public class HACWebView extends WebView {
 
         _context = context;
 
-        if (!ConfigManager.getInstance().getBypassCompatibleCheck() && MiscUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION) {
-            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为：" + SUPPORT_WEBVIEW_MAJOR_VERSION + "，当前设备为：" + MiscUtilities.getWebViewVersionName() + "。\r\n您可以在应用市场中搜索“Chrome”，安装这个浏览器后，系统会自动将WebView升级到最新版。");
-        }
-
         // 先配置进度条
         _progressBar = new ProgressBar(context, null,
                 android.R.attr.progressBarStyleHorizontal);
@@ -110,13 +106,18 @@ public class HACWebView extends WebView {
      */
     public void refreshWebView() {
 
+        // 根据配置选项决定是否检查版本兼容性
+        if (!ConfigManager.getInstance().getBypassCompatibleCheck() && MiscUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION) {
+            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为：" + SUPPORT_WEBVIEW_MAJOR_VERSION + "，当前设备为：" + MiscUtilities.getWebViewVersionName() + "。\r\n您可以在应用市场中搜索“Chrome”，安装这个浏览器后，系统会自动将WebView升级到最新版。");
+        }
+
         // 根据选项决定是否启用硬件加速
         if (ConfigManager.getInstance().getHA()) {
             this.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速，性能更好，有兼容性风险
-            XLog.v("浏览器采用硬件加速");
+            XLog.v("WebView组件采用硬件加速");
         } else {
             this.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
-            XLog.v("浏览器采用软件加速");
+            XLog.v("WebView组件采用软件加速");
         }
 
         String target = ConfigManager.getInstance().getEntry();
