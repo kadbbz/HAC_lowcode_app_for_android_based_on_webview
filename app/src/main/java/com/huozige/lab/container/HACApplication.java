@@ -15,6 +15,7 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
+import com.huozige.lab.container.utilities.ConfigManager;
 
 import java.io.File;
 
@@ -28,11 +29,13 @@ import io.realm.RealmConfiguration;
 public class HACApplication extends Application {
 
     static final long MAX_TIME = 1000 * 60 * 60 * 24 * 7; // 7 days
-    final static String LOG_TAG="HAC_Application";
+    final static String LOG_TAG = "HAC_Application";
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        ConfigManager.init(this);
 
         initLogger();
 
@@ -52,11 +55,11 @@ public class HACApplication extends Application {
 
     }
 
-    private void initLogger(){
+    private void initLogger() {
         // 初始化日志记录器
         LogConfiguration logConfig = new LogConfiguration.Builder()
                 .logLevel(BuildConfig.DEBUG ? LogLevel.ALL             // Specify log level, logs below this level won't be printed, default: LogLevel.ALL
-                        : LogLevel.ERROR)
+                        : ConfigManager.getInstance().getShouldLogAllEntry() ? LogLevel.ALL : LogLevel.ERROR)
                 .tag(LOG_TAG)                                            // Specify TAG, default: "X-LOG"
                 .enableThreadInfo()                                    // Enable thread info, disabled by default
                 .enableStackTrace(2)                                   // Enable stack trace info with depth 2, disabled by default
@@ -93,12 +96,12 @@ public class HACApplication extends Application {
                 filePrinter);
     }
 
-    private void initCrashHandler(){
+    private void initCrashHandler() {
         HACCrashHandler handler = new HACCrashHandler(this);
         Thread.setDefaultUncaughtExceptionHandler(handler);
     }
 
-    private void initReadlm(){
+    private void initReadlm() {
         // 初始化Realm
         Realm.init(this);
 
@@ -121,7 +124,7 @@ public class HACApplication extends Application {
          */
         @Override
         public String generateFileName(int logLevel, long timestamp) {
-            return "HAC_Log_"+LogLevel.getLevelName(logLevel)+".txt";
+            return "HAC_Log_" + LogLevel.getLevelName(logLevel) + ".txt";
         }
     }
 }

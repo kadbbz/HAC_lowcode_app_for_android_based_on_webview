@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -20,7 +21,9 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
@@ -38,7 +41,12 @@ public class SettingActivity extends BaseActivity {
     ActivityResultLauncher<Intent> _arcZxingLite, _arc4QuickConfig;
 
     EditText _txtUrl, _txtScanAction, _txtScanExtra;
-    CheckBox _cboHa;
+    CheckBox _cboHa,_cboLAE;
+    TextView _lblInfo;
+
+    private String getVersionInfo(){
+        return "SSAID: "+ MiscUtilities.getSSAID(this) +" \r\nPackage Version: " + MiscUtilities.getPackageVersionName(this) + " \r\nWebView Version: "+ MiscUtilities.getWebViewVersionName();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +60,8 @@ public class SettingActivity extends BaseActivity {
         _txtScanAction = findViewById(R.id.txtAction);
         _txtScanExtra = findViewById(R.id.txtExtra);
         _cboHa = findViewById(R.id.cboHa);
+        _cboLAE = findViewById(R.id.cboLAE);
+        _lblInfo = findViewById(R.id.lblVersionInfo);
 
         Button cmdReset = findViewById(R.id.cmdReset);
         cmdReset.setOnClickListener(reset);
@@ -80,11 +90,13 @@ public class SettingActivity extends BaseActivity {
         _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
 
         // 设置初始值
-        _txtUrl.setText(getConfigManager().getEntry());
-        _txtScanAction.setText(getConfigManager().getScanAction());
-        _txtScanExtra.setText(getConfigManager().getScanExtra());
-        _cboHa.setChecked(getConfigManager().getHA());
+        _txtUrl.setText(ConfigManager.getInstance().getEntry());
+        _txtScanAction.setText(ConfigManager.getInstance().getScanAction());
+        _txtScanExtra.setText(ConfigManager.getInstance().getScanExtra());
+        _cboHa.setChecked(ConfigManager.getInstance().getHA());
+        _cboLAE.setChecked(ConfigManager.getInstance().getShouldLogAllEntry());
 
+        _lblInfo.setText(getVersionInfo());
         XLog.v("["+LOG_TAG+ "]配置页面初始化完成。");
 
     }
@@ -111,10 +123,11 @@ public class SettingActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // 保存配置
-                getConfigManager().upsertEntry(_txtUrl.getText().toString());
-                getConfigManager().upsertScanAction(_txtScanAction.getText().toString());
-                getConfigManager().upsertScanExtra(_txtScanExtra.getText().toString());
-                getConfigManager().upsertHA(_cboHa.isChecked());
+                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_APP_ENTRY_URL, _txtUrl.getText().toString());
+                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_ACTION ,_txtScanAction.getText().toString());
+                ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA ,_txtScanExtra.getText().toString());
+                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, _cboHa.isChecked()?"true":"false");
+                ConfigManager.getInstance().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, _cboLAE.isChecked()?"true":"false");
 
                 Toast.makeText(SettingActivity.this, "设置保存成功。", Toast.LENGTH_LONG).show();
 
@@ -147,8 +160,8 @@ public class SettingActivity extends BaseActivity {
             Realm.getDefaultInstance(). executeTransactionAsync (transactionRealm -> transactionRealm.deleteAll());
 
             // 用户信息
-            getConfigManager().upsertPassword("");
-            getConfigManager().upsertUserName("");
+            ConfigManager.getInstance().upsertStringEntry (ConfigManager.PREFERENCE_KEY_CURRENT_USER,"");
+            ConfigManager.getInstance().upsertStringEntry (ConfigManager.PREFERENCE_KEY_CURRENT_PWD,"");
 
             // 清理WebView的缓存
             CookieManager.getInstance().removeAllCookies(null);

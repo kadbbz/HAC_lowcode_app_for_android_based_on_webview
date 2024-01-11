@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import com.elvishew.xlog.XLog;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
@@ -22,6 +22,7 @@ import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
+import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
@@ -57,6 +58,7 @@ public class MainActivity extends BaseActivity {
 
     static final String LOG_TAG = "HAC_MainActivity"; // 日志的标识
 
+
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,9 +76,6 @@ public class MainActivity extends BaseActivity {
         try{
 
             _webView = new HACWebView(this);
-
-            // 3. 注册配置操作接口
-            _webView.setConfigManager(getConfigManager());
 
             // 4. 创建并注册WebViewClient，处理页面事件
             _webViewClient = new HACWebViewClient(this);
@@ -100,7 +99,7 @@ public class MainActivity extends BaseActivity {
             // 9. 创建和初始化JS代理
             for (AbstractProxy br : ProxyRegister.getInstance().getAllProxies()
             ) {
-                br.setConfigManager(getConfigManager()); // 配置接口
+                br.setConfigManager(ConfigManager.getInstance()); // 配置接口
                 br.setInterop(_webInterop); // WebInterop
                 _webView.addJavascriptInterface(br,br.getName()); // 注册到浏览器
                 br.onActivityCreated(MainActivity.this); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
@@ -152,7 +151,7 @@ public class MainActivity extends BaseActivity {
         super.onResume();
 
         // 如果没有设置入口，视同”未配置“
-        if (getConfigManager().getEntry().length() == 0) {
+        if (ConfigManager.getInstance().getEntry().length() == 0) {
             // 跳转到设置页面
             _arc4QuickConfig.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
         }else{
@@ -226,17 +225,17 @@ public class MainActivity extends BaseActivity {
         menu.add(0, MENU_ID_REFRESH, MENU_ID_REFRESH, getString(R.string.ui_menu_refresh));
 
         // 设置
-        if (getConfigManager().getSettingMenuVisible()) {
+        if (ConfigManager.getInstance().getSettingMenuVisible()) {
             menu.add(0, MENU_ID_SETTINGS, MENU_ID_SETTINGS, getString(R.string.ui_menu_settings));
         }
 
         // 帮助
-        if (getConfigManager().getHelpUrl().length() > 0) {
+        if (ConfigManager.getInstance().getHelpUrl().length() > 0) {
             menu.add(0, MENU_ID_HELP, MENU_ID_HELP, getString(R.string.ui_menu_help));
         }
 
         // 关于
-        if (getConfigManager().getAboutUrl().length() > 0) {
+        if (ConfigManager.getInstance().getAboutUrl().length() > 0) {
             menu.add(0, MENU_ID_ABOUT, MENU_ID_ABOUT, getString(R.string.ui_menu_about));
         }
 
@@ -264,11 +263,11 @@ public class MainActivity extends BaseActivity {
                 break;
             case MENU_ID_HELP:
                 XLog.v("["+LOG_TAG+ "]点击菜单【帮助】");
-                _webView.loadUrl(getConfigManager().getHelpUrl());
+                _webView.loadUrl(ConfigManager.getInstance().getHelpUrl());
                 break;
             case MENU_ID_ABOUT:
                 XLog.v("["+LOG_TAG+ "]点击菜单【关于】");
-                _webView.loadUrl(getConfigManager().getAboutUrl());
+                _webView.loadUrl(ConfigManager.getInstance().getAboutUrl());
                 break;
             // 你可以在这里处理新创建菜单的点击事件
         }

@@ -14,12 +14,8 @@ import com.huozige.lab.container.utilities.ConfigManager;
  */
 public class BaseActivity extends AppCompatActivity {
 
-    private ConfigManager configManager;
-
     public  BaseActivity(){
         super();
-
-        configManager = new ConfigManager(this);
     }
 
     /**
@@ -34,19 +30,19 @@ public class BaseActivity extends AppCompatActivity {
             ActionBar actionBar = getSupportActionBar();
 
             if(actionBar!=null){
-                if(!getConfigManager().getActionBarVisible()){
+                if(!ConfigManager.getInstance().getActionBarVisible()){
                     // 隐藏ActionBar
                     actionBar.hide();
                 }else{
 
                     // 设置ActionBar的颜色
-                    actionBar.setBackgroundDrawable(new ColorDrawable(getConfigManager().getTCD()));
+                    actionBar.setBackgroundDrawable(new ColorDrawable(ConfigManager.getInstance().getTCD()));
 
                     // 设置状态栏颜色，做沉浸式体验
                     Window window = this.getWindow();
                     window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
                     window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-                    window.setStatusBarColor(getConfigManager().getTCD());
+                    window.setStatusBarColor(ConfigManager.getInstance().getTCD());
                 }
             }
 
@@ -62,13 +58,5 @@ public class BaseActivity extends AppCompatActivity {
         super.onResume();
 
         refreshActionBar();
-    }
-
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public void setConfigManager(ConfigManager configManager) {
-        this.configManager = configManager;
     }
 }

@@ -44,6 +44,7 @@
     <string name="ui_label_settings_save">保存</string>
     <string name="ui_label_settings_reset">重新配置APP</string>
     <string name="ui_label_settings_ha">启用硬件加速</string>
+    <string name="ui_label_settings_lae">启用诊断日志</string>
     <string name="ui_message_setting_save">你确认要保存和应用应用配置吗？</string>
     <string name="ui_message_quick_config_confirm">确定要使用当前的配置启动APP吗？</string>
     <string name="ui_message_quick_config_broken">配置信息的格式不正确，请再次确认</string>

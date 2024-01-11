@@ -8,6 +8,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.huozige.lab.container.utilities.ConfigManager;
+
 /**
  * 扫码配置的替代页面：输入JSON文本实现配置
  */
@@ -36,7 +38,7 @@ public class TextConfigActivity extends BaseActivity {
         ab.setPositiveButton(TextConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
             // 执行配置过程
-            Boolean isOk= getConfigManager().quickConfig(json);
+            Boolean isOk= ConfigManager.getInstance().quickConfig(json);
 
             if(isOk){
 

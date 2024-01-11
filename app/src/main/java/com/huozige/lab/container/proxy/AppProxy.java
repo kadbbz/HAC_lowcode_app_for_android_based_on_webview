@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
+import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
@@ -48,16 +49,6 @@ public class AppProxy extends AbstractProxy {
     static final String LOG_TAG = "HAC_AppProxy";
 
     /**
-     * 根据传递过来的字符串判断是否为true
-     *
-     * @param text 用来判断的字符串，如1、true、yes均被视为true
-     * @return 判断结果
-     */
-    private boolean assertSwitch(String text) {
-        return text != null && text.length() > 0 && !text.equalsIgnoreCase("0") && !text.equalsIgnoreCase("false") && !text.equalsIgnoreCase("no");
-    }
-
-    /**
      * 注册的名称为：app
      */
     @Override
@@ -80,10 +71,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void setScannerOptions(String action, String extra) {
-
-        // 更新配置项
-        getConfigManager().upsertScanAction(action);
-        getConfigManager().upsertScanExtra(extra);
+        getConfigManager().upsertStringEntry (ConfigManager.PREFERENCE_KEY_SCANNER_ACTION, action);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_SCANNER_EXTRA,extra);
     }
 
 
@@ -152,7 +141,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void toggleSettingMenu(String shouldShow) {
 
-        getConfigManager().upsertSettingMenuVisible(assertSwitch(shouldShow));
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_SETTING_MENU,shouldShow);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -165,7 +154,34 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void toggleActionBar(String shouldShow) {
 
-        getConfigManager().upsertActionBarVisible(assertSwitch(shouldShow));
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_ACTION_BAR, shouldShow);
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
+    }
+
+    @JavascriptInterface
+    public void toggleHardwareAccelerate(String shouldEnable) {
+
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, shouldEnable);
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
+    }
+
+    @JavascriptInterface
+    public void toggleBypassCompatibleCheck(String shouldBypass) {
+
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, shouldBypass);
+
+        // 重启生效
+        LifecycleUtility.restart(getInterop().getActivityContext());
+    }
+
+    @JavascriptInterface
+    public void toggleLogAllEntries(String shouldLog) {
+
+        getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, shouldLog);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -178,8 +194,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setAboutUrl(String url) {
 
-        // 更新配置项
-        getConfigManager().upsertAboutUrl(url);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ABOUT_URL,url);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -192,8 +207,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setHelpUrl(String url) {
 
-        // 更新配置项
-        getConfigManager().upsertHelpUrl(url);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_HELP_URL,url);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -237,12 +251,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void setActionBarColor(String colorInteger) {
 
-        // 去掉可能误输入的#号和0x
-        colorInteger = colorInteger.replace("#", "");
-        colorInteger = colorInteger.replace("0x", "");
-
-        // 更新配置项
-        getConfigManager().upsertTCD(Integer.parseInt(colorInteger, 16) + 0xFF000000);
+        getConfigManager().upsertHexIntEntry(ConfigManager.PREFERENCE_KEY_ACTION_BAR_COLOR,colorInteger);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());

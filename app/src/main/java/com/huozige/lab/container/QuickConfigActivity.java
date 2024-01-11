@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
@@ -41,7 +42,7 @@ public class QuickConfigActivity extends BaseActivity {
             ab.setPositiveButton(QuickConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
 
                 // 执行配置过程
-                Boolean isOk= getConfigManager().quickConfig(json);
+                Boolean isOk= ConfigManager.getInstance().quickConfig(json);
 
                 if(isOk){
 

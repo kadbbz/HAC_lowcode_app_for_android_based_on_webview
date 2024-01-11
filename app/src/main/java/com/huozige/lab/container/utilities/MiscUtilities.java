@@ -1,12 +1,23 @@
 package com.huozige.lab.container.utilities;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.provider.Settings;
 import android.webkit.URLUtil;
+import android.webkit.WebView;
+
+import com.elvishew.xlog.XLog;
 
 import java.net.URL;
 import java.net.URLConnection;
 
 
 public class MiscUtilities {
+
+    static final String LOG_TAG="HAC_MiscUtilities";
 
     /**
      * 在字符串中去除非ASCII字符和其他不能输出到屏幕的字符
@@ -134,4 +145,54 @@ public class MiscUtilities {
         }
         return sb.toString();
     }
+
+    public static String getPackageVersionName(Context context){
+        String versionName = "";
+
+        try {
+            PackageInfo pinfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_CONFIGURATIONS);
+            versionName = pinfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            XLog.e("["+LOG_TAG+ "]获取应用版本信息出错" ,e);
+        }
+
+        return versionName;
+    }
+
+
+    public static String getSSAID(Activity context){
+
+        @SuppressLint("HardwareIds") String id = Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+
+        return id;
+    }
+
+    /**
+     * 获取WebView的主版本
+     * @return 主版本
+     */
+    public static int getWebViewMajorVersion(){
+        PackageInfo pinfo = WebView.getCurrentWebViewPackage();
+
+        if(pinfo == null){
+            return Integer.MAX_VALUE; // 如果无法获取版本号，按照可以使用来处理
+        }else{
+            String major = pinfo.versionName.split("\\.")[0];
+            return Integer.parseInt(major);
+        }
+
+    }
+
+    public static String getWebViewVersionName(){
+        PackageInfo pinfo = WebView.getCurrentWebViewPackage();
+
+        if(pinfo == null){
+            return "";
+        }else{
+           return pinfo.versionName;
+        }
+
+    }
+
 }
