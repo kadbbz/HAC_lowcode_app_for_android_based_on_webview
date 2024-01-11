@@ -56,9 +56,6 @@ public class MainActivity extends BaseActivity {
     static final int MENU_ID_HELP = 3;
     static final int MENU_ID_ABOUT = 4;
 
-    static final String LOG_TAG = "HAC_MainActivity"; // 日志的标识
-
-
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +64,7 @@ public class MainActivity extends BaseActivity {
         // 0. 申请权限
         PermissionsUtility.asyncRequirePermissions(this,new String[]{
                 Permission.WRITE_EXTERNAL_STORAGE
-        },()->XLog.v("["+LOG_TAG+"]日志记录的权限申请成功。"));
+        },()->XLog.v("日志记录的权限申请成功。"));
 
         // 1. 设置页面标题
         setTitle(getString(R.string.app_name));
@@ -169,7 +166,7 @@ public class MainActivity extends BaseActivity {
 
                     if(u!=null){
 
-                        XLog.v(LOG_TAG,"收到带跳转的Intent请求，URL："+url);
+                        XLog.v("收到带跳转的Intent请求，URL："+url);
                         this._webView.loadUrl(url);
                     }
                 }

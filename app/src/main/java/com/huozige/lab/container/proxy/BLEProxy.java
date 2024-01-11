@@ -26,8 +26,6 @@ public class BLEProxy extends AbstractProxy {
     ActivityResultLauncher<Intent> _scanner;
     String cellPayload, cellError, cellRaw;
 
-    static final String LOG_TAG = "HAC_BLEProxy";
-
     @Override
     public String getName() {
         return "ble";
@@ -126,7 +124,7 @@ public class BLEProxy extends AbstractProxy {
                     getInterop().writeLogIntoConsole("Error occurred during data exchanging: " + error);
                 }
 
-                XLog.v("[" + LOG_TAG + "]code -> " + code + " payload - > " + payload + " err -> " + error);
+                XLog.v("code -> " + code + " payload - > " + payload + " err -> " + error);
 
                 if (cellError != null && !cellError.isEmpty()) {
                     getInterop().setInputValue(cellError, error);
@@ -141,7 +139,7 @@ public class BLEProxy extends AbstractProxy {
 
                 getInterop().writeLogIntoConsole("App error! Return without intent, code is " + code);
 
-                XLog.e("[" + LOG_TAG + "]应用运行异常，蓝牙返回的结果中没有Intent数据，返回码为：" + code);
+                XLog.e("应用运行异常，蓝牙返回的结果中没有Intent数据，返回码为：" + code);
 
                 if (cellError != null && !cellError.isEmpty()) {
                     getInterop().setInputValue(cellError, code);

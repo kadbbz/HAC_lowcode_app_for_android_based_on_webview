@@ -44,14 +44,14 @@ public class PDFPreviewActivity extends AppCompatActivity {
         HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf", new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(Uri localFileUri) {
-                XLog.v("Download task completed: " + _url + " to: " + localFileUri);
+                XLog.v("PDF文件下载完成，Url: " + _url + "，保存到：" + localFileUri);
                 Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_downloaded + _fileName, Toast.LENGTH_LONG).show();
                 renderPDF(localFileUri);
             }
 
             @Override
             public void onError(String fileName, String url) {
-                XLog.v("Download task failed: " + url + " name: " + fileName);
+                XLog.e("PDF文件下载失败，Url：" + url + "，文件名：" + fileName);
                 Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_download_failed + fileName, Toast.LENGTH_LONG).show();
                 PDFPreviewActivity.this.finish();
             }
@@ -84,7 +84,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
             // 开始展示PDF
             config.load();
 
-            XLog.v("PDF file was rendered:" + pdfFile);
+            XLog.v("PDF文件渲染完成，文件：" + pdfFile);
 
         } catch (Exception ex) {
 

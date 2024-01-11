@@ -54,11 +54,11 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
             String url_path_prefix = String.format(originalTpl, version);
             String cache_prefix = String.format(cacheTpl, version);
 
-            if (url.getPath().startsWith(url_path_prefix)) {
+            if (url.getPath() != null && url.getPath().startsWith(url_path_prefix)) {
 
                 // 获取文件名
                 String fileName = url.getLastPathSegment();
-                XLog.v("Local cache matched for : " + fileName);
+                XLog.v("命中本地缓存，不再从网络获取，Url: " + fileName);
 
                 // 构建返回对象
                 CacheHint result = new CacheHint();
@@ -66,20 +66,22 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
                 result.LocalFilePath = url.getPath().replace(url_path_prefix, cache_prefix); // 通过Path进行替换，可以避免Query的影响
                 result.Encoding = "UTF-8";
 
-                if (fileName.toLowerCase().endsWith("css")) {
-                    result.MIME = "text/css";
-                } else if (fileName.toLowerCase().endsWith("js")) {
-                    result.MIME = "application/x-javascript";
-                } else if (fileName.toLowerCase().endsWith("json")) {
-                    result.MIME = "application/json";
-                } else if (fileName.toLowerCase().endsWith("xml")) {
-                    result.MIME = "text/xml";
-                } else if (fileName.toLowerCase().endsWith("jpg") || fileName.toLowerCase().endsWith("jpeg")) {
-                    result.MIME = "image/jpeg";
-                } else if (fileName.toLowerCase().endsWith("png")) {
-                    result.MIME = "image/png";
-                } else {
-                    result.MIME = "text/plain"; // 默认值
+                if (fileName != null) {
+                    if (fileName.toLowerCase().endsWith("css")) {
+                        result.MIME = "text/css";
+                    } else if (fileName.toLowerCase().endsWith("js")) {
+                        result.MIME = "application/x-javascript";
+                    } else if (fileName.toLowerCase().endsWith("json")) {
+                        result.MIME = "application/json";
+                    } else if (fileName.toLowerCase().endsWith("xml")) {
+                        result.MIME = "text/xml";
+                    } else if (fileName.toLowerCase().endsWith("jpg") || fileName.toLowerCase().endsWith("jpeg")) {
+                        result.MIME = "image/jpeg";
+                    } else if (fileName.toLowerCase().endsWith("png")) {
+                        result.MIME = "image/png";
+                    } else {
+                        result.MIME = "text/plain"; // 默认值
+                    }
                 }
 
                 return result;

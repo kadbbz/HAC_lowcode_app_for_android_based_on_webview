@@ -9,6 +9,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
@@ -117,6 +118,8 @@ public class AppProxy extends AbstractProxy {
             Intent intent = new Intent();
             intent.setAction("android.intent.action.CALL");
             intent.setData(Uri.parse("tel:" + phoneNumber));
+
+            XLog.v("拨打电话：" + phoneNumber);
             this.getInterop().getActivityContext().startActivity(intent);
         });
     }

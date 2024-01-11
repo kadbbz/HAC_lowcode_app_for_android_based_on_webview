@@ -24,7 +24,7 @@ public class JPushProxy extends AbstractProxy {
 
         String rid = JPushInterface.getRegistrationID(this.getInterop().getActivityContext());
 
-        XLog.v("RegistrationId was found: " + rid);
+        XLog.v("获取到极光推送的RegistrationId: " + rid);
         return rid;
     }
 

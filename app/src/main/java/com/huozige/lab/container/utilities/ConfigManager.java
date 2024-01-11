@@ -15,14 +15,12 @@ import com.huozige.lab.container.R;
  */
 public class ConfigManager {
 
-    static final String LOG_TAG = "HAC_ConfigManager";
-
     static final String PREFERENCE_NAME = "HAC";
 
     public static final String PREFERENCE_KEY_APP_ENTRY_URL = "E"; // 页面入口的地址
     public static final String PREFERENCE_KEY_SCANNER_ACTION = "SA"; // 扫描广播的Action
     public static final String PREFERENCE_KEY_SCANNER_EXTRA = "SE"; // 扫描广播的Extra
-    public  static final String PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE = "HA"; // 硬件加速
+    public static final String PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE = "HA"; // 硬件加速
     public static final String PREFERENCE_KEY_ACTION_BAR_COLOR = "TCD"; // 主题色（暗色）
     public static final String PREFERENCE_KEY_SHOW_ACTION_BAR = "ABV"; // 是否显示动作栏
     public static final String PREFERENCE_KEY_SHOW_SETTING_MENU = "MSV"; // 是否显示设置菜单
@@ -41,14 +39,15 @@ public class ConfigManager {
 
     static ConfigManager __instance;
 
-    public static void init(Application app){
-        if(null == __instance){
+    public static void init(Application app) {
+        if (null == __instance) {
             __instance = new ConfigManager(app);
         }
     }
-    public static ConfigManager getInstance(){
 
-        if(__instance == null){
+    public static ConfigManager getInstance() {
+
+        if (__instance == null) {
             throw new IllegalStateException("ConfigManager没有初始化，获取实例前需先调用init方法。");
         }
 
@@ -71,6 +70,7 @@ public class ConfigManager {
         // 保存到配置库
         sharedPref.edit().putBoolean(key, value).apply();
 
+        XLog.v("更新应用配置，键：" + key + "，值（boolean）：" + propertyValue);
     }
 
     public void upsertStringEntry(String key, String propertyValue) {
@@ -80,16 +80,18 @@ public class ConfigManager {
 
         // 保存到配置库
         sharedPref.edit().putString(key, propertyValue).apply();
+
+        XLog.v("更新应用配置，键：" + key + "，值：" + propertyValue);
     }
 
     public void upsertHexIntEntry(String key, String propertyValue) {
 
         int value = 0;
 
-        if(propertyValue!=null){
+        if (propertyValue != null) {
             try {
                 value = parseHexIntegerFromString(propertyValue);
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 // 不做
             }
         }
@@ -100,6 +102,8 @@ public class ConfigManager {
         // 保存到配置库
         sharedPref.edit().putInt(key, value).apply();
 
+        XLog.v("更新应用配置，键：" + key + "，值（hex）：" + propertyValue);
+
     }
 
     public Boolean quickConfig(String json) {
@@ -109,45 +113,47 @@ public class ConfigManager {
             if (config != null) {
 
                 // 应用入口
-                this.upsertStringEntry(PREFERENCE_KEY_APP_ENTRY_URL,config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
+                this.upsertStringEntry(PREFERENCE_KEY_APP_ENTRY_URL, config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
 
                 // 扫码Action
-                this.upsertStringEntry(PREFERENCE_KEY_SCANNER_ACTION,config.getString(PREFERENCE_KEY_SCANNER_ACTION));
+                this.upsertStringEntry(PREFERENCE_KEY_SCANNER_ACTION, config.getString(PREFERENCE_KEY_SCANNER_ACTION));
 
                 // 扫码Extra
-                this.upsertStringEntry(PREFERENCE_KEY_SCANNER_EXTRA,config.getString(PREFERENCE_KEY_SCANNER_EXTRA));
+                this.upsertStringEntry(PREFERENCE_KEY_SCANNER_EXTRA, config.getString(PREFERENCE_KEY_SCANNER_EXTRA));
 
                 // 关于菜单的地址
-                this.upsertStringEntry(PREFERENCE_KEY_ABOUT_URL,config.getString(PREFERENCE_KEY_ABOUT_URL));
+                this.upsertStringEntry(PREFERENCE_KEY_ABOUT_URL, config.getString(PREFERENCE_KEY_ABOUT_URL));
 
                 // 帮助菜单的地址
-                this.upsertStringEntry(PREFERENCE_KEY_HELP_URL,config.getString(PREFERENCE_KEY_HELP_URL));
+                this.upsertStringEntry(PREFERENCE_KEY_HELP_URL, config.getString(PREFERENCE_KEY_HELP_URL));
 
                 // 标题栏颜色
-                this.upsertHexIntEntry(PREFERENCE_KEY_ACTION_BAR_COLOR,config.getString(PREFERENCE_KEY_ACTION_BAR_COLOR));
+                this.upsertHexIntEntry(PREFERENCE_KEY_ACTION_BAR_COLOR, config.getString(PREFERENCE_KEY_ACTION_BAR_COLOR));
 
                 // 菜单是否可见
-                this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_SETTING_MENU,config.getString(PREFERENCE_KEY_SHOW_SETTING_MENU));
+                this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_SETTING_MENU, config.getString(PREFERENCE_KEY_SHOW_SETTING_MENU));
 
                 // 标题栏是否可见
-                this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_ACTION_BAR,config.getString(PREFERENCE_KEY_SHOW_ACTION_BAR));
+                this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_ACTION_BAR, config.getString(PREFERENCE_KEY_SHOW_ACTION_BAR));
 
                 // 是否启用硬件加速
-                this.upsertBooleanEntry(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE,config.getString(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE));
+                this.upsertBooleanEntry(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, config.getString(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE));
 
                 // 是否跳过浏览器版本检查
-                this.upsertBooleanEntry(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK,config.getString(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK));
+                this.upsertBooleanEntry(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, config.getString(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK));
 
                 // 是否记录所有日志
-                this.upsertBooleanEntry(PREFERENCE_KEY_LOG_ALL_ENTRIES,config.getString(PREFERENCE_KEY_LOG_ALL_ENTRIES));
+                this.upsertBooleanEntry(PREFERENCE_KEY_LOG_ALL_ENTRIES, config.getString(PREFERENCE_KEY_LOG_ALL_ENTRIES));
 
-               return true;
+                XLog.v("应用初始化设置完成，配置数据：" + json);
+
+                return true;
             } else {
                 return false;
             }
 
         } catch (Exception ex) {
-            XLog.e("[" + LOG_TAG + "]存储配置信息时出错", ex);
+            XLog.e("存储配置信息时出错", ex);
             return false;
         }
     }
