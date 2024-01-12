@@ -1,6 +1,7 @@
 package com.huozige.lab.container.proxy;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
+
 import android.webkit.JavascriptInterface;
 
 import cn.jpush.android.api.JPushInterface;
@@ -8,11 +9,10 @@ import cn.jpush.android.api.JPushInterface;
 /**
  * 极光推送的操作接口
  * 1.13.0
- * jpush.getRegistrationID 获取用于推送的RID
+ * jpush.getRegistrationID()：获取用于推送的RID
  */
 public class JPushProxy extends AbstractProxy {
 
-    static final String LOG_TAG = "HAC_JPushProxy";
 
     @Override
     public String getName() {
@@ -24,7 +24,7 @@ public class JPushProxy extends AbstractProxy {
 
         String rid = JPushInterface.getRegistrationID(this.getInterop().getActivityContext());
 
-        Log.v(LOG_TAG, "RegistrationId was found: " + rid);
+        XLog.v("获取到极光推送的RegistrationId: " + rid);
         return rid;
     }
 

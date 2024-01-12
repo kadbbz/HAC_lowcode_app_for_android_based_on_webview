@@ -1,6 +1,5 @@
 package com.huozige.lab.container.proxy;
 
-import android.content.Intent;
 import android.webkit.JavascriptInterface;
 
 import com.hjq.permissions.Permission;
@@ -9,6 +8,7 @@ import locationprovider.davidserrano.com.LocationProvider;
 
 /**
  * 让页面能获取当前的地理位置
+ * 1.2.0
  * geo.getLocation(coordinateSystem,cellLat,cellLon,cellError)：获取地理位置
  */
 public class GeoProxy extends AbstractProxy {

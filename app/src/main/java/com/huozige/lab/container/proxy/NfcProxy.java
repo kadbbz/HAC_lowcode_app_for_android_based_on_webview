@@ -13,7 +13,7 @@ import com.huozige.lab.container.utilities.MiscUtilities;
 /**
  * 让页面能读取NFC标签
  * 1.8.0
- * nfc.readTagId()：弹出模态窗口，读取NFC标签ID并返回到单元格
+ * nfc.readTagId(cellTag)：弹出模态窗口，读取NFC标签ID并返回到单元格
  */
 public class NfcProxy extends AbstractProxy {
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。

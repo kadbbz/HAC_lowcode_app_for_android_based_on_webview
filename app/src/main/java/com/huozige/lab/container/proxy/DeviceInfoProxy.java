@@ -1,8 +1,7 @@
 package com.huozige.lab.container.proxy;
 
-import android.annotation.SuppressLint;
-import android.provider.Settings;
-import android.util.Log;
+import com.huozige.lab.container.utilities.MiscUtilities;
+
 import android.webkit.JavascriptInterface;
 
 /**
@@ -11,8 +10,6 @@ import android.webkit.JavascriptInterface;
  * device.getSecureId()：获取当前设备的唯一标识
  */
 public class DeviceInfoProxy extends AbstractProxy {
-
-    static final String LOG_TAG = "HAC_DeviceInfoProxy";
 
     @Override
     public String getName() {
@@ -24,14 +21,7 @@ public class DeviceInfoProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getSecureId() {
-
-        // 采用SSAID作为唯一标识，不再使用Mac：https://developer.android.com/training/articles/user-data-ids?hl=zh-cn#mac-11-plus
-        @SuppressLint("HardwareIds") String id = Settings.Secure.getString(this.getInterop().getActivityContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID);
-
-        Log.v(LOG_TAG,"SSAID: " + id);
-
-       return id;
+        return MiscUtilities.getSSAID(this.getInterop().getActivityContext());
     }
 
 }

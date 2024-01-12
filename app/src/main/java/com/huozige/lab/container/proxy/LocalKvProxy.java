@@ -1,6 +1,7 @@
 package com.huozige.lab.container.proxy;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
+
 import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
@@ -12,6 +13,7 @@ import io.realm.Realm;
 
 /**
  * 让页面存取本地KV数据库
+ * 1.4.0
  * localKv.upsert(key,value)：向本地数据库存入值
  * localKv.retrieve(key,cell)：从本地数据库中查找值，并写入单元格
  * localKv.remove(key)：从本地数据库中删除特定值
@@ -24,9 +26,7 @@ public class LocalKvProxy extends AbstractProxy {
     private static final String VALUE_NA = "DATA_NOT_FOUND";
     private static final String KEY_TEMPLATE = "%s|%s";
 
-    private static final String VERSION_DEFAULT="default";
-
-    static final String LOG_TAG="HAC_LocalKvProxy";
+    private static final String VERSION_DEFAULT = "default";
 
     @Override
     public String getName() {
@@ -35,9 +35,10 @@ public class LocalKvProxy extends AbstractProxy {
 
     /**
      * 获取当前入口的主机名
+     *
      * @return 主机名
      */
-    private String getEntryHost(){
+    private String getEntryHost() {
 
         try {
             return (new URI(getConfigManager().getEntry())).getHost();
@@ -50,90 +51,95 @@ public class LocalKvProxy extends AbstractProxy {
     /**
      * 注册到页面的localKv.upsert(key,value)方法
      * 向本地数据库中存入值
-     * @param key Key，大小写敏感
+     *
+     * @param key         Key，大小写敏感
      * @param valueString 放入的值
      */
     @JavascriptInterface
     public void upsert(String key, String valueString) {
-        upsertV(key,valueString,VERSION_NA);
+        upsertV(key, valueString, VERSION_NA);
     }
 
     /**
      * 注册到页面的localKv.retrieve(key,cell)方法
      * 从本地数据库中查找值，并写入单元格
-     * @param key Key，大小写敏感
+     *
+     * @param key  Key，大小写敏感
      * @param cell 目标单元格
      */
     @JavascriptInterface
-    public void retrieve(String key,String cell) {
-        retrieveV(key,VERSION_NA,cell);
+    public void retrieve(String key, String cell) {
+        retrieveV(key, VERSION_NA, cell);
     }
 
     /**
      * 注册到页面的localKv.retrieve2(key,param)方法
      * 从本地数据库中查找值，并写入变量
+     *
      * @param key Key，大小写敏感
      */
     @JavascriptInterface
     public String retrieve2(String key) {
-        return retrieveV2(key,VERSION_NA);
+        return retrieveV2(key, VERSION_NA);
     }
 
     /**
      * 注册到页面的 localKv.upsertV(key,value,version)方法
      * 向本地数据库中存入值
-     * @param key Key，大小写敏感
+     *
+     * @param key         Key，大小写敏感
      * @param valueString 放入的值
-     * @param version 版本号
+     * @param version     版本号
      */
     @JavascriptInterface
     public void upsertV(String key, String valueString, String version) {
 
-        if(null == version){
+        if (null == version) {
             version = VERSION_DEFAULT;
         }
 
         String finalVersion = version;
 
-        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
             LocalKv_Bundle bundle = new LocalKv_Bundle();
-            bundle.key = String.format(KEY_TEMPLATE, getEntryHost(),  key);
+            bundle.key = String.format(KEY_TEMPLATE, getEntryHost(), key);
             bundle.value = valueString;
-            bundle.version= finalVersion;
+            bundle.version = finalVersion;
             transactionRealm.insertOrUpdate(bundle);
 
-            Log.v(LOG_TAG,"LocalKV has been upsert with key " + key +" on " + getEntryHost() +" value: "+ valueString);
+            XLog.v("本地缓存已更新，键：" + key + "，服务器：" + getEntryHost() + "，值：" + valueString);
         });
     }
 
     /**
      * 注册到页面的 localKv.retrieveV(key,version,cell)方法
      * 从本地数据库中查找值，并写入单元格
-     * @param key Key，大小写敏感
+     *
+     * @param key     Key，大小写敏感
      * @param version 版本号
-     * @param cell 目标单元格，没有找到键值+版本时返回DATA_NOT_FOUND
+     * @param cell    目标单元格，没有找到键值+版本时返回DATA_NOT_FOUND
      */
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
 
-        if(null == version){
+        if (null == version) {
             version = VERSION_DEFAULT;
         }
 
         String finalVersion = version;
 
-        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
             String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
-            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
+            LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
-            if(bundle !=null){
-                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey);
-                getInterop().setInputValue(cell,bundle.value);
-            }else{
-                getInterop().setInputValue(cell,VALUE_NA);
-                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+            if (bundle != null) {
+                XLog.v("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                getInterop().setInputValue(cell, bundle.value);
+            } else {
+                getInterop().setInputValue(cell, VALUE_NA);
+                XLog.v("本地缓存中没有找到该键：" + bKey);
             }
         });
     }
@@ -141,7 +147,8 @@ public class LocalKvProxy extends AbstractProxy {
     /**
      * 注册到页面的 localKv.retrieveV(key,version,cell)方法
      * 从本地数据库中查找值，并写入变量
-     * @param key Key，大小写敏感
+     *
+     * @param key     Key，大小写敏感
      * @param version 版本号
      */
     @JavascriptInterface
@@ -149,23 +156,23 @@ public class LocalKvProxy extends AbstractProxy {
 
         final String[] result = new String[1];
 
-        if(null == version){
+        if (null == version) {
             version = VERSION_DEFAULT;
         }
 
         String finalVersion = version;
 
-        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
             String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
-            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).equalTo("version",finalVersion).findFirst();
+            LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
-            if(bundle !=null){
-                Log.v(LOG_TAG,"Data from LocalKV has been sent. Key: " + bKey+" value: "+ bundle.value);
-                result[0] =  bundle.value;
-            }else{
-                Log.v(LOG_TAG,"Data not found in LocalKV. Key: " + bKey);
+            if (bundle != null) {
+                XLog.v("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                result[0] = bundle.value;
+            } else {
+                XLog.v("本地缓存中没有找到该键：" + bKey);
                 result[0] = VALUE_NA;
             }
         });
@@ -176,18 +183,19 @@ public class LocalKvProxy extends AbstractProxy {
     /**
      * 注册到页面的 localKv.remove(key)方法
      * 删除特定键值的数据
+     *
      * @param key Key，大小写敏感
      */
     @JavascriptInterface
     public void remove(String key) {
-        Realm.getDefaultInstance().executeTransaction (transactionRealm -> {
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
             String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
-            LocalKv_Bundle bundle= transactionRealm.where(LocalKv_Bundle.class).equalTo("key",bKey).findFirst();
+            LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).findFirst();
             if (bundle != null) {
                 bundle.deleteFromRealm();
-                Log.v(LOG_TAG,"Data was deleted from LocalKV. Key: " + bKey);
+                XLog.v("从本地缓存中移除该键：" + bKey);
             }
         });
     }
@@ -195,7 +203,7 @@ public class LocalKvProxy extends AbstractProxy {
     @Override
     public void onActivityDestroy() {
 
-        if(Realm.getDefaultInstance() !=null && !Realm.getDefaultInstance().isClosed()){
+        if (Realm.getDefaultInstance() != null && !Realm.getDefaultInstance().isClosed()) {
             // 关闭Realm的连接
             Realm.getDefaultInstance().close();
         }

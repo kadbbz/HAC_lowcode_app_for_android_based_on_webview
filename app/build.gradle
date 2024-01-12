@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.14.1-release'
+        versionName '1.14.2-release'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
@@ -58,4 +58,5 @@ dependencies {
     implementation 'com.github.barteksc:android-pdf-viewer:3.2.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.2.0' // 极光推送
     implementation 'com.github.Jasonchenlijian:FastBle:2.4.0' // BLE设备
+    implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
 }

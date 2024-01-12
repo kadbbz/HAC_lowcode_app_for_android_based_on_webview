@@ -126,13 +126,39 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txtExtra" />
 
+        <CheckBox
+            android:id="@+id/cboBCC"
+            android:layout_width="220dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="30dp"
+            android:text="@string/ui_label_settings_BCC"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.289"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cboHa" />
+
+        <CheckBox
+            android:id="@+id/cboLAE"
+            android:layout_width="220dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="30dp"
+            android:text="@string/ui_label_settings_lae"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.289"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cboBCC" />
+
         <Button
             android:id="@+id/cmdSave"
             style="@style/Widget.AppCompat.Button"
             android:layout_width="113dp"
             android:layout_height="48dp"
             android:layout_marginStart="100dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="30dp"
             android:layout_marginEnd="100dp"
             android:background="@color/colorAccent"
             android:text="@string/ui_label_settings_save"
@@ -141,16 +167,16 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.52"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cboHa"
+            app:layout_constraintTop_toBottomOf="@+id/cboLAE"
             tools:ignore="TextContrastCheck" />
 
         <Button
             android:id="@+id/cmdClear"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="180dp"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="100dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="30dp"
             android:layout_marginEnd="100dp"
             android:text="@string/ui_label_settings_clear"
             android:textColor="#DD2C00"
@@ -164,9 +190,9 @@
             android:id="@+id/cmdReset"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="113dp"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="100dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="100dp"
             android:text="@string/ui_label_settings_reset"
             android:textColor="#DD2C00"
@@ -176,7 +202,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cmdClear" />
 
-
+        <TextView
+            android:id="@+id/lblVersionInfo"
+            android:layout_width="260dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="35dp"
+            android:text=""
+            android:textAlignment="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.52"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cmdReset" />
 
         <ImageButton
             android:id="@+id/imgScan"

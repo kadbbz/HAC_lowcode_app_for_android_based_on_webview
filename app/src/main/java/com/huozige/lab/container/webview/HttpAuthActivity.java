@@ -2,7 +2,9 @@ package com.huozige.lab.container.webview;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+
+import com.elvishew.xlog.XLog;
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -11,11 +13,11 @@ import android.widget.EditText;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.SettingActivity;
+import com.huozige.lab.container.utilities.ConfigManager;
 
 public class HttpAuthActivity extends BaseActivity {
-    static final String LOG_TAG = "HAC_HttpAuthActivity";
-    static  final String BUNDLE_EXTRA_RESULT_USER="username";
-    static  final String BUNDLE_EXTRA_RESULT_PASSWORD="password";
+    static final String BUNDLE_EXTRA_RESULT_USER = "username";
+    static final String BUNDLE_EXTRA_RESULT_PASSWORD = "password";
     EditText _txtUser, _txtPassword;
     CheckBox _chkRemember;
 
@@ -45,19 +47,19 @@ public class HttpAuthActivity extends BaseActivity {
 
         // 初始化
         // 考虑到企业用移动设备的典型应用场景（设备与应用系统和用户绑定），同一设备上的用户名趋同，所以仅记录一份。
-        _txtUser.setText(getConfigManager().getUserName());
-        _txtPassword.setText(getConfigManager().getPassword());
+        _txtUser.setText(ConfigManager.getInstance().getUserName());
+        _txtPassword.setText(ConfigManager.getInstance().getPassword());
     }
 
     View.OnClickListener save = view -> {
 
-        Log.v(LOG_TAG,"用户提供了认证信息。");
+        XLog.v("用户提供了认证信息。");
 
-        if(_chkRemember.isChecked()){
+        if (_chkRemember.isChecked()) {
             // 将用户输入的信息保存到配置中
-            getConfigManager().upsertUserName(_txtUser.getText().toString());
-            getConfigManager().upsertPassword(_txtPassword.getText().toString());
-            Log.v(LOG_TAG,"认证信息已保存到本地存储。");
+            ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_CURRENT_USER, _txtUser.getText().toString());
+            ConfigManager.getInstance().upsertStringEntry(ConfigManager.PREFERENCE_KEY_CURRENT_PWD, _txtPassword.getText().toString());
+            XLog.v("认证信息已保存到本地存储。");
         }
         // 将其打包发给调用者
         Intent res = new Intent();

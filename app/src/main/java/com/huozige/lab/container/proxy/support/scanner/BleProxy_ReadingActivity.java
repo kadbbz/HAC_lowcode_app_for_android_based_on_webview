@@ -5,7 +5,9 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+
+import com.elvishew.xlog.XLog;
+
 import android.view.View;
 import android.widget.Toast;
 
@@ -51,13 +53,11 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
     public final static String BUNDLE_EXTRA_ERROR = "error";
 
-    public final static String LOG_TAG = "HAC_BleReadingActivity";
-
     private final List<RegistryInfo> __notifyKeys = new ArrayList<>();
 
     private final List<RegistryInfo> __indicateKeys = new ArrayList<>();
 
-    View.OnClickListener _cancelButtonClick = view -> sendResultAndFinish(new BleError(-999,"USER_CANCEL"),true);
+    View.OnClickListener _cancelButtonClick = view -> sendResultAndFinish(new BleError(-999, "USER_CANCEL"), true);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +74,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                 .setOperateTimeout(5000)
                 .init(getApplication());
 
-        Log.v(LOG_TAG, "BLE manager is ready.");
+        XLog.v("BLE操作接口已完成初始化");
     }
 
     @Override
@@ -129,16 +129,17 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
             }
         }
     }
+
     @Override
     public void onDestroy() {
 
-        for(RegistryInfo keys : __notifyKeys){
+        for (RegistryInfo keys : __notifyKeys) {
             BleManager.getInstance().stopNotify(keys.device, keys.service, keys.characteristic);
         }
 
         __notifyKeys.clear();
 
-        for(RegistryInfo keys : __indicateKeys){
+        for (RegistryInfo keys : __indicateKeys) {
             BleManager.getInstance().stopIndicate(keys.device, keys.service, keys.characteristic);
         }
 
@@ -147,9 +148,9 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public static class RegistryInfo{
+    public static class RegistryInfo {
 
-        public RegistryInfo(BleDevice device, String service, String character){
+        public RegistryInfo(BleDevice device, String service, String character) {
             this.characteristic = character;
             this.device = device;
             this.service = service;
@@ -162,20 +163,20 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
     }
 
     private void sendResultAndFinish(BleError error) {
-        sendResultAndFinish(error,false);
+        sendResultAndFinish(error, false);
     }
 
-    private void sendResultAndFinish(BleError error,boolean isCancel) {
+    private void sendResultAndFinish(BleError error, boolean isCancel) {
 
-        sendResultAndFinish(isCancel?STATUS_CANCEL:STATUS_ERROR,"","",error.toString());
+        sendResultAndFinish(isCancel ? STATUS_CANCEL : STATUS_ERROR, "", "", error.toString());
     }
 
-    private void sendResultAndFinish( byte[] payload) {
-        sendResultAndFinish(STATUS_OK,Base64.getEncoder().encodeToString(payload),stringifyByteArray(payload),"");
+    private void sendResultAndFinish(byte[] payload) {
+        sendResultAndFinish(STATUS_OK, Base64.getEncoder().encodeToString(payload), stringifyByteArray(payload), "");
     }
 
     private void sendResultAndFinish(String payload) {
-        sendResultAndFinish(STATUS_OK,payload,payload,"");
+        sendResultAndFinish(STATUS_OK, payload, payload, "");
     }
 
     private void sendResultAndFinish(int status, String base64, String raw, String error) {
@@ -191,19 +192,19 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
         if (!BleManager.getInstance().isSupportBle()) {
 
-            Log.e(LOG_TAG, "BLE_NOT_SUPPORTED");
+            XLog.e("当前设备的蓝牙设备不可用：BLE_NOT_SUPPORTED");
             Toast.makeText(this, R.string.ui_message_ble_na, Toast.LENGTH_LONG).show();
             sendResultAndFinish(new BleError(-1, "BLE_NOT_SUPPORTED"));
 
         }
 
         if (!BleManager.getInstance().isBlueEnable()) {
-            Log.e(LOG_TAG, "BLE_DISABLED");
+            XLog.e("当前设备的蓝牙被禁用：BLE_DISABLED");
             Toast.makeText(this, R.string.ui_message_ble_na, Toast.LENGTH_LONG).show();
             sendResultAndFinish(new BleError(-1, "BLE_DISABLED"));
         }
 
-        Log.v(LOG_TAG, "Device feature is ok.");
+        XLog.v("设备的BLE功能可正常使用");
 
     }
 
@@ -220,7 +221,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
             if (servicesList.size() > 0) {
                 realServiceCharacterUuid[0] = servicesList.get(0).getUuid().toString();
 
-                Log.v(LOG_TAG, "Services detected: " + availableServices + ". Use default/first uuid_service: " + servicesList.get(0).getUuid());
+                XLog.v("当前设备的服务有: " + availableServices + "，选取第一个作为默认值：" + servicesList.get(0).getUuid());
             }
         } else if (uuid_service.length() == 4) // 处理短名如：180a （Device Information service）
         {
@@ -254,7 +255,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
             if (bluetoothGattCharacteristicList.size() > 0) {
                 realServiceCharacterUuid[1] = bluetoothGattCharacteristicList.get(0).getUuid().toString();
 
-                Log.v(LOG_TAG, "Characteristics detected for this service (" + realServiceCharacterUuid[0] + "): " + availableChars + ". Use default/first uuid_characteristic: " + bluetoothGattCharacteristicList.get(0).getUuid());
+                XLog.v("服务（" + realServiceCharacterUuid[0] + "）中的特性有: " + availableChars + "，选取第一个作为默认值：" + bluetoothGattCharacteristicList.get(0).getUuid());
             }
         } else if (uuid_characteristic.length() == 4) // 处理短名如：2a00 （Device Name）
         {
@@ -268,7 +269,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
         }
     }
 
-    private String stringifyByteArray(byte[] data){
+    private String stringifyByteArray(byte[] data) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -290,7 +291,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                 Permission.ACCESS_COARSE_LOCATION
         }, () -> {
 
-            Log.v(LOG_TAG, "Checking for device feature.");
+            XLog.v("检查蓝牙功能");
 
             // 检查设备是否可用
             checkBleErrors();
@@ -299,12 +300,12 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
             BleManager.getInstance().scan(new BleScanCallback() {
                 @Override
                 public void onScanStarted(boolean success) {
-                    Log.v(LOG_TAG, "Start scanning BLE devices");
+                    XLog.v("开始扫描蓝牙设备");
                 }
 
                 @Override
                 public void onScanning(BleDevice bleDevice) {
-                    Log.v(LOG_TAG, "BLE device was founded:" + bleDevice.getKey());
+                    XLog.v("扫描到设备：" + bleDevice.getKey());
                 }
 
                 @Override
@@ -321,7 +322,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         json = JSON.toJSONString(devices);
                     }
 
-                    Log.v(LOG_TAG, "Scan completed, BLE devices: " + json);
+                    XLog.v("扫描完毕，发现的蓝牙设备列表：" + json);
 
                     sendResultAndFinish(json);
                 }
@@ -340,7 +341,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         Permission.ACCESS_COARSE_LOCATION
                 }, () -> {
 
-                    Log.v(LOG_TAG, "Checking for device feature.");
+                    XLog.v("检查蓝牙功能");
 
                     // 检查设备是否可用
                     checkBleErrors();
@@ -348,20 +349,18 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                     BleManager.getInstance().connect(mac, new BleGattCallback() {
                         @Override
                         public void onStartConnect() {
-                            Log.v(LOG_TAG, "Start connecting to the device.");
+                            XLog.v("开始连接蓝牙设备：" + mac);
                         }
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            Log.e(LOG_TAG, "Connecting failed, device: " + bleDevice.getName() + "  detail: " + exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
 
                         @Override
                         public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-
-                            Log.v(LOG_TAG, "Connected the device, ready for reading: " + bleDevice.getName() + " ,status: " + status);
 
                             try {
                                 Thread.sleep(100);
@@ -371,7 +370,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                             fillDefaultServiceAndCharacters(gatt, realServiceCharacterUuid, uuid_service, uuid_characteristic);
 
-                            Log.v(LOG_TAG, "Start reading: " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1]);
+                            XLog.v("连接成功，开始读取。设备：" + bleDevice.getName() + "，服务：" + realServiceCharacterUuid[0] + "，特性：" + realServiceCharacterUuid[1]);
 
                             BleManager.getInstance().read(
                                     bleDevice,
@@ -381,20 +380,20 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                         @Override
                                         public void onReadSuccess(byte[] data) {
 
-                                            Log.v(LOG_TAG, "Data retrieved.");
+                                            XLog.v("读取到数据");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
+                                                XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
-                                                Log.v(LOG_TAG, "Reading completed, no data retrieved.");
+                                                XLog.v("没有接收到有效数据");
                                                 sendResultAndFinish("");
                                             }
                                         }
 
                                         @Override
                                         public void onReadFailure(BleException exception) {
-                                            Log.e(LOG_TAG, "Reading failed, detail: " + exception);
+                                            XLog.e("从蓝牙设备读取数据过程中出错，设备：" + bleDevice.getName(), exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
                                     });
@@ -402,7 +401,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                            Log.v(LOG_TAG, "Device disconnected: " + bleDevice.getName() + " ,status: " + status);
+                            XLog.v("设备（" + bleDevice.getName() + "）已断开连接，当前状态：" + status);
                         }
                     });
                 }
@@ -420,7 +419,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         Permission.ACCESS_COARSE_LOCATION
                 }, () -> {
 
-                    Log.v(LOG_TAG, "Checking for device feature.");
+                    XLog.v("检查蓝牙功能");
 
                     // 检查设备是否可用
                     checkBleErrors();
@@ -428,20 +427,18 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                     BleManager.getInstance().connect(mac, new BleGattCallback() {
                         @Override
                         public void onStartConnect() {
-                            Log.v(LOG_TAG, "Start connecting to the device.");
+                            XLog.v("开始连接蓝牙设备：" + mac);
                         }
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            Log.e(LOG_TAG, "Connecting failed, device: " + bleDevice.getName() + "  detail: " + exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
 
                         @Override
                         public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-
-                            Log.v(LOG_TAG, "Connected the device, ready for notify: " + bleDevice.getName() + " ,status: " + status);
 
                             try {
                                 Thread.sleep(100);
@@ -451,7 +448,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                             fillDefaultServiceAndCharacters(gatt, realServiceCharacterUuid, uuid_service, uuid_characteristic);
 
-                            Log.v(LOG_TAG, "Start registry notify: " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1]);
+                            XLog.v("连接成功，开始订阅Notify。设备：" + bleDevice.getName() + "，服务：" + realServiceCharacterUuid[0] + "，特性：" + realServiceCharacterUuid[1]);
 
                             BleManager.getInstance().notify(
                                     bleDevice,
@@ -461,20 +458,20 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                         @Override
                                         public void onCharacteristicChanged(byte[] data) {
 
-                                            Log.v(LOG_TAG, "Notify Data retrieved.");
+                                            XLog.v("接受到Notify数据");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
+                                                XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
-                                                Log.v(LOG_TAG, "Reading completed, no data retrieved.");
+                                                XLog.v("没有接收到有效数据");
                                                 sendResultAndFinish("");
                                             }
                                         }
 
                                         @Override
                                         public void onNotifyFailure(BleException exception) {
-                                            Log.e(LOG_TAG, "Notify failed, detail: " + exception);
+                                            XLog.e("通过蓝牙订阅Notify时出错，设备：" + bleDevice.getName(), exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
 
@@ -488,7 +485,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                            Log.v(LOG_TAG, "Device disconnected: " + bleDevice.getName() + " ,status: " + status);
+                            XLog.v("设备（" + bleDevice.getName() + "）已断开连接，当前状态：" + status);
                         }
                     });
                 }
@@ -506,7 +503,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         Permission.ACCESS_COARSE_LOCATION
                 }, () -> {
 
-                    Log.v(LOG_TAG, "Checking for device feature.");
+                    XLog.v("检查蓝牙功能");
 
                     // 检查设备是否可用
                     checkBleErrors();
@@ -514,20 +511,18 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                     BleManager.getInstance().connect(mac, new BleGattCallback() {
                         @Override
                         public void onStartConnect() {
-                            Log.v(LOG_TAG, "Start connecting to the device.");
+                            XLog.v("开始连接蓝牙设备：" + mac);
                         }
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            Log.e(LOG_TAG, "Connecting failed, device: " + bleDevice.getName() + "  detail: " + exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
 
                         @Override
                         public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-
-                            Log.v(LOG_TAG, "Connected the device, ready for indicate: " + bleDevice.getName() + " ,status: " + status);
 
                             try {
                                 Thread.sleep(100);
@@ -537,7 +532,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                             fillDefaultServiceAndCharacters(gatt, realServiceCharacterUuid, uuid_service, uuid_characteristic);
 
-                            Log.v(LOG_TAG, "Start registry notify: " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1]);
+                            XLog.v("连接成功，开始订阅Indicate。设备：" + bleDevice.getName() + "，服务：" + realServiceCharacterUuid[0] + "，特性：" + realServiceCharacterUuid[1]);
 
                             BleManager.getInstance().indicate(
                                     bleDevice,
@@ -547,20 +542,20 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                         @Override
                                         public void onCharacteristicChanged(byte[] data) {
 
-                                            Log.v(LOG_TAG, "Indicate Data retrieved.");
+                                            XLog.v("接受到Indicate数据");
 
                                             if (data != null) {
-                                                Log.v(LOG_TAG, "Reading completed, data: " + MiscUtilities.bytesToHex(data));
+                                                XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
                                                 sendResultAndFinish(data);
                                             } else {
-                                                Log.v(LOG_TAG, "Reading completed, no data retrieved.");
+                                                XLog.v("没有接收到有效数据");
                                                 sendResultAndFinish("");
                                             }
                                         }
 
                                         @Override
                                         public void onIndicateFailure(BleException exception) {
-                                            Log.e(LOG_TAG, "Indicate failed, detail: " + exception);
+                                            XLog.e("通过蓝牙订阅Indicate时出错，设备：" + bleDevice.getName(), exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
 
@@ -574,7 +569,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                            Log.v(LOG_TAG, "Device disconnected: " + bleDevice.getName() + " ,status: " + status);
+                            XLog.v("设备（" + bleDevice.getName() + "）已断开连接，当前状态：" + status);
                         }
                     });
                 }
@@ -588,7 +583,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
         realServiceCharacterUuid[1] = uuid_characteristic;
 
         // 解析写入蓝牙的负载
-        if(stringValue==null || stringValue.isEmpty()){
+        if (stringValue == null || stringValue.isEmpty()) {
             sendResultAndFinish(new BleError(-110, "PAYLOAD_IS_EMPTY"));
             return;
         }
@@ -598,10 +593,10 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
         // 解析时，优先判断十六进制，然后再处理base64.如果都不是则直接报错
         if (stringValue.toLowerCase().startsWith("0x")) {
             parsedData = MiscUtilities.hexToByteArray(stringValue);
-        }else{
+        } else {
             try {
                 parsedData = Base64.getDecoder().decode(stringValue);
-            }catch(IllegalArgumentException ex){
+            } catch (IllegalArgumentException ex) {
                 sendResultAndFinish(new BleError(-110, "PAYLOAD_IS_NOT_HEX_OR_BASE64"));
                 return;
             }
@@ -614,7 +609,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         Permission.ACCESS_COARSE_LOCATION
                 }, () -> {
 
-                    Log.v(LOG_TAG, "Checking for device feature.");
+                    XLog.v("检查蓝牙功能");
 
                     // 检查设备是否可用
                     checkBleErrors();
@@ -622,19 +617,17 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                     BleManager.getInstance().connect(mac, new BleGattCallback() {
                         @Override
                         public void onStartConnect() {
-                            Log.v(LOG_TAG, "Start connecting to the device.");
+                            XLog.v("开始连接蓝牙设备：" + mac);
                         }
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            Log.e(LOG_TAG, "Connecting failed, device: " + bleDevice.getName() + "  detail: " + exception);
+                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName(), exception);
                             sendResultAndFinish(BleError.from(exception));
                         }
 
                         @Override
                         public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-
-                            Log.v(LOG_TAG, "Connected the device, ready for writing: " + bleDevice.getName() + " ,status: " + status);
 
                             try {
                                 Thread.sleep(100);
@@ -644,7 +637,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                             fillDefaultServiceAndCharacters(gatt, realServiceCharacterUuid, uuid_service, uuid_characteristic);
 
-                            Log.v(LOG_TAG, "Start writing to " + bleDevice.getName() + ", service: " + realServiceCharacterUuid[0] + ", character: " + realServiceCharacterUuid[1] + ", payload: " + stringValue);
+                            XLog.v("连接成功，开始写入数据。设备：" + bleDevice.getName() + "，服务：" + realServiceCharacterUuid[0] + "，特性：" + realServiceCharacterUuid[1]);
 
                             BleManager.getInstance().write(
                                     bleDevice,
@@ -655,13 +648,13 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                                         @Override
                                         public void onWriteSuccess(int current, int total, byte[] justWrite) {
 
-                                            Log.v(LOG_TAG, "Writing completed, total: " + total);
+                                            XLog.v("数据写入完毕，总计：" + total);
                                             sendResultAndFinish("");
                                         }
 
                                         @Override
                                         public void onWriteFailure(BleException exception) {
-                                            Log.e(LOG_TAG, "Writing failed, detail: " + exception);
+                                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName(), exception);
 
                                             sendResultAndFinish(BleError.from(exception));
                                         }
@@ -670,7 +663,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                            Log.v(LOG_TAG, "Device disconnected: " + bleDevice.getName() + " ,status: " + status);
+                            XLog.v("设备（" + bleDevice.getName() + "）已断开连接，当前状态：" + status);
                         }
                     });
                 }

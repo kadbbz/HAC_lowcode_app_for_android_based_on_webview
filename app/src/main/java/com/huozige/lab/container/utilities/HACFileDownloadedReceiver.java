@@ -9,22 +9,20 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 
-import android.util.Log;
+import com.elvishew.xlog.XLog;
 
 import java.util.Map;
 
 public class HACFileDownloadedReceiver extends BroadcastReceiver {
-
-    static final String LOG_TAG = "HAC_HACFileDownloadedReceiver"; // 日志的标识
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
 
-            DownloadManager dm =  (android.app.DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
+            DownloadManager dm = (android.app.DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
 
-            for (Map.Entry<Long, HACDownloadTask> entry: HACDownloadManager.getTasks().entrySet()
+            for (Map.Entry<Long, HACDownloadTask> entry : HACDownloadManager.getTasks().entrySet()
             ) {
                 Cursor cursor = dm.query(new DownloadManager.Query().setFilterById(entry.getKey()));
 
@@ -38,18 +36,18 @@ public class HACFileDownloadedReceiver extends BroadcastReceiver {
 
                         if (statusColumn >= 0) {
                             int status = cursor.getInt(statusColumn);
-                            int reason =  cursor.getInt(reasonColumn);
+                            int reason = cursor.getInt(reasonColumn);
                             task.statusCode = status;
                             HACDownloadManager.getTasks().remove(task.taskId);
                             switch (status) {
                                 case DownloadManager.STATUS_FAILED:
-                                    Log.e(LOG_TAG, "文件下载失败："+ task.fileName+"，标识为"+task.taskId+"，原因是"+reason);
+                                    XLog.e("文件下载失败：" + task.fileName + "，标识为" + task.taskId + "，原因是" + reason);
                                     //下载失败
                                     task.handler.onError(task.fileName, task.url);
 
                                     break;
                                 case DownloadManager.STATUS_SUCCESSFUL:
-                                    Log.v(LOG_TAG, "文件下载成功：" + task.fileName +"，标识为"+task.taskId);
+                                    XLog.v("文件下载成功：" + task.fileName + "，标识为" + task.taskId);
                                     //下载成功
 
                                     Uri target = dm.getUriForDownloadedFile(task.taskId);
