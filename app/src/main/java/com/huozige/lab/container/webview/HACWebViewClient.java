@@ -140,7 +140,7 @@ public class HACWebViewClient extends WebViewClient {
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-        XLog.e("页面加载出错，Url：" + request.getUrl(), error);
+        XLog.e("页面加载出错，Url：" + request.getUrl() + "，错误码（WebResourceError）：" + error.getErrorCode() + "，详细信息：" + error.getDescription());
 
         // 对超时错误做特殊处理
         if (error.getErrorCode() == WebViewClient.ERROR_CONNECT || error.getErrorCode() == WebViewClient.ERROR_TIMEOUT || error.getErrorCode() == WebViewClient.ERROR_HOST_LOOKUP) {
