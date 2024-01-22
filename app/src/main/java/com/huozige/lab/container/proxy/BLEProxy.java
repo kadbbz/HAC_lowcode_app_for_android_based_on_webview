@@ -124,7 +124,7 @@ public class BLEProxy extends AbstractProxy {
                     getInterop().writeLogIntoConsole("Error occurred during data exchanging: " + error);
                 }
 
-                XLog.v("code -> " + code + " payload - > " + payload + " err -> " + error);
+                XLog.v("蓝牙操作的返回信息：code -> " + code + " payload - > " + payload + " err -> " + error);
 
                 if (cellError != null && !cellError.isEmpty()) {
                     getInterop().setInputValue(cellError, error);

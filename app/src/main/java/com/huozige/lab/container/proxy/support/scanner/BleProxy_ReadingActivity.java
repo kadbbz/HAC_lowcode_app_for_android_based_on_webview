@@ -315,10 +315,10 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                     String json = "[]";
 
                     // 处理返回值，这里为了更多应用场景，返回所有可以获得的设备信息
+                    // 这里避免权限问题，仅获取最基础的信息，包含name、mac、rssi、timestamp和key（name+mac）
                     if (scanResultList != null) {
-
                         // 过滤出有名称的，和系统设置页面保持一致
-                        BleDevice[] devices = scanResultList.stream().filter((d) -> d.getName() != null).toArray(BleDevice[]::new);
+                        BleDeviceInfo[] devices = scanResultList.stream().filter((d) -> d.getName() != null).map(BleDeviceInfo::create).toArray(BleDeviceInfo[]::new);
                         json = JSON.toJSONString(devices);
                     }
 
