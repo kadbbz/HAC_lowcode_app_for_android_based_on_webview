@@ -356,7 +356,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName()+" \r\n%s", exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
@@ -395,7 +395,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onReadFailure(BleException exception) {
-                                            XLog.e("从蓝牙设备读取数据过程中出错，设备：" + bleDevice.getName(), exception);
+                                            XLog.e("从蓝牙设备读取数据过程中出错，设备：" + bleDevice.getName() +" \r\n%s", exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
                                     });
@@ -434,7 +434,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName()+" \r\n%s", exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
@@ -473,7 +473,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onNotifyFailure(BleException exception) {
-                                            XLog.e("通过蓝牙订阅Notify时出错，设备：" + bleDevice.getName(), exception);
+                                            XLog.e("通过蓝牙订阅Notify时出错，设备：" + bleDevice.getName()+" \r\n%s", exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
 
@@ -518,7 +518,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName(), exception);
+                            XLog.e("蓝牙设备连接过程中出错，设备: " + bleDevice.getName()+" \r\n%s", exception);
 
                             sendResultAndFinish(BleError.from(exception));
                         }
@@ -557,7 +557,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onIndicateFailure(BleException exception) {
-                                            XLog.e("通过蓝牙订阅Indicate时出错，设备：" + bleDevice.getName(), exception);
+                                            XLog.e("通过蓝牙订阅Indicate时出错，设备：" + bleDevice.getName()+" \r\n%s", exception);
                                             sendResultAndFinish(BleError.from(exception));
                                         }
 
@@ -624,7 +624,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                         @Override
                         public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName(), exception);
+                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName()+" \r\n%s", exception);
                             sendResultAndFinish(BleError.from(exception));
                         }
 
@@ -656,7 +656,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onWriteFailure(BleException exception) {
-                                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName(), exception);
+                                            XLog.e("通过蓝牙发送数据时出错，设备：" + bleDevice.getName()+" \r\n%s", exception);
 
                                             sendResultAndFinish(BleError.from(exception));
                                         }

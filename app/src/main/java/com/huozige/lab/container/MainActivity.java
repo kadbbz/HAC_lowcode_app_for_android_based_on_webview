@@ -110,7 +110,7 @@ public class MainActivity extends BaseActivity {
             _webView.refreshWebView();
         }catch (Exception ex){
 
-            XLog.e("WebView组件初始化失败",ex);
+            XLog.e("WebView组件初始化失败。\r\n%s",ex);
 
             String message = "应用初始化失败，这通常是操作系统和运行环境不兼容导致的，请按照下方提示操作。如果遇到困难，可拍摄本界面或截屏后，与技术支持人员联系。";
             message+="\r\n\n";

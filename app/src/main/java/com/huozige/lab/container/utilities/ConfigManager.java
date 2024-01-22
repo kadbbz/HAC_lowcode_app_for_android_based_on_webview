@@ -153,7 +153,7 @@ public class ConfigManager {
             }
 
         } catch (Exception ex) {
-            XLog.e("存储配置信息时出错", ex);
+            XLog.e("存储配置信息时出错。 \r\n%s", ex);
             return false;
         }
     }
