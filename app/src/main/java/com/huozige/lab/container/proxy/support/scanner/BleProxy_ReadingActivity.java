@@ -311,6 +311,8 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                 @Override
                 public void onScanFinished(List<BleDevice> scanResultList) {
 
+                    XLog.v("扫描完毕，开始整理数据");
+
                     // 默认返回空的数组
                     String json = "[]";
 
@@ -322,7 +324,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
                         json = JSON.toJSONString(devices);
                     }
 
-                    XLog.v("扫描完毕，发现的蓝牙设备列表：" + json);
+                    XLog.v("即将返回有名称的蓝牙设备列表：" + json);
 
                     sendResultAndFinish(json);
                 }
