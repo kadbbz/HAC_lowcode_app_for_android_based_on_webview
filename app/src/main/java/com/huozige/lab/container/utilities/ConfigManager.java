@@ -39,6 +39,17 @@ public class ConfigManager {
 
     static ConfigManager __instance;
 
+    SharedPreferences _sharedPref;
+
+    private SharedPreferences getPref(){
+        if(_sharedPref==null){
+            _sharedPref = _context.getSharedPreferences(
+                    PREFERENCE_NAME, Activity.MODE_PRIVATE);
+        }
+
+        return  _sharedPref;
+    }
+
     public static void init(Application app) {
         if (null == __instance) {
             __instance = new ConfigManager(app);
@@ -58,28 +69,26 @@ public class ConfigManager {
         _context = context;
     }
 
+    public  boolean isAppReady(){
+      return  this.getEntry().length() > 0;
+    }
+
     // =========== 回写 ===========
 
     public void upsertBooleanEntry(String key, String propertyValue) {
 
         boolean value = parseBooleanFromString(propertyValue);
 
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
         // 保存到配置库
-        sharedPref.edit().putBoolean(key, value).apply();
+        getPref().edit().putBoolean(key, value).apply();
 
         XLog.v("更新应用配置，键：" + key + "，值（boolean）：" + propertyValue);
     }
 
     public void upsertStringEntry(String key, String propertyValue) {
 
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
         // 保存到配置库
-        sharedPref.edit().putString(key, propertyValue).apply();
+        getPref().edit().putString(key, propertyValue).apply();
 
         XLog.v("更新应用配置，键：" + key + "，值：" + propertyValue);
     }
@@ -96,11 +105,8 @@ public class ConfigManager {
             }
         }
 
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
         // 保存到配置库
-        sharedPref.edit().putInt(key, value).apply();
+        getPref().edit().putInt(key, value).apply();
 
         XLog.v("更新应用配置，键：" + key + "，值（hex）：" + propertyValue);
 
@@ -173,68 +179,51 @@ public class ConfigManager {
     }
 
     public Boolean getHA() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
-
         // 从数据库中加载，默认为软件加速
-        return sharedPref.getBoolean(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, false);
+        return getPref().getBoolean(PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, false);
     }
 
     public int getTCD() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+
 
         int defaultColor = parseHexIntegerFromString(_context.getString(R.string.app_customize_action_bar_color));
 
         // 从数据库中加载，默认为配置的主题色
-        return sharedPref.getInt(PREFERENCE_KEY_ACTION_BAR_COLOR, defaultColor);
+        return getPref().getInt(PREFERENCE_KEY_ACTION_BAR_COLOR, defaultColor);
     }
 
     public Boolean getSettingMenuVisible() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
         // 配置文件中的默认值
         boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_setting_menu));
 
         // 从数据库中加载
-        return sharedPref.getBoolean(PREFERENCE_KEY_SHOW_SETTING_MENU, defaultVisible);
+        return getPref().getBoolean(PREFERENCE_KEY_SHOW_SETTING_MENU, defaultVisible);
     }
 
     public Boolean getActionBarVisible() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
         // 配置文件中的默认值
         boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_action_bar));
 
         // 从数据库中加载
-        return sharedPref.getBoolean(PREFERENCE_KEY_SHOW_ACTION_BAR, defaultVisible);
+        return getPref().getBoolean(PREFERENCE_KEY_SHOW_ACTION_BAR, defaultVisible);
     }
 
     public Boolean getBypassCompatibleCheck() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
 
         // 配置文件中的默认值
         boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_bypass_compatible_check));
 
         // 从数据库中加载
-        return sharedPref.getBoolean(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, defaultVisible);
+        return getPref().getBoolean(PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, defaultVisible);
     }
 
     public Boolean getShouldLogAllEntry() {
-        // 打开配置库
-        SharedPreferences sharedPref = _context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+
 
         // 从数据库中加载
-        return sharedPref.getBoolean(PREFERENCE_KEY_LOG_ALL_ENTRIES, false);
+        return getPref().getBoolean(PREFERENCE_KEY_LOG_ALL_ENTRIES, false);
     }
 
     public String getAboutUrl() {
@@ -256,12 +245,9 @@ public class ConfigManager {
     /**
      * 读取配置
      */
-    private static String getStringValue(Context context, String key, int defaultValueStringId) {
-        // 从配置库中读取启动地址
-        SharedPreferences sharedPref = context.getSharedPreferences(
-                PREFERENCE_NAME, Activity.MODE_PRIVATE);
+    private String getStringValue(Context context, String key, int defaultValueStringId) {
 
-        return sharedPref.getString(key, context.getString(defaultValueStringId));
+        return getPref().getString(key, context.getString(defaultValueStringId));
     }
 
     // =========== 格式转换 ===========
