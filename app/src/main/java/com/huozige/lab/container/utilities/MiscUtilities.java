@@ -156,7 +156,7 @@ public class MiscUtilities {
             PackageInfo pinfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_CONFIGURATIONS);
             versionName = pinfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            XLog.e("获取应用版本信息出错", e);
+            XLog.e("获取应用版本信息出错。 \r\n%s", e);
         }
 
         return versionName;

@@ -73,15 +73,7 @@ public abstract class AbstractProxy {
         return interop;
     }
 
-    public ConfigManager getConfigManager() throws IllegalStateException {
-
-        if (null == configManager) {
-            throw new IllegalStateException ("ConfigManager has not be initialized.");
-        }
-        return configManager;
-    }
-
-    public void setConfigManager(ConfigManager configManager) {
-        this.configManager = configManager;
+    public ConfigManager getConfigManager() {
+        return ConfigManager.getInstance();
     }
 }

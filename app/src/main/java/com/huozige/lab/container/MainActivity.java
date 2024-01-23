@@ -10,8 +10,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
@@ -23,7 +21,6 @@ import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
@@ -35,6 +32,9 @@ import com.huozige.lab.container.webview.HACWebViewClient;
  * 也需要作为其他功能的默认上下文
  */
 public class MainActivity extends BaseActivity {
+
+    public static final String INTENT_NAVIGATE_TO = "com.huozige.lab.container.navigate";
+    public static final String EXTRA_URL = "url";
 
     // 构造Web平台相关的策略，用于组合
     AbstractWebInterop _webInterop = new HZGWebInterop();
@@ -48,8 +48,6 @@ public class MainActivity extends BaseActivity {
 
     HACDownloadListener _downloadListener; // 下载分流处理器
 
-    ActivityResultLauncher<Intent> _arc4QuickConfig; // 用来弹出配置页面。
-
     static final int MENU_ID_HOME = 0;
     static final int MENU_ID_REFRESH = 1;
     static final int MENU_ID_SETTINGS = 2;
@@ -62,66 +60,73 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
 
         // 0. 申请权限
-        PermissionsUtility.asyncRequirePermissions(this,new String[]{
+        PermissionsUtility.asyncRequirePermissions(this, new String[]{
                 Permission.WRITE_EXTERNAL_STORAGE
-        },()->XLog.v("日志记录的权限申请成功。"));
+        }, () -> XLog.v("日志记录的权限申请成功。"));
 
         // 1. 设置页面标题
         setTitle(getString(R.string.app_name));
 
-        // 2. 创建浏览器
-        try{
+        // 2. 检查是否已经完成配置
+        if (!ConfigManager.getInstance().isAppReady()) {
+            XLog.v("APP尚未完成配置，即将跳转到初始化界面");
+            // 跳转到设置页面
+            startActivity(new Intent(this, QuickConfigActivity.class));
+        } else {
 
-            _webView = new HACWebView(this);
+            try {
+                // 3. 创建浏览器并执行初始化
+                _webView = new HACWebView(this);
 
-            // 4. 创建并注册WebViewClient，处理页面事件
-            _webViewClient = new HACWebViewClient(this);
-            _webViewClient.setStaticFilesCacheFilter(_cacheFilter);
-            _webView.setWebViewClient(_webViewClient);
+                // 4. 创建并注册WebViewClient，处理页面事件
+                _webViewClient = new HACWebViewClient(this);
+                _webViewClient.setStaticFilesCacheFilter(_cacheFilter);
+                _webView.setWebViewClient(_webViewClient);
 
-            // 5. 创建并注册WebChromeClient，处理浏览器事件
-            _webChromeClient = new HACWebChromeClient(this);
-            _webView.setWebChromeClient(_webChromeClient);
+                // 5. 创建并注册WebChromeClient，处理浏览器事件
+                _webChromeClient = new HACWebChromeClient(this);
+                _webView.setWebChromeClient(_webChromeClient);
 
-            // 6. 注册下载分流处理器
-            _downloadListener = new HACDownloadListener(_webView);
-            _webView.setDownloadListener(_downloadListener);
+                // 6. 注册下载分流处理器
+                _downloadListener = new HACDownloadListener(_webView);
+                _webView.setDownloadListener(_downloadListener);
 
-            // 7. 将准备就绪的浏览器加载到页面
-            setContentView(_webView);
+                // 7. 将准备就绪的浏览器加载到页面
+                setContentView(_webView);
 
-            // 8. 使用WebView初始化WebInterop，处理和HTML的交互
-            _webInterop.setWebView(_webView);
+                // 8. 使用WebView初始化WebInterop，处理和HTML的交互
+                _webInterop.setWebView(_webView);
 
-            // 9. 创建和初始化JS代理
-            for (AbstractProxy br : ProxyRegister.getInstance().getAllProxies()
-            ) {
-                br.setConfigManager(ConfigManager.getInstance()); // 配置接口
-                br.setInterop(_webInterop); // WebInterop
-                _webView.addJavascriptInterface(br,br.getName()); // 注册到浏览器
-                br.onActivityCreated(MainActivity.this); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+                // 9. 创建和初始化JS代理
+                for (AbstractProxy br : ProxyRegister.getInstance().getAllProxies()
+                ) {
+                    br.setInterop(_webInterop); // WebInterop
+                    _webView.addJavascriptInterface(br, br.getName()); // 注册到浏览器
+                    br.onActivityCreated(MainActivity.this); // 初始化以当前Activity为上下文的启动器，这一操作仅允许在当前阶段调用，否则会出错
+                }
+
+                // 10. 初始化ChromeClient的启动器
+                _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
+
+                XLog.v("WebView初始化完成");
+
+                // 11. 加载页面
+                _webView.navigateToDefaultPage();
+            } catch (Exception ex) {
+
+                // 统一处理各种异常
+                XLog.e("WebView组件初始化失败。\r\n%s", ex);
+
+                String message = "应用初始化失败，这通常是操作系统和运行环境不兼容导致的，请按照下方提示操作。如果遇到困难，可拍摄本界面或截屏后，与技术支持人员联系。";
+                message += "\r\n\n";
+                message += ex.getMessage();
+
+                Intent intent = new Intent(this, ShowErrorActivity.class);
+                intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);
+
+                this.startActivity(intent);
             }
-
-            // 10. 初始化启动器
-            _webChromeClient.registryLaunchersOnCreated(); // ChromeClient的初始化
-            _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
-
-            // 11. 加载页面
-            _webView.refreshWebView();
-        }catch (Exception ex){
-
-            XLog.e("WebView组件初始化失败",ex);
-
-            String message = "应用初始化失败，这通常是操作系统和运行环境不兼容导致的，请按照下方提示操作。如果遇到困难，可拍摄本界面或截屏后，与技术支持人员联系。";
-            message+="\r\n\n";
-            message+=ex.getMessage();
-
-            Intent intent = new Intent(this, ShowErrorActivity.class);
-            intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);
-
-            this.startActivity(intent);
         }
-
 
     }
 
@@ -132,7 +137,7 @@ public class MainActivity extends BaseActivity {
     public void onDestroy() {
 
         // 销毁浏览器
-        if(_webView!=null){
+        if (_webView != null) {
             _webView.removeAllViews();
             _webView.destroy();
         }
@@ -147,33 +152,24 @@ public class MainActivity extends BaseActivity {
     public void onResume() {
         super.onResume();
 
-        // 如果没有设置入口，视同”未配置“
-        if (ConfigManager.getInstance().getEntry().length() == 0) {
-            // 跳转到设置页面
-            _arc4QuickConfig.launch(new Intent(this, QuickConfigActivity.class)); // 弹出设置页面
-        }else{
+        // 判断是否需要自动跳转到特定页面
+        Intent intent = getIntent();
 
-            // 判断是否需要自动跳转到特定页面
-            Intent intent = getIntent();
+        // Action：com.huozige.lab.container.navigate
+        // Extra：url
+        if (intent != null && intent.getAction() != null && intent.getAction().equalsIgnoreCase(INTENT_NAVIGATE_TO)) {
+            String url = intent.getStringExtra(EXTRA_URL);
 
-            // Action：com.huozige.lab.container.navigate
-            // Extra：url
-            if(intent!=null && intent.getAction()!=null && intent.getAction().equalsIgnoreCase("com.huozige.lab.container.navigate")){
-                String url = intent.getStringExtra("url");
+            if (url != null) {
+                Uri u = Uri.parse(url);
 
-                if(url!=null){
-                    Uri u = Uri.parse(url);
+                if (u != null) {
 
-                    if(u!=null){
-
-                        XLog.v("收到带跳转的Intent请求，URL："+url);
-                        this._webView.loadUrl(url);
-                    }
+                    XLog.v("收到带跳转的Intent请求，URL：" + url);
+                    this._webView.loadUrl(url);
                 }
             }
-
         }
-
 
     }
 
@@ -199,13 +195,14 @@ public class MainActivity extends BaseActivity {
 
     /**
      * 处理配置变更的事件，这里仅做日志记录
+     *
      * @param newConfig The new device configuration.
      */
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        XLog.v("HAC_BaseActivity","Config changed: "+ newConfig);
+        XLog.v("HAC_BaseActivity", "Config changed: " + newConfig);
 
     }
 
@@ -249,14 +246,14 @@ public class MainActivity extends BaseActivity {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
                 XLog.v("点击菜单【首页】");
-                _webView.refreshWebView(); // 页面初始化
+                _webView.navigateToDefaultPage(); // 页面初始化
                 break;
             case MENU_ID_REFRESH:
                 XLog.v("点击菜单【刷新】");
                 _webView.reload(); // 仅刷新
                 break;
             case MENU_ID_SETTINGS:
-                _arc4QuickConfig.launch(new Intent(this, SettingActivity.class)); // 弹出设置页面
+                startActivity(new Intent(this, SettingActivity.class));
                 break;
             case MENU_ID_HELP:
                 XLog.v("点击菜单【帮助】");

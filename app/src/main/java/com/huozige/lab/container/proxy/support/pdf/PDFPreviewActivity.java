@@ -89,7 +89,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            XLog.e("渲染PDF文件时出错，文件: " + pdfFile, ex);
+            XLog.e("渲染PDF文件时出错，文件: " + pdfFile+" \r\n%s", ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }

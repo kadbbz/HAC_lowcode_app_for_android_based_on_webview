@@ -61,7 +61,7 @@ public class HACWebViewClient extends WebViewClient {
             XLog.v("hac_inject_before_loaded.js文件读取完毕，长度为" + _hacJsContent.length());
 
         } catch (IOException e) {
-            XLog.e("读取本地资源hac_inject_before_loaded.js时出错", e);
+            XLog.e("读取本地资源hac_inject_before_loaded.js时出错。\r\n%s", e);
         }
     }
 
@@ -219,7 +219,7 @@ public class HACWebViewClient extends WebViewClient {
                 } catch (IOException e) {
 
                     // 仅记录日志
-                    XLog.e("读取本地缓存文件资源是出错，Url：" + request.getUrl().toString(), e);
+                    XLog.e("读取本地缓存文件资源是出错，Url：" + request.getUrl().toString() + " \r\n%s", e);
                 }
             }
         }

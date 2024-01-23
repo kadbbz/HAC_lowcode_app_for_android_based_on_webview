@@ -2,9 +2,6 @@ package com.huozige.lab.container;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import com.elvishew.xlog.XLog;
-
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -14,8 +11,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
@@ -25,11 +24,12 @@ import com.king.zxing.CaptureActivity;
  */
 public class QuickConfigActivity extends BaseActivity {
 
-
     ActivityResultLauncher<Intent> _arc4TCA; // 用来弹出配置页面。
 
     // 创建到ZXingLite的调用器
     ActivityResultLauncher<Intent> _arcZxingLite = this.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+
+        XLog.v("扫描到配置码");
 
         // 按照ZXingLite文档获取和解析扫码结果数据，如果出错或者取消，默认为空字符串，同官方APP
         Intent data = result.getData();
@@ -37,7 +37,7 @@ public class QuickConfigActivity extends BaseActivity {
         if (null != data) {
             String json = CameraScan.parseScanResult(data);
 
-            XLog.v("Load config from QRCode : " + json);
+            XLog.v("配置码的内容: " + json);
 
             AlertDialog.Builder ab = new AlertDialog.Builder(QuickConfigActivity.this);
             ab.setPositiveButton(QuickConfigActivity.this.getString(R.string.ui_button_ok), (dialogInterface, i) -> {
@@ -47,16 +47,16 @@ public class QuickConfigActivity extends BaseActivity {
 
                 if (isOk) {
 
-                    XLog.v("QRCode config applied.");
+                    XLog.v("配置码格式正确，已完成初始化");
 
                     // 提示正确的信息
                     Toast.makeText(QuickConfigActivity.this, getString(R.string.ui_message_quick_config_done), Toast.LENGTH_LONG).show();
 
                     // 重启生效
-                    restart();
+                    LifecycleUtility.restart(QuickConfigActivity.this);
                 } else {
 
-                    XLog.v("QRCode config is broken.");
+                    XLog.e("配置码不正确或版本过旧，内容为：" + json);
 
                     // 仅提示错误信息
                     Toast.makeText(QuickConfigActivity.this, getString(R.string.ui_message_quick_config_broken), Toast.LENGTH_LONG).show();
@@ -69,6 +69,8 @@ public class QuickConfigActivity extends BaseActivity {
             ab.setMessage(R.string.ui_message_quick_config_confirm);
             ab.setTitle(R.string.ui_menu_settings);
             ab.show();
+        }else{
+            XLog.e("配置码格式不正确，无法读取有效内容");
         }
 
     });
@@ -88,7 +90,9 @@ public class QuickConfigActivity extends BaseActivity {
         TextView lblHelp = findViewById(R.id.textTCHelp);
         lblHelp.setOnClickListener(gotoTextConfig);
 
-        _arc4TCA = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> restart()); // 打开设置页面，返回后刷新浏览器
+        _arc4TCA = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(QuickConfigActivity.this)); // 打开设置页面，返回后刷新浏览器
+
+        XLog.v("快速配置界面准备就绪");
     }
 
     View.OnClickListener gotoTextConfig = view -> _arc4TCA.launch(new Intent(this, TextConfigActivity.class));
@@ -105,11 +109,4 @@ public class QuickConfigActivity extends BaseActivity {
         });
     };
 
-    void restart() {
-        Intent intentR = getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-        if (intentR != null) {
-            intentR.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intentR);
-        }
-    }
 }
