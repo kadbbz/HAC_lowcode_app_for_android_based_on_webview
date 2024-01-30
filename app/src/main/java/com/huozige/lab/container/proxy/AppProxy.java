@@ -20,7 +20,7 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * 让页面能对APP壳子进行操作
- * 1.1.0
+ * 1.0.0
  * app.getVersion(cell)：获取版本号
  * app.getPackageName(cell)：获取入口的包名
  * app.getActionBarColor(cell)：获取标题栏颜色
@@ -42,6 +42,9 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  * app.toggleHardwareAccelerate(shouldEnable)：是否启用硬件加速，重启APP后生效
  * app.toggleBypassCompatibleCheck(shouldBypass)：是否跳过WebView版本检查，重启APP后生效
  * app.toggleLogAllEntries(shouldLog)：是否记录全部诊断日志，重启APP后生效
+ * 1.15.0
+ * app.toggleOfflineMode(shouldOffline)：启用或关闭离线模式
+ * app.showToast(text)：提示消息
  */
 public class AppProxy extends AbstractProxy {
 
@@ -144,6 +147,9 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_SETTING_MENU, shouldShow);
 
+        XLog.v("切换设置菜单的显示策略为：" + shouldShow);
+        getInterop().writeLogIntoConsole("切换设置菜单的显示策略为：" + shouldShow);
+
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
     }
@@ -157,32 +163,59 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_ACTION_BAR, shouldShow);
 
+        XLog.v("切换标题栏的显示策略为：" + shouldShow);
+        getInterop().writeLogIntoConsole("切换标题栏的显示策略为：" + shouldShow);
+
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
+    /**
+     * 启用或关闭硬件加速
+     *
+     * @param shouldEnable 硬件加速
+     */
     @JavascriptInterface
     public void toggleHardwareAccelerate(String shouldEnable) {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, shouldEnable);
 
+        XLog.v("切换硬件加速的策略为：" + shouldEnable);
+        getInterop().writeLogIntoConsole("切换硬件加速的策略为：" + shouldEnable);
+
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
+    /**
+     * 启用或关闭WebView兼容性检查
+     *
+     * @param shouldBypass 跳过检查
+     */
     @JavascriptInterface
     public void toggleBypassCompatibleCheck(String shouldBypass) {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, shouldBypass);
 
+        XLog.v("切换“跳过兼容性检测”的策略为：" + shouldBypass);
+        getInterop().writeLogIntoConsole("切换“跳过兼容性检测”的策略为：" + shouldBypass);
+
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
     }
 
+    /**
+     * 设置是否记录诊断日志
+     *
+     * @param shouldLog 记录全部日志
+     */
     @JavascriptInterface
     public void toggleLogAllEntries(String shouldLog) {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, shouldLog);
+
+        XLog.v("切换诊断日志的记录策略为：" + shouldLog);
+        getInterop().writeLogIntoConsole("切换诊断日志的记录策略为：" + shouldLog);
 
         // 重启生效
         LifecycleUtility.restart(getInterop().getActivityContext());
@@ -273,5 +306,26 @@ public class AppProxy extends AbstractProxy {
     public void getVersion(String cell) {
         String finalVersionName = MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
         getInterop().setInputValue(cell, finalVersionName);
+    }
+
+    /**
+     * 设置离线模式
+     *
+     * @param shouldOffline 是否为离线模式
+     */
+    @JavascriptInterface
+    public void toggleOfflineMode(boolean shouldOffline) {
+        getInterop().setOfflineMode(shouldOffline);
+        getInterop().writeLogIntoConsole("离线模式已切换为：" + shouldOffline);
+    }
+
+    /**
+     * 以Toast形式提示消息
+     *
+     * @param text 文本
+     */
+    @JavascriptInterface
+    public void showToast(String text) {
+        getInterop().showToast(text);
     }
 }

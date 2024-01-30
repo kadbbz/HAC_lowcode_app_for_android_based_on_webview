@@ -1,12 +1,12 @@
 package com.huozige.lab.container.platform;
 
-import com.elvishew.xlog.XLog;
-
-import android.webkit.WebView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.PermissionsUtility;
+import com.huozige.lab.container.webview.HACWebView;
 
 /**
  * 与HTML元素直接交互的操作接口
@@ -14,7 +14,7 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
 public abstract class AbstractWebInterop {
 
 
-    protected WebView webView; // 浏览器内核
+    protected HACWebView webView; // 浏览器内核
 
     /**
      * 设置某个输入类HTML元素的值
@@ -51,6 +51,16 @@ public abstract class AbstractWebInterop {
         getActivityContext().runOnUiThread(() -> webView.evaluateJavascript(jsSegment, (result) -> XLog.v("在浏览器执行脚本完成：" + jsSegment + " >> " + result)));
 
         XLog.v("开始在浏览器中执行脚本：" + jsSegment);
+    }
+
+    /**
+     * 弹出Toast消息
+     *
+     * @param text 消息
+     */
+    public void showToast(String text) {
+        getActivityContext().runOnUiThread(() -> Toast.makeText(getActivityContext(), text, Toast.LENGTH_LONG).show());
+        XLog.v("以Toast形式弹出消息：" + text);
     }
 
     /**
@@ -171,7 +181,7 @@ public abstract class AbstractWebInterop {
      *
      * @param webView 浏览器实例
      */
-    public void setWebView(WebView webView) {
+    public void setWebView(HACWebView webView) {
         this.webView = webView;
     }
 
@@ -180,7 +190,26 @@ public abstract class AbstractWebInterop {
      *
      * @return 浏览器实例
      */
-    public WebView getWebView() {
+    public HACWebView getWebView() {
         return this.webView;
+    }
+
+    private static boolean _isOfflineMode;
+
+    /**
+     * 设置离线模式
+     * @param mode 是否为离线模式
+     */
+    public void setOfflineMode(boolean mode) {
+        _isOfflineMode = mode;
+        XLog.v("切换离线模式为：" + mode);
+    }
+
+    /**
+     * 获取当前是否为离线模式
+     * @return 是否为离线模式
+     */
+    public boolean isOfflineMode() {
+        return _isOfflineMode;
     }
 }

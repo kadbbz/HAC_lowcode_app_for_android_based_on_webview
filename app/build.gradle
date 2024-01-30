@@ -11,7 +11,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.14.3-release'
+        versionName '1.15.0-beta1'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
@@ -59,4 +59,6 @@ dependencies {
     implementation 'cn.jiguang.sdk:jpush:5.2.0' // 极光推送
     implementation 'com.github.Jasonchenlijian:FastBle:2.4.0' // BLE设备
     implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
+    implementation 'com.otaliastudios:cameraview:2.7.2' // 拍照与图像预处理
+    implementation 'com.huangyz0918:androidwm-light:0.1.2' // 图片水印
 }

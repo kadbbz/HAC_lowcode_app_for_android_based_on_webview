@@ -55,6 +55,10 @@ public class ProxyRegister {
 
         this._proxies.add(new BLEProxy()); // BLE设备
 
+        this._proxies.add(new CameraProxy()); // 摄像头
+
+        this._proxies.add(new FileProxy()); // 文件操作
+
         __instance = this;
     }
 }
