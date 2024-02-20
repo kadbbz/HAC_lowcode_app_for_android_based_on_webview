@@ -5,16 +5,30 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.webkit.URLUtil;
 import android.webkit.WebView;
 
+import androidx.core.content.FileProvider;
+
 import com.elvishew.xlog.XLog;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Timer;
+import java.util.TimerTask;
 
-
+/**
+ * 帮助类，提供一些杂项功能
+ */
 public class MiscUtilities {
 
 
@@ -52,7 +66,7 @@ public class MiscUtilities {
 
         // 活字格的附件名存放在download的file参数中，如https://hac.app.hzgcloud.cn/demo/FileDownloadUpload/Download?file=47916819-f90e-47f8-8079-72df4fce78ac_AppLevelSecurityProvider.zip
         if (url.toLowerCase().contains("/filedownloadupload/download?")) {
-            String hzgFileName = MiscUtilities.getUrlparameter(url, "file");
+            String hzgFileName = MiscUtilities.getUrlParameter(url, "file");
             if (hzgFileName != null && hzgFileName.split("_").length > 1) {
                 fileName = hzgFileName.replace(hzgFileName.split("_")[0] + "_", "");
                 mimeType = URLConnection.guessContentTypeFromName(fileName);
@@ -65,7 +79,14 @@ public class MiscUtilities {
         return result;
     }
 
-    public static String getUrlparameter(String urlString, String paraName) {
+    /**
+     * 从URL中读取特定的参数的值
+     *
+     * @param urlString URL
+     * @param paraName  参数名称
+     * @return 参数的值
+     */
+    public static String getUrlParameter(String urlString, String paraName) {
         URL url;
         try {
             url = new URL(urlString);
@@ -149,6 +170,12 @@ public class MiscUtilities {
         return sb.toString();
     }
 
+    /**
+     * 读取当前APP的版本号
+     *
+     * @param context 执行读取的上下文
+     * @return 版本号
+     */
     public static String getPackageVersionName(Context context) {
         String versionName = "";
 
@@ -162,7 +189,12 @@ public class MiscUtilities {
         return versionName;
     }
 
-
+    /**
+     * 读取设备标识SSAID
+     *
+     * @param context 执行读取的上下文
+     * @return SSAID
+     */
     public static String getSSAID(Activity context) {
 
         @SuppressLint("HardwareIds") String id = Settings.Secure.getString(context.getContentResolver(),
@@ -188,6 +220,11 @@ public class MiscUtilities {
 
     }
 
+    /**
+     * 获取WebView的版本号
+     *
+     * @return 完整的版本号
+     */
     public static String getWebViewVersionName() {
         PackageInfo pinfo = WebView.getCurrentWebViewPackage();
 
@@ -195,6 +232,110 @@ public class MiscUtilities {
             return "";
         } else {
             return pinfo.versionName;
+        }
+
+    }
+
+    /**
+     * 读取文件内容到Byte[]
+     *
+     * @param context 执行读取的上下文
+     * @param uri     目标文件
+     * @return 文件的内容（Byte[]格式）
+     * @throws Exception 异常
+     */
+    public static byte[] readFileToByteArray(Context context, Uri uri) throws Exception {
+        InputStream input = context.getContentResolver().openInputStream(uri);
+
+        if (input == null) {
+            throw new FileNotFoundException(uri.toString());
+        }
+
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int n;
+        while (-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+        }
+        input.close();
+
+        return output.toByteArray();
+    }
+
+    /**
+     * 将文件路径封装为对读取更友好的Uri格式
+     *
+     * @param context  执行封装的上下文
+     * @param filePath 文件路径
+     * @return 文件路径（Uri格式）
+     */
+    public static Uri toUri(Context context, String filePath) {
+
+        return FileProvider.getUriForFile(context, context.getApplicationInfo().packageName, new File(filePath));
+
+    }
+
+    private static Uri __latestFile;
+
+    /**
+     * 获取上次操作的文件
+     *
+     * @return 文件
+     */
+    public static Uri getLatestFile() {
+        return __latestFile;
+    }
+
+    /**
+     * 注册为“上次操作的文件”
+     *
+     * @param uri 文件
+     */
+    public static void registryLatestFile(Uri uri) {
+        __latestFile = uri;
+    }
+
+    /**
+     * 震动
+     *
+     * @param context           上下文
+     * @param durationInSeconds 持续时间（秒）
+     */
+    public static void vibrate(Context context, long durationInSeconds) {
+        Vibrator op = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+        if (op != null) {
+            op.vibrate(VibrationEffect.createOneShot(1000 * durationInSeconds, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+    }
+
+    public static int RINGTONE_TYPE_NOTIFICATION = RingtoneManager.TYPE_NOTIFICATION;
+    public static int RINGTONE_TYPE_RINGTONE = RingtoneManager.TYPE_RINGTONE;
+    public static int RINGTONE_TYPE_ALARM = RingtoneManager.TYPE_ALARM;
+
+    /**
+     * 播放铃声
+     *
+     * @param context      上下文
+     * @param ringtoneType 铃声的类型，支持RINGTONE_TYPE_NOTIFICATION、RINGTONE_TYPE_RINGTONE和RINGTONE_TYPE_ALARM
+     */
+    public static void playRingtone(Context context, int ringtoneType) {
+        Uri ringtoneUri = RingtoneManager.getDefaultUri(ringtoneType);
+        var op = RingtoneManager.getRingtone(context, ringtoneUri);
+
+        if(op!=null){
+            op.play();
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (op.isPlaying()) {
+                        op.stop();
+                        XLog.v("铃声播放时间超过5秒，已自动停止。");
+                    }
+                }
+            }, 5 * 1000);
+        }else{
+            XLog.e("无法找到需要播放的铃声："+ringtoneUri);
         }
 
     }

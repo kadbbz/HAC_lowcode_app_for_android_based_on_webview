@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -182,9 +183,14 @@ public class MainActivity extends BaseActivity {
         // 仅处理后退键
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
 
-            // 避免误操作，不允许通过后退键退出应用
-            if (_webView.canGoBack()) {
-                _webView.goBack();
+            if (_webInterop.isOfflineMode()) {
+                // 离线模式不允许执行后退操作
+                Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
+            } else {
+                // 浏览器到最后一页时，不允许通过后退键退出应用
+                if (_webView.canGoBack()) {
+                    _webView.goBack();
+                }
             }
 
             return true;
@@ -245,23 +251,48 @@ public class MainActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                XLog.v("点击菜单【首页】");
-                _webView.navigateToDefaultPage(); // 页面初始化
+                if (_webInterop.isOfflineMode()) {
+                    // 离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
+                } else {
+                    XLog.v("点击菜单【首页】");
+                    _webView.navigateToDefaultPage(); // 页面初始化
+                }
                 break;
             case MENU_ID_REFRESH:
-                XLog.v("点击菜单【刷新】");
-                _webView.reload(); // 仅刷新
+                if (_webInterop.isOfflineMode()) {
+                    // 离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于离线模式，无法执行页面刷新。", Toast.LENGTH_LONG).show();
+                } else {
+                    XLog.v("点击菜单【刷新】");
+                    _webView.reload(); // 仅刷新
+                }
                 break;
             case MENU_ID_SETTINGS:
-                startActivity(new Intent(this, SettingActivity.class));
+                if (_webInterop.isOfflineMode()) {
+                    // 离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
+                } else {
+                    startActivity(new Intent(this, SettingActivity.class));
+                }
                 break;
             case MENU_ID_HELP:
-                XLog.v("点击菜单【帮助】");
-                _webView.loadUrl(ConfigManager.getInstance().getHelpUrl());
+                if (_webInterop.isOfflineMode()) {
+                    // 离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于离线模式，无法打开【帮助】页面。", Toast.LENGTH_LONG).show();
+                } else {
+                    XLog.v("点击菜单【帮助】");
+                    _webView.loadUrl(ConfigManager.getInstance().getHelpUrl());
+                }
                 break;
             case MENU_ID_ABOUT:
-                XLog.v("点击菜单【关于】");
-                _webView.loadUrl(ConfigManager.getInstance().getAboutUrl());
+                if (_webInterop.isOfflineMode()) {
+                    // 离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于离线模式，无法打开【关于】页面。", Toast.LENGTH_LONG).show();
+                } else {
+                    XLog.v("点击菜单【关于】");
+                    _webView.loadUrl(ConfigManager.getInstance().getAboutUrl());
+                }
                 break;
             // 你可以在这里处理新创建菜单的点击事件
         }

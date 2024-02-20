@@ -3,14 +3,9 @@ package com.huozige.lab.container.webview;
 import static android.app.Activity.RESULT_OK;
 
 import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.text.InputType;
-
-import com.elvishew.xlog.XLog;
-
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
@@ -25,8 +20,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
+import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
@@ -49,8 +47,6 @@ public class HACWebChromeClient extends WebChromeClient {
 
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
     ActivityResultLauncher<Intent> _imageCaptureChooser; // 拍摄照片的调用器
-
-    Uri _UriForImageCapture;// 拍摄照片用的缓存
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
 
@@ -180,11 +176,9 @@ public class HACWebChromeClient extends WebChromeClient {
 
                     // 兼容活字格官方Vant插件，支持“直接调出摄像头拍照上传”功能
                     if (fileChooserParams.isCaptureEnabled()) {
-                        ContentValues values = new ContentValues();
-                        values.put(MediaStore.Images.Media.TITLE, this._title);
-                        _UriForImageCapture = this._context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, _UriForImageCapture);
+
+                        Intent cameraIntent = new Intent(this._context, CameraViewActivity.class);
+                        cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
                         _imageCaptureChooser.launch(cameraIntent);
                     } else {
                         // 照片采用知乎的Matisse库，支持拍摄
@@ -235,18 +229,16 @@ public class HACWebChromeClient extends WebChromeClient {
                 result -> {
                     List<Uri> selectedFiles = new ArrayList<>();
 
-                    if (result.getResultCode() == RESULT_OK) {
-
-                        if (null != _UriForImageCapture) {
-                            selectedFiles.add(_UriForImageCapture);
-                        }
-
-                        // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
-                        _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
-                    } else {
-                        // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
-                        _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        // 从Intent中读取图片URI
+                        String uriStr = result.getData().getStringExtra(CameraViewActivity.EXTRA_OUT_URI);
+                        var uri = Uri.parse(uriStr);
+                        selectedFiles.add(uri);
+                        MiscUtilities.registryLatestFile(uri);
                     }
+
+                    // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                 });
 
         // 创建文件选择页面启动器
@@ -258,6 +250,7 @@ public class HACWebChromeClient extends WebChromeClient {
                     // GetContent是单选，如果用户取消时，会返回null
                     if (null != uri) {
                         selectedFiles.add(uri);
+                        MiscUtilities.registryLatestFile(uri);
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
