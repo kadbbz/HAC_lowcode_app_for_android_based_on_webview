@@ -340,7 +340,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void vibrate(long duration){
         MiscUtilities.vibrate(getInterop().getActivityContext(), duration);
-        getInterop().writeLogIntoConsole("已震动：" + duration +"秒");
+        getInterop().writeLogIntoConsole("Vibrate for " + duration +" sec.");
     }
 
     /**
@@ -349,7 +349,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void playNotification(){
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_NOTIFICATION);
-        getInterop().writeLogIntoConsole("已播放：NOTIFICATION提示音");
+        getInterop().writeLogIntoConsole("Play NOTIFICATION sound.");
     }
 
     /**
@@ -358,7 +358,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void playAlarm(){
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_ALARM);
-        getInterop().writeLogIntoConsole("已播放：ALARM闹钟");
+        getInterop().writeLogIntoConsole("Play ALARM sound.");
     }
 
     /**
@@ -367,6 +367,6 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void playRingtone(){
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_RINGTONE);
-        getInterop().writeLogIntoConsole("已播放：RINGTONE铃声");
+        getInterop().writeLogIntoConsole("Play RINGTONE sound.");
     }
 }
