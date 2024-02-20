@@ -45,6 +45,10 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  * 1.15.0
  * app.toggleOfflineMode(shouldOffline)：启用或关闭离线模式
  * app.showToast(text)：提示消息
+ * app.vibrate(duration)：持续震动
+ * app.playNotification()：播放提示音
+ * app.playAlarm()：播放闹钟
+ * app.playRingtone()：播放铃声
  */
 public class AppProxy extends AbstractProxy {
 
@@ -327,5 +331,42 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void showToast(String text) {
         getInterop().showToast(text);
+    }
+
+    /**
+     * 持续震动
+     * @param duration 持续时间（秒）
+     */
+    @JavascriptInterface
+    public void vibrate(long duration){
+        MiscUtilities.vibrate(getInterop().getActivityContext(), duration);
+        getInterop().writeLogIntoConsole("已震动：" + duration +"秒");
+    }
+
+    /**
+     * 播放提示音
+     */
+    @JavascriptInterface
+    public void playNotification(){
+        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_NOTIFICATION);
+        getInterop().writeLogIntoConsole("已播放：NOTIFICATION提示音");
+    }
+
+    /**
+     * 播放闹钟
+     */
+    @JavascriptInterface
+    public void playAlarm(){
+        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_ALARM);
+        getInterop().writeLogIntoConsole("已播放：ALARM闹钟");
+    }
+
+    /**
+     * 播放铃声
+     */
+    @JavascriptInterface
+    public void playRingtone(){
+        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_RINGTONE);
+        getInterop().writeLogIntoConsole("已播放：RINGTONE铃声");
     }
 }

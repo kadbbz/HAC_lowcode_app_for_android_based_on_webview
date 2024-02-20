@@ -5,7 +5,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.webkit.URLUtil;
 import android.webkit.WebView;
@@ -76,8 +81,9 @@ public class MiscUtilities {
 
     /**
      * 从URL中读取特定的参数的值
+     *
      * @param urlString URL
-     * @param paraName 参数名称
+     * @param paraName  参数名称
      * @return 参数的值
      */
     public static String getUrlParameter(String urlString, String paraName) {
@@ -166,6 +172,7 @@ public class MiscUtilities {
 
     /**
      * 读取当前APP的版本号
+     *
      * @param context 执行读取的上下文
      * @return 版本号
      */
@@ -184,6 +191,7 @@ public class MiscUtilities {
 
     /**
      * 读取设备标识SSAID
+     *
      * @param context 执行读取的上下文
      * @return SSAID
      */
@@ -214,6 +222,7 @@ public class MiscUtilities {
 
     /**
      * 获取WebView的版本号
+     *
      * @return 完整的版本号
      */
     public static String getWebViewVersionName() {
@@ -229,15 +238,16 @@ public class MiscUtilities {
 
     /**
      * 读取文件内容到Byte[]
+     *
      * @param context 执行读取的上下文
-     * @param uri 目标文件
+     * @param uri     目标文件
      * @return 文件的内容（Byte[]格式）
      * @throws Exception 异常
      */
-    public static byte[] readFileToByteArray(Context context, Uri uri)throws Exception{
+    public static byte[] readFileToByteArray(Context context, Uri uri) throws Exception {
         InputStream input = context.getContentResolver().openInputStream(uri);
 
-        if(input==null){
+        if (input == null) {
             throw new FileNotFoundException(uri.toString());
         }
 
@@ -254,7 +264,8 @@ public class MiscUtilities {
 
     /**
      * 将文件路径封装为对读取更友好的Uri格式
-     * @param context 执行封装的上下文
+     *
+     * @param context  执行封装的上下文
      * @param filePath 文件路径
      * @return 文件路径（Uri格式）
      */
@@ -268,18 +279,69 @@ public class MiscUtilities {
 
     /**
      * 获取上次操作的文件
+     *
      * @return 文件
      */
-    public static Uri getLatestFile(){
+    public static Uri getLatestFile() {
         return __latestFile;
     }
 
     /**
      * 注册为“上次操作的文件”
+     *
      * @param uri 文件
      */
-    public static void registryLatestFile(Uri uri){
+    public static void registryLatestFile(Uri uri) {
         __latestFile = uri;
+    }
+
+    /**
+     * 震动
+     *
+     * @param context           上下文
+     * @param durationInSeconds 持续时间（秒）
+     */
+    public static void vibrate(Context context, long durationInSeconds) {
+        Vibrator op = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+        if (op != null) {
+            op.vibrate(VibrationEffect.createOneShot(1000 * durationInSeconds, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+    }
+
+    public static int RINGTONE_TYPE_NOTIFICATION = RingtoneManager.TYPE_NOTIFICATION;
+    public static int RINGTONE_TYPE_RINGTONE = RingtoneManager.TYPE_RINGTONE;
+    public static int RINGTONE_TYPE_ALARM = RingtoneManager.TYPE_ALARM;
+
+    /**
+     * 播放铃声
+     *
+     * @param context      上下文
+     * @param ringtoneType 铃声的类型，支持RINGTONE_TYPE_NOTIFICATION、RINGTONE_TYPE_RINGTONE和RINGTONE_TYPE_ALARM
+     */
+    public static void playRingtone(Context context, int ringtoneType) {
+        Uri ringtoneUri = RingtoneManager.getDefaultUri(ringtoneType);
+
+        MediaPlayer player = new MediaPlayer();
+        try {
+            player.setDataSource(context, ringtoneUri);
+            player.setLooping(false);
+
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+                    .build();
+            player.setAudioAttributes(audioAttributes);
+
+            player.setOnPreparedListener(mp -> player.start());
+
+            player.prepareAsync();
+
+        } catch (Exception ex) {
+            XLog.e("播放铃声时发生错误：", ex);
+        }
+
     }
 
 }
