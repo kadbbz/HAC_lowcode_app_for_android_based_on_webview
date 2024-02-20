@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.media.AudioAttributes;
-import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.VibrationEffect;
@@ -25,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 帮助类，提供一些杂项功能
@@ -321,25 +321,21 @@ public class MiscUtilities {
      */
     public static void playRingtone(Context context, int ringtoneType) {
         Uri ringtoneUri = RingtoneManager.getDefaultUri(ringtoneType);
+        var op = RingtoneManager.getRingtone(context, ringtoneUri);
 
-        MediaPlayer player = new MediaPlayer();
-        try {
-            player.setDataSource(context, ringtoneUri);
-            player.setLooping(false);
-
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
-                    .build();
-            player.setAudioAttributes(audioAttributes);
-
-            player.setOnPreparedListener(mp -> player.start());
-
-            player.prepareAsync();
-
-        } catch (Exception ex) {
-            XLog.e("播放铃声时发生错误：", ex);
+        if(op!=null){
+            op.play();
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (op.isPlaying()) {
+                        op.stop();
+                        XLog.v("铃声播放时间超过5秒，已自动停止。");
+                    }
+                }
+            }, 5 * 1000);
+        }else{
+            XLog.e("无法找到需要播放的铃声："+ringtoneUri);
         }
 
     }
