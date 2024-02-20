@@ -15,6 +15,8 @@
         android:layout_gravity="center"
         android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
+        app:cameraSnapshotMaxHeight="1000"
+        app:cameraSnapshotMaxWidth="1000"
         app:cameraExperimental="true"
         app:cameraEngine="camera2"
         app:cameraPreview="glSurface"

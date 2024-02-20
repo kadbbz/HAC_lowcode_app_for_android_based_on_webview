@@ -21,6 +21,7 @@ import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Mode;
 
 import java.io.File;
@@ -112,9 +113,11 @@ public class CameraViewActivity extends AppCompatActivity {
 
         // 拍照
         ibPhoto.setOnClickListener((d) -> {
-            if (isSnapshot) {
+            if (!isSnapshot) {
+                XLog.v("开始拍摄照片（全尺寸）");
                 camera.takePicture();
             } else {
+                XLog.v("开始拍摄照片（小尺寸）");
                 camera.takePictureSnapshot();
             }
         });
@@ -122,15 +125,29 @@ public class CameraViewActivity extends AppCompatActivity {
         // 录像
         ibVideo.setOnClickListener((d) -> {
             if (camera.isTakingVideo()) {
+                XLog.v("停止拍摄视频");
                 camera.stopVideo();
             } else {
                 File tempFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "HAC_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".mp4");
-                if (isSnapshot) {
+                if (!isSnapshot) {
+                    XLog.v("开始拍摄视频（全尺寸）");
                     camera.takeVideo(tempFile);
                 } else {
+                    XLog.v("开始拍摄视频（小尺寸）");
                     camera.takeVideoSnapshot(tempFile);
                 }
                 Toast.makeText(this, "视频录制中，再次点击停止录像", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        ibToggleCamera.setOnClickListener((d)->{
+            var currentF = camera.getFacing();
+            if(currentF == Facing.BACK){
+                camera.setFacing(Facing.FRONT);
+                XLog.v("已切换至前摄像头");
+            }else{
+                camera.setFacing(Facing.BACK);
+                XLog.v("已切换至主摄像头");
             }
         });
     }

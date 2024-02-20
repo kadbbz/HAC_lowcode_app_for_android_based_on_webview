@@ -1,5 +1,6 @@
 package com.huozige.lab.container.proxy;
 
+import com.alibaba.fastjson.JSON;
 import com.elvishew.xlog.XLog;
 
 import android.webkit.JavascriptInterface;
@@ -8,6 +9,8 @@ import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.Realm;
 
@@ -19,6 +22,8 @@ import io.realm.Realm;
  * localKv.remove(key)：从本地数据库中删除特定值
  * localKv.upsertV(key,value,version)：向本地数据库存入值（含版本）
  * localKv.retrieveV(key,version,cell)：从本地数据库中查找特定版本的值，并写入单元格
+ * 1.15.0
+ * localKv.retrieveAllKeys()：查询本地数据库中当前应用的所有键，以JSON形式返回
  */
 public class LocalKvProxy extends AbstractProxy {
 
@@ -198,6 +203,29 @@ public class LocalKvProxy extends AbstractProxy {
                 XLog.v("从本地缓存中移除该键：" + bKey);
             }
         });
+    }
+
+    /**
+     * 注册到页面的 localKv.retrieveAllKeys()方法
+     * 从本地数据库中查找值，并写入变量
+     */
+    @JavascriptInterface
+    public String retrieveAllKeys() {
+
+        final List<String> result = new ArrayList<>();
+
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
+
+            var bundles = transactionRealm.where(LocalKv_Bundle.class).findAll();
+
+            if (bundles != null && !bundles.isEmpty()) {
+                bundles.forEach((d)-> result.add(d.key));
+            }
+
+            XLog.v("从本地缓存中获取所有键，数量："+ result.size());
+        });
+
+        return JSON.toJSONString(result.toArray(new String[1]));
     }
 
     @Override

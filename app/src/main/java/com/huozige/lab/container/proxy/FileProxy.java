@@ -125,7 +125,7 @@ public class FileProxy extends AbstractProxy {
 
             WatermarkText watermarkText = new WatermarkText(watermark)
                     .setTextColor(fontColor)
-                    .setTextShadow(0.1f, (float) fontSize / 4, (float) fontSize / 4, Color.WHITE)
+                    .setTextShadow(0.1f, 1, 1, Color.WHITE)
                     .setTextAlpha(150)
                     .setPositionX(0.5)
                     .setPositionY(0.5)
