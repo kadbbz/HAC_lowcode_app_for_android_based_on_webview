@@ -143,6 +143,30 @@ public class MiscUtilities {
     }
 
     /**
+     * Byte数组转逗号分隔的字符串
+     * @param data byte数组
+     * @return 字符串
+     */
+    public static String byteArrayToCommaSeperatedString(byte[] data) {
+
+        if(data==null){
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < data.length; i++) {
+            sb.append(data[i]);
+
+            if (i != data.length - 1) {
+                sb.append(",");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Hex字符串转byte
      *
      * @param inHex 待转换的Hex字符串
@@ -323,7 +347,7 @@ public class MiscUtilities {
         Uri ringtoneUri = RingtoneManager.getDefaultUri(ringtoneType);
         var op = RingtoneManager.getRingtone(context, ringtoneUri);
 
-        if(op!=null){
+        if (op != null) {
             op.play();
             new Timer().schedule(new TimerTask() {
                 @Override
@@ -334,8 +358,8 @@ public class MiscUtilities {
                     }
                 }
             }, 5 * 1000);
-        }else{
-            XLog.e("无法找到需要播放的铃声："+ringtoneUri);
+        } else {
+            XLog.e("无法找到需要播放的铃声：" + ringtoneUri);
         }
 
     }
