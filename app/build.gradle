@@ -1,5 +1,9 @@
 plugins {
     id 'com.android.application'
+    // Add the Crashlytics Gradle plugin
+    id 'com.google.firebase.crashlytics'
+    // Add the Performance Monitoring Gradle plugin
+    id 'com.google.firebase.firebase-perf'
 }
 
 android {
@@ -11,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.15.1-release'
+        versionName '1.15.2-release'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
@@ -42,13 +46,19 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: "realm-android"
 
 dependencies {
-    implementation 'com.google.firebase:firebase-analytics:21.5.1'
-    implementation 'com.github.getActivity:XXPermissions:18.2'
+    // Import the BoM for the Firebase platform
+    implementation(platform('com.google.firebase:firebase-bom:32.7.4'))
+    implementation 'com.google.firebase:firebase-perf'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-analytics'
+    // Android使用的类库
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'commons-io:commons-io:2.6'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    // 其他类库
+    implementation 'commons-io:commons-io:2.6' // 文件与路径处理
+    implementation 'com.github.getActivity:XXPermissions:18.2' // 权限控制
     implementation files('libs/LPAPI-2021-02-02-R.jar') // 德佟打印机
     implementation 'com.zhihu.android:matisse:0.5.3-beta3' // 图片选择
     implementation 'com.github.bumptech.glide:glide:4.11.0' // matisse依赖
