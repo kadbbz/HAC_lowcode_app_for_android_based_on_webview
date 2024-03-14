@@ -3,6 +3,7 @@ package com.huozige.lab.container.proxy;
 import android.webkit.JavascriptInterface;
 
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.utilities.EventUtility;
 
 import locationprovider.davidserrano.com.LocationProvider;
 
@@ -99,6 +100,8 @@ public class GeoProxy extends AbstractProxy {
             //start getting location
             provider.requestLocation();
         });
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_gps_feature", "getLocation");
     }
 
     @Override

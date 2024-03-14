@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
 /**
@@ -98,6 +99,8 @@ public class HACWebView extends WebView {
             this.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // 软件加速，兼容性更好
             XLog.v("WebView组件初始化完成，采用软件加速");
         }
+
+        EventUtility.logEvent(this._context,"web_view_init", Integer.toString(MiscUtilities.getWebViewMajorVersion()));
     }
 
     /**

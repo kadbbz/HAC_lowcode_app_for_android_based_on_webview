@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
+import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
 import java.util.ArrayList;
@@ -175,6 +176,8 @@ public class PDAProxy extends AbstractProxy {
         // 记录日志
         getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
 
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_scanner_feature", "modalScan");
+
     }
 
     /**
@@ -198,6 +201,8 @@ public class PDAProxy extends AbstractProxy {
 
         // 开始监听
         startReceiver();
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_scanner_feature", "continuousScan");
     }
 
     /**
