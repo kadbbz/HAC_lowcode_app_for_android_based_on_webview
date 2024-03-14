@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Intent;
 
 import com.elvishew.xlog.XLog;
+import com.huozige.lab.container.utilities.EventUtility;
 
 import android.widget.Toast;
 
@@ -23,6 +24,8 @@ public class HACCrashHandler implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
+
+        EventUtility.logEvent(this._context,"app_uncaught_exception", throwable.toString());
 
         XLog.e("出现未捕获的异常：" + throwable.getMessage()+" \r\n%s", throwable);
 

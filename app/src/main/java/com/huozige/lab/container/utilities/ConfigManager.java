@@ -70,7 +70,7 @@ public class ConfigManager {
     }
 
     public  boolean isAppReady(){
-      return  this.getEntry().length() > 0;
+      return !this.getEntry().isEmpty();
     }
 
     // =========== 回写 ===========
@@ -152,6 +152,8 @@ public class ConfigManager {
                 this.upsertBooleanEntry(PREFERENCE_KEY_LOG_ALL_ENTRIES, config.getString(PREFERENCE_KEY_LOG_ALL_ENTRIES));
 
                 XLog.v("应用初始化设置完成，配置数据：" + json);
+
+                EventUtility.logEvent(this._context,"app_quick_config",config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
 
                 return true;
             } else {
@@ -261,6 +263,6 @@ public class ConfigManager {
     }
 
     public static boolean parseBooleanFromString(String text) {
-        return text != null && text.length() > 0 && !text.equalsIgnoreCase("0") && !text.equalsIgnoreCase("false") && !text.equalsIgnoreCase("no");
+        return text != null && !text.isEmpty() && !text.equalsIgnoreCase("0") && !text.equalsIgnoreCase("false") && !text.equalsIgnoreCase("no");
     }
 }

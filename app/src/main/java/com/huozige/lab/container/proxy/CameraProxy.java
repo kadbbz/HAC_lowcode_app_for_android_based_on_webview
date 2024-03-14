@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
+import com.huozige.lab.container.utilities.EventUtility;
 
 /**
  * 操作摄像头
@@ -41,6 +42,8 @@ public class CameraProxy extends AbstractProxy {
 
         // 弹出相机
         _imageCaptureChooser.launch(cameraIntent);
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_camera_feature", "takePhoto");
     }
 
     /**
@@ -58,6 +61,8 @@ public class CameraProxy extends AbstractProxy {
 
         // 弹出相机
         _imageCaptureChooser.launch(cameraIntent);
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_camera_feature", "takeVideo");
     }
 
     @Override

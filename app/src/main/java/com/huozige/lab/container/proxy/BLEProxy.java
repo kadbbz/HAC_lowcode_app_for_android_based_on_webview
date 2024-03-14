@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.proxy.support.scanner.BleHelper;
 import com.huozige.lab.container.proxy.support.scanner.BleProxy_ReadingActivity;
+import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
 import java.util.Base64;
@@ -52,6 +53,8 @@ public class BLEProxy extends AbstractProxy {
         Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_SCAN);
         _scanner.launch(request);
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ble_feature", "scan");
     }
 
     /**
@@ -78,6 +81,8 @@ public class BLEProxy extends AbstractProxy {
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_CHARACTER, uuid_characteristic);
         _scanner.launch(request);
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ble_feature", "read");
     }
 
     /**
@@ -103,6 +108,7 @@ public class BLEProxy extends AbstractProxy {
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_PAYLOAD, hexOrBase64Value);
         _scanner.launch(request);
 
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ble_feature", "write");
     }
 
     /**
@@ -147,6 +153,8 @@ public class BLEProxy extends AbstractProxy {
                 }
             }
         });
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ble_feature", "notify");
 
     }
 
@@ -209,6 +217,8 @@ public class BLEProxy extends AbstractProxy {
                 }
             }
         });
+
+        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ble_feature", "indicate");
     }
 
     /**
