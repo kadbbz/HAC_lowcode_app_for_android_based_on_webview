@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.15.3-release'
+        versionName '1.16.0-beta1'
 
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
@@ -71,4 +71,5 @@ dependencies {
     implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
     implementation 'com.otaliastudios:cameraview:2.7.2' // 拍照与图像预处理
     implementation 'com.huangyz0918:androidwm-light:0.1.2' // 图片水印
+    implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0' // ECS蓝牙打印机
 }
