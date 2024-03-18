@@ -59,6 +59,8 @@ public class ProxyRegister {
 
         this._proxies.add(new FileProxy()); // 文件操作
 
+        this._proxies.add(new EscBtPrinterProxy()); // ESC协议的蓝牙打印
+
         __instance = this;
     }
 }
