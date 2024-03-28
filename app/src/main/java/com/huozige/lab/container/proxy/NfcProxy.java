@@ -7,10 +7,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.NfcProxy_ReadingActivity;
-import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
 /**

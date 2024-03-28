@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
-import com.huozige.lab.container.utilities.EventUtility;
 
 /**
  * 操作摄像头

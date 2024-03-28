@@ -2,10 +2,8 @@ package com.huozige.lab.container.platform;
 
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.alibaba.fastjson.JSON;
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACWebView;

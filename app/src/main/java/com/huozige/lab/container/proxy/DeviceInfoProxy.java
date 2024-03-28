@@ -1,9 +1,8 @@
 package com.huozige.lab.container.proxy;
 
-import com.huozige.lab.container.utilities.EventUtility;
-import com.huozige.lab.container.utilities.MiscUtilities;
-
 import android.webkit.JavascriptInterface;
+
+import com.huozige.lab.container.utilities.MiscUtilities;
 
 /**
  * 让页面能获取设备的唯一标识

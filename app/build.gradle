@@ -47,7 +47,7 @@ apply plugin: "realm-android"
 
 dependencies {
     // Import the BoM for the Firebase platform
-    implementation(platform('com.google.firebase:firebase-bom:32.7.4'))
+    implementation(platform('com.google.firebase:firebase-bom:32.8.0'))
     implementation 'com.google.firebase:firebase-perf'
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-analytics'
