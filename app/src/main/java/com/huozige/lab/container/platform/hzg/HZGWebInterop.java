@@ -3,6 +3,7 @@ package com.huozige.lab.container.platform.hzg;
 import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.platform.CallbackParams;
 
 /**
  * 活字格页面专用
@@ -23,6 +24,18 @@ public class HZGWebInterop extends AbstractWebInterop {
         executeJavaScript(scripts);
     }
 
+    @Override
+    public void callback(String ticket, CallbackParams params) throws IllegalStateException{
+
+        String scripts;
+        if(params.isSuccess){
+            scripts = "HAC.dispatchSuccessCallback(" + ticket + ",'" + params.payload + "','" + params.payload2 + "');";
+        }else{
+            scripts = "HAC.dispatchErrorCallback(" + ticket + ",'"+  params.error + "');";
+        }
+
+        executeJavaScript(scripts);
+    }
 
     /**
      * 用于从HTML中传回字符串值的JS代理

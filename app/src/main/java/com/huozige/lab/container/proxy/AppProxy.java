@@ -49,6 +49,10 @@ import com.huozige.lab.container.utilities.PermissionsUtility;
  * app.playNotification()：播放提示音
  * app.playAlarm()：播放闹钟
  * app.playRingtone()：播放铃声
+ * 1.17.0
+ * app.getVersion2()：获取版本号
+ * app.getPackageName2()：获取入口的包名
+ * app.getActionBarColor2()：获取标题栏颜色
  */
 public class AppProxy extends AbstractProxy {
 
@@ -280,6 +284,35 @@ public class AppProxy extends AbstractProxy {
     }
 
     /**
+     * 注册到页面的app.getActionBarColor()方法
+     * 获取APP ActionBar的颜色
+     *
+     * @return 返回的数值是16进制，去掉透明度
+     */
+    @JavascriptInterface
+    public String getActionBarColor2() {
+
+        int tcdColor = getConfigManager().getTCD();
+
+        // 兼容Web的常规做法，不返回A，仅返回RGB
+        String R, G, B;
+        StringBuilder sb = new StringBuilder();
+        R = Integer.toHexString(Color.red(tcdColor));
+        G = Integer.toHexString(Color.green(tcdColor));
+        B = Integer.toHexString(Color.blue(tcdColor));
+        //判断获取到的A,R,G,B值的长度 如果长度等于1 给A,R,G,B值的前边添0
+        R = R.length() == 1 ? "0" + R : R;
+        G = G.length() == 1 ? "0" + G : G;
+        B = B.length() == 1 ? "0" + B : B;
+        sb.append("0x");
+        sb.append(R);
+        sb.append(G);
+        sb.append(B);
+
+        return sb.toString();
+    }
+
+    /**
      * 注册到页面的app.setActionBarColor(colorInteger)方法
      * 设置APP ActionBar的颜色
      * 输入的颜色是16进制，不需要透明度
@@ -303,6 +336,17 @@ public class AppProxy extends AbstractProxy {
     }
 
     /**
+     * 注册到页面的app.getPackageName2()方法
+     * 获取APP入口的包名
+     *
+     * @return 应用的包名
+     */
+    @JavascriptInterface
+    public String getPackageName2(String cell) {
+        return getInterop().getActivityContext().getPackageName();
+    }
+
+    /**
      * 注册到页面的app.getVersion(cell)方法
      * 获取版本号
      */
@@ -310,6 +354,17 @@ public class AppProxy extends AbstractProxy {
     public void getVersion(String cell) {
         String finalVersionName = MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
         getInterop().setInputValue(cell, finalVersionName);
+    }
+
+    /**
+     * 注册到页面的app.getVersion()方法
+     * 获取版本号
+     *
+     * @return 版本号
+     */
+    @JavascriptInterface
+    public String getVersion2(String cell) {
+        return MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
     }
 
     /**
@@ -335,19 +390,20 @@ public class AppProxy extends AbstractProxy {
 
     /**
      * 持续震动
+     *
      * @param duration 持续时间（秒）
      */
     @JavascriptInterface
-    public void vibrate(long duration){
+    public void vibrate(long duration) {
         MiscUtilities.vibrate(getInterop().getActivityContext(), duration);
-        getInterop().writeLogIntoConsole("Vibrate for " + duration +" sec.");
+        getInterop().writeLogIntoConsole("Vibrate for " + duration + " sec.");
     }
 
     /**
      * 播放提示音
      */
     @JavascriptInterface
-    public void playNotification(){
+    public void playNotification() {
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_NOTIFICATION);
         getInterop().writeLogIntoConsole("Play NOTIFICATION sound.");
     }
@@ -356,7 +412,7 @@ public class AppProxy extends AbstractProxy {
      * 播放闹钟
      */
     @JavascriptInterface
-    public void playAlarm(){
+    public void playAlarm() {
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_ALARM);
         getInterop().writeLogIntoConsole("Play ALARM sound.");
     }
@@ -365,7 +421,7 @@ public class AppProxy extends AbstractProxy {
      * 播放铃声
      */
     @JavascriptInterface
-    public void playRingtone(){
+    public void playRingtone() {
         MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_RINGTONE);
         getInterop().writeLogIntoConsole("Play RINGTONE sound.");
     }

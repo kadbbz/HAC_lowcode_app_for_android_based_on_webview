@@ -36,6 +36,7 @@ public class DothanPrinterProxy extends AbstractProxy{
      */
     @JavascriptInterface
     public int getStatus() {
+        logEvent("use_dothan_feature", "getStatus");
         IDzPrinter.PrinterState status = _lpApi.getPrinterState();
         return status.ordinal();
     }

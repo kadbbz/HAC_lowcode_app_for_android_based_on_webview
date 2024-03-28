@@ -1,10 +1,9 @@
 package com.huozige.lab.container.proxy;
 
-import com.alibaba.fastjson.JSON;
-import com.elvishew.xlog.XLog;
-
 import android.webkit.JavascriptInterface;
 
+import com.alibaba.fastjson.JSON;
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
 
 import java.net.URI;
@@ -48,7 +47,7 @@ public class LocalKvProxy extends AbstractProxy {
         try {
             return (new URI(getConfigManager().getEntry())).getHost();
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            XLog.e("The Uri's format is not supported. " + e);
             return "";
         }
     }
@@ -99,6 +98,8 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void upsertV(String key, String valueString, String version) {
 
+        logEvent("use_localdb_feature","upsert");
+
         if (null == version) {
             version = VERSION_DEFAULT;
         }
@@ -126,6 +127,8 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
+
+        logEvent("use_localdb_feature","retrieve");
 
         if (null == version) {
             version = VERSION_DEFAULT;
@@ -158,6 +161,8 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String retrieveV2(String key, String version) {
+
+        logEvent("use_localdb_feature","retrieve2");
 
         final String[] result = new String[1];
 
@@ -193,6 +198,9 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void remove(String key) {
+
+        logEvent("use_localdb_feature","remove");
+
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
             // 确保按照服务器隔离，在这里拼接出真实存储的Key
@@ -219,10 +227,10 @@ public class LocalKvProxy extends AbstractProxy {
             var bundles = transactionRealm.where(LocalKv_Bundle.class).findAll();
 
             if (bundles != null && !bundles.isEmpty()) {
-                bundles.forEach((d)-> result.add(d.key));
+                bundles.forEach((d) -> result.add(d.key));
             }
 
-            XLog.v("从本地缓存中获取所有键，数量："+ result.size());
+            XLog.v("从本地缓存中获取所有键，数量：" + result.size());
         });
 
         return JSON.toJSONString(result.toArray(new String[1]));

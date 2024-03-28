@@ -22,7 +22,7 @@ public class DeviceInfoProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getSecureId() {
-        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_ssaid_feature", "getId");
+        logEvent("use_ssaid_feature", "getId");
 
         return MiscUtilities.getSSAID(this.getInterop().getActivityContext());
     }

@@ -2,8 +2,10 @@ package com.huozige.lab.container.platform;
 
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.alibaba.fastjson.JSON;
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACWebView;
@@ -21,8 +23,17 @@ public abstract class AbstractWebInterop {
      *
      * @param identity HTML元素的标识（如ID、名称等）
      * @param rawValue 需要设置的值
+     * @throws IllegalStateException 当前状态下不可用时抛出该异常
      */
     public abstract void setInputValue(String identity, Object rawValue) throws IllegalStateException;
+
+    /**
+     * 触发回调
+     * @param identity 回调的唯一标识
+     * @param params 需要传递给回调的参数
+     * @throws IllegalStateException 当前状态下不可用时抛出该异常
+     */
+    public abstract void callback(String identity, CallbackParams params) throws IllegalStateException;
 
     /**
      * 向浏览器输出日志，供调试使用

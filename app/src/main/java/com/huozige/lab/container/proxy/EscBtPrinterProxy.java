@@ -1,3 +1,4 @@
+
 package com.huozige.lab.container.proxy;
 
 import android.annotation.SuppressLint;
@@ -10,7 +11,7 @@ import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections;
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.utilities.EventUtility;
+import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
 import java.util.Arrays;
@@ -21,6 +22,8 @@ import java.util.stream.Stream;
  * 1.16.0
  * escBtPrinter.scan(resultCell) ：扫描打印机，返回包含有设备名称和mac的信息列表
  * escBtPrinter.print(mac, printerDpi, printerWidthMM, printerNbrCharactersPerLine, template)：执行打印操作
+ * 1.17.0
+ * scBtPrinter.scanAsync(resultCell) ：扫描打印机，返回包含有设备名称和mac的信息列表
  */
 public class EscBtPrinterProxy extends AbstractProxy {
 
@@ -29,15 +32,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
         return "escBtPrinter";
     }
 
-    /**
-     * 扫描蓝牙打印机并将列表返回到单元格
-     * 形如：[{"deviceName":"GP-M322-B982","mac":"DC:1D:30:FB:B9:82"}]
-     *
-     * @param resultCell 存放打印机信息列表的单元格
-     */
-    @SuppressLint("MissingPermission")
-    @JavascriptInterface
-    public void scan(String resultCell) {
+    private void startScan() {
 
         getInterop().writeLogIntoConsole("Start ecs printer scanning.");
 
@@ -51,24 +46,50 @@ public class EscBtPrinterProxy extends AbstractProxy {
             if (bluetoothDevicesList != null) {
                 XLog.v("Esc printers scanning completed, " + bluetoothDevicesList.length + " found.");
 
-                Stream<EscPrinterInfo> result = Arrays.stream(bluetoothDevicesList).map((conn) -> {
+                @SuppressLint("MissingPermission") Stream<EscPrinterInfo> result = Arrays.stream(bluetoothDevicesList).map((conn) -> {
                     EscPrinterInfo device = new EscPrinterInfo();
                     device.deviceName = conn.getDevice().getName();
                     device.mac = conn.getDevice().getAddress();
                     return device;
                 });
 
-                getInterop().setInputValue(resultCell, JSON.toJSONString(result.toArray(EscPrinterInfo[]::new)));
+                callback(CallbackParams.success(JSON.toJSONString(result.toArray(EscPrinterInfo[]::new))));
 
             } else {
                 XLog.e("Esc printers scanning failed.");
-                getInterop().setInputValue(resultCell, "[]");
+                callback(CallbackParams.error("Esc printers scanning failed."));
             }
-
-
         });
+    }
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(), "use_ecs_feature", "scan");
+    /**
+     * 扫描蓝牙打印机并将列表返回到单元格
+     * 形如：[{"deviceName":"GP-M322-B982","mac":"DC:1D:30:FB:B9:82"}]
+     *
+     * @param resultCell 存放打印机信息列表的单元格
+     */
+    @JavascriptInterface
+    public void scan(String resultCell) {
+        logEvent("use_esc_feature", "scan");
+
+        registryPayloadCellLocation(resultCell);
+
+        startScan();
+    }
+
+    /**
+     * 扫描蓝牙打印机并将列表返回到单元格
+     * 形如：[{"deviceName":"GP-M322-B982","mac":"DC:1D:30:FB:B9:82"}]
+     *
+     * @param ticket 回调
+     */
+    @JavascriptInterface
+    public void scanAsync(String ticket) {
+        logEvent("use_esc_feature", "scanAsync");
+
+        registryCallbackTicket(ticket);
+
+        startScan();
     }
 
     /**
@@ -83,12 +104,12 @@ public class EscBtPrinterProxy extends AbstractProxy {
     @JavascriptInterface
     public void print(String mac, int printerDpi, float printerWidthMM, int printerNbrCharactersPerLine, String template) {
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(), "use_ecs_feature", "print");
+        logEvent("use_esc_feature", "print");
 
         getInterop().writeLogIntoConsole("Start printing via ESC.");
 
         try {
-            XLog.v("Print " + template + ", using printer " + mac +" dpi: "+ printerDpi +" width: " + printerWidthMM +" CPL: "+ printerNbrCharactersPerLine);
+            XLog.v("Print " + template + ", using printer " + mac + " dpi: " + printerDpi + " width: " + printerWidthMM + " CPL: " + printerNbrCharactersPerLine);
             EscPosPrinter printer = new EscPosPrinter(findPrinter(mac), printerDpi, printerWidthMM, printerNbrCharactersPerLine, new EscPosCharsetEncoding("GBK", 16));
             printer.printFormattedText(template);
             XLog.v("Template was printed via ESC.");

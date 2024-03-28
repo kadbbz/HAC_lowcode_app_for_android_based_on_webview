@@ -7,6 +7,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.NfcProxy_ReadingActivity;
 import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
@@ -15,10 +17,11 @@ import com.huozige.lab.container.utilities.MiscUtilities;
  * 让页面能读取NFC标签
  * 1.8.0
  * nfc.readTagId(cellTag)：弹出模态窗口，读取NFC标签ID并返回到单元格
+ * 1.17.0
+ * nfc.readTagIdAsync(ticket)：弹出模态窗口，读取NFC标签的ID后触发回调
  */
 public class NfcProxy extends AbstractProxy {
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
-    String _cellTag; // 用来接收标签的单元格位置信息
 
     @Override
     public String getName() {
@@ -29,15 +32,31 @@ public class NfcProxy extends AbstractProxy {
     public void readTagId(String cellTag) {
 
         // 记录传入的Cell信息
-        _cellTag = cellTag;
+        registryPayloadCellLocation(cellTag);
 
         // 调用读取页面
         _arcScanner.launch(new Intent(getInterop().getActivityContext(), NfcProxy_ReadingActivity.class));
 
         // 记录日志
-        getInterop().writeLogIntoConsole( "NFC reading started.");
+        getInterop().writeLogIntoConsole("NFC reading started.");
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_nfc_feature", "readTagId");
+        logEvent("use_nfc_feature", "readTagId");
+
+    }
+
+    @JavascriptInterface
+    public void readTagIdAsync(String ticket) {
+
+        // 记录传入的Cell信息
+        registryCallbackTicket(ticket);
+
+        // 调用读取页面
+        _arcScanner.launch(new Intent(getInterop().getActivityContext(), NfcProxy_ReadingActivity.class));
+
+        // 记录日志
+        getInterop().writeLogIntoConsole("NFC reading started.");
+
+        logEvent("use_nfc_feature", "readTagIdAsync");
 
     }
 
@@ -62,34 +81,36 @@ public class NfcProxy extends AbstractProxy {
                     String tag = data.getStringExtra(NfcProxy_ReadingActivity.BUNDLE_EXTRA_RESULT_TAG_ID);
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "NFC Reading completed. Tag is : " + tag );
+                    getInterop().writeLogIntoConsole("NFC Reading completed. Tag is : " + tag);
 
                     // 去除非ASCII字符
-                    tag= MiscUtilities.removeNonASCIIChars(tag);
+                    tag = MiscUtilities.removeNonASCIIChars(tag);
 
-                    // 将结果写入单元格
-                    getInterop().setInputValue( _cellTag, tag);
-                } else if(code == NfcProxy_ReadingActivity.SCAN_STATUS_NA){
+                    // 将结果返回
+                    callback(CallbackParams.success(tag));
+                } else if (code == NfcProxy_ReadingActivity.SCAN_STATUS_NA) {
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "The NFC device is not ready due to not functional or disabled.");
+                    getInterop().writeLogIntoConsole("The NFC device is not ready due to not functional or disabled.");
 
                     // 重置单元格
-                    getInterop().setInputValue( _cellTag, "");
-                }else {
+                    callback(CallbackParams.error("The NFC device is not ready due to not functional or disabled."));
+                } else {
                     // 记录日志
-                    getInterop().writeLogIntoConsole( "NFC reading canceled or failed. Return code is : " + code);
+                    getInterop().writeLogIntoConsole("NFC reading canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    getInterop().setInputValue( _cellTag, "");
+                    callback(CallbackParams.error("NFC reading canceled or failed. Return code is : " + code));
                 }
             } else {
                 // 记录日志
-                getInterop().writeErrorIntoConsole( "NFC reading failed.");
+                getInterop().writeErrorIntoConsole("NFC reading failed.");
 
                 // 重置单元格
-                getInterop().setInputValue( _cellTag, "");
+                callback(CallbackParams.error("NFC reading failed."));
             }
         });
     }
+
+
 
 }
