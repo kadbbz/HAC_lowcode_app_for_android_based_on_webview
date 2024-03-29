@@ -3,7 +3,7 @@ package com.huozige.lab.container.proxy;
 import android.webkit.JavascriptInterface;
 
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.utilities.EventUtility;
+import com.huozige.lab.container.platform.CallbackParams;
 
 import locationprovider.davidserrano.com.LocationProvider;
 
@@ -11,22 +11,15 @@ import locationprovider.davidserrano.com.LocationProvider;
  * 让页面能获取当前的地理位置
  * 1.2.0
  * geo.getLocation(coordinateSystem,cellLat,cellLon,cellError)：获取地理位置
+ * 1.17.0
+ * geo.getLocationAsync(coordinateSystem,ticket)：异步获取地理位置
  */
 public class GeoProxy extends AbstractProxy {
 
     static final String CS_WGS84 = "wgs84";
     static final String CS_BD09 = "bd09";
 
-    /**
-     * 注册到页面的geo.getPackageName(cell)方法
-     * 将当前地址信息填写到单元格
-     * 支持的坐标系（coordinateSystem）：
-     * WGS84坐标系：即地球坐标系，是为GPS全球定位系统使用而建立的坐标系统，国际上通用的坐标系。如Google Earth（不含中国）
-     * GCJ02坐标系：又称火星坐标系，中国国家测绘局制订的地理信息系统的坐标系统，WGS84坐标系经加密（加入随机的偏差）后的坐标系。如Google中国、搜搜、阿里云、高德
-     * BD09坐标系：即百度坐标系，在GCJ02坐标系再次加密后的坐标系。如百度
-     */
-    @JavascriptInterface
-    public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
+    private void startGetLocation(String coordinateSystem) {
 
         // 获取地理位置，需要先申请权限
         getInterop().requirePermission(new String[]{
@@ -41,21 +34,18 @@ public class GeoProxy extends AbstractProxy {
                     if (CS_BD09.equalsIgnoreCase(coordinateSystem)) {
                         // 优先百度坐标，可配套百度地图使用
                         double[] bd09 = Geo_CoordinateSystemHelpers.wgs84_bd09(lat, lon);
-                        getInterop().setInputValue(cellLat, String.valueOf(bd09[0]));
-                        getInterop().setInputValue(cellLon, String.valueOf(bd09[1]));
+
+                        callback(CallbackParams.success(String.valueOf(bd09[0]), String.valueOf(bd09[1])));
+
                     } else if (CS_WGS84.equalsIgnoreCase(coordinateSystem)) {
                         // 然后是GPS坐标
-                        getInterop().setInputValue(cellLat, String.valueOf(lat));
-                        getInterop().setInputValue(cellLon, String.valueOf(lon));
+                        callback(CallbackParams.success(String.valueOf(lat), String.valueOf(lon)));
+
                     } else {
                         // 默认为国内火星坐标
                         double[] gcj02 = Geo_CoordinateSystemHelpers.wgs84_gcj02(lat, lon);
-                        getInterop().setInputValue(cellLat, String.valueOf(gcj02[0]));
-                        getInterop().setInputValue(cellLon, String.valueOf(gcj02[1]));
+                        callback(CallbackParams.success(String.valueOf(gcj02[0]), String.valueOf(gcj02[1])));
                     }
-
-                    // 重置错误信息
-                    getInterop().setInputValue(cellErr, "");
                 }
 
                 @Override
@@ -68,7 +58,7 @@ public class GeoProxy extends AbstractProxy {
                 @Override
                 public void locationServicesNotEnabled() {
                     getInterop().writeErrorIntoConsole("getLocation Location Services Not Enabled");
-                    getInterop().setInputValue(cellErr, "LocationServicesNotEnabled");
+                    callback(CallbackParams.error("Location Services Not Enabled"));
                 }
 
                 @Override
@@ -100,8 +90,41 @@ public class GeoProxy extends AbstractProxy {
             //start getting location
             provider.requestLocation();
         });
+    }
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_gps_feature", "getLocation");
+    /**
+     * 注册到页面的geo.getPackageName(cell)方法
+     * 将当前地址信息填写到单元格
+     * 支持的坐标系（coordinateSystem）：
+     * WGS84坐标系：即地球坐标系，是为GPS全球定位系统使用而建立的坐标系统，国际上通用的坐标系。如Google Earth（不含中国）
+     * GCJ02坐标系：又称火星坐标系，中国国家测绘局制订的地理信息系统的坐标系统，WGS84坐标系经加密（加入随机的偏差）后的坐标系。如Google中国、搜搜、阿里云、高德
+     * BD09坐标系：即百度坐标系，在GCJ02坐标系再次加密后的坐标系。如百度
+     */
+    @JavascriptInterface
+    public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
+        logEvent("use_gps_feature", "getLocation");
+
+        registryPayloadCellLocation(cellLat, cellLon);
+        registryErrorCellLocation(cellErr);
+
+        startGetLocation(coordinateSystem);
+    }
+
+    /**
+     * 注册到页面的geo.getPackageName(cell)方法
+     * 异步获取当前地址信息
+     * 支持的坐标系（coordinateSystem）：
+     * WGS84坐标系：即地球坐标系，是为GPS全球定位系统使用而建立的坐标系统，国际上通用的坐标系。如Google Earth（不含中国）
+     * GCJ02坐标系：又称火星坐标系，中国国家测绘局制订的地理信息系统的坐标系统，WGS84坐标系经加密（加入随机的偏差）后的坐标系。如Google中国、搜搜、阿里云、高德
+     * BD09坐标系：即百度坐标系，在GCJ02坐标系再次加密后的坐标系。如百度
+     */
+    @JavascriptInterface
+    public void getLocationAsync(String coordinateSystem, String ticket) {
+        logEvent("use_gps_feature", "getLocationAsync");
+
+        registryCallbackTicket(ticket);
+
+        startGetLocation(coordinateSystem);
     }
 
     @Override

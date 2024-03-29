@@ -5,17 +5,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-
-import com.elvishew.xlog.XLog;
-
 import android.webkit.JavascriptInterface;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
+import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
-import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 
 import java.util.ArrayList;
@@ -26,14 +24,16 @@ import java.util.ArrayList;
  * pda.modal_scan(cell): 带模态窗口的单次扫码
  * pda.continuous_scan(cell): 开始持续扫码
  * pda.continuous_scan_stop()： 停止持续扫码
+ * 1.17.0
+ * pda.modal_scanAsync(ticket): 带模态窗口的单次扫码
+ * pda.continuous_scanAsync(ticket): 开始持续扫码
  */
 public class PDAProxy extends AbstractProxy {
 
     ActivityResultLauncher<Intent> _arcScanner; // 用来弹出Broadcast模式扫码页面的调用器，用来代替旧版本的startActivityForResult方法。
-    String _cell; // 用来接收扫码结果的单元格位置信息
 
     Boolean _continueScanOn = false;
-    String continueScanCell;
+
     ArrayList<String> _resultCache = new ArrayList<>();
     Integer continueScanLimit;
 
@@ -69,20 +69,20 @@ public class PDAProxy extends AbstractProxy {
                     getInterop().writeLogIntoConsole("PDA scan completed. Result is : " + resultS);
 
                     // 将结果写入单元格
-                    getInterop().setInputValue(_cell, resultS);
+                    callback(CallbackParams.success(resultS));
                 } else {
                     // 记录日志
                     getInterop().writeLogIntoConsole("PDA scan canceled or failed. Return code is : " + code);
 
                     // 重置单元格
-                    getInterop().setInputValue(_cell, "");
+                    callback(CallbackParams.error("PDA scan canceled or failed. Return code is : " + code));
                 }
             } else {
                 // 记录日志
                 getInterop().writeErrorIntoConsole("PDA scan failed.");
 
                 // 重置单元格
-                getInterop().setInputValue(_cell, "");
+                callback(CallbackParams.error("PDA scan failed."));
             }
         });
     }
@@ -138,8 +138,8 @@ public class PDAProxy extends AbstractProxy {
                 // 记录日志
                 getInterop().writeLogIntoConsole("PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
 
-                // 输出到界面
-                getInterop().setInputValue(continueScanCell, rc);
+                // 输出
+                callback(CallbackParams.success(rc));
 
                 if (_resultCache.size() >= continueScanLimit) {
 
@@ -166,18 +166,34 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void modal_scan(String cellLocation) {
+        logEvent("use_scanner_feature", "modalScan");
 
-        // 记录传入的Cell信息
-        _cell = cellLocation;
-
-        // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
+        registryPayloadCellLocation(cellLocation);
 
         // 记录日志
         getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_scanner_feature", "modalScan");
+        // 调用Broadcast模式扫码页面
+        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
+    }
 
+    /**
+     * 注册到页面的pda.modal_scan(cell)方法
+     * 单次扫码
+     *
+     * @param ticket 回调
+     */
+    @JavascriptInterface
+    public void modal_scanAsync(String ticket) {
+        logEvent("use_scanner_feature", "modalScanAsync");
+
+        registryCallbackTicket(ticket);
+
+        // 记录日志
+        getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
+
+        // 调用Broadcast模式扫码页面
+        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
     }
 
     /**
@@ -188,11 +204,12 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void continuous_scan(String cellLocation, String limit) {
+        logEvent("use_scanner_feature", "continuousScan");
 
         XLog.v("continuous_scan start with limit : " + limit);
 
         // 记录传入参数
-        continueScanCell = cellLocation;
+        registryPayloadCellLocation(cellLocation);
         continueScanLimit = (null == limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
 
         // 清空缓存，仅在启动扫描时重置
@@ -201,8 +218,30 @@ public class PDAProxy extends AbstractProxy {
 
         // 开始监听
         startReceiver();
+    }
 
-        EventUtility.logEvent(this.getInterop().getActivityContext(),"use_scanner_feature", "continuousScan");
+    /**
+     * 注册到页面的pda.continuous_scan(cell)方法
+     * 开始连续扫码
+     *
+     * @param ticket 回调
+     */
+    @JavascriptInterface
+    public void continuous_scanAsync(String ticket, String limit) {
+        logEvent("use_scanner_feature", "continuousScan");
+
+        XLog.v("continuous_scan start with limit : " + limit);
+
+        // 记录传入参数
+        registryCallbackTicket(ticket);
+        continueScanLimit = (null == limit || Integer.decode(limit) <= 0) ? Integer.MAX_VALUE : Integer.decode(limit); // 传入0或者复数，则不限制最大次数
+
+        // 清空缓存，仅在启动扫描时重置
+        _continueScanOn = true;
+        _resultCache.clear();
+
+        // 开始监听
+        startReceiver();
     }
 
     /**

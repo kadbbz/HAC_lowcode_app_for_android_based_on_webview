@@ -10,6 +10,7 @@ import android.os.Environment;
 import android.webkit.JavascriptInterface;
 
 import com.elvishew.xlog.XLog;
+import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.MiscUtilities;
 import com.watermark.androidwm_light.WatermarkBuilder;
 import com.watermark.androidwm_light.bean.WatermarkText;
@@ -19,7 +20,6 @@ import java.io.FileOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.InputMismatchException;
 
 /**
  * 操作文件
@@ -27,6 +27,8 @@ import java.util.InputMismatchException;
  * hac_file.loadFile(fileUri)：读取文件并返回Object Url
  * hac_file.loadLatestFile()：读取上次操作的文件并返回Object Url
  * hac_file.drawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color, fileUriLocation)：为图片加水印并返回文件地址
+ * 1.17.0
+ * hac_file.drawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color, ticket)：异步为图片加水印并返回文件地址
  */
 public class FileProxy extends AbstractProxy {
     @Override
@@ -41,6 +43,9 @@ public class FileProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String loadLatestFile() {
+
+        logEvent("use_file_feature", "loadLatestFile");
+
         var uri = MiscUtilities.getLatestFile();
         if (uri != null) {
             return loadFile(uri.toString());
@@ -59,6 +64,8 @@ public class FileProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String loadFile(String fileUri) {
+
+        logEvent("use_file_feature", "loadFile");
 
         try {
 
@@ -92,17 +99,7 @@ public class FileProxy extends AbstractProxy {
 
     }
 
-    /**
-     * 为图片加水印，将结果的Uri写入单元格
-     *
-     * @param fileUri             图片文件的Uri，空字符串则读取上次操作的文件
-     * @param watermark           水印文字
-     * @param isWatermarkTileMode 是否为平铺模式
-     * @param color               水印颜色
-     * @param fileUriLocation     处理后的文件路径
-     */
-    @JavascriptInterface
-    public void drawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color, String fileUriLocation) {
+    private void startDrawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color) {
         try {
             if (fileUri == null || fileUri.isEmpty()) {
                 fileUri = MiscUtilities.getLatestFile().toString();
@@ -112,7 +109,8 @@ public class FileProxy extends AbstractProxy {
             Bitmap b = BitmapFactory.decodeByteArray(source, 0, source.length);
 
             if (b == null) {
-                throw new InputMismatchException("该文件不是有效的图片类型。");
+                callback(CallbackParams.error("The file is not image or the format is not supported."));
+                return;
             }
 
             XLog.v("准备加水印：" + watermark);
@@ -163,11 +161,43 @@ public class FileProxy extends AbstractProxy {
             MiscUtilities.registryLatestFile(resultFile);
 
             XLog.v("水印处理完毕，即将返回");
-            this.getInterop().setInputValue(fileUriLocation, resultFile.toString());
+            callback(CallbackParams.success(resultFile.toString()));
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            callback(CallbackParams.error(e.toString()));
         }
+    }
+
+    /**
+     * 为图片加水印，将结果的Uri写入单元格
+     *
+     * @param fileUri             图片文件的Uri，空字符串则读取上次操作的文件
+     * @param watermark           水印文字
+     * @param isWatermarkTileMode 是否为平铺模式
+     * @param color               水印颜色
+     * @param fileUriLocation     处理后的文件路径
+     */
+    @JavascriptInterface
+    public void drawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color, String fileUriLocation) {
+        logEvent("use_file_feature", "drawWatermarkForImage");
+        registryPayloadCellLocation(fileUriLocation);
+        startDrawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color);
+    }
+
+    /**
+     * 异步为图片加水印，将结果的Uri写入单元格
+     *
+     * @param fileUri             图片文件的Uri，空字符串则读取上次操作的文件
+     * @param watermark           水印文字
+     * @param isWatermarkTileMode 是否为平铺模式
+     * @param color               水印颜色
+     * @param ticket              回调
+     */
+    @JavascriptInterface
+    public void drawWatermarkForImageAsync(String fileUri, String watermark, boolean isWatermarkTileMode, String color, String ticket) {
+        logEvent("use_file_feature", "drawWatermarkForImageAsync");
+        registryCallbackTicket(ticket);
+        startDrawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color);
     }
 
 }

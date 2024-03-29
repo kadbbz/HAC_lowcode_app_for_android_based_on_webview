@@ -5,11 +5,14 @@ import android.content.Intent;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.platform.AbstractWebInterop;
+import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.EventUtility;
 
 /**
  * JavaScript桥的抽象类
  * 未来可以做更多功能，但暂时没有具体的实现
+ *
  * @noinspection unused
  */
 public abstract class AbstractProxy {
@@ -25,7 +28,7 @@ public abstract class AbstractProxy {
     /**
      * 需要注册到上下文中的初始化操作
      */
-    public void onActivityCreated(AppCompatActivity activity){
+    public void onActivityCreated(AppCompatActivity activity) {
 
     }
 
@@ -76,4 +79,88 @@ public abstract class AbstractProxy {
     public ConfigManager getConfigManager() {
         return ConfigManager.getInstance();
     }
+
+    private String __ticket, __payloadCell, __payload2Cell, __errorCell;
+
+    /**
+     * 注册接收处理结果的回调
+     *
+     * @param ticket 处理数据的回调
+     */
+    public void registryCallbackTicket(String ticket) {
+        __ticket = ticket;
+    }
+
+    /**
+     * 注册接收错误信息的单元格
+     *
+     * @param errorCell 接受错误信息的单元格
+     */
+    public void registryErrorCellLocation(String errorCell) {
+        __errorCell = errorCell;
+    }
+
+    /**
+     * 注册接收处理结果的单元格
+     *
+     * @param payloadCell 接受处理结果的单元格
+     */
+    public void registryPayloadCellLocation(String payloadCell) {
+        registryPayloadCellLocation(payloadCell, null);
+    }
+
+    /**
+     * 注册接收处理结果的单元格
+     *
+     * @param payloadCell  接受处理结果的单元格
+     * @param payload2Cell 接受处理结果（备选）的单元格
+     */
+    public void registryPayloadCellLocation(String payloadCell, String payload2Cell) {
+        __payloadCell = payloadCell;
+        __payload2Cell = payload2Cell;
+    }
+
+    /**
+     * 记录FB日志
+     *
+     * @param name  日志名字
+     * @param extra 附加信息
+     */
+    public void logEvent(String name, String extra) {
+        EventUtility.logEvent(getInterop().getActivityContext(), name, extra);
+    }
+
+    /**
+     * 将处理结果返回到WebView
+     *
+     * @param params 参数
+     */
+    public void callback(CallbackParams params) {
+
+        getInterop().writeLogIntoConsole("Data from the Android native function: "
+                + (params.isSuccess ? "success" : "error")
+                + " | " + params.payload
+                + " | " + params.error);
+
+        if (params.isSuccess && __payloadCell != null && !__payloadCell.isEmpty()) {
+            getInterop().setInputValue(__payloadCell, params.payload);
+            getInterop().setInputValue(__errorCell, "");
+        }
+
+        if (params.isSuccess && __payload2Cell != null && !__payload2Cell.isEmpty()) {
+            getInterop().setInputValue(__payload2Cell, params.payload2);
+            getInterop().setInputValue(__errorCell, "");
+        }
+
+
+        if (!params.isSuccess && __errorCell != null && !__errorCell.isEmpty()) {
+            getInterop().setInputValue(__payloadCell, "");
+            getInterop().setInputValue(__errorCell, params.error);
+        }
+
+        if (__ticket != null && !__ticket.isEmpty()) {
+            getInterop().callback(__ticket, params);
+        }
+    }
+
 }
