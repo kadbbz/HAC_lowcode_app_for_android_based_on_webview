@@ -342,7 +342,7 @@ public class AppProxy extends AbstractProxy {
      * @return 应用的包名
      */
     @JavascriptInterface
-    public String getPackageName2(String cell) {
+    public String getPackageName2() {
         return getInterop().getActivityContext().getPackageName();
     }
 
@@ -363,7 +363,7 @@ public class AppProxy extends AbstractProxy {
      * @return 版本号
      */
     @JavascriptInterface
-    public String getVersion2(String cell) {
+    public String getVersion2() {
         return MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
     }
 
