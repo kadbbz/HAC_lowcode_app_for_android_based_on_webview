@@ -5,7 +5,7 @@ import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS;
 import com.arthenica.mobileffmpeg.FFmpeg;
 
 public class FFmpegUtility {
-    public static void wavToMp3(String input, String output, FFmpegCallback callback){
+    public static long wavToMp3(String input, String output, FFmpegCallback callback){
         long executionId = FFmpeg.executeAsync("-i \""+ input+"\" \""+output+"\" -y", (executionId1, returnCode) -> {
             if (returnCode == RETURN_CODE_SUCCESS) {
                 callback.onSuccess();
@@ -13,6 +13,8 @@ public class FFmpegUtility {
                callback.onError(returnCode);
             }
         });
+
+        return executionId;
     }
 
     public abstract static class FFmpegCallback{

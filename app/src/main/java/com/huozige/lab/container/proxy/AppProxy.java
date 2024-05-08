@@ -16,7 +16,6 @@ import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
-import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -112,7 +111,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void openSettingPage() {
 
-        getInterop().getActivityContext().runOnUiThread(() ->
+        runOnUiThread(() ->
                 _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), SettingActivity.class))
         );
     }
