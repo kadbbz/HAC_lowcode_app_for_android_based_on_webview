@@ -25,8 +25,7 @@ import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
-import com.king.zxing.CameraScan;
-import com.king.zxing.CaptureActivity;
+import com.king.camera.scan.CameraScan;
 
 import io.realm.Realm;
 
@@ -111,7 +110,7 @@ public class SettingActivity extends BaseActivity {
                     Permission.CAMERA
             }, () -> {
                 // 调用ZXingLite的扫码页面
-                _arcZxingLite.launch(new Intent(SettingActivity.this, CaptureActivity.class));
+                _arcZxingLite.launch(new Intent(SettingActivity.this, HACQRCodeScanActivity.class));
             });
         }
     };

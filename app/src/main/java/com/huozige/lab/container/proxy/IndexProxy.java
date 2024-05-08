@@ -8,8 +8,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.king.zxing.CameraScan;
-import com.king.zxing.CaptureActivity;
+import com.huozige.lab.container.HACQRCodeScanActivity;
+import com.king.camera.scan.CameraScan;
 
 /**
  * 兼容官方APP的页面端能力
@@ -33,7 +33,7 @@ public class IndexProxy extends AbstractProxy {
         _scanResultCell = cellLocation;
 
         // 调用ZXingLite的扫码页面
-        _arcZxingLite.launch(new Intent(getInterop().getActivityContext(), CaptureActivity.class));
+        _arcZxingLite.launch(new Intent(getInterop().getActivityContext(), HACQRCodeScanActivity.class));
     }
 
     /**

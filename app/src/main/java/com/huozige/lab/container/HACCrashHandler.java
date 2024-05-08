@@ -3,12 +3,10 @@ package com.huozige.lab.container;
 import android.app.Application;
 import android.content.Intent;
 
+import androidx.annotation.NonNull;
+
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.EventUtility;
-
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
 
 /**
  * 全局挂载的未捕获异常处理机制
@@ -27,15 +25,13 @@ public class HACCrashHandler implements Thread.UncaughtExceptionHandler {
 
         EventUtility.logEvent(this._context,"app_uncaught_exception", throwable.toString());
 
-        XLog.e("出现未捕获的异常：" + throwable.getMessage()+" \r\n%s", throwable);
+        XLog.e("出现未捕获的异常：" + throwable.getMessage(),throwable);
 
         String message = "应用出现严重错误，请拍摄本界面或截屏后，与技术支持人员联系。";
         message += "\r\n\n";
         message += throwable.getMessage();
         message += "\r\n";
         message += throwable.toString();
-
-        Toast.makeText(this._context, message, Toast.LENGTH_LONG).show();
 
         Intent intent = new Intent(_context, ShowErrorActivity.class);
         intent.putExtra(ShowErrorActivity.EXTRA_KEY_MESSAGE, message);

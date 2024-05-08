@@ -16,8 +16,7 @@ import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
-import com.king.zxing.CameraScan;
-import com.king.zxing.CaptureActivity;
+import com.king.camera.scan.CameraScan;
 
 /**
  * 通过二维码完成快速配置
@@ -105,7 +104,9 @@ public class QuickConfigActivity extends BaseActivity {
                 Permission.NOTIFICATION_SERVICE
         }, () -> {
             // 调用ZXingLite的扫码页面
-            _arcZxingLite.launch(new Intent(QuickConfigActivity.this, CaptureActivity.class));
+            var intent = new Intent(QuickConfigActivity.this, HACQRCodeScanActivity.class);
+            intent.putExtra(HACQRCodeScanActivity.EXTRA_KEY_SCAN_HINTS, HACQRCodeScanActivity.EXTRA_QR_CODE_HINTS);
+            _arcZxingLite.launch(intent);
         });
     };
 

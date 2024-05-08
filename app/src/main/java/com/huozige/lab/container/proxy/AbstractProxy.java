@@ -8,6 +8,7 @@ import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.EventUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * JavaScript桥的抽象类
@@ -128,6 +129,19 @@ public abstract class AbstractProxy {
      */
     public void logEvent(String name, String extra) {
         EventUtility.logEvent(getInterop().getActivityContext(), name, extra);
+    }
+
+    /**
+     * 申请权限
+     * @param permissions 需要申请的权限列表
+     * @param successAction 申请成功后需要执行的操作
+     */
+    public void asyncRequirePermissions(String[] permissions, Runnable successAction){
+        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), permissions,successAction);
+    }
+
+    public void runOnUiThread(Runnable action){
+        getInterop().getActivityContext().runOnUiThread(action);
     }
 
     /**

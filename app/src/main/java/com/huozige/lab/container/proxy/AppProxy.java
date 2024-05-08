@@ -123,7 +123,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void dial(String phoneNumber) {
 
-        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), new String[]{
+        asyncRequirePermissions(new String[]{
                 Permission.CALL_PHONE
         }, () -> {
             Intent intent = new Intent();
@@ -141,7 +141,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void openQuickConfigPage() {
-        getInterop().getActivityContext().runOnUiThread(() ->
+        runOnUiThread(() ->
                 _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), QuickConfigActivity.class))
         );
     }

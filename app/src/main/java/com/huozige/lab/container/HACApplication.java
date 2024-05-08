@@ -51,10 +51,9 @@ public class HACApplication extends Application {
 
         XLog.v("Realm初始化完成");
 
-        JPushInterface.init(HACApplication.this);
+        JPushInterface.init(this);
 
         XLog.v("JPush初始化完成");
-
     }
 
     private void initLogger() {
