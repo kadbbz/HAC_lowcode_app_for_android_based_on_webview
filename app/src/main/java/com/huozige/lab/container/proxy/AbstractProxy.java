@@ -143,41 +143,45 @@ public abstract class AbstractProxy {
     }
 
 
-    protected void showLongToast(String message){
+    protected void showLongToast(String message) {
         getInterop().showToast(message);
     }
 
     /**
      * 获取当前WebView
+     *
      * @return 上下文
      */
-    protected WebView getWebView(){
+    protected WebView getWebView() {
         return getInterop().getWebView();
     }
 
     /**
      * 弹出页面
+     *
      * @param intent 参数
      */
-    protected void startActivity(Intent intent){
+    protected void startActivity(Intent intent) {
         this.getInterop().getActivityContext().startActivity(intent);
     }
 
     /**
      * 弹出页面
+     *
      * @param targetActivityClass 目标页面的类型
      */
-    protected void startActivity(Class<?> targetActivityClass){
+    protected void startActivity(Class<?> targetActivityClass) {
         this.getInterop().getActivityContext().startActivity(createIntent(targetActivityClass));
     }
 
     /**
      * 生成页面跳转用的Intent
+     *
      * @param targetActivityClass 目标页面的类型
      * @return 到该页面的intent
      */
-    protected Intent createIntent(Class<?> targetActivityClass){
-     return new Intent(this.getInterop().getActivityContext(), targetActivityClass);
+    protected Intent createIntent(Class<?> targetActivityClass) {
+        return new Intent(this.getInterop().getActivityContext(), targetActivityClass);
     }
 
     /**
@@ -188,25 +192,16 @@ public abstract class AbstractProxy {
      */
     protected void callback(CallbackParams params) {
 
-        getInterop().writeLogIntoConsole("Data from the Android native function: "
-                + (params.isSuccess ? "success" : "error")
-                + " | " + params.payload
-                + " | " + params.error);
-
-        if (params.isSuccess && _payloadCell != null && !_payloadCell.isEmpty()) {
-            getInterop().setInputValue(_payloadCell, params.payload);
-            getInterop().setInputValue(_errorCell, "");
+        if (_payloadCell != null && !_payloadCell.isEmpty()) {
+            getInterop().setInputValue(_payloadCell, params.isSuccess ? params.payload : "");
         }
 
         if (params.isSuccess && _payload2Cell != null && !_payload2Cell.isEmpty()) {
-            getInterop().setInputValue(_payload2Cell, params.payload2);
-            getInterop().setInputValue(_errorCell, "");
+            getInterop().setInputValue(_payload2Cell, params.isSuccess ? params.payload2 : "");
         }
 
-
         if (!params.isSuccess && _errorCell != null && !_errorCell.isEmpty()) {
-            getInterop().setInputValue(_payloadCell, "");
-            getInterop().setInputValue(_errorCell, params.error);
+            getInterop().setInputValue(_errorCell, !params.isSuccess ? params.error : "");
         }
 
         if (_ticket != null && !_ticket.isEmpty()) {
@@ -219,7 +214,7 @@ public abstract class AbstractProxy {
      * 采用简化方式完成，仅支持写入单元格
      *
      * @param cellLocation 单元格名称
-     * @param value 需要写入的值
+     * @param value        需要写入的值
      */
     protected void callback(String cellLocation, String value) {
         getInterop().setInputValue(cellLocation, value);
@@ -227,9 +222,10 @@ public abstract class AbstractProxy {
 
     /**
      * 写入WebView控制台的普通日志，诊断使用
+     *
      * @param log 日志内容
      */
-    protected void writeInfoLog(String log){
+    protected void writeInfoLog(String log) {
 
         // 先记录到APP端
         XLog.v(log);
@@ -240,9 +236,10 @@ public abstract class AbstractProxy {
 
     /**
      * 写入WebView控制台的错误日志，调查使用
+     *
      * @param error 错误日志内容
      */
-    protected void writeErrorLog(String error){
+    protected void writeErrorLog(String error) {
 
         // 先记录到APP端
         XLog.e(error);
@@ -254,8 +251,8 @@ public abstract class AbstractProxy {
     /**
      * 记录Firebase日志，用于分析功能用量
      *
-     * @param featureName  功能名字
-     * @param extra 操作方法
+     * @param featureName 功能名字
+     * @param extra       操作方法
      */
     protected void registryForFeatureUsageAnalyze(String featureName, String extra) {
         EventUtility.logEvent(featureName, extra);

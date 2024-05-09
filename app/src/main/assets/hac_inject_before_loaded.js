@@ -71,7 +71,7 @@
         currentWindow.HAC.__errorCallbacks.get(ticket.functionName)(error);
     };
 
-    console.log("HAC helper is ready.");
+    console.log("HAC准备就绪。");
 
-    return "版本号：20240327.01";
+    return "版本号：20240509.01";
 })();

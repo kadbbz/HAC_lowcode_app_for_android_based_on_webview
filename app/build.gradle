@@ -44,6 +44,17 @@ android {
         viewBinding true
     }
     namespace "com.huozige.lab.container"
+
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            if (variant.buildType.name == "debug") {
+                output.outputFileName = "hac-${android.defaultConfig.versionName}-debug.apk"
+            } else if (variant.buildType.name == "release") {
+                output.outputFileName = "hac-${android.defaultConfig.versionName}.apk"
+            }
+        }
+    }
 }
 
 
