@@ -9,9 +9,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.webkit.JavascriptInterface;
 
-import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.watermark.androidwm_light.WatermarkBuilder;
 import com.watermark.androidwm_light.bean.WatermarkText;
 
@@ -44,14 +43,13 @@ public class FileProxy extends AbstractProxy {
     @JavascriptInterface
     public String loadLatestFile() {
 
-        logEvent("use_file_feature", "loadLatestFile");
+        registryForFeatureUsageAnalyze("use_file_feature", "loadLatestFile");
 
-        var uri = MiscUtilities.getLatestFile();
+        var uri = DeviceUtilities.getLatestFile();
         if (uri != null) {
             return loadFile(uri.toString());
         } else {
-            XLog.e("应用启动后暂未执行过文件相关操作，无法读取");
-            getInterop().writeLogIntoConsole("应用启动后暂未执行过文件相关操作，无法读取");
+            writeErrorLog("应用启动后暂未执行过文件相关操作，无法读取");
             return null;
         }
     }
@@ -65,33 +63,32 @@ public class FileProxy extends AbstractProxy {
     @JavascriptInterface
     public String loadFile(String fileUri) {
 
-        logEvent("use_file_feature", "loadFile");
+        registryForFeatureUsageAnalyze("use_file_feature", "loadFile");
 
         try {
 
-            XLog.v("开始读取文件：" + fileUri);
+            writeInfoLog("开始读取文件：" + fileUri);
 
-            ContentResolver cR = getInterop().getActivityContext().getContentResolver();
+            ContentResolver cR = getWebView().getContext().getContentResolver();
             String type = cR.getType(Uri.parse(fileUri));
 
             if (type == null) {
                 type = "application/octet-stream";
             }
 
-            XLog.v("该文件的MIME为：" + type);
+            writeInfoLog("该文件的MIME为：" + type);
 
             // 形如 data:image/jpg;base64,AA67...
             String objUrl = "data:"
                     + type
                     + ";base64,"
-                    + Base64.getEncoder().encodeToString(MiscUtilities.readFileToByteArray(getInterop().getActivityContext(), Uri.parse(fileUri)));
+                    + Base64.getEncoder().encodeToString(DeviceUtilities.readFileToByteArray(Uri.parse(fileUri)));
 
-            XLog.v("文件读取完毕，Object Url的总长度为：" + objUrl.length());
+            writeInfoLog("文件读取完毕，Object Url的总长度为：" + objUrl.length());
 
             return objUrl;
         } catch (Exception e) {
-            XLog.e("读取文件时出错：" + fileUri, e);
-            getInterop().writeLogIntoConsole("读取文件时出错：" + fileUri + " \r\n" + e);
+            writeErrorLog("读取文件时出错：" + fileUri + "，详情：" + e);
 
             return null;
         }
@@ -102,18 +99,19 @@ public class FileProxy extends AbstractProxy {
     private void startDrawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color) {
         try {
             if (fileUri == null || fileUri.isEmpty()) {
-                fileUri = MiscUtilities.getLatestFile().toString();
+                fileUri = DeviceUtilities.getLatestFile().toString();
             }
 
-            byte[] source = MiscUtilities.readFileToByteArray(this.getInterop().getActivityContext(), Uri.parse(fileUri));
+            byte[] source = DeviceUtilities.readFileToByteArray(Uri.parse(fileUri));
             Bitmap b = BitmapFactory.decodeByteArray(source, 0, source.length);
 
             if (b == null) {
+                writeErrorLog("文件不是图片类型，或者图片的格式不被支持：" + fileUri);
                 callback(CallbackParams.error("The file is not image or the format is not supported."));
                 return;
             }
 
-            XLog.v("准备加水印：" + watermark);
+            writeInfoLog("准备加水印：" + watermark);
 
             var fontSize = Integer.max(b.getHeight() / 200, 20);
             var fontColor = Color.LTGRAY; // 默认颜色
@@ -134,7 +132,7 @@ public class FileProxy extends AbstractProxy {
             }
 
             var builder = WatermarkBuilder
-                    .create(this.getInterop().getActivityContext(), b)
+                    .create(getWebView().getContext(), b)
                     .loadWatermarkText(watermarkText)
                     .setTileMode(isWatermarkTileMode);
 
@@ -143,27 +141,28 @@ public class FileProxy extends AbstractProxy {
             // 创建图片文件
             File imageFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "HAC_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "_WM.jpg");
             FileOutputStream fileStream = new FileOutputStream(imageFile);
-            XLog.v("水印添加完毕，准备存储为新文件：" + imageFile.getPath());
+            writeInfoLog("水印添加完毕，准备存储为新文件：" + imageFile.getPath());
 
             // 将 Bitmap 保存到文件
             b.compress(Bitmap.CompressFormat.JPEG, 100, fileStream);
 
             // 通知系统相册刷新，异步操作，无需等待
-            MediaScannerConnection.scanFile(this.getInterop().getActivityContext(),
+            MediaScannerConnection.scanFile(getWebView().getContext(),
                     new String[]{imageFile.getAbsolutePath()}, null,
                     (path, uri) -> {
                         // 图片保存成功后的回调
                         // 可以在这里进行额外的操作，比如显示图片等
-                        XLog.v("图片已被相册收录：%s", uri);
+                        writeInfoLog("图片已被相册收录：" + uri);
                     });
 
-            Uri resultFile = MiscUtilities.toUri(this.getInterop().getActivityContext(), imageFile.getPath());
-            MiscUtilities.registryLatestFile(resultFile);
+            Uri resultFile = DeviceUtilities.pathToUri(imageFile.getPath());
+            DeviceUtilities.registryLatestFile(resultFile);
 
-            XLog.v("水印处理完毕，即将返回");
+            writeInfoLog("水印处理完毕，即将返回");
             callback(CallbackParams.success(resultFile.toString()));
 
         } catch (Exception e) {
+            writeErrorLog("给图片[" + fileUri + "]添加水印时出错，详情：" + e);
             callback(CallbackParams.error(e.toString()));
         }
     }
@@ -179,7 +178,7 @@ public class FileProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void drawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color, String fileUriLocation) {
-        logEvent("use_file_feature", "drawWatermarkForImage");
+        registryForFeatureUsageAnalyze("use_file_feature", "drawWatermarkForImage");
         registryPayloadCellLocation(fileUriLocation);
         startDrawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color);
     }
@@ -195,7 +194,7 @@ public class FileProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void drawWatermarkForImageAsync(String fileUri, String watermark, boolean isWatermarkTileMode, String color, String ticket) {
-        logEvent("use_file_feature", "drawWatermarkForImageAsync");
+        registryForFeatureUsageAnalyze("use_file_feature", "drawWatermarkForImageAsync");
         registryCallbackTicket(ticket);
         startDrawWatermarkForImage(fileUri, watermark, isWatermarkTileMode, color);
     }

@@ -23,7 +23,7 @@ import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.king.camera.scan.CameraScan;
 
@@ -43,7 +43,7 @@ public class SettingActivity extends BaseActivity {
     TextView _lblInfo;
 
     private String getVersionInfo() {
-        return "SSAID: " + MiscUtilities.getSSAID(this) + " \r\nPackage Version: " + MiscUtilities.getPackageVersionName(this) + " \r\nWebView Version: " + MiscUtilities.getWebViewVersionName();
+        return "SSAID: " + DeviceUtilities.getSSAID() + " \r\nPackage Version: " + DeviceUtilities.getPackageVersionName() + " \r\nWebView Version: " + DeviceUtilities.getWebViewVersionName();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class SettingActivity extends BaseActivity {
             }
         });
 
-        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(this)); // 打开设置页面，返回后重启应用
+        _arc4QuickConfig = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart()); // 打开设置页面，返回后重启应用
 
         // 设置初始值
         _txtUrl.setText(ConfigManager.getInstance().getEntry());
@@ -135,7 +135,7 @@ public class SettingActivity extends BaseActivity {
                 XLog.v("配置更新完成。");
 
                 // 重启生效
-                LifecycleUtility.restart(SettingActivity.this);
+                LifecycleUtility.restart();
             }
         });
 
@@ -178,7 +178,7 @@ public class SettingActivity extends BaseActivity {
             XLog.v("数据清理完成。");
 
             // 重启生效
-            LifecycleUtility.restart(SettingActivity.this);
+            LifecycleUtility.restart();
         });
 
         ab.setNegativeButton(SettingActivity.this.getString(R.string.ui_button_cancel), (dialogInterface, i) -> {

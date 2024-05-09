@@ -2,9 +2,6 @@ package com.huozige.lab.container.webview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-
-import com.elvishew.xlog.XLog;
-
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,9 +10,10 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.EventUtility;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 
 /**
  * HAC定制化的WebView控件，内置配置选项和浏览器控制台（Console）操作能力
@@ -41,8 +39,8 @@ public class HACWebView extends WebView {
         _context = context;
 
         // 根据配置选项决定是否检查版本兼容性
-        if (!ConfigManager.getInstance().getBypassCompatibleCheck() && MiscUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION) {
-            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为：" + SUPPORT_WEBVIEW_MAJOR_VERSION + "，当前设备为：" + MiscUtilities.getWebViewVersionName() + "。\r\n请联系设备厂商，升级WebView组件；如果因为设备原因确实无法升级，可在【设置】界面上勾选“跳过WebView兼容性检查”，临时使用旧版本WebView。");
+        if (!ConfigManager.getInstance().getBypassCompatibleCheck() && DeviceUtilities.getWebViewMajorVersion() < SUPPORT_WEBVIEW_MAJOR_VERSION) {
+            throw new IllegalStateException("系统中的WebView组件版本过低。最低兼容版本为：" + SUPPORT_WEBVIEW_MAJOR_VERSION + "，当前设备为：" + DeviceUtilities.getWebViewVersionName() + "。\r\n请联系设备厂商，升级WebView组件；如果因为设备原因确实无法升级，可在【设置】界面上勾选“跳过WebView兼容性检查”，临时使用旧版本WebView。");
         }
 
         // 先配置进度条
@@ -87,7 +85,7 @@ public class HACWebView extends WebView {
         WebView.setWebContentsDebuggingEnabled(true); // 使用Chrome调试网页，需要开启这个
 
         // UA
-        String versionName = MiscUtilities.getPackageVersionName(this.getContext());
+        String versionName = DeviceUtilities.getPackageVersionName();
         String ua = settings.getUserAgentString();//原来获取的UA
         settings.setUserAgentString(ua + " HAC/" + versionName);
 
@@ -100,7 +98,7 @@ public class HACWebView extends WebView {
             XLog.v("WebView组件初始化完成，采用软件加速");
         }
 
-        EventUtility.logEvent(this._context,"web_view_init", Integer.toString(MiscUtilities.getWebViewMajorVersion()));
+        EventUtility.logEvent("web_view_init", Integer.toString(DeviceUtilities.getWebViewMajorVersion()));
     }
 
     /**

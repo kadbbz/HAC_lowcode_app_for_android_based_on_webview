@@ -15,7 +15,7 @@ import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -30,12 +30,24 @@ import io.realm.RealmConfiguration;
  */
 public class HACApplication extends Application {
 
+    static HACApplication  __instance;
+
+    /**
+     * 获取应用级上下文的实例
+     * @return 应用级上下文
+     */
+    public static HACApplication getInstance(){
+        return __instance;
+    }
+
     static final long MAX_TIME = 1000 * 60 * 60 * 24 * 7; // 7 days
     final static String LOG_TAG = "HAC_Application";
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        __instance = this;
 
         ConfigManager.init(this);
 
@@ -81,8 +93,8 @@ public class HACApplication extends Application {
                                 "\nDevice Model       : " + Build.MODEL +
                                 "\nAndroid Version    : " + Build.VERSION.RELEASE +
                                 "\nAndroid SDK        : " + Build.VERSION.SDK_INT +
-                                "\nApp VersionName    : " + MiscUtilities.getPackageVersionName(HACApplication.this) +
-                                "\nWebView Version    : " + MiscUtilities.getWebViewVersionName() +
+                                "\nApp VersionName    : " + DeviceUtilities.getPackageVersionName() +
+                                "\nWebView Version    : " + DeviceUtilities.getWebViewVersionName() +
                                 "\n<<<<<<<<<<<<<<<< File Header <<<<<<<<<<<<<<<<\n\n";
                         appendLog(header);
                     }

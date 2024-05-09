@@ -23,9 +23,9 @@ public class HACCrashHandler implements Thread.UncaughtExceptionHandler {
     @Override
     public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
 
-        EventUtility.logEvent(this._context,"app_uncaught_exception", throwable.toString());
+        EventUtility.logEvent("app_uncaught_exception", throwable.toString());
 
-        XLog.e("出现未捕获的异常：" + throwable.getMessage(),throwable);
+        XLog.e("出现未捕获的异常：" + throwable.getMessage(), throwable);
 
         String message = "应用出现严重错误，请拍摄本界面或截屏后，与技术支持人员联系。";
         message += "\r\n\n";

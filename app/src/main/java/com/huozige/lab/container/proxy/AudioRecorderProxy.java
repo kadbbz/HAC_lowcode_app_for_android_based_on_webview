@@ -3,11 +3,11 @@ package com.huozige.lab.container.proxy;
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Environment;
 import android.webkit.JavascriptInterface;
 
-import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.platform.CallbackParams;
@@ -26,7 +26,7 @@ import cafe.adriel.androidaudiorecorder.model.AudioSource;
  * audio.record(cellTag)：录音并返回mp3文件
  * audio.recordAsync(ticket)：异步录音
  */
-public class AudioRecorderProxy extends AbstractProxy{
+public class AudioRecorderProxy extends AbstractProxy {
 
     String _currentWavFilePath;
 
@@ -39,6 +39,7 @@ public class AudioRecorderProxy extends AbstractProxy{
 
     /**
      * 录音并将录制的mp3文件的Uri地址填充到单元格
+     *
      * @param cellTag 接收文件地址的单元格
      */
     @JavascriptInterface
@@ -48,15 +49,16 @@ public class AudioRecorderProxy extends AbstractProxy{
         registryPayloadCellLocation(cellTag);
 
         // 记录日志
-        getInterop().writeLogIntoConsole("Audio recording started.");
+        writeInfoLog("开始录音");
 
         startRecording();
 
-        logEvent("use_audio_feature", "record");
+        registryForFeatureUsageAnalyze("use_audio_feature", "record");
     }
 
     /**
      * 异步开始录音，结果保存为mp3文件
+     *
      * @param ticket 包含文件地址的回调
      */
     @JavascriptInterface
@@ -66,23 +68,23 @@ public class AudioRecorderProxy extends AbstractProxy{
         registryCallbackTicket(ticket);
 
         // 记录日志
-        getInterop().writeLogIntoConsole("Audio recording started.");
+        writeInfoLog("开始录音");
 
         startRecording();
 
-        logEvent("use_audio_feature", "recordAsync");
+        registryForFeatureUsageAnalyze("use_audio_feature", "recordAsync");
 
     }
 
-    private void startRecording(){
+    private void startRecording() {
 
         // 需要权限
-        asyncRequirePermissions(new String[]{Permission.RECORD_AUDIO, Permission.WRITE_EXTERNAL_STORAGE},()->{
+        asyncRequirePermissions(new String[]{Permission.RECORD_AUDIO, Permission.WRITE_EXTERNAL_STORAGE}, () -> {
 
             _currentWavFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + "HAC_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".wav";
-            int color = this.getInterop().getActivityContext().getColor(R.color.colorAccent);
+            int color = getWebView().getContext().getColor(R.color.colorAccent);
 
-            AndroidAudioRecorder.with(this.getInterop().getActivityContext())
+            AndroidAudioRecorder.with((Activity) getWebView().getContext())
                     // Required
                     .setFilePath(_currentWavFilePath)
                     .setColor(color)
@@ -97,7 +99,7 @@ public class AudioRecorderProxy extends AbstractProxy{
                     // Start recording
                     .record();
 
-            XLog.v("打开录音界面，等待录制完成。");
+            writeInfoLog("已打开录音界面，等待录制完成。");
         });
     }
 
@@ -107,29 +109,27 @@ public class AudioRecorderProxy extends AbstractProxy{
         if (requestCode == __requestCode) {
             if (resultCode == RESULT_OK) {
 
-                getInterop().writeLogIntoConsole("Audio recording completed, start compressing.");
-
-                XLog.v("音频录制完成，原始文件保存到："+_currentWavFilePath +" ，即将开始压缩");
+                writeInfoLog("音频录制完成，原始文件保存到：" + _currentWavFilePath + " ，即将开始压缩");
 
                 var convertedFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + "HAC_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "_compressed.mp3";
                 FFmpegUtility.wavToMp3(_currentWavFilePath, convertedFile, new FFmpegUtility.FFmpegCallback() {
                     @Override
                     public void onSuccess() {
-                        XLog.v("音频压缩完成，文件保存到："+convertedFile);
+                        writeInfoLog("音频压缩完成，文件保存到：" + convertedFile);
                         callback(CallbackParams.success(convertedFile));
                     }
 
                     @Override
                     public void onError(int code) {
-                        XLog.e("音频压缩过程出错，错误码：",code);
-                        callback(CallbackParams.error("ffmpeg error: "+code));
+                        writeErrorLog("音频压缩过程出错，错误码：" + code);
+                        callback(CallbackParams.error("ffmpeg error: " + code));
                     }
                 });
 
                 return true;
             } else if (resultCode == RESULT_CANCELED) {
 
-                XLog.v("录音界面关闭，用户取消或者发生了预期外的错误。");
+                writeErrorLog("录音界面关闭，用户取消或者发生了预期外的错误，错误码：" + requestCode);
                 callback(CallbackParams.error(CallbackParams.CANCEL_BY_USER));
                 return true;
             }

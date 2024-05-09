@@ -31,10 +31,10 @@ public class CameraProxy extends AbstractProxy {
 
     private void startTakePhoto(boolean isSnapshot) {
 
-        getInterop().writeLogIntoConsole("Start taking photo " + (isSnapshot ? "(snapshot)" : ""));
+        writeInfoLog("开始拍摄照片" + (isSnapshot ? "（小尺寸）" : ""));
 
         // 配置参数
-        Intent cameraIntent = new Intent(this.getInterop().getActivityContext(), CameraViewActivity.class);
+        Intent cameraIntent = createIntent(CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, isSnapshot ? CameraViewActivity.OPERATION_TAKE_PHOTO_SNAPSHOT : CameraViewActivity.OPERATION_TAKE_PHOTO);
 
         // 弹出相机
@@ -49,7 +49,7 @@ public class CameraProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void takePhoto(boolean isSnapshot, String fileUriLocation) {
-        logEvent("use_camera_feature", "takePhoto");
+        registryForFeatureUsageAnalyze("use_camera_feature", "takePhoto");
 
         registryPayloadCellLocation(fileUriLocation);
 
@@ -64,7 +64,7 @@ public class CameraProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void takePhotoAsync(boolean isSnapshot, String ticket) {
-        logEvent("use_camera_feature", "takePhotoAsync");
+        registryForFeatureUsageAnalyze("use_camera_feature", "takePhotoAsync");
 
         registryCallbackTicket(ticket);
 
@@ -73,10 +73,10 @@ public class CameraProxy extends AbstractProxy {
 
     private void startTakeVideo(boolean isSnapshot) {
 
-        getInterop().writeLogIntoConsole("Start taking video " + (isSnapshot ? "(snapshot)" : ""));
+        writeInfoLog("开始拍摄视频" + (isSnapshot ? "（小尺寸）" : ""));
 
         // 配置参数
-        Intent cameraIntent = new Intent(this.getInterop().getActivityContext(), CameraViewActivity.class);
+        Intent cameraIntent = createIntent(CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, isSnapshot ? CameraViewActivity.OPERATION_TAKE_VIDEO_SNAPSHOT : CameraViewActivity.OPERATION_TAKE_VIDEO);
 
         // 弹出相机
@@ -92,7 +92,7 @@ public class CameraProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void takeVideo(boolean isSnapshot, String filePathLocation) {
-        logEvent("use_camera_feature", "takeVideo");
+        registryForFeatureUsageAnalyze("use_camera_feature", "takeVideo");
 
         registryPayloadCellLocation(filePathLocation);
 
@@ -107,7 +107,7 @@ public class CameraProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void takeVideoAsync(boolean isSnapshot, String ticket) {
-        logEvent("use_camera_feature", "takeVideoAsync");
+        registryForFeatureUsageAnalyze("use_camera_feature", "takeVideoAsync");
 
         registryCallbackTicket(ticket);
 
@@ -119,8 +119,10 @@ public class CameraProxy extends AbstractProxy {
         _imageCaptureChooser = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null && result.getData().getExtras() != null) {
+                        var file = result.getData().getStringExtra(CameraViewActivity.EXTRA_OUT_URI);
+                        writeInfoLog("照片/视频拍摄完成，保存到：" + file);
                         // 从Intent中读取图片和视频的URI
-                        callback(CallbackParams.success(result.getData().getStringExtra(CameraViewActivity.EXTRA_OUT_URI)));
+                        callback(CallbackParams.success(file));
                     }
                 });
     }
