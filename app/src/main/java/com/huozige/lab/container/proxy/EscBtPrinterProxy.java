@@ -9,10 +9,8 @@ import com.dantsu.escposprinter.EscPosCharsetEncoding;
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections;
-import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.utilities.PermissionsUtility;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -34,9 +32,9 @@ public class EscBtPrinterProxy extends AbstractProxy {
 
     private void startScan() {
 
-        getInterop().writeLogIntoConsole("Start ecs printer scanning.");
+        writeInfoLog("开始扫描蓝牙的ESC打印机");
 
-        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), new String[]{
+        asyncRequirePermissions(new String[]{
                 Permission.ACCESS_FINE_LOCATION,
                 Permission.ACCESS_COARSE_LOCATION
         }, () -> {
@@ -44,7 +42,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
             final BluetoothConnection[] bluetoothDevicesList = (new BluetoothPrintersConnections()).getList();
 
             if (bluetoothDevicesList != null) {
-                XLog.v("Esc printers scanning completed, " + bluetoothDevicesList.length + " found.");
+                writeInfoLog("ESC打印机扫描完毕，共发现：" + bluetoothDevicesList.length + "台");
 
                 @SuppressLint("MissingPermission") Stream<EscPrinterInfo> result = Arrays.stream(bluetoothDevicesList).map((conn) -> {
                     EscPrinterInfo device = new EscPrinterInfo();
@@ -56,7 +54,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
                 callback(CallbackParams.success(JSON.toJSONString(result.toArray(EscPrinterInfo[]::new))));
 
             } else {
-                XLog.e("Esc printers scanning failed.");
+                writeErrorLog("ESC打印机扫描过程出错");
                 callback(CallbackParams.error("Esc printers scanning failed."));
             }
         });
@@ -70,7 +68,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void scan(String resultCell) {
-        logEvent("use_esc_feature", "scan");
+        registryForFeatureUsageAnalyze("use_esc_feature", "scan");
 
         registryPayloadCellLocation(resultCell);
 
@@ -85,7 +83,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void scanAsync(String ticket) {
-        logEvent("use_esc_feature", "scanAsync");
+        registryForFeatureUsageAnalyze("use_esc_feature", "scanAsync");
 
         registryCallbackTicket(ticket);
 
@@ -104,23 +102,21 @@ public class EscBtPrinterProxy extends AbstractProxy {
     @JavascriptInterface
     public void print(String mac, int printerDpi, float printerWidthMM, int printerNbrCharactersPerLine, String template) {
 
-        logEvent("use_esc_feature", "print");
+        registryForFeatureUsageAnalyze("use_esc_feature", "print");
 
-        getInterop().writeLogIntoConsole("Start printing via ESC.");
+        writeInfoLog("开始使用ESC协议打印，打印机的地址为："+ mac);
 
         try {
-            XLog.v("Print " + template + ", using printer " + mac + " dpi: " + printerDpi + " width: " + printerWidthMM + " CPL: " + printerNbrCharactersPerLine);
+            writeInfoLog("打印模板：" + template + "，dpi: " + printerDpi + " width: " + printerWidthMM + " CPL: " + printerNbrCharactersPerLine);
             EscPosPrinter printer = new EscPosPrinter(findPrinter(mac), printerDpi, printerWidthMM, printerNbrCharactersPerLine, new EscPosCharsetEncoding("GBK", 16));
             printer.printFormattedText(template);
-            XLog.v("Template was printed via ESC.");
+            writeInfoLog("打印完成");
             printer.disconnectPrinter();
 
-            getInterop().showToast("蓝牙打印完成，连接已断开。");
+            showLongToast("蓝牙打印完成，连接已断开。");
         } catch (Exception ex) {
-            XLog.e("Esc print failed. Error: " + ex);
+            writeErrorLog("ESC协议打印出错：" + ex);
         }
-
-        getInterop().writeLogIntoConsole("ESC template was printed.");
     }
 
     private BluetoothConnection findPrinter(String mac) {

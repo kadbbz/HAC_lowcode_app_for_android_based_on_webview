@@ -1,10 +1,11 @@
 package com.huozige.lab.container.proxy.support.pdf;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-
-import com.elvishew.xlog.XLog;
-
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
@@ -12,8 +13,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.HACDownloadManager;
 import com.huozige.lab.container.utilities.HACDownloadTask;
 
@@ -24,9 +27,10 @@ import org.apache.commons.io.FilenameUtils;
  */
 public class PDFPreviewActivity extends AppCompatActivity {
 
-    private String _url, _password, _fileName;
+    private String _url, _password, _fileName, _localFilePath;
 
     private static final int MENU_ID_CLOSE = 2;
+    private static final int MENU_ID_PRINT = 1;
 
     public static String EXTRA_KEY_URL = "url";
     public static String EXTRA_KEY_PASSWORD = "password";
@@ -41,10 +45,13 @@ public class PDFPreviewActivity extends AppCompatActivity {
     private void startDownload() {
         setTitle(R.string.title_pdf_downloading);
 
-        HACDownloadManager.getInstance(this).startDownloadTask(this, _url, "application/pdf", new HACDownloadTask.IHACDownloadHandler() {
+        HACDownloadManager.getInstance().startDownloadTask(_url, "application/pdf", new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(Uri localFileUri) {
                 XLog.v("PDF文件下载完成，Url: " + _url + "，保存到：" + localFileUri);
+
+                _localFilePath = DeviceUtilities.uriToPath(localFileUri);
+
                 Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_downloaded + _fileName, Toast.LENGTH_LONG).show();
                 renderPDF(localFileUri);
             }
@@ -89,7 +96,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
         } catch (Exception ex) {
 
             // 提示错误消息后关闭窗口
-            XLog.e("渲染PDF文件时出错，文件: " + pdfFile+" \r\n%s", ex);
+            XLog.e("渲染PDF文件时出错，文件: " + pdfFile + " \r\n%s", ex);
             Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
             this.finish();
         }
@@ -123,6 +130,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
+        menu.add(0, MENU_ID_PRINT, MENU_ID_PRINT, getString(R.string.menu_pdf_print));
         menu.add(0, MENU_ID_CLOSE, MENU_ID_CLOSE, getString(R.string.menu_pdf_close));
 
         return true;
@@ -132,8 +140,26 @@ public class PDFPreviewActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == MENU_ID_CLOSE) {
             this.finish();
+        } else if (item.getItemId() == MENU_ID_PRINT) {
+            this.print();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * 来源：<a href="https://github.com/HarshitaBambure/AndroidPDFPrint">...</a>
+     */
+    private void print() {
+        PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+        try {
+            XLog.v("调用系统服务打印文件：" + _localFilePath);
+            PrintDocumentAdapter printDocumentAdapter = new PdfDocumentAdapter(this, _localFilePath);
+            printManager.print(_fileName, printDocumentAdapter, new PrintAttributes.Builder().build());
+        } catch (Exception ex) {
+            XLog.e("打印PDF文件时出错，文件: " + _localFilePath + " \r\n" + ex);
+            Toast.makeText(PDFPreviewActivity.this, ex.getMessage(), Toast.LENGTH_LONG).show();
+
+        }
     }
 
 }

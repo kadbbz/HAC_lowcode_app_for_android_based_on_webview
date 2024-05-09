@@ -1,13 +1,16 @@
 package com.huozige.lab.container.proxy;
 
 import android.content.Intent;
+import android.webkit.WebView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.EventUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * JavaScript桥的抽象类
@@ -17,8 +20,10 @@ import com.huozige.lab.container.utilities.EventUtility;
  */
 public abstract class AbstractProxy {
 
-    private AbstractWebInterop interop; // HTML页面交互器
-    private ConfigManager configManager; // 配置管理器
+    private AbstractWebInterop _interop; // HTML页面交互器
+    private ConfigManager _configManager; // 配置管理器
+
+    private String _ticket, _payloadCell, _payload2Cell, _errorCell;
 
     /**
      * 获取JS桥注册到页面时使用的名称
@@ -66,29 +71,27 @@ public abstract class AbstractProxy {
     }
 
     public void setInterop(AbstractWebInterop interop) {
-        this.interop = interop;
+        this._interop = interop;
     }
 
-    public AbstractWebInterop getInterop() throws IllegalStateException {
-        if (null == interop) {
+    private AbstractWebInterop getInterop() throws IllegalStateException {
+        if (null == _interop) {
             throw new IllegalStateException("Interop has not be initialized.");
         }
-        return interop;
+        return _interop;
     }
 
-    public ConfigManager getConfigManager() {
+    protected ConfigManager getConfigManager() {
         return ConfigManager.getInstance();
     }
-
-    private String __ticket, __payloadCell, __payload2Cell, __errorCell;
 
     /**
      * 注册接收处理结果的回调
      *
      * @param ticket 处理数据的回调
      */
-    public void registryCallbackTicket(String ticket) {
-        __ticket = ticket;
+    protected void registryCallbackTicket(String ticket) {
+        _ticket = ticket;
     }
 
     /**
@@ -96,8 +99,8 @@ public abstract class AbstractProxy {
      *
      * @param errorCell 接受错误信息的单元格
      */
-    public void registryErrorCellLocation(String errorCell) {
-        __errorCell = errorCell;
+    protected void registryErrorCellLocation(String errorCell) {
+        _errorCell = errorCell;
     }
 
     /**
@@ -105,7 +108,7 @@ public abstract class AbstractProxy {
      *
      * @param payloadCell 接受处理结果的单元格
      */
-    public void registryPayloadCellLocation(String payloadCell) {
+    protected void registryPayloadCellLocation(String payloadCell) {
         registryPayloadCellLocation(payloadCell, null);
     }
 
@@ -115,52 +118,144 @@ public abstract class AbstractProxy {
      * @param payloadCell  接受处理结果的单元格
      * @param payload2Cell 接受处理结果（备选）的单元格
      */
-    public void registryPayloadCellLocation(String payloadCell, String payload2Cell) {
-        __payloadCell = payloadCell;
-        __payload2Cell = payload2Cell;
+    protected void registryPayloadCellLocation(String payloadCell, String payload2Cell) {
+        _payloadCell = payloadCell;
+        _payload2Cell = payload2Cell;
     }
 
     /**
-     * 记录FB日志
+     * 申请权限
      *
-     * @param name  日志名字
-     * @param extra 附加信息
+     * @param permissions   需要申请的权限列表
+     * @param successAction 申请成功后需要执行的操作
      */
-    public void logEvent(String name, String extra) {
-        EventUtility.logEvent(getInterop().getActivityContext(), name, extra);
+    protected void asyncRequirePermissions(String[] permissions, Runnable successAction) {
+        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), permissions, successAction);
+    }
+
+    /**
+     * 调度回UI线程执行后续操作
+     *
+     * @param action 需要执行的操作
+     */
+    protected void runOnUiThread(Runnable action) {
+        getInterop().getActivityContext().runOnUiThread(action);
+    }
+
+
+    protected void showLongToast(String message) {
+        getInterop().showToast(message);
+    }
+
+    /**
+     * 获取当前WebView
+     *
+     * @return 上下文
+     */
+    protected WebView getWebView() {
+        return getInterop().getWebView();
+    }
+
+    /**
+     * 弹出页面
+     *
+     * @param intent 参数
+     */
+    protected void startActivity(Intent intent) {
+        this.getInterop().getActivityContext().startActivity(intent);
+    }
+
+    /**
+     * 弹出页面
+     *
+     * @param targetActivityClass 目标页面的类型
+     */
+    protected void startActivity(Class<?> targetActivityClass) {
+        this.getInterop().getActivityContext().startActivity(createIntent(targetActivityClass));
+    }
+
+    /**
+     * 生成页面跳转用的Intent
+     *
+     * @param targetActivityClass 目标页面的类型
+     * @return 到该页面的intent
+     */
+    protected Intent createIntent(Class<?> targetActivityClass) {
+        return new Intent(this.getInterop().getActivityContext(), targetActivityClass);
     }
 
     /**
      * 将处理结果返回到WebView
+     * 采用标准回调的方式来完成，支持写入单元格和回调函数
      *
      * @param params 参数
      */
-    public void callback(CallbackParams params) {
+    protected void callback(CallbackParams params) {
 
-        getInterop().writeLogIntoConsole("Data from the Android native function: "
-                + (params.isSuccess ? "success" : "error")
-                + " | " + params.payload
-                + " | " + params.error);
-
-        if (params.isSuccess && __payloadCell != null && !__payloadCell.isEmpty()) {
-            getInterop().setInputValue(__payloadCell, params.payload);
-            getInterop().setInputValue(__errorCell, "");
+        if (_payloadCell != null && !_payloadCell.isEmpty()) {
+            getInterop().setInputValue(_payloadCell, params.isSuccess ? params.payload : "");
         }
 
-        if (params.isSuccess && __payload2Cell != null && !__payload2Cell.isEmpty()) {
-            getInterop().setInputValue(__payload2Cell, params.payload2);
-            getInterop().setInputValue(__errorCell, "");
+        if (params.isSuccess && _payload2Cell != null && !_payload2Cell.isEmpty()) {
+            getInterop().setInputValue(_payload2Cell, params.isSuccess ? params.payload2 : "");
         }
 
-
-        if (!params.isSuccess && __errorCell != null && !__errorCell.isEmpty()) {
-            getInterop().setInputValue(__payloadCell, "");
-            getInterop().setInputValue(__errorCell, params.error);
+        if (!params.isSuccess && _errorCell != null && !_errorCell.isEmpty()) {
+            getInterop().setInputValue(_errorCell, !params.isSuccess ? params.error : "");
         }
 
-        if (__ticket != null && !__ticket.isEmpty()) {
-            getInterop().callback(__ticket, params);
+        if (_ticket != null && !_ticket.isEmpty()) {
+            getInterop().callback(_ticket, params);
         }
+    }
+
+    /**
+     * 将处理结果返回到WebView
+     * 采用简化方式完成，仅支持写入单元格
+     *
+     * @param cellLocation 单元格名称
+     * @param value        需要写入的值
+     */
+    protected void callback(String cellLocation, String value) {
+        getInterop().setInputValue(cellLocation, value);
+    }
+
+    /**
+     * 写入WebView控制台的普通日志，诊断使用
+     *
+     * @param log 日志内容
+     */
+    protected void writeInfoLog(String log) {
+
+        // 先记录到APP端
+        XLog.v(log);
+
+        // 再记录到WebView的Console中
+        getInterop().writeLogIntoConsole(log);
+    }
+
+    /**
+     * 写入WebView控制台的错误日志，调查使用
+     *
+     * @param error 错误日志内容
+     */
+    protected void writeErrorLog(String error) {
+
+        // 先记录到APP端
+        XLog.e(error);
+
+        // 再记录到WebView的Error Console中
+        getInterop().writeErrorLogIntoConsole(error);
+    }
+
+    /**
+     * 记录Firebase日志，用于分析功能用量
+     *
+     * @param featureName 功能名字
+     * @param extra       操作方法
+     */
+    protected void registryForFeatureUsageAnalyze(String featureName, String extra) {
+        EventUtility.logEvent(featureName, extra);
     }
 
 }

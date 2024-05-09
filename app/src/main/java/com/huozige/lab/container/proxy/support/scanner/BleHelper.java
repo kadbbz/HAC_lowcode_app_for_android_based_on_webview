@@ -20,8 +20,8 @@ import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.utilities.MiscUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.Arrays;
 import java.util.Base64;
@@ -246,7 +246,7 @@ public class BleHelper {
                                 XLog.v("读取到数据");
 
                                 if (data != null) {
-                                    XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
+                                    XLog.v("接收到有效数据，内容：" + StringConvertUtility.byteArrayToHexString(data));
                                     callback.onSuccess(new BleResultData(null, data));
                                 } else {
                                     XLog.v("没有接收到有效数据");
@@ -336,7 +336,7 @@ public class BleHelper {
                                 XLog.v("接受到Notify数据");
 
                                 if (data != null) {
-                                    XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
+                                    XLog.v("接收到有效数据，内容：" + StringConvertUtility.byteArrayToHexString(data));
 
                                 } else {
                                     XLog.v("没有接收到有效数据");
@@ -433,7 +433,7 @@ public class BleHelper {
                                 XLog.v("接受到Indicate数据");
 
                                 if (data != null) {
-                                    XLog.v("接收到有效数据，内容：" + MiscUtilities.bytesToHex(data));
+                                    XLog.v("接收到有效数据，内容：" + StringConvertUtility.byteArrayToHexString(data));
                                 } else {
                                     XLog.v("没有接收到有效数据");
                                 }
@@ -484,7 +484,7 @@ public class BleHelper {
 
         // 解析时，优先判断十六进制，然后再处理base64.如果都不是则直接报错
         if (stringValue.toLowerCase().startsWith("0x")) {
-            parsedData = MiscUtilities.hexToByteArray(stringValue);
+            parsedData = StringConvertUtility.hexStringToByteArray(stringValue);
         } else {
             try {
                 parsedData = Base64.getDecoder().decode(stringValue);

@@ -3,7 +3,6 @@ package com.huozige.lab.container.proxy;
 import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
-import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
 
 import java.net.URI;
@@ -47,7 +46,7 @@ public class LocalKvProxy extends AbstractProxy {
         try {
             return (new URI(getConfigManager().getEntry())).getHost();
         } catch (URISyntaxException e) {
-            XLog.e("The Uri's format is not supported. " + e);
+            writeErrorLog("解析Uri过程中出错：" + e);
             return "";
         }
     }
@@ -98,7 +97,7 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void upsertV(String key, String valueString, String version) {
 
-        logEvent("use_localdb_feature","upsert");
+        registryForFeatureUsageAnalyze("use_localdb_feature","upsert");
 
         if (null == version) {
             version = VERSION_DEFAULT;
@@ -113,7 +112,7 @@ public class LocalKvProxy extends AbstractProxy {
             bundle.version = finalVersion;
             transactionRealm.insertOrUpdate(bundle);
 
-            XLog.v("本地缓存已更新，键：" + key + "，服务器：" + getEntryHost() + "，值：" + valueString);
+            writeInfoLog("本地缓存已更新，键：" + key + "，服务器：" + getEntryHost() + "，值：" + valueString);
         });
     }
 
@@ -128,7 +127,7 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
 
-        logEvent("use_localdb_feature","retrieve");
+        registryForFeatureUsageAnalyze("use_localdb_feature","retrieve");
 
         if (null == version) {
             version = VERSION_DEFAULT;
@@ -143,11 +142,11 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
             if (bundle != null) {
-                XLog.v("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
-                getInterop().setInputValue(cell, bundle.value);
+                writeInfoLog("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                callback(cell, bundle.value);
             } else {
-                getInterop().setInputValue(cell, VALUE_NA);
-                XLog.v("本地缓存中没有找到该键：" + bKey);
+                writeInfoLog("本地缓存中没有找到该键：" + bKey);
+                callback(cell, VALUE_NA);
             }
         });
     }
@@ -162,7 +161,7 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public String retrieveV2(String key, String version) {
 
-        logEvent("use_localdb_feature","retrieve2");
+        registryForFeatureUsageAnalyze("use_localdb_feature","retrieve2");
 
         final String[] result = new String[1];
 
@@ -179,10 +178,10 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
             if (bundle != null) {
-                XLog.v("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                writeInfoLog("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
                 result[0] = bundle.value;
             } else {
-                XLog.v("本地缓存中没有找到该键：" + bKey);
+                writeInfoLog("本地缓存中没有找到该键：" + bKey);
                 result[0] = VALUE_NA;
             }
         });
@@ -199,7 +198,7 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void remove(String key) {
 
-        logEvent("use_localdb_feature","remove");
+        registryForFeatureUsageAnalyze("use_localdb_feature","remove");
 
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
@@ -208,7 +207,7 @@ public class LocalKvProxy extends AbstractProxy {
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).findFirst();
             if (bundle != null) {
                 bundle.deleteFromRealm();
-                XLog.v("从本地缓存中移除该键：" + bKey);
+                writeInfoLog("从本地缓存中移除该键：" + bKey);
             }
         });
     }
@@ -230,7 +229,7 @@ public class LocalKvProxy extends AbstractProxy {
                 bundles.forEach((d) -> result.add(d.key));
             }
 
-            XLog.v("从本地缓存中获取所有键，数量：" + result.size());
+            writeInfoLog("从本地缓存中获取所有键，数量：" + result.size());
         });
 
         return JSON.toJSONString(result.toArray(new String[1]));

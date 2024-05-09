@@ -1,5 +1,6 @@
 package com.huozige.lab.container.proxy;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.webkit.JavascriptInterface;
 
@@ -7,11 +8,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.BleHelper;
 import com.huozige.lab.container.proxy.support.scanner.BleProxy_ReadingActivity;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.Base64;
 
@@ -43,9 +43,9 @@ public class BLEProxy extends AbstractProxy {
     }
 
     private void startScan() {
-        getInterop().writeLogIntoConsole("Start BLE scanning.");
+        writeInfoLog("开始扫描BLE设备。");
 
-        Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
+        Intent request = createIntent(BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_SCAN);
         _scanner.launch(request);
     }
@@ -58,7 +58,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void scan(String payloadLocation, String errorLocation) {
-        logEvent("use_ble_feature", "scan");
+        registryForFeatureUsageAnalyze("use_ble_feature", "scan");
 
         registryPayloadCellLocation(payloadLocation);
         registryErrorCellLocation(errorLocation);
@@ -73,7 +73,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void scanAsync(String callbackTicket) {
-        logEvent("use_ble_feature", "scanAsync");
+        registryForFeatureUsageAnalyze("use_ble_feature", "scanAsync");
 
         registryCallbackTicket(callbackTicket);
 
@@ -82,9 +82,9 @@ public class BLEProxy extends AbstractProxy {
 
     private void startRead(String mac, String uuid_service, String uuid_characteristic) {
 
-        getInterop().writeLogIntoConsole("Start reading via BLE device " + mac + " service: " + uuid_service + " characteristic: " + uuid_characteristic);
+        writeInfoLog("开始从地址为" + mac + "的BLE设备读取数据，service: " + uuid_service + " characteristic: " + uuid_characteristic);
 
-        Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
+        Intent request = createIntent(BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_READ);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
@@ -104,7 +104,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void read(String mac, String uuid_service, String uuid_characteristic, String payloadLocation, String rawLocation, String errorLocation) {
-        logEvent("use_ble_feature", "read");
+        registryForFeatureUsageAnalyze("use_ble_feature", "read");
 
         registryPayloadCellLocation(payloadLocation, rawLocation);
         registryErrorCellLocation(errorLocation);
@@ -122,7 +122,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void readAsync(String mac, String uuid_service, String uuid_characteristic, String ticket) {
-        logEvent("use_ble_feature", "readAsync");
+        registryForFeatureUsageAnalyze("use_ble_feature", "readAsync");
 
         registryCallbackTicket(ticket);
 
@@ -130,9 +130,9 @@ public class BLEProxy extends AbstractProxy {
     }
 
     private void startWrite(String mac, String uuid_service, String uuid_characteristic, String hexOrBase64Value) {
-        getInterop().writeLogIntoConsole("Start write data " + hexOrBase64Value + " to BLE device " + mac + " service: " + uuid_service + " characteristic: " + uuid_characteristic);
+        writeInfoLog("开始将[" + hexOrBase64Value + "]写入地址为" + mac + "的设备，service: " + uuid_service + " characteristic: " + uuid_characteristic);
 
-        Intent request = new Intent(getInterop().getActivityContext(), BleProxy_ReadingActivity.class);
+        Intent request = createIntent(BleProxy_ReadingActivity.class);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_OP, BleProxy_ReadingActivity.BLE_OP_WRITE);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_MAC, mac);
         request.putExtra(BleProxy_ReadingActivity.BUNDLE_EXTRA_SERVICE, uuid_service);
@@ -153,7 +153,7 @@ public class BLEProxy extends AbstractProxy {
     @JavascriptInterface
     public void write(String mac, String uuid_service, String uuid_characteristic, String hexOrBase64Value, String errorLocation) {
 
-        logEvent("use_ble_feature", "write");
+        registryForFeatureUsageAnalyze("use_ble_feature", "write");
 
         registryErrorCellLocation(errorLocation);
 
@@ -172,7 +172,7 @@ public class BLEProxy extends AbstractProxy {
     @JavascriptInterface
     public void writeAsync(String mac, String uuid_service, String uuid_characteristic, String hexOrBase64Value, String ticket) {
 
-        logEvent("use_ble_feature", "writeAsync");
+        registryForFeatureUsageAnalyze("use_ble_feature", "writeAsync");
 
         registryCallbackTicket(ticket);
 
@@ -180,24 +180,22 @@ public class BLEProxy extends AbstractProxy {
     }
 
     private void startNotify(String mac, String uuid_service, String uuid_characteristic) {
-        getInterop().writeLogIntoConsole("Start watching NOTIFY from BLE device " + mac + " service: " + uuid_service + " characteristic: " + uuid_characteristic);
+        writeInfoLog("用NOTIFY方式监听地址为" + mac + "的BLE设备，service: " + uuid_service + " characteristic: " + uuid_characteristic);
 
-        BleHelper.getInstance(getInterop().getActivityContext().getApplication()).registryNotify(getInterop().getActivityContext(), mac, uuid_service, uuid_characteristic, new BleHelper.BleCallback() {
+        BleHelper.getInstance(((Activity)getWebView().getContext()).getApplication()).registryNotify(getWebView().getContext(), mac, uuid_service, uuid_characteristic, new BleHelper.BleCallback() {
             @Override
             public void onSuccess(BleHelper.BleResultData data) {
-                getInterop().writeLogIntoConsole("Data received by NOTIFY from BLE " + mac + " characteristic: " + uuid_characteristic + " data: " + MiscUtilities.byteArrayToCommaSeperatedString(data.payloadAsByteArray));
+                writeInfoLog("从地址为" + mac + "的设备上监听到数据，characteristic: " + uuid_characteristic + " data: " + StringConvertUtility.byteArrayToCommaSeperatedString(data.payloadAsByteArray));
 
                 if (data.payloadAsByteArray != null && data.payloadAsByteArray.length > 0) {
-                    callback(CallbackParams.success(Base64.getEncoder().encodeToString(data.payloadAsByteArray), MiscUtilities.byteArrayToCommaSeperatedString(data.payloadAsByteArray)));
+                    callback(CallbackParams.success(Base64.getEncoder().encodeToString(data.payloadAsByteArray), StringConvertUtility.byteArrayToCommaSeperatedString(data.payloadAsByteArray)));
                 }
             }
 
             @Override
             public void onError(BleHelper.BleError error) {
 
-                getInterop().writeLogIntoConsole("BLE error from NOTIFY! Code is " + error.code + " , detail: " + error.description);
-
-                XLog.e("蓝牙操作出错(NOTIFY)，错误码为：" + error.code + "，错误信息：" + error.description);
+                writeErrorLog("蓝牙操作出错(NOTIFY)，错误码为：" + error.code + "，错误信息：" + error.description);
 
                 callback(CallbackParams.error(error.code + " > " + error.description));
             }
@@ -217,7 +215,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void notify(String mac, String uuid_service, String uuid_characteristic, String payloadLocation, String rawLocation, String errorLocation) {
-        logEvent("use_ble_feature", "notify");
+        registryForFeatureUsageAnalyze("use_ble_feature", "notify");
 
         registryPayloadCellLocation(payloadLocation, rawLocation);
         registryErrorCellLocation(errorLocation);
@@ -235,7 +233,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void notifyAsync(String mac, String uuid_service, String uuid_characteristic, String ticket) {
-        logEvent("use_ble_feature", "notifyAsync");
+        registryForFeatureUsageAnalyze("use_ble_feature", "notifyAsync");
 
         registryCallbackTicket(ticket);
 
@@ -251,34 +249,32 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void unregisterNotify(String mac, String uuid_service, String uuid_characteristic) {
-        getInterop().writeLogIntoConsole("Stop watching NOTIFY: " + mac + " -> " + uuid_service + " -> " + uuid_characteristic);
+        writeInfoLog("从地址为" + mac + "的设备上停止NOTIFY监听，" + uuid_service + " -> " + uuid_characteristic);
 
-        boolean isAlive = BleHelper.getInstance(getInterop().getActivityContext().getApplication()).unregisterNotify(mac, uuid_service, uuid_characteristic);
+        boolean isAlive = BleHelper.getInstance(((Activity)getWebView().getContext()).getApplication()).unregisterNotify(mac, uuid_service, uuid_characteristic);
 
         if (!isAlive)
-            getInterop().writeLogIntoConsole("Warn: Device has been disconnected before unregisterNotify.");
+            writeErrorLog("在调用本方法停止监听之前，与该设备的连接已经中断。");
     }
 
     public void startIndicate(String mac, String uuid_service, String uuid_characteristic) {
-        getInterop().writeLogIntoConsole("Start watching INDICATE from BLE device " + mac + " service: " + uuid_service + " characteristic: " + uuid_characteristic);
+        writeInfoLog("用INDICATE的方式监听地址为" + mac + "的BLE设备，service: " + uuid_service + " characteristic: " + uuid_characteristic);
 
-        BleHelper.getInstance(getInterop().getActivityContext().getApplication()).registryIndicate(getInterop().getActivityContext(), mac, uuid_service, uuid_characteristic, new BleHelper.BleCallback() {
+        BleHelper.getInstance(((Activity)getWebView().getContext()).getApplication()).registryIndicate(getWebView().getContext(), mac, uuid_service, uuid_characteristic, new BleHelper.BleCallback() {
             @Override
             public void onSuccess(BleHelper.BleResultData data) {
-                getInterop().writeLogIntoConsole("Data received by INDICATE from BLE " + mac + " characteristic: " + uuid_characteristic + " data: " + MiscUtilities.byteArrayToCommaSeperatedString(data.payloadAsByteArray));
+                writeInfoLog("从地址为" + mac + "的设备上监听到数据，characteristic: " + uuid_characteristic + " data: "  + StringConvertUtility.byteArrayToCommaSeperatedString(data.payloadAsByteArray));
 
                 if (data.payloadAsByteArray != null && data.payloadAsByteArray.length > 0) {
 
-                    callback(CallbackParams.success(Base64.getEncoder().encodeToString(data.payloadAsByteArray), MiscUtilities.byteArrayToCommaSeperatedString(data.payloadAsByteArray)));
+                    callback(CallbackParams.success(Base64.getEncoder().encodeToString(data.payloadAsByteArray), StringConvertUtility.byteArrayToCommaSeperatedString(data.payloadAsByteArray)));
                 }
             }
 
             @Override
             public void onError(BleHelper.BleError error) {
 
-                getInterop().writeLogIntoConsole("BLE error from INDICATE! Code is " + error.code + " , detail: " + error.description);
-
-                XLog.e("蓝牙操作出错(INDICATE)，错误码为：" + error.code + "，错误信息：" + error.description);
+                writeErrorLog("蓝牙操作出错(INDICATE)，错误码为：" + error.code + "，错误信息：" + error.description);
 
                 callback(CallbackParams.error(error.code + " > " + error.description));
             }
@@ -297,7 +293,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void indicate(String mac, String uuid_service, String uuid_characteristic, String payloadLocation, String rawLocation, String errorLocation) {
-        logEvent("use_ble_feature", "indicate");
+        registryForFeatureUsageAnalyze("use_ble_feature", "indicate");
 
         registryPayloadCellLocation(payloadLocation, rawLocation);
         registryErrorCellLocation(errorLocation);
@@ -315,7 +311,7 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void indicateAsync(String mac, String uuid_service, String uuid_characteristic, String ticket) {
-        logEvent("use_ble_feature", "indicateAsync");
+        registryForFeatureUsageAnalyze("use_ble_feature", "indicateAsync");
 
         registryCallbackTicket(ticket);
 
@@ -331,12 +327,12 @@ public class BLEProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void unregisterIndicate(String mac, String uuid_service, String uuid_characteristic) {
-        getInterop().writeLogIntoConsole("Stop watching INDICATE: " + mac + " -> " + uuid_service + " -> " + uuid_characteristic);
+        writeInfoLog("从地址为" + mac + "的设备上停止INDICATE监听，" + uuid_service + " -> " + uuid_characteristic);
 
-        boolean isAlive = BleHelper.getInstance(getInterop().getActivityContext().getApplication()).unregisterIndicate(mac, uuid_service, uuid_characteristic);
+        boolean isAlive = BleHelper.getInstance(((Activity)getWebView().getContext()).getApplication()).unregisterIndicate(mac, uuid_service, uuid_characteristic);
 
         if (!isAlive)
-            getInterop().writeLogIntoConsole("Warn: Device has been disconnected before unregisterNotify.");
+            writeErrorLog("在调用本方法停止监听之前，与该设备的连接已经中断。");
     }
 
     @Override
@@ -353,21 +349,15 @@ public class BLEProxy extends AbstractProxy {
 
 
                 if (error == null || error.isEmpty()) {
-                    getInterop().writeLogIntoConsole("Data received from device: " + payload + " (" + raw + ")");
+                    writeInfoLog("从BLE设备上成功完成数据读写：" + payload + " (" + raw + ")");
                     data = CallbackParams.success(payload, raw);
                 } else {
-                    getInterop().writeLogIntoConsole("Error occurred during data exchanging: " + error);
+                    writeErrorLog("从BLE上读取数据是发生错误：" + error);
                     data = CallbackParams.error(error);
                 }
 
-                XLog.v("蓝牙操作的返回信息：code -> " + code + " payload - > " + payload + " err -> " + error);
-
-
             } else {
-
-                getInterop().writeLogIntoConsole("App error! Return without intent, code is " + code);
-
-                XLog.e("应用运行异常，蓝牙返回的结果中没有Intent数据，返回码为：" + code);
+                writeErrorLog("应用运行异常，蓝牙返回的结果中没有Intent数据，返回码为：" + code);
 
                 data = CallbackParams.error("App error! Return without intent, code is " + code);
             }

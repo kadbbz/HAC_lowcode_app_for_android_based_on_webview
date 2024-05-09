@@ -1,7 +1,5 @@
 package com.huozige.lab.container.proxy;
 
-import com.elvishew.xlog.XLog;
-
 import android.webkit.JavascriptInterface;
 
 import cn.jpush.android.api.JPushInterface;
@@ -22,9 +20,9 @@ public class JPushProxy extends AbstractProxy {
     @JavascriptInterface
     public String getRegistrationID() {
 
-        String rid = JPushInterface.getRegistrationID(this.getInterop().getActivityContext());
+        String rid = JPushInterface.getRegistrationID(getWebView().getContext());
 
-        XLog.v("获取到极光推送的RegistrationId: " + rid);
+        writeInfoLog("获取到极光推送的RegistrationId: " + rid);
         return rid;
     }
 

@@ -2,7 +2,7 @@ package com.huozige.lab.container.proxy;
 
 import android.webkit.JavascriptInterface;
 
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 
 /**
  * 让页面能获取设备的唯一标识
@@ -21,9 +21,9 @@ public class DeviceInfoProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getSecureId() {
-        logEvent("use_ssaid_feature", "getId");
+        registryForFeatureUsageAnalyze("use_ssaid_feature", "getId");
 
-        return MiscUtilities.getSSAID(this.getInterop().getActivityContext());
+        return DeviceUtilities.getSSAID();
     }
 
 }

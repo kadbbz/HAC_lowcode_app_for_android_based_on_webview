@@ -4,6 +4,10 @@ package com.huozige.lab.container.platform;
  * 返回给WebView的回调参数
  */
 public class CallbackParams {
+
+    public static final String CANCEL_BY_USER = "用户取消了该操作。";
+    public static final String OK = "操作已成功完成。";
+
     private CallbackParams(boolean isSuccess, String payload, String error) {
         this.isSuccess = isSuccess;
         this.error = error;

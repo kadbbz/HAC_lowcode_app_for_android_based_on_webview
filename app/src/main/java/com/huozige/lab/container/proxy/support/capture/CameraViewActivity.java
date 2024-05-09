@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
@@ -62,9 +62,9 @@ public class CameraViewActivity extends AppCompatActivity {
                     XLog.v("图片已被相册收录：%s", uri);
                 });
 
-        Uri resultFileUri = MiscUtilities.toUri(CameraViewActivity.this, resultFile.getPath());
+        Uri resultFileUri = DeviceUtilities.pathToUri(resultFile.getPath());
         bundle.putString(EXTRA_OUT_URI, resultFileUri.toString());
-        MiscUtilities.registryLatestFile(resultFileUri);
+        DeviceUtilities.registryLatestFile(resultFileUri);
 
         cameraResult.putExtras(bundle);
 
@@ -140,12 +140,12 @@ public class CameraViewActivity extends AppCompatActivity {
             }
         });
 
-        ibToggleCamera.setOnClickListener((d)->{
+        ibToggleCamera.setOnClickListener((d) -> {
             var currentF = camera.getFacing();
-            if(currentF == Facing.BACK){
+            if (currentF == Facing.BACK) {
                 camera.setFacing(Facing.FRONT);
                 XLog.v("已切换至前摄像头");
-            }else{
+            } else {
                 camera.setFacing(Facing.BACK);
                 XLog.v("已切换至主摄像头");
             }

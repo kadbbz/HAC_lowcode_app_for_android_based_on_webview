@@ -22,7 +22,7 @@ public class GeoProxy extends AbstractProxy {
     private void startGetLocation(String coordinateSystem) {
 
         // 获取地理位置，需要先申请权限
-        getInterop().requirePermission(new String[]{
+        asyncRequirePermissions(new String[]{
                 Permission.ACCESS_FINE_LOCATION,
                 Permission.ACCESS_COARSE_LOCATION
         }, () -> {
@@ -51,39 +51,38 @@ public class GeoProxy extends AbstractProxy {
                 @Override
                 public void onNewLocationAvailable(float lat, float lon) {
 
-                    getInterop().writeLogIntoConsole("getLocation NewLocationAvailable : lat " + lat + " lon " + lon + " (WGS84).");
+                    writeInfoLog("获取到当前地理位置（onNewLocationAvailable），lat: " + lat + " lon: " + lon + " (WGS84).");
                     returnWithWGS84(lat, lon);
                 }
 
                 @Override
                 public void locationServicesNotEnabled() {
-                    getInterop().writeErrorIntoConsole("getLocation Location Services Not Enabled");
+                    writeErrorLog("获取地理位置出错，服务不可用");
                     callback(CallbackParams.error("Location Services Not Enabled"));
                 }
 
                 @Override
                 public void updateLocationInBackground(float lat, float lon) {
                     //if a listener returns after the main locationAvailable callback, it will go here
-                    getInterop().writeLogIntoConsole("getLocation UpdateLocationInBackground : lat " + lat + " lon " + lon + " (WGS84).");
-
+                    writeInfoLog("获取到当前地理位置（updateLocationInBackground），lat: " + lat + " lon: " + lon + " (WGS84).");
                     returnWithWGS84(lat, lon);
                 }
 
                 @Override
                 public void networkListenerInitialised() {
                     //when the library switched from GPS only to GPS & network
-                    getInterop().writeLogIntoConsole("getLocation Network Listener Initialised");
+                    writeInfoLog("networkListenerInitialised被触发");
                 }
 
                 @Override
                 public void locationRequestStopped() {
-                    getInterop().writeLogIntoConsole("getLocation location Request Stopped");
+                    writeInfoLog("locationRequestStopped被触发");
                 }
             };
 
             //initialise an instance with the two required parameters
             LocationProvider provider = new LocationProvider.Builder()
-                    .setContext(getInterop().getActivityContext())
+                    .setContext(getWebView().getContext())
                     .setListener(callback)
                     .create();
 
@@ -102,7 +101,7 @@ public class GeoProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getLocation(String coordinateSystem, String cellLat, String cellLon, String cellErr) {
-        logEvent("use_gps_feature", "getLocation");
+        registryForFeatureUsageAnalyze("use_gps_feature", "getLocation");
 
         registryPayloadCellLocation(cellLat, cellLon);
         registryErrorCellLocation(cellErr);
@@ -120,7 +119,7 @@ public class GeoProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getLocationAsync(String coordinateSystem, String ticket) {
-        logEvent("use_gps_feature", "getLocationAsync");
+        registryForFeatureUsageAnalyze("use_gps_feature", "getLocationAsync");
 
         registryCallbackTicket(ticket);
 

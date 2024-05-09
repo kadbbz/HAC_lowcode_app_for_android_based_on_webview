@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.Base64;
 
@@ -92,7 +92,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
     }
 
     private void sendResultAndFinish(byte[] payload) {
-        sendResultAndFinish(STATUS_OK, Base64.getEncoder().encodeToString(payload), MiscUtilities.byteArrayToCommaSeperatedString(payload), "");
+        sendResultAndFinish(STATUS_OK, Base64.getEncoder().encodeToString(payload), StringConvertUtility.byteArrayToCommaSeperatedString(payload), "");
     }
 
     private void sendResultAndFinish(String payload) {

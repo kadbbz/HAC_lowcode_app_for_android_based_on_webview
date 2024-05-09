@@ -73,6 +73,7 @@
     <string name="title_pdf_preview">PDF预览</string>
     <string name="menu_pdf_open_dir">浏览已下载的文件</string>
     <string name="menu_pdf_close">关闭预览</string>
+    <string name="menu_pdf_print">打印</string>
     <string name="ui_message_download_to_dir">文件传输完成，已保存到【下载】目录。</string>
     <string name="ui_message_download_failed">文件下载失败，这通常是因为网络不可用或临时中断，请稍后重试。</string>
     <string name="ui_message_pdf_downloaded">PDF文件已成功下载，即将打开：</string>

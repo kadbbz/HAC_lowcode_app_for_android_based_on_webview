@@ -22,6 +22,7 @@ import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
@@ -183,7 +184,7 @@ public class MainActivity extends BaseActivity {
         // 仅处理后退键
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
 
-            if (_webInterop.isOfflineMode()) {
+            if (DeviceUtilities.isOfflineMode()) {
                 // 离线模式不允许执行后退操作
                 Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
             } else {
@@ -230,12 +231,12 @@ public class MainActivity extends BaseActivity {
         }
 
         // 帮助
-        if (ConfigManager.getInstance().getHelpUrl().length() > 0) {
+        if (!ConfigManager.getInstance().getHelpUrl().isEmpty()) {
             menu.add(0, MENU_ID_HELP, MENU_ID_HELP, getString(R.string.ui_menu_help));
         }
 
         // 关于
-        if (ConfigManager.getInstance().getAboutUrl().length() > 0) {
+        if (!ConfigManager.getInstance().getAboutUrl().isEmpty()) {
             menu.add(0, MENU_ID_ABOUT, MENU_ID_ABOUT, getString(R.string.ui_menu_about));
         }
 
@@ -251,7 +252,7 @@ public class MainActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                if (_webInterop.isOfflineMode()) {
+                if (DeviceUtilities.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
                 } else {
@@ -260,7 +261,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_REFRESH:
-                if (_webInterop.isOfflineMode()) {
+                if (DeviceUtilities.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法执行页面刷新。", Toast.LENGTH_LONG).show();
                 } else {
@@ -269,7 +270,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_SETTINGS:
-                if (_webInterop.isOfflineMode()) {
+                if (DeviceUtilities.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
                 } else {
@@ -277,7 +278,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_HELP:
-                if (_webInterop.isOfflineMode()) {
+                if (DeviceUtilities.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【帮助】页面。", Toast.LENGTH_LONG).show();
                 } else {
@@ -286,7 +287,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_ABOUT:
-                if (_webInterop.isOfflineMode()) {
+                if (DeviceUtilities.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【关于】页面。", Toast.LENGTH_LONG).show();
                 } else {

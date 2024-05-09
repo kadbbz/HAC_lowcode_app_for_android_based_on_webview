@@ -11,10 +11,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.ArrayList;
 
@@ -66,20 +65,20 @@ public class PDAProxy extends AbstractProxy {
                     String resultS = data.getStringExtra(PDAProxy_SingleScanActivity.BUNDLE_EXTRA_RESULT);
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole("PDA scan completed. Result is : " + resultS);
+                    writeInfoLog("扫描头的返回结果为：" + resultS);
 
                     // 将结果写入单元格
                     callback(CallbackParams.success(resultS));
                 } else {
                     // 记录日志
-                    getInterop().writeLogIntoConsole("PDA scan canceled or failed. Return code is : " + code);
+                    writeErrorLog("扫描头操作出错，错误码为：" + code);
 
                     // 重置单元格
                     callback(CallbackParams.error("PDA scan canceled or failed. Return code is : " + code));
                 }
             } else {
                 // 记录日志
-                getInterop().writeErrorIntoConsole("PDA scan failed.");
+                writeErrorLog("扫描头操作出错，返回了空值");
 
                 // 重置单元格
                 callback(CallbackParams.error("PDA scan failed."));
@@ -115,17 +114,17 @@ public class PDAProxy extends AbstractProxy {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            XLog.v("收到持续扫码结果的广播");
+            writeInfoLog("收到持续扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra(getConfigManager().getScanExtra());
 
-            XLog.v("当次扫码结果是：" + result);
+            writeInfoLog("当次扫码结果是：" + result);
 
             if (result == null) result = "";
 
             // 去除非ASCII字符
-            result = MiscUtilities.removeNonASCIIChars(result);
+            result = StringConvertUtility.removeNonASCIIChars(result);
 
             if (_continueScanOn && !result.isEmpty()) {
 
@@ -136,7 +135,7 @@ public class PDAProxy extends AbstractProxy {
                 String rc = String.join(",", _resultCache);
 
                 // 记录日志
-                getInterop().writeLogIntoConsole("PDA scan (Continues Mode) result received. Current scan is : " + result + " , total result is : " + rc);
+                writeInfoLog("当前处在连续扫描模式，收到了新的扫描结果，当次结果为：" + result + "，总体结果为：" + rc);
 
                 // 输出
                 callback(CallbackParams.success(rc));
@@ -146,14 +145,14 @@ public class PDAProxy extends AbstractProxy {
                     stopReceiver();
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole("PDA scan (Continues Mode)'s count reach limit, stopping the broadcast receiver.");
+                    writeInfoLog("当前处在连续扫描模式，已经超过了预设的扫描次数上限（" + continueScanLimit + "），停止接受扫描结果");
 
                 }
 
             } else {
 
                 // 预期外场景需要记录日志
-                XLog.e("应用运行异常，当前没有处在持续扫描模式，但监听器仍在运行。");
+                writeErrorLog("应用运行异常，当前没有处在持续扫描模式，但监听器仍在运行。");
             }
         }
     };
@@ -166,15 +165,15 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void modal_scan(String cellLocation) {
-        logEvent("use_scanner_feature", "modalScan");
+        registryForFeatureUsageAnalyze("use_scanner_feature", "modalScan");
 
         registryPayloadCellLocation(cellLocation);
 
         // 记录日志
-        getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
+        writeInfoLog("单次扫码已启动，等待接收扫描结果");
 
         // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
+        _arcScanner.launch(createIntent(PDAProxy_SingleScanActivity.class));
     }
 
     /**
@@ -185,15 +184,15 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void modal_scanAsync(String ticket) {
-        logEvent("use_scanner_feature", "modalScanAsync");
+        registryForFeatureUsageAnalyze("use_scanner_feature", "modalScanAsync");
 
         registryCallbackTicket(ticket);
 
         // 记录日志
-        getInterop().writeLogIntoConsole("PDA scan (Single Mode) started.");
+        writeInfoLog("异步单次扫码已启动，等待接收扫描结果");
 
         // 调用Broadcast模式扫码页面
-        _arcScanner.launch(new Intent(getInterop().getActivityContext(), PDAProxy_SingleScanActivity.class));
+        _arcScanner.launch(createIntent(PDAProxy_SingleScanActivity.class));
     }
 
     /**
@@ -204,9 +203,9 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void continuous_scan(String cellLocation, String limit) {
-        logEvent("use_scanner_feature", "continuousScan");
+        registryForFeatureUsageAnalyze("use_scanner_feature", "continuousScan");
 
-        XLog.v("continuous_scan start with limit : " + limit);
+        writeInfoLog("连续扫码已启动，等待接收扫描结果，接收上限为：" + limit);
 
         // 记录传入参数
         registryPayloadCellLocation(cellLocation);
@@ -228,9 +227,9 @@ public class PDAProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void continuous_scanAsync(String ticket, String limit) {
-        logEvent("use_scanner_feature", "continuousScan");
+        registryForFeatureUsageAnalyze("use_scanner_feature", "continuousScan");
 
-        XLog.v("continuous_scan start with limit : " + limit);
+        writeInfoLog("异步连续扫码已启动，等待接收扫描结果，接收上限为：" + limit);
 
         // 记录传入参数
         registryCallbackTicket(ticket);
@@ -267,10 +266,10 @@ public class PDAProxy extends AbstractProxy {
         intentFilter.setPriority(Integer.MAX_VALUE);
 
         // 注册广播监听
-        getInterop().getActivityContext().registerReceiver(_scanReceiver, intentFilter);
+        getWebView().getContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        getInterop().writeLogIntoConsole("PDA scan (Continues Mode) started.");
+        writeInfoLog("扫描头广播接收器已启动");
 
     }
 
@@ -280,12 +279,12 @@ public class PDAProxy extends AbstractProxy {
     private void stopReceiver() {
         if (_continueScanOn) {
 
-            getInterop().getActivityContext().unregisterReceiver(_scanReceiver);
+            getWebView().getContext().unregisterReceiver(_scanReceiver);
 
             _continueScanOn = false;
 
             // 记录日志
-            getInterop().writeLogIntoConsole("PDA scan (Continues Mode) stopped.");
+            writeInfoLog("扫描头广播接收器已停止");
 
         }
     }

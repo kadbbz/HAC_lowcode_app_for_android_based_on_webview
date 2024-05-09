@@ -5,9 +5,8 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.elvishew.xlog.XLog;
-
 import com.alibaba.fastjson.JSONObject;
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
 
 /**
@@ -41,13 +40,13 @@ public class ConfigManager {
 
     SharedPreferences _sharedPref;
 
-    private SharedPreferences getPref(){
-        if(_sharedPref==null){
+    private SharedPreferences getPref() {
+        if (_sharedPref == null) {
             _sharedPref = _context.getSharedPreferences(
                     PREFERENCE_NAME, Activity.MODE_PRIVATE);
         }
 
-        return  _sharedPref;
+        return _sharedPref;
     }
 
     public static void init(Application app) {
@@ -69,15 +68,15 @@ public class ConfigManager {
         _context = context;
     }
 
-    public  boolean isAppReady(){
-      return !this.getEntry().isEmpty();
+    public boolean isAppReady() {
+        return !this.getEntry().isEmpty();
     }
 
     // =========== 回写 ===========
 
     public void upsertBooleanEntry(String key, String propertyValue) {
 
-        boolean value = parseBooleanFromString(propertyValue);
+        boolean value = StringConvertUtility.stringToBoolean(propertyValue);
 
         // 保存到配置库
         getPref().edit().putBoolean(key, value).apply();
@@ -99,7 +98,7 @@ public class ConfigManager {
 
         if (propertyValue != null) {
             try {
-                value = parseHexIntegerFromString(propertyValue);
+                value = StringConvertUtility.hexStringToInteger(propertyValue);
             } catch (NumberFormatException e) {
                 // 不做
             }
@@ -153,7 +152,7 @@ public class ConfigManager {
 
                 XLog.v("应用初始化设置完成，配置数据：" + json);
 
-                EventUtility.logEvent(this._context,"app_quick_config",config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
+                EventUtility.logEvent("app_quick_config", config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
 
                 return true;
             } else {
@@ -188,7 +187,7 @@ public class ConfigManager {
     public int getTCD() {
 
 
-        int defaultColor = parseHexIntegerFromString(_context.getString(R.string.app_customize_action_bar_color));
+        int defaultColor = StringConvertUtility.hexStringToInteger(_context.getString(R.string.app_customize_action_bar_color));
 
         // 从数据库中加载，默认为配置的主题色
         return getPref().getInt(PREFERENCE_KEY_ACTION_BAR_COLOR, defaultColor);
@@ -250,19 +249,5 @@ public class ConfigManager {
     private String getStringValue(Context context, String key, int defaultValueStringId) {
 
         return getPref().getString(key, context.getString(defaultValueStringId));
-    }
-
-    // =========== 格式转换 ===========
-
-    public static int parseHexIntegerFromString(String tcd) {
-
-        tcd = tcd.replace("#", "");
-        tcd = tcd.replace("0x", "");
-
-        return Integer.parseInt(tcd, 16) + 0xFF000000;
-    }
-
-    public static boolean parseBooleanFromString(String text) {
-        return text != null && !text.isEmpty() && !text.equalsIgnoreCase("0") && !text.equalsIgnoreCase("false") && !text.equalsIgnoreCase("no");
     }
 }

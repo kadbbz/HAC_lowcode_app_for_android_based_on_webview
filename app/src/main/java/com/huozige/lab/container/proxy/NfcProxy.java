@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.NfcProxy_ReadingActivity;
-import com.huozige.lab.container.utilities.MiscUtilities;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 /**
  * 让页面能读取NFC标签
@@ -33,12 +33,12 @@ public class NfcProxy extends AbstractProxy {
         registryPayloadCellLocation(cellTag);
 
         // 调用读取页面
-        _arcScanner.launch(new Intent(getInterop().getActivityContext(), NfcProxy_ReadingActivity.class));
+        _arcScanner.launch(createIntent(NfcProxy_ReadingActivity.class));
 
         // 记录日志
-        getInterop().writeLogIntoConsole("NFC reading started.");
+        writeInfoLog("开始读取NFC");
 
-        logEvent("use_nfc_feature", "readTagId");
+        registryForFeatureUsageAnalyze("use_nfc_feature", "readTagId");
 
     }
 
@@ -49,12 +49,12 @@ public class NfcProxy extends AbstractProxy {
         registryCallbackTicket(ticket);
 
         // 调用读取页面
-        _arcScanner.launch(new Intent(getInterop().getActivityContext(), NfcProxy_ReadingActivity.class));
+        _arcScanner.launch(createIntent(NfcProxy_ReadingActivity.class));
 
         // 记录日志
-        getInterop().writeLogIntoConsole("NFC reading started.");
+        writeInfoLog("开始异步读取NFC");
 
-        logEvent("use_nfc_feature", "readTagIdAsync");
+        registryForFeatureUsageAnalyze("use_nfc_feature", "readTagIdAsync");
 
     }
 
@@ -79,36 +79,35 @@ public class NfcProxy extends AbstractProxy {
                     String tag = data.getStringExtra(NfcProxy_ReadingActivity.BUNDLE_EXTRA_RESULT_TAG_ID);
 
                     // 记录日志
-                    getInterop().writeLogIntoConsole("NFC Reading completed. Tag is : " + tag);
+                    writeInfoLog("NFC读取成功，结果为：" + tag);
 
                     // 去除非ASCII字符
-                    tag = MiscUtilities.removeNonASCIIChars(tag);
+                    tag = StringConvertUtility.removeNonASCIIChars(tag);
 
                     // 将结果返回
                     callback(CallbackParams.success(tag));
                 } else if (code == NfcProxy_ReadingActivity.SCAN_STATUS_NA) {
                     // 记录日志
-                    getInterop().writeLogIntoConsole("The NFC device is not ready due to not functional or disabled.");
+                    writeErrorLog("NFC读取失败，设备不支持NFC或禁用了NFC功能");
 
                     // 重置单元格
                     callback(CallbackParams.error("The NFC device is not ready due to not functional or disabled."));
                 } else {
                     // 记录日志
-                    getInterop().writeLogIntoConsole("NFC reading canceled or failed. Return code is : " + code);
+                    writeErrorLog("NFC读取失败，错误码为：" + code);
 
                     // 重置单元格
                     callback(CallbackParams.error("NFC reading canceled or failed. Return code is : " + code));
                 }
             } else {
                 // 记录日志
-                getInterop().writeErrorIntoConsole("NFC reading failed.");
+                writeErrorLog("NFC读取失败，返回了空值");
 
                 // 重置单元格
                 callback(CallbackParams.error("NFC reading failed."));
             }
         });
     }
-
 
 
 }

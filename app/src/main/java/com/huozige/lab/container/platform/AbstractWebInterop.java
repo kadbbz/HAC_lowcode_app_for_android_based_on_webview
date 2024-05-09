@@ -5,7 +5,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
-import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACWebView;
 
 /**
@@ -43,11 +42,11 @@ public abstract class AbstractWebInterop {
     }
 
     /**
-     * 向浏览器输出错误信息，供调试使用
+     * 向浏览器输出日志，供调试使用
      *
      * @param logContent 日志的内容
      */
-    public void writeErrorIntoConsole(String logContent) {
+    public void writeErrorLogIntoConsole(String logContent) {
         executeJavaScript("console.error('" + removeJSKeyWords(logContent) + "')");
     }
 
@@ -176,16 +175,6 @@ public abstract class AbstractWebInterop {
     }
 
     /**
-     * 申请多个敏感权限
-     *
-     * @param permissions   需要申请的权限
-     * @param successAction 申请成功后执行的动作
-     */
-    public void requirePermission(String[] permissions, Runnable successAction) {
-        PermissionsUtility.asyncRequirePermissions(webView.getContext(), permissions, successAction);
-    }
-
-    /**
      * 初始化浏览器
      *
      * @param webView 浏览器实例
@@ -203,22 +192,5 @@ public abstract class AbstractWebInterop {
         return this.webView;
     }
 
-    private static boolean _isOfflineMode;
 
-    /**
-     * 设置离线模式
-     * @param mode 是否为离线模式
-     */
-    public void setOfflineMode(boolean mode) {
-        _isOfflineMode = mode;
-        XLog.v("切换离线模式为：" + mode);
-    }
-
-    /**
-     * 获取当前是否为离线模式
-     * @return 是否为离线模式
-     */
-    public boolean isOfflineMode() {
-        return _isOfflineMode;
-    }
 }

@@ -61,6 +61,8 @@ public class ProxyRegister {
 
         this._proxies.add(new EscBtPrinterProxy()); // ESC协议的蓝牙打印
 
+        this._proxies.add(new AudioRecorderProxy()); // 录制音频
+
         __instance = this;
     }
 }

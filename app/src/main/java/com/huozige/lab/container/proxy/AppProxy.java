@@ -9,14 +9,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.QuickConfigActivity;
 import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
-import com.huozige.lab.container.utilities.MiscUtilities;
-import com.huozige.lab.container.utilities.PermissionsUtility;
+import com.huozige.lab.container.utilities.DeviceUtilities;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -102,7 +100,7 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void restartApp() {
         // 直接重启
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -112,8 +110,8 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void openSettingPage() {
 
-        getInterop().getActivityContext().runOnUiThread(() ->
-                _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), SettingActivity.class))
+        runOnUiThread(() ->
+                _arcWoCallback.launch(createIntent(SettingActivity.class))
         );
     }
 
@@ -123,15 +121,15 @@ public class AppProxy extends AbstractProxy {
     @JavascriptInterface
     public void dial(String phoneNumber) {
 
-        PermissionsUtility.asyncRequirePermissions(this.getInterop().getActivityContext(), new String[]{
+        asyncRequirePermissions(new String[]{
                 Permission.CALL_PHONE
         }, () -> {
             Intent intent = new Intent();
             intent.setAction("android.intent.action.CALL");
             intent.setData(Uri.parse("tel:" + phoneNumber));
 
-            XLog.v("拨打电话：" + phoneNumber);
-            this.getInterop().getActivityContext().startActivity(intent);
+            writeInfoLog("拨打电话：" + phoneNumber);
+            startActivity(intent);
         });
     }
 
@@ -141,8 +139,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void openQuickConfigPage() {
-        getInterop().getActivityContext().runOnUiThread(() ->
-                _arcWoCallback.launch(new Intent(getInterop().getActivityContext(), QuickConfigActivity.class))
+        runOnUiThread(() ->
+                _arcWoCallback.launch(createIntent(QuickConfigActivity.class))
         );
     }
 
@@ -155,11 +153,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_SETTING_MENU, shouldShow);
 
-        XLog.v("切换设置菜单的显示策略为：" + shouldShow);
-        getInterop().writeLogIntoConsole("切换设置菜单的显示策略为：" + shouldShow);
+        writeInfoLog("切换设置菜单的显示策略为：" + shouldShow);
 
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -171,11 +168,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_SHOW_ACTION_BAR, shouldShow);
 
-        XLog.v("切换标题栏的显示策略为：" + shouldShow);
-        getInterop().writeLogIntoConsole("切换标题栏的显示策略为：" + shouldShow);
+        writeInfoLog("切换标题栏的显示策略为：" + shouldShow);
 
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -188,11 +184,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_ENABLE_HARDWARE_ACCELERATE, shouldEnable);
 
-        XLog.v("切换硬件加速的策略为：" + shouldEnable);
-        getInterop().writeLogIntoConsole("切换硬件加速的策略为：" + shouldEnable);
+        writeInfoLog("切换硬件加速的策略为：" + shouldEnable);
 
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -205,11 +200,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_BYPASS_COMPATIBLE_CHECK, shouldBypass);
 
-        XLog.v("切换“跳过兼容性检测”的策略为：" + shouldBypass);
-        getInterop().writeLogIntoConsole("切换“跳过兼容性检测”的策略为：" + shouldBypass);
+        writeInfoLog("切换“跳过兼容性检测”的策略为：" + shouldBypass);
 
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -222,11 +216,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertBooleanEntry(ConfigManager.PREFERENCE_KEY_LOG_ALL_ENTRIES, shouldLog);
 
-        XLog.v("切换诊断日志的记录策略为：" + shouldLog);
-        getInterop().writeLogIntoConsole("切换诊断日志的记录策略为：" + shouldLog);
+        writeInfoLog("切换诊断日志的记录策略为：" + shouldLog);
 
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -238,8 +231,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ABOUT_URL, url);
 
+        writeInfoLog("修改关于菜单的地址为：" + url);
+
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -251,8 +246,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_HELP_URL, url);
 
+        writeInfoLog("修改帮助菜单的地址为：" + url);
+
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -280,7 +277,7 @@ public class AppProxy extends AbstractProxy {
         sb.append(G);
         sb.append(B);
 
-        getInterop().setInputValue(cell, sb.toString());
+        callback(cell, sb.toString());
     }
 
     /**
@@ -322,8 +319,10 @@ public class AppProxy extends AbstractProxy {
 
         getConfigManager().upsertHexIntEntry(ConfigManager.PREFERENCE_KEY_ACTION_BAR_COLOR, colorInteger);
 
+        writeInfoLog("修改标题栏的颜色为：" + colorInteger);
+
         // 重启生效
-        LifecycleUtility.restart(getInterop().getActivityContext());
+        LifecycleUtility.restart();
     }
 
     /**
@@ -332,7 +331,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getPackageName(String cell) {
-        getInterop().setInputValue(cell, getInterop().getActivityContext().getPackageName());
+       callback(cell, DeviceUtilities.getPackageName());
     }
 
     /**
@@ -343,7 +342,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getPackageName2() {
-        return getInterop().getActivityContext().getPackageName();
+        return DeviceUtilities.getPackageName();
     }
 
     /**
@@ -352,8 +351,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getVersion(String cell) {
-        String finalVersionName = MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
-        getInterop().setInputValue(cell, finalVersionName);
+        String finalVersionName = DeviceUtilities.getPackageVersionName();
+        callback(cell, finalVersionName);
     }
 
     /**
@@ -364,7 +363,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getVersion2() {
-        return MiscUtilities.getPackageVersionName(this.getInterop().getActivityContext());
+        return DeviceUtilities.getPackageVersionName();
     }
 
     /**
@@ -374,8 +373,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void toggleOfflineMode(boolean shouldOffline) {
-        getInterop().setOfflineMode(shouldOffline);
-        getInterop().writeLogIntoConsole("离线模式已切换为：" + shouldOffline);
+        DeviceUtilities.setOfflineMode(shouldOffline);
+        writeInfoLog("离线模式已切换为：" + shouldOffline);
     }
 
     /**
@@ -385,7 +384,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void showToast(String text) {
-        getInterop().showToast(text);
+        showLongToast(text);
     }
 
     /**
@@ -395,8 +394,9 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void vibrate(long duration) {
-        MiscUtilities.vibrate(getInterop().getActivityContext(), duration);
-        getInterop().writeLogIntoConsole("Vibrate for " + duration + " sec.");
+        DeviceUtilities.vibrate(duration);
+        writeInfoLog("执行震动：" + duration + "秒");
+        registryForFeatureUsageAnalyze("use_vibrate_feature", "");
     }
 
     /**
@@ -404,8 +404,9 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playNotification() {
-        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_NOTIFICATION);
-        getInterop().writeLogIntoConsole("Play NOTIFICATION sound.");
+        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_NOTIFICATION);
+        writeInfoLog("播放NOTIFICATION铃声");
+        registryForFeatureUsageAnalyze("use_ring_feature", "Notification");
     }
 
     /**
@@ -413,8 +414,9 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playAlarm() {
-        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_ALARM);
-        getInterop().writeLogIntoConsole("Play ALARM sound.");
+        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_ALARM);
+        writeInfoLog("播放ALARM铃声");
+        registryForFeatureUsageAnalyze("use_ring_feature", "Alarm");
     }
 
     /**
@@ -422,7 +424,8 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playRingtone() {
-        MiscUtilities.playRingtone(getInterop().getActivityContext(), MiscUtilities.RINGTONE_TYPE_RINGTONE);
-        getInterop().writeLogIntoConsole("Play RINGTONE sound.");
+        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_RINGTONE);
+        writeInfoLog("播放RINGTONE铃声");
+        registryForFeatureUsageAnalyze("use_ring_feature", "Ringtone");
     }
 }

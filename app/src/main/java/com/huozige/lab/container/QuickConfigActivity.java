@@ -16,8 +16,7 @@ import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
-import com.king.zxing.CameraScan;
-import com.king.zxing.CaptureActivity;
+import com.king.camera.scan.CameraScan;
 
 /**
  * 通过二维码完成快速配置
@@ -53,7 +52,7 @@ public class QuickConfigActivity extends BaseActivity {
                     Toast.makeText(QuickConfigActivity.this, getString(R.string.ui_message_quick_config_done), Toast.LENGTH_LONG).show();
 
                     // 重启生效
-                    LifecycleUtility.restart(QuickConfigActivity.this);
+                    LifecycleUtility.restart();
                 } else {
 
                     XLog.e("配置码不正确或版本过旧，内容为：" + json);
@@ -69,7 +68,7 @@ public class QuickConfigActivity extends BaseActivity {
             ab.setMessage(R.string.ui_message_quick_config_confirm);
             ab.setTitle(R.string.ui_menu_settings);
             ab.show();
-        }else{
+        } else {
             XLog.e("配置码格式不正确，无法读取有效内容");
         }
 
@@ -90,7 +89,7 @@ public class QuickConfigActivity extends BaseActivity {
         TextView lblHelp = findViewById(R.id.textTCHelp);
         lblHelp.setOnClickListener(gotoTextConfig);
 
-        _arc4TCA = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart(QuickConfigActivity.this)); // 打开设置页面，返回后刷新浏览器
+        _arc4TCA = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> LifecycleUtility.restart()); // 打开设置页面，返回后刷新浏览器
 
         XLog.v("快速配置界面准备就绪");
     }
@@ -105,7 +104,9 @@ public class QuickConfigActivity extends BaseActivity {
                 Permission.NOTIFICATION_SERVICE
         }, () -> {
             // 调用ZXingLite的扫码页面
-            _arcZxingLite.launch(new Intent(QuickConfigActivity.this, CaptureActivity.class));
+            var intent = new Intent(QuickConfigActivity.this, HACQRCodeScanActivity.class);
+            intent.putExtra(HACQRCodeScanActivity.EXTRA_KEY_SCAN_HINTS, HACQRCodeScanActivity.EXTRA_QR_CODE_HINTS);
+            _arcZxingLite.launch(intent);
         });
     };
 

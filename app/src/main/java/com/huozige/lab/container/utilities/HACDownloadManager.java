@@ -4,15 +4,14 @@ import static android.content.Context.DOWNLOAD_SERVICE;
 import static android.content.Context.RECEIVER_EXPORTED;
 
 import android.app.DownloadManager;
-import android.content.Context;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.webkit.CookieManager;
 
 import com.elvishew.xlog.XLog;
-
-import android.webkit.CookieManager;
+import com.huozige.lab.container.HACApplication;
 
 import java.io.File;
 import java.util.HashMap;
@@ -31,7 +30,7 @@ public class HACDownloadManager {
 
     static final HashMap<Long, HACDownloadTask> __taskList = new HashMap<>();
 
-    public static HACDownloadManager getInstance(Context context) {
+    public static HACDownloadManager getInstance() {
 
         if (__instance != null) {
             return __instance;
@@ -41,9 +40,9 @@ public class HACDownloadManager {
         __instance._receiver = new HACFileDownloadedReceiver();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(__instance._receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), RECEIVER_EXPORTED);
+            HACApplication.getInstance().registerReceiver(__instance._receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), RECEIVER_EXPORTED);
         } else {
-            context.registerReceiver(__instance._receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            HACApplication.getInstance().registerReceiver(__instance._receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         }
 
         return __instance;
@@ -54,11 +53,10 @@ public class HACDownloadManager {
     /**
      * 执行下载
      *
-     * @param context  操作上下文
      * @param url      需要被下载的URL
      * @param callback 下载成功的回调
      */
-    public void startDownloadTask(Context context, String url, String mimeType, HACDownloadTask.IHACDownloadHandler callback) {
+    public void startDownloadTask(String url, String mimeType, HACDownloadTask.IHACDownloadHandler callback) {
 
         XLog.v("即将开始下载：" + url);
 
@@ -67,7 +65,7 @@ public class HACDownloadManager {
         task.registryHandler(callback);
 
         // 1. 处理文件名
-        FileNameInfo fileInfo = MiscUtilities.guessFileName(url, mimeType);
+        FileNameInfo fileInfo = StringConvertUtility.guessFileName(url, mimeType);
         task.fileName = fileInfo.fileName;
         mimeType = fileInfo.mimeType;
         File tempFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), task.fileName);
@@ -91,7 +89,7 @@ public class HACDownloadManager {
         request.addRequestHeader("Cookie", cookieString);
 
         // 4. 启动下载
-        android.app.DownloadManager downloadManager = (android.app.DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
+        android.app.DownloadManager downloadManager = (android.app.DownloadManager) HACApplication.getInstance().getSystemService(DOWNLOAD_SERVICE);
         task.taskId = downloadManager.enqueue(request);
 
         // 5. 加入列表
