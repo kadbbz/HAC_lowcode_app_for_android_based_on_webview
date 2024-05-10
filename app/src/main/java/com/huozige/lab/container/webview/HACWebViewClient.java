@@ -21,6 +21,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
+import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -126,6 +128,21 @@ public class HACWebViewClient extends WebViewClient {
 
         // 判断导航的协议，HTTP/HTTPS在当前WebView打开
         if (reqUriSchema.equalsIgnoreCase("http") || reqUriSchema.equalsIgnoreCase("https")) {
+
+            // 对PDF文件做特殊处理
+            var nameInfo = StringConvertUtility.guessFileName(request.getUrl().toString(),"application/pdf");
+            if(nameInfo.mimeType.equalsIgnoreCase("application/pdf")){
+
+                XLog.v("使用HAC的PDF预览能力处理该文件：" + request.getUrl());
+
+                Intent intent = new Intent(view.getContext(),PDFPreviewActivity.class);
+                intent.putExtra(PDFPreviewActivity.EXTRA_KEY_URL, request.getUrl().toString());
+                intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, nameInfo.fileName);
+                intent.putExtra(PDFPreviewActivity.EXTRA_KEY_PASSWORD, "");
+                view.getContext().startActivity(intent);
+                return true;
+            }
+
             return false;
         } else {
             // 其他协议使用系统服务打开

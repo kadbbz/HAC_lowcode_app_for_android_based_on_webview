@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.18.0-beta1'
+        versionName '1.18.0-release'
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
                 JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush上注册的包名对应的Appkey，与包名相关，如果修改package name，需要自行注册极光推送账号，并修改这个选项
@@ -65,9 +65,9 @@ apply plugin: "realm-android"
 dependencies {
     // Import the BoM for the Firebase platform
     implementation(platform('com.google.firebase:firebase-bom:33.0.0'))
-    implementation 'com.google.firebase:firebase-perf'
-    implementation 'com.google.firebase:firebase-crashlytics'
-    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-perf:21.0.0'
+    implementation 'com.google.firebase:firebase-crashlytics:19.0.0'
+    implementation 'com.google.firebase:firebase-analytics:22.0.0'
     // Android使用的类库
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.12.0'
