@@ -8,9 +8,10 @@ import com.alibaba.fastjson.JSON;
 import com.dantsu.escposprinter.EscPosCharsetEncoding;
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
-import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections;
+import com.dantsu.escposprinter.exceptions.EscPosConnectionException;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.platform.CallbackParams;
+import com.huozige.lab.container.proxy.support.printer.ExtBluetoothPrintersConnections;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -39,7 +40,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
                 Permission.ACCESS_COARSE_LOCATION
         }, () -> {
 
-            final BluetoothConnection[] bluetoothDevicesList = (new BluetoothPrintersConnections()).getList();
+            final BluetoothConnection[] bluetoothDevicesList = (new ExtBluetoothPrintersConnections()).getList();
 
             if (bluetoothDevicesList != null) {
                 writeInfoLog("ESC打印机扫描完毕，共发现：" + bluetoothDevicesList.length + "台");
@@ -104,7 +105,7 @@ public class EscBtPrinterProxy extends AbstractProxy {
 
         registryForFeatureUsageAnalyze("use_esc_feature", "print");
 
-        writeInfoLog("开始使用ESC协议打印，打印机的地址为："+ mac);
+        writeInfoLog("开始使用ESC协议打印，打印机的地址为：" + mac);
 
         try {
             writeInfoLog("打印模板：" + template + "，dpi: " + printerDpi + " width: " + printerWidthMM + " CPL: " + printerNbrCharactersPerLine);
@@ -114,17 +115,18 @@ public class EscBtPrinterProxy extends AbstractProxy {
             printer.disconnectPrinter();
 
             showLongToast("蓝牙打印完成，连接已断开。");
+
         } catch (Exception ex) {
             writeErrorLog("ESC协议打印出错：" + ex);
         }
     }
 
-    private BluetoothConnection findPrinter(String mac) {
+    private BluetoothConnection findPrinter(String mac) throws EscPosConnectionException {
 
         if (mac == null || mac.isEmpty()) {
-            return BluetoothPrintersConnections.selectFirstPaired();
+            return ExtBluetoothPrintersConnections.selectFirstPaired();
         } else {
-            final BluetoothConnection[] bluetoothDevicesList = (new BluetoothPrintersConnections()).getList();
+            final BluetoothConnection[] bluetoothDevicesList = (new ExtBluetoothPrintersConnections()).getList();
             if (bluetoothDevicesList != null) {
                 var match = Arrays.stream(bluetoothDevicesList).filter((d) -> d.getDevice().getAddress().equalsIgnoreCase(mac)).findFirst();
                 if (match.isPresent()) {
