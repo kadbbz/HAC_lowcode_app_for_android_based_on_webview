@@ -22,18 +22,21 @@ public class StringConvertUtility {
         // 默认实现
         String fileName = URLUtil.guessFileName(url, "", mimeType);
 
+        // 如果你的服务器遇到一个它不认识的文件扩展名，它可能会发送 application/octet-stream 作为MIME类型，这表明这是一个二进制的数据流，客户端应该以附件的形式来下载它
+        String targetMime="application/octet-stream";
+
         // 活字格的附件名存放在download的file参数中，如https://hac.app.hzgcloud.cn/demo/FileDownloadUpload/Download?file=47916819-f90e-47f8-8079-72df4fce78ac_AppLevelSecurityProvider.zip
         if (url.toLowerCase().contains("/filedownloadupload/download?")) {
             String hzgFileName = StringConvertUtility.getUrlParameter(url, "file");
             if (hzgFileName != null && hzgFileName.split("_").length > 1) {
                 fileName = hzgFileName.replace(hzgFileName.split("_")[0] + "_", "");
-                mimeType = URLConnection.guessContentTypeFromName(fileName);
+                targetMime = URLConnection.guessContentTypeFromName(fileName);
             }
         }
 
         FileNameInfo result = new FileNameInfo();
         result.fileName = fileName;
-        result.mimeType = mimeType;
+        result.mimeType = targetMime;
         return result;
     }
 

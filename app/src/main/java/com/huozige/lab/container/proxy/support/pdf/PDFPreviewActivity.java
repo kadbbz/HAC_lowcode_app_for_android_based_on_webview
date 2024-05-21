@@ -110,12 +110,6 @@ public class PDFPreviewActivity extends AppCompatActivity {
         _pdfView = this.findViewById(R.id.pdfView);
         _pbDownload = this.findViewById(R.id.pbDownloading);
 
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
         _url = this.getIntent().getStringExtra(EXTRA_KEY_URL);
         _password = this.getIntent().getStringExtra(EXTRA_KEY_PASSWORD);
         _fileName = this.getIntent().getStringExtra(EXTRA_KEY_FILENAME);
@@ -126,6 +120,7 @@ public class PDFPreviewActivity extends AppCompatActivity {
 
         startDownload();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

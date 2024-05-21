@@ -130,7 +130,7 @@ public class HACWebViewClient extends WebViewClient {
         if (reqUriSchema.equalsIgnoreCase("http") || reqUriSchema.equalsIgnoreCase("https")) {
 
             // 对PDF文件做特殊处理
-            var nameInfo = StringConvertUtility.guessFileName(request.getUrl().toString(),"application/pdf");
+            var nameInfo = StringConvertUtility.guessFileName(request.getUrl().toString(),null);
             if(nameInfo.mimeType.equalsIgnoreCase("application/pdf")){
 
                 XLog.v("使用HAC的PDF预览能力处理该文件：" + request.getUrl());
