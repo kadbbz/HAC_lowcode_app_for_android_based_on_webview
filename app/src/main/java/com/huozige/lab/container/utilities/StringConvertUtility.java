@@ -23,7 +23,7 @@ public class StringConvertUtility {
         String fileName = URLUtil.guessFileName(url, "", mimeType);
 
         // 如果你的服务器遇到一个它不认识的文件扩展名，它可能会发送 application/octet-stream 作为MIME类型，这表明这是一个二进制的数据流，客户端应该以附件的形式来下载它
-        String targetMime="application/octet-stream";
+        String targetMime = "application/octet-stream";
 
         // 活字格的附件名存放在download的file参数中，如https://hac.app.hzgcloud.cn/demo/FileDownloadUpload/Download?file=47916819-f90e-47f8-8079-72df4fce78ac_AppLevelSecurityProvider.zip
         if (url.toLowerCase().contains("/filedownloadupload/download?")) {
@@ -31,6 +31,40 @@ public class StringConvertUtility {
             if (hzgFileName != null && hzgFileName.split("_").length > 1) {
                 fileName = hzgFileName.replace(hzgFileName.split("_")[0] + "_", "");
                 targetMime = URLConnection.guessContentTypeFromName(fileName);
+            }
+        }
+
+        // 活字格报表模块生成报表文件时，会将文件类型存放在exportType参数中,如https://hac.app.hzgcloud.cn/demo/ARExport/ExportReport?CacheGuid=64de400e-7fc7-4464-819c-c899376a4797&exportType=0
+        // 0：pdf
+        // 1: word
+        // 2: excel
+        // 3: csv
+        if (url.toLowerCase().contains("/arexport/exportreport?")) {
+            String fileType = StringConvertUtility.getUrlParameter(url, "exportType");
+
+            if (fileType != null) {
+                switch (fileType) {
+                    case "0": {
+                        fileName = "ExportReport.pdf";
+                        targetMime = "application/pdf";
+                        break;
+                    }
+                    case "1": {
+                        fileName = "ExportReport.docx";
+                        targetMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                        break;
+                    }
+                    case "2": {
+                        fileName = "ExportReport.xlsx";
+                        targetMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        break;
+                    }
+                    case "3": {
+                        fileName = "ExportReport.csv";
+                        targetMime = "text/csv";
+                        break;
+                    }
+                }
             }
         }
 
@@ -124,12 +158,13 @@ public class StringConvertUtility {
 
     /**
      * Byte数组转逗号分隔的字符串
+     *
      * @param data byte数组
      * @return 字符串
      */
     public static String byteArrayToCommaSeperatedString(byte[] data) {
 
-        if(data==null){
+        if (data == null) {
             return "";
         }
 
@@ -148,6 +183,7 @@ public class StringConvertUtility {
 
     /**
      * 十六进制字符串转整数
+     *
      * @param tcd 字符串，以#或0x开头时，会删除这些前缀
      * @return 整数
      */
@@ -161,6 +197,7 @@ public class StringConvertUtility {
 
     /**
      * 从传入的字符串转换为布尔值，空引用、空、0、false、no均判定为false，否则时true
+     *
      * @param text 字符串
      * @return 布尔值
      */
