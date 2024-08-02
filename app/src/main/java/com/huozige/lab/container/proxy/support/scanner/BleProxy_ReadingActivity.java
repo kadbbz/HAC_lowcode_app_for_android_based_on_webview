@@ -8,12 +8,14 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
+import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.Base64;
 
-public class BleProxy_ReadingActivity extends AppCompatActivity {
+public class BleProxy_ReadingActivity extends BaseActivityNoActionBar {
 
     public final static int STATUS_OK = 0;
     public final static int STATUS_ERROR = -10;

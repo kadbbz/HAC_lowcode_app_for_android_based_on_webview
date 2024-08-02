@@ -17,13 +17,14 @@ import android.widget.Toast;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 
 import java.util.ArrayList;
 
 /**
  * 实现方法参考：<a href="https://blog.csdn.net/qq_37565670/article/details/119240737">...</a>
  */
-public class NfcProxy_ReadingActivity extends BaseActivity {
+public class NfcProxy_ReadingActivity extends BaseActivityNoActionBar {
 
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_NA = -10;

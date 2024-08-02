@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
 import com.github.barteksc.pdfviewer.PDFView;
+import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.HACDownloadManager;
@@ -25,7 +26,7 @@ import org.apache.commons.io.FilenameUtils;
 /**
  * 下载并预览PDF的页面
  */
-public class PDFPreviewActivity extends AppCompatActivity {
+public class PDFPreviewActivity extends BaseActivity {
 
     private String _url, _password, _fileName, _localFilePath;
 

@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.otaliastudios.cameraview.CameraListener;
@@ -28,7 +30,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class CameraViewActivity extends AppCompatActivity {
+public class CameraViewActivity extends BaseActivityNoActionBar {
 
     public static final String EXTRA_OPERATION = "op";
     public static final String OPERATION_TAKE_PHOTO = "photo";

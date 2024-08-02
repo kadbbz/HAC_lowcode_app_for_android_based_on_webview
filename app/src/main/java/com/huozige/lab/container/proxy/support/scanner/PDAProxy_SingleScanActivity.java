@@ -10,12 +10,13 @@ import android.view.View;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.ConfigManager;
 
 /**
  * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
  */
-public class PDAProxy_SingleScanActivity extends BaseActivity {
+public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
 
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_CANCEL = -1;
