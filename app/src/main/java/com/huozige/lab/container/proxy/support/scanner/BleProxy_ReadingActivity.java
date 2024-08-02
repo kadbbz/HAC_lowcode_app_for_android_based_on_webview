@@ -5,10 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.elvishew.xlog.XLog;
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.StringConvertUtility;
@@ -41,7 +38,7 @@ public class BleProxy_ReadingActivity extends BaseActivityNoActionBar {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        helper= BleHelper.getInstance(getApplication());
+        helper = BleHelper.getInstance(getApplication());
 
         setContentView(R.layout.activity_ble_proxy_reading);
         findViewById(R.id.button_cancel).setOnClickListener(_cancelButtonClick);

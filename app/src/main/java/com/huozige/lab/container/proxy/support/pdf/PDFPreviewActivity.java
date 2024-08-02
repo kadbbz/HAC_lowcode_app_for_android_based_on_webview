@@ -11,8 +11,6 @@ import android.view.MenuItem;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.elvishew.xlog.XLog;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.huozige.lab.container.BaseActivity;

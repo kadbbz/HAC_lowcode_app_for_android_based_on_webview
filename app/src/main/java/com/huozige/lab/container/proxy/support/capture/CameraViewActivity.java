@@ -10,11 +10,9 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.DeviceUtilities;
