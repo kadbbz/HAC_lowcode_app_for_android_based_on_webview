@@ -5,15 +5,14 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.Base64;
 
-public class BleProxy_ReadingActivity extends AppCompatActivity {
+public class BleProxy_ReadingActivity extends BaseActivityNoActionBar {
 
     public final static int STATUS_OK = 0;
     public final static int STATUS_ERROR = -10;
@@ -39,7 +38,7 @@ public class BleProxy_ReadingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        helper= BleHelper.getInstance(getApplication());
+        helper = BleHelper.getInstance(getApplication());
 
         setContentView(R.layout.activity_ble_proxy_reading);
         findViewById(R.id.button_cancel).setOnClickListener(_cancelButtonClick);

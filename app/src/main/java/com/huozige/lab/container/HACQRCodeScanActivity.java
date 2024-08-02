@@ -1,5 +1,6 @@
 package com.huozige.lab.container;
 
+import androidx.appcompat.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
 
@@ -29,6 +30,15 @@ public class HACQRCodeScanActivity extends BarcodeCameraScanActivity {
      * 仅处理QR码，速度更快
      */
     public static final String EXTRA_QR_CODE_HINTS = "qr";
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+
+        // 强制隐藏标题栏
+        ActionBar aBar = getSupportActionBar();
+        if(aBar!=null) aBar.hide();
+    }
 
     @Override
     public void initCameraScan(@NonNull CameraScan<Result> cameraScan) {

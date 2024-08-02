@@ -5,17 +5,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import com.elvishew.xlog.XLog;
 import android.view.View;
 
-import com.huozige.lab.container.BaseActivity;
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.ConfigManager;
 
 /**
  * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
  */
-public class PDAProxy_SingleScanActivity extends BaseActivity {
+public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
 
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_CANCEL = -1;
@@ -33,7 +33,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
             XLog.v("收到单次扫码结果的广播");
 
             // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra( (null == ConfigManager.getInstance().getScanExtra())? getString( R.string.feature_scanner_extra_key_barcode_broadcast):ConfigManager.getInstance().getScanExtra());
+            String result = intent.getStringExtra((null == ConfigManager.getInstance().getScanExtra()) ? getString(R.string.feature_scanner_extra_key_barcode_broadcast) : ConfigManager.getInstance().getScanExtra());
 
             XLog.v("扫码结果是：" + result);
 
@@ -79,7 +79,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivity {
 
         super.onResume();
 
-        String intentF = (ConfigManager.getInstance().getScanAction() == null)?getString(R.string.feature_scanner_broadcast_name):ConfigManager.getInstance().getScanAction();
+        String intentF = (ConfigManager.getInstance().getScanAction() == null) ? getString(R.string.feature_scanner_broadcast_name) : ConfigManager.getInstance().getScanAction();
 
         // 按照名称来过滤出需要处理的广播
         IntentFilter intentFilter = new IntentFilter(intentF);

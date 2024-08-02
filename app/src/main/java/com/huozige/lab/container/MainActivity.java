@@ -4,6 +4,8 @@ package com.huozige.lab.container;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -12,6 +14,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
@@ -21,6 +24,7 @@ import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
 import com.huozige.lab.container.platform.hzg.HZGWebInterop;
 import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
+import com.huozige.lab.container.utilities.ColorUtility;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.PermissionsUtility;
@@ -241,6 +245,23 @@ public class MainActivity extends BaseActivity {
         }
 
         // 你可以在这里创建新的菜单
+
+        // 设置ActionBar的图标颜色，避免文字和背景颜色过于接近
+        Toolbar aBar = findViewById(androidx.appcompat.R.id.action_bar);
+
+        if (aBar != null) {
+            Drawable oriIcon = aBar.getOverflowIcon();
+            // 深色采用黑色文字，浅色用白色文字
+            if (ColorUtility.getGrayScale(ConfigManager.getInstance().getTCD()) > ColorUtility.GRAYSCALE_THRESHOLD_BRIGHT_COLOR) {
+                if (oriIcon != null) {
+                    aBar.setOverflowIcon(ColorUtility.resetImageTintColorTo(oriIcon, Color.BLACK));
+                }
+            } else {
+                if (oriIcon != null) {
+                    aBar.setOverflowIcon(ColorUtility.resetImageTintColorTo(oriIcon, Color.WHITE));
+                }
+            }
+        }
 
         return true;
     }

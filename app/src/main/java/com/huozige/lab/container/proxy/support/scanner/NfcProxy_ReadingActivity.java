@@ -9,21 +9,19 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Parcelable;
-
-import com.elvishew.xlog.XLog;
-
 import android.view.View;
 import android.widget.Toast;
 
-import com.huozige.lab.container.BaseActivity;
+import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 
 import java.util.ArrayList;
 
 /**
  * 实现方法参考：<a href="https://blog.csdn.net/qq_37565670/article/details/119240737">...</a>
  */
-public class NfcProxy_ReadingActivity extends BaseActivity {
+public class NfcProxy_ReadingActivity extends BaseActivityNoActionBar {
 
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_NA = -10;
@@ -113,7 +111,8 @@ public class NfcProxy_ReadingActivity extends BaseActivity {
         XLog.v("扫描到NFC标签，即将读取");
         Intent data = getIntent();
         Tag tag = data.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-        String tagInHex = bytesToHex(tag.getId());
+
+        String tagInHex = (tag != null) ? bytesToHex(tag.getId()) : "";
 
         XLog.v("NFC标签的TAG ID为：" + tagInHex);
 
