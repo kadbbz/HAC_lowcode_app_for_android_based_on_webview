@@ -119,12 +119,12 @@ public class PDAProxy extends AbstractProxy {
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra(getConfigManager().getScanExtra());
 
-            writeInfoLog("当次扫码结果是：" + result);
-
             if (result == null) result = "";
 
             // 去除非ASCII字符
             result = StringConvertUtility.removeNonASCIIChars(result);
+
+            writeInfoLog("当次扫码结果是：" + result);
 
             if (_continueScanOn && !result.isEmpty()) {
 
@@ -170,7 +170,7 @@ public class PDAProxy extends AbstractProxy {
         registryPayloadCellLocation(cellLocation);
 
         // 记录日志
-        writeInfoLog("单次扫码已启动，等待接收扫描结果");
+        writeInfoLog("单次扫码已启动，等待接收扫描结果。广播：" + getConfigManager().getScanAction() + "，键值：" + getConfigManager().getScanExtra());
 
         // 调用Broadcast模式扫码页面
         _arcScanner.launch(createIntent(PDAProxy_SingleScanActivity.class));
@@ -189,7 +189,7 @@ public class PDAProxy extends AbstractProxy {
         registryCallbackTicket(ticket);
 
         // 记录日志
-        writeInfoLog("异步单次扫码已启动，等待接收扫描结果");
+        writeInfoLog("异步单次扫码已启动，等待接收扫描结果。广播：" + getConfigManager().getScanAction() + "，键值：" + getConfigManager().getScanExtra());
 
         // 调用Broadcast模式扫码页面
         _arcScanner.launch(createIntent(PDAProxy_SingleScanActivity.class));
@@ -205,7 +205,7 @@ public class PDAProxy extends AbstractProxy {
     public void continuous_scan(String cellLocation, String limit) {
         registryForFeatureUsageAnalyze("use_scanner_feature", "continuousScan");
 
-        writeInfoLog("连续扫码已启动，等待接收扫描结果，接收上限为：" + limit);
+        writeInfoLog("连续扫码已启动，等待接收扫描结果，接收上限为：" + limit + "。广播：" + getConfigManager().getScanAction() + "，键值：" + getConfigManager().getScanExtra());
 
         // 记录传入参数
         registryPayloadCellLocation(cellLocation);
@@ -229,7 +229,7 @@ public class PDAProxy extends AbstractProxy {
     public void continuous_scanAsync(String ticket, String limit) {
         registryForFeatureUsageAnalyze("use_scanner_feature", "continuousScan");
 
-        writeInfoLog("异步连续扫码已启动，等待接收扫描结果，接收上限为：" + limit);
+        writeInfoLog("异步连续扫码已启动，等待接收扫描结果，接收上限为：" + limit + "。广播：" + getConfigManager().getScanAction() + "，键值：" + getConfigManager().getScanExtra());
 
         // 记录传入参数
         registryCallbackTicket(ticket);
@@ -269,7 +269,7 @@ public class PDAProxy extends AbstractProxy {
         getWebView().getContext().registerReceiver(_scanReceiver, intentFilter);
 
         // 记录日志
-        writeInfoLog("扫描头广播接收器已启动");
+        writeInfoLog("扫描头广播接收器已启动。广播：" + getConfigManager().getScanAction() + "，键值：" + getConfigManager().getScanExtra());
 
     }
 

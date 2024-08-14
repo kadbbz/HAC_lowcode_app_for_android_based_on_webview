@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.18.4-release'
+        versionName '1.18.5-release'
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
                 JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush上注册的包名对应的Appkey，与包名相关，如果修改package name，需要自行注册极光推送账号，并修改这个选项
@@ -68,12 +68,12 @@ apply plugin: "realm-android"
 
 dependencies {
     // Import the BoM for the Firebase platform
-    implementation(platform('com.google.firebase:firebase-bom:33.0.0'))
-    implementation 'com.google.firebase:firebase-perf:21.0.0'
-    implementation 'com.google.firebase:firebase-crashlytics:19.0.0'
-    implementation 'com.google.firebase:firebase-analytics:22.0.0'
+    implementation(platform('com.google.firebase:firebase-bom:33.1.2'))
+    implementation 'com.google.firebase:firebase-perf:21.0.1'
+    implementation 'com.google.firebase:firebase-crashlytics:19.0.3'
+    implementation 'com.google.firebase:firebase-analytics:22.0.2'
     // Android使用的类库
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -89,6 +89,8 @@ dependencies {
     implementation 'com.alibaba:fastjson:2.0.49' // JSON处理
     implementation 'com.github.barteksc:android-pdf-viewer:3.2.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.3.1' // 极光推送
+    implementation 'com.google.firebase:firebase-messaging:24.0.0'
+    implementation 'cn.jiguang.sdk.plugin:fcm:5.0.0'
     implementation 'com.github.Jasonchenlijian:FastBle:2.4.0' // BLE设备
     implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
     implementation 'com.otaliastudios:cameraview:2.7.2' // 拍照与图像预处理
