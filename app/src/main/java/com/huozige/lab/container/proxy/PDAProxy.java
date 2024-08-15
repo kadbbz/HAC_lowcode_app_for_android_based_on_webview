@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.PDAProxy_SingleScanActivity;
-import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.util.ArrayList;
 
@@ -122,7 +121,7 @@ public class PDAProxy extends AbstractProxy {
             if (result == null) result = "";
 
             // 去除非ASCII字符
-            result = StringConvertUtility.removeNonASCIIChars(result);
+            //result = StringConvertUtility.removeNonASCIIChars(result);
 
             writeInfoLog("当次扫码结果是：" + result);
 

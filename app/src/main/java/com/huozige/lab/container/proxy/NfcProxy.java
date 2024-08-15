@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.proxy.support.scanner.NfcProxy_ReadingActivity;
-import com.huozige.lab.container.utilities.StringConvertUtility;
 
 /**
  * 让页面能读取NFC标签
@@ -82,7 +81,7 @@ public class NfcProxy extends AbstractProxy {
                     writeInfoLog("NFC读取成功，结果为：" + tag);
 
                     // 去除非ASCII字符
-                    tag = StringConvertUtility.removeNonASCIIChars(tag);
+                    //tag = StringConvertUtility.removeNonASCIIChars(tag);
 
                     // 将结果返回
                     callback(CallbackParams.success(tag));

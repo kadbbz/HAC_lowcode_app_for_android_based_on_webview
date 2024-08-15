@@ -4,11 +4,29 @@ import android.webkit.URLUtil;
 
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Base64;
 
 /**
  * 与字符串和格式处理有关的帮助类
  */
 public class StringConvertUtility {
+
+    public static String HAC_ENCODING_PREFIX = "HACe_P!v1|";
+    public static String HAC_NULL_MASK="HACm_nUll";
+
+    /**
+     * 执行HAC编码逻辑
+     *
+     * @param value 原始字符串
+     * @return 编码后的字符串，以 HAC_ENCODING_PREFIX 开头
+     */
+    public static String encodeByHAC(String value) {
+
+        if(value == null){
+            return HAC_NULL_MASK;
+        }
+        return HAC_ENCODING_PREFIX + Base64.getEncoder().encodeToString(value.getBytes());
+    }
 
     /**
      * 获取附件类URL的文件名
@@ -104,25 +122,6 @@ public class StringConvertUtility {
         }
 
         return null;
-    }
-
-    /**
-     * 在字符串中去除非ASCII字符和其他不能输出到屏幕的字符
-     *
-     * @param text 原始字符串
-     * @return 处理后的字符串
-     */
-    public static String removeNonASCIIChars(String text) {
-        // strips off all non-ASCII characters
-        text = text.replaceAll("[^\\x00-\\x7F]", "");
-
-        // erases all the ASCII control characters
-        // text = text.replaceAll("\\p{Cntrl}&&[^\r\n\t]", "");
-
-        // removes non-printable characters from Unicode
-        text = text.replaceAll("\\p{C}", "");
-
-        return text.trim();
     }
 
     /**

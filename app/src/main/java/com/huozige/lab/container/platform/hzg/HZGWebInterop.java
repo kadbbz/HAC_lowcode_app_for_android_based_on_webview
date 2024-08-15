@@ -4,6 +4,7 @@ import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.CallbackParams;
+import com.huozige.lab.container.utilities.StringConvertUtility;
 
 /**
  * 活字格页面专用
@@ -19,7 +20,7 @@ public class HZGWebInterop extends AbstractWebInterop {
     @Override
     public void setInputValue(String cellLocation, Object rawValue) throws IllegalStateException {
 
-        String scripts = "HAC.setCellValue(" + cellLocation + ",'" + rawValue.toString() + "');";
+        String scripts = "HAC.setCellValue(" + cellLocation + ",'" + StringConvertUtility.encodeByHAC(rawValue.toString()) + "');";
 
         executeJavaScript(scripts);
     }
@@ -29,9 +30,9 @@ public class HZGWebInterop extends AbstractWebInterop {
 
         String scripts;
         if(params.isSuccess){
-            scripts = "HAC.dispatchSuccessCallback(" + ticket + ",'" + params.payload + "','" + params.payload2 + "');";
+            scripts = "HAC.dispatchSuccessCallback(" + ticket + ",'" + StringConvertUtility.encodeByHAC(params.payload) + "','" + StringConvertUtility.encodeByHAC(params.payload2) + "');";
         }else{
-            scripts = "HAC.dispatchErrorCallback(" + ticket + ",'"+  params.error + "');";
+            scripts = "HAC.dispatchErrorCallback(" + ticket + ",'"+  StringConvertUtility.encodeByHAC(params.error) + "');";
         }
 
         executeJavaScript(scripts);
