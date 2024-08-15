@@ -11,7 +11,6 @@ import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.StringConvertUtility;
 
 /**
  * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
@@ -35,9 +34,6 @@ public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
 
             // 按照厂商的文档，从广播中获取扫码结果
             String result = intent.getStringExtra(ConfigManager.getInstance().getScanExtra());
-
-            // 去除非ASCII字符
-            result = StringConvertUtility.removeNonASCIIChars(result);
 
             XLog.v("扫码结果是：" + result);
 
