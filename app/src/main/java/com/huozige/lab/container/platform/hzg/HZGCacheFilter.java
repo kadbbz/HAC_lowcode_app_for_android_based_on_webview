@@ -17,7 +17,8 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
     final static String[] SUPPORTED_VERSIONS = {
             "9.0.6.0", // 9.0
             "9.0.103.0",// 9.1
-            "10.0.3.0",}; // 10.0
+            "10.0.3.0", // 10.0
+            "10.0.102.0"}; // 10.1
 
     /**
      * 执行缓存检查
