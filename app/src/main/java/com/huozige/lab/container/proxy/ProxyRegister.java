@@ -63,6 +63,8 @@ public class ProxyRegister {
 
         this._proxies.add(new AudioRecorderProxy()); // 录制音频
 
+        this._proxies.add(new UHFProxy()); // UHF/RFID读取
+
         __instance = this;
     }
 }

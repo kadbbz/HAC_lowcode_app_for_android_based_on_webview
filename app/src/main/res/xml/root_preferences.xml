@@ -1,0 +1,58 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/web_header">
+
+        <EditTextPreference
+            app:key="E"
+            app:title="@string/url_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/scanner_header">
+
+        <EditTextPreference
+            app:key="SA"
+            app:title="@string/scanner_action_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="SE"
+            app:title="@string/scanner_extra_key_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/uhf_header">
+
+        <EditTextPreference
+            app:key="USA"
+            app:title="@string/uhf_action_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="USE"
+            app:title="@string/uhf_extra_key_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/option_header">
+
+        <SwitchPreferenceCompat
+            app:key="BCC"
+            app:title="@string/skip_bcc_title" />
+
+        <SwitchPreferenceCompat
+            app:key="HA"
+            app:title="@string/enable_ha_title" />
+
+        <SwitchPreferenceCompat
+            app:key="LAE"
+            app:summaryOff="@string/attachment_summary_off"
+            app:summaryOn="@string/attachment_summary_on"
+            app:title="@string/attachment_title" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

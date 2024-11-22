@@ -10,8 +10,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.OptionSettingsActivity;
 import com.huozige.lab.container.QuickConfigActivity;
-import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.DeviceUtilities;
@@ -111,7 +111,7 @@ public class AppProxy extends AbstractProxy {
     public void openSettingPage() {
 
         runOnUiThread(() ->
-                _arcWoCallback.launch(createIntent(SettingActivity.class))
+                _arcWoCallback.launch(createIntent(OptionSettingsActivity.class))
         );
     }
 

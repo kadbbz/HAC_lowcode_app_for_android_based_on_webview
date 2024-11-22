@@ -295,7 +295,7 @@ public class MainActivity extends BaseActivity {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
                 } else {
-                    startActivity(new Intent(this, SettingActivity.class));
+                    startActivity(new Intent(this, OptionSettingsActivity.class));
                 }
                 break;
             case MENU_ID_HELP:

@@ -11,8 +11,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 
 import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.OptionSettingsActivity;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 
 public class HttpAuthActivity extends BaseActivity {
@@ -70,5 +70,5 @@ public class HttpAuthActivity extends BaseActivity {
         finish();
     };
 
-    View.OnClickListener goSetting = view -> startActivity(new Intent(HttpAuthActivity.this, SettingActivity.class));
+    View.OnClickListener goSetting = view -> startActivity(new Intent(HttpAuthActivity.this, OptionSettingsActivity.class));
 }

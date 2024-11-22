@@ -34,6 +34,9 @@ public class ConfigManager {
 
     public static final String PREFERENCE_KEY_LOG_ALL_ENTRIES = "LAE"; // 是否记录全部日志
 
+    public static final String PREFERENCE_KEY_UHF_ACTION = "USA"; // 扫描广播的Action
+    public static final String PREFERENCE_KEY_UHF_EXTRA = "USE"; // 扫描广播的Extra
+
     final Application _context;
 
     static ConfigManager __instance;
@@ -150,6 +153,12 @@ public class ConfigManager {
                 // 是否记录所有日志
                 this.upsertBooleanEntry(PREFERENCE_KEY_LOG_ALL_ENTRIES, config.getString(PREFERENCE_KEY_LOG_ALL_ENTRIES));
 
+                // UHF Action
+                this.upsertStringEntry(PREFERENCE_KEY_UHF_ACTION, config.getString(PREFERENCE_KEY_UHF_ACTION));
+
+                // UHF Extra
+                this.upsertStringEntry(PREFERENCE_KEY_UHF_EXTRA, config.getString(PREFERENCE_KEY_UHF_EXTRA));
+
                 XLog.v("应用初始化设置完成，配置数据：" + json);
 
                 EventUtility.logEvent("app_quick_config", config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
@@ -177,6 +186,14 @@ public class ConfigManager {
 
     public String getScanExtra() {
         return getStringValue(_context, PREFERENCE_KEY_SCANNER_EXTRA, R.string.feature_scanner_extra_key_barcode_broadcast);
+    }
+
+    public String getUHFAction() {
+        return getStringValue(_context, PREFERENCE_KEY_UHF_ACTION, R.string.feature_uhf_broadcast_name);
+    }
+
+    public String getUHFExtra() {
+        return getStringValue(_context, PREFERENCE_KEY_UHF_EXTRA, R.string.feature_uhf_extra_key_barcode_broadcast);
     }
 
     public Boolean getHA() {
@@ -241,6 +258,14 @@ public class ConfigManager {
 
     public String getPassword() {
         return getStringValue(_context, PREFERENCE_KEY_CURRENT_PWD, R.string.app_customize_url_for_help_menu);
+    }
+
+    public String getStringValue(String key, String defValue) {
+        return getPref().getString(key, defValue);
+    }
+
+    public boolean getBooleanValue(String key, boolean defValue) {
+        return getPref().getBoolean(key, defValue);
     }
 
     /**

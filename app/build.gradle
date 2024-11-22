@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.18.7-release'
+        versionName '1.18.8-beta1'
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
                 JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush上注册的包名对应的Appkey，与包名相关，如果修改package name，需要自行注册极光推送账号，并修改这个选项
@@ -68,14 +68,14 @@ apply plugin: "realm-android"
 
 dependencies {
     // Import the BoM for the Firebase platform
-    implementation(platform('com.google.firebase:firebase-bom:33.3.0'))
-    implementation 'com.google.firebase:firebase-perf:21.0.1'
-    implementation 'com.google.firebase:firebase-crashlytics:19.1.0'
-    implementation 'com.google.firebase:firebase-analytics:22.1.0'
+    implementation(platform('com.google.firebase:firebase-bom:33.6.0'))
+    implementation 'com.google.firebase:firebase-perf:21.0.2'
+    implementation 'com.google.firebase:firebase-crashlytics:19.2.1'
+    implementation 'com.google.firebase:firebase-analytics:22.1.2'
     // Android使用的类库
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // 其他类库
     implementation 'commons-io:commons-io:2.16.1' // 文件与路径处理
@@ -89,7 +89,7 @@ dependencies {
     implementation 'com.alibaba:fastjson:2.0.49' // JSON处理
     implementation 'com.github.barteksc:android-pdf-viewer:3.2.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.3.1' // 极光推送
-    implementation 'com.google.firebase:firebase-messaging:24.0.1'
+    implementation 'com.google.firebase:firebase-messaging:24.1.0'
     implementation 'cn.jiguang.sdk.plugin:fcm:5.0.0'
     implementation 'com.github.Jasonchenlijian:FastBle:2.4.0' // BLE设备
     implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
@@ -97,5 +97,6 @@ dependencies {
     implementation 'com.huangyz0918:androidwm-light:0.1.2' // 图片水印
     implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0' // ECS蓝牙打印机
     implementation 'com.github.adrielcafe:AndroidAudioRecorder:0.3.0' // 录音机
-    implementation 'com.arthenica:mobile-ffmpeg-full:4.4' // 音视频压缩处理用
+    implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
+    implementation 'androidx.preference:preference:1.2.0'// 音视频压缩处理用
 }
