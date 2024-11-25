@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.18.8-beta1'
+        versionName '1.19.0-beta1'
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
                 JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush上注册的包名对应的Appkey，与包名相关，如果修改package name，需要自行注册极光推送账号，并修改这个选项
@@ -80,7 +80,7 @@ dependencies {
     // 其他类库
     implementation 'commons-io:commons-io:2.16.1' // 文件与路径处理
     implementation 'com.github.getActivity:XXPermissions:18.2' // 权限控制
-    implementation files('libs/LPAPI-2024-08-02-R.jar') // 德佟打印机
+    implementation files('libs/LPAPI-2024-10-21-R.jar') // 德佟打印机
     implementation 'com.zhihu.android:matisse:0.5.3-beta3' // 图片选择
     implementation 'com.github.bumptech.glide:glide:4.16.0' // matisse依赖
     implementation 'com.github.jenly1314:zxing-lite:3.1.1' // 二维码识别：扫描
@@ -98,5 +98,5 @@ dependencies {
     implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0' // ECS蓝牙打印机
     implementation 'com.github.adrielcafe:AndroidAudioRecorder:0.3.0' // 录音机
     implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
-    implementation 'androidx.preference:preference:1.2.0'// 音视频压缩处理用
+    implementation 'androidx.preference:preference:1.2.1'// 音视频压缩处理用
 }

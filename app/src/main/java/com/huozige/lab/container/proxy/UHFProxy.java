@@ -8,6 +8,9 @@ import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.platform.CallbackParams;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * 让页面具备操作UHF硬件的能力
  * 1.19.0
@@ -19,6 +22,9 @@ public class UHFProxy extends AbstractProxy {
     public String getName() {
         return "uhf";
     }
+
+
+    HashSet<String> _scanResultCache = new HashSet<>();
 
     /**
      * 定义用于接收持续扫描的广播接收器
@@ -43,11 +49,13 @@ public class UHFProxy extends AbstractProxy {
 
                 writeInfoLog("当次读取结果是：" + result);
 
-                if (result.isEmpty()) {
+                // 多个结果按照回车来分隔，需要先拆解
+                // 与激光头不同，这里需要去重，所以用Hashset
+                _scanResultCache.addAll(Arrays.asList(result.split("\n")));
 
-                    // 输出
-                    callback(CallbackParams.success(result));
-                }
+                // 输出，按照HAC的惯例，逗号分隔
+                callback(CallbackParams.success(String.join(",", _scanResultCache)));
+
             } catch (Exception ex) {
                 callback(CallbackParams.error(ex.toString()));
             }
@@ -78,6 +86,8 @@ public class UHFProxy extends AbstractProxy {
 
             intentFilter.setPriority(Integer.MAX_VALUE);
 
+            _scanResultCache.clear();
+
             // 注册广播监听
             getWebView().getContext().registerReceiver(_scanReceiver, intentFilter);
 
@@ -100,6 +110,9 @@ public class UHFProxy extends AbstractProxy {
         writeInfoLog("尝试停止UHF广播接收器");
 
         getWebView().getContext().unregisterReceiver(_scanReceiver);
+
+        _scanResultCache.clear();
+
         // 记录日志
         writeInfoLog("UHF广播接收器已停止");
     }

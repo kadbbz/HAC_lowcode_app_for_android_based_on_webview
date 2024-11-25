@@ -1,31 +1,26 @@
 package com.huozige.lab.container;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebStorage;
 import android.webkit.WebViewDatabase;
 import android.widget.Toast;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceDataStore;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.elvishew.xlog.XLog;
-import com.huozige.lab.container.utilities.ColorUtility;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.DeviceUtilities;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.UiUtility;
 
 import javax.annotation.Nullable;
 
@@ -53,32 +48,7 @@ public class OptionSettingsActivity extends AppCompatActivity {
         }
 
         // 设置动作栏
-        ActionBar actionBar = getSupportActionBar();
-
-        if (actionBar != null) {
-
-            actionBar.show();
-
-            // 设置状态栏颜色，做沉浸式体验
-            Window window = this.getWindow();
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            window.setStatusBarColor(ConfigManager.getInstance().getTCD());
-
-            // 设置ActionBar的颜色，需要避免文字和背景颜色过于接近
-            Toolbar aBar = findViewById(androidx.appcompat.R.id.action_bar);
-
-            if (aBar != null) {
-
-                aBar.setBackgroundColor(ConfigManager.getInstance().getTCD());
-                // 深色采用黑色文字，浅色用白色文字
-                if (ColorUtility.getGrayScale(ConfigManager.getInstance().getTCD()) > ColorUtility.GRAYSCALE_THRESHOLD_BRIGHT_COLOR) {
-                    aBar.setTitleTextColor(Color.BLACK);
-                } else {
-                    aBar.setTitleTextColor(Color.WHITE);
-                }
-            }
-        }
+        UiUtility.initializeActionBar(this, getSupportActionBar(), true);
     }
 
 
@@ -159,7 +129,7 @@ public class OptionSettingsActivity extends AppCompatActivity {
                 break;
             }
             case MENU_ID_ABOUT: {
-                String info = "SSAID: " + DeviceUtilities.getSSAID() + " \r\nPackage Version: " + DeviceUtilities.getPackageVersionName() + " \r\nWebView Version: " + DeviceUtilities.getWebViewVersionName();
+                String info = "WebView Version: " + DeviceUtilities.getWebViewVersionName() + "\r\nPackage Version: " + DeviceUtilities.getPackageVersionName() + "\r\nSSAID: " + DeviceUtilities.getSSAID();
                 Toast.makeText(OptionSettingsActivity.this, info, Toast.LENGTH_LONG).show();
                 break;
             }
