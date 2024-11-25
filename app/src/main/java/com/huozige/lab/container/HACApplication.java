@@ -15,7 +15,7 @@ import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -93,8 +93,8 @@ public class HACApplication extends Application {
                                 "\nDevice Model       : " + Build.MODEL +
                                 "\nAndroid Version    : " + Build.VERSION.RELEASE +
                                 "\nAndroid SDK        : " + Build.VERSION.SDK_INT +
-                                "\nApp VersionName    : " + DeviceUtilities.getPackageVersionName() +
-                                "\nWebView Version    : " + DeviceUtilities.getWebViewVersionName() +
+                                "\nApp VersionName    : " + DeviceUtility.getPackageVersionName() +
+                                "\nWebView Version    : " + DeviceUtility.getWebViewVersionName() +
                                 "\n<<<<<<<<<<<<<<<< File Header <<<<<<<<<<<<<<<<\n\n";
                         appendLog(header);
                     }

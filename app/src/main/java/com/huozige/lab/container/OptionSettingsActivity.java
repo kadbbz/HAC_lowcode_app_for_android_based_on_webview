@@ -18,7 +18,7 @@ import androidx.preference.PreferenceManager;
 
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.LifecycleUtility;
 import com.huozige.lab.container.utilities.UiUtility;
 
@@ -129,7 +129,7 @@ public class OptionSettingsActivity extends AppCompatActivity {
                 break;
             }
             case MENU_ID_ABOUT: {
-                String info = "WebView Version: " + DeviceUtilities.getWebViewVersionName() + "\r\nPackage Version: " + DeviceUtilities.getPackageVersionName() + "\r\nSSAID: " + DeviceUtilities.getSSAID();
+                String info = "WebView Version: " + DeviceUtility.getWebViewVersionName() + "\r\nPackage Version: " + DeviceUtility.getPackageVersionName() + "\r\nSSAID: " + DeviceUtility.getSSAID();
                 Toast.makeText(OptionSettingsActivity.this, info, Toast.LENGTH_LONG).show();
                 break;
             }

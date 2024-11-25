@@ -28,7 +28,7 @@ import java.util.TimerTask;
 /**
  * 设备相关的帮助类
  */
-public class DeviceUtilities {
+public class DeviceUtility {
 
     private static boolean _isOfflineMode;
 

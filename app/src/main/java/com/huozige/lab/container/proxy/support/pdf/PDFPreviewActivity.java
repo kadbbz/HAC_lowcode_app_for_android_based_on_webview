@@ -15,7 +15,7 @@ import com.elvishew.xlog.XLog;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.HACDownloadManager;
 import com.huozige.lab.container.utilities.HACDownloadTask;
 
@@ -49,7 +49,7 @@ public class PDFPreviewActivity extends BaseActivity {
             public void onSuccess(Uri localFileUri) {
                 XLog.v("PDF文件下载完成，Url: " + _url + "，保存到：" + localFileUri);
 
-                _localFilePath = DeviceUtilities.uriToPath(localFileUri);
+                _localFilePath = DeviceUtility.uriToPath(localFileUri);
 
                 Toast.makeText(PDFPreviewActivity.this, R.string.ui_message_pdf_downloaded + _fileName, Toast.LENGTH_LONG).show();
                 renderPDF(localFileUri);

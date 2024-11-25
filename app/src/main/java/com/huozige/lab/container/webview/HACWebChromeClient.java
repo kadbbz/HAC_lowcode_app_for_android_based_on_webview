@@ -24,7 +24,7 @@ import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
@@ -234,7 +234,7 @@ public class HACWebChromeClient extends WebChromeClient {
                         String uriStr = result.getData().getStringExtra(CameraViewActivity.EXTRA_OUT_URI);
                         var uri = Uri.parse(uriStr);
                         selectedFiles.add(uri);
-                        DeviceUtilities.registryLatestFile(uri);
+                        DeviceUtility.registryLatestFile(uri);
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
@@ -250,7 +250,7 @@ public class HACWebChromeClient extends WebChromeClient {
                     // GetContent是单选，如果用户取消时，会返回null
                     if (null != uri) {
                         selectedFiles.add(uri);
-                        DeviceUtilities.registryLatestFile(uri);
+                        DeviceUtility.registryLatestFile(uri);
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件

@@ -11,7 +11,7 @@ import android.webkit.JavascriptInterface;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.FFmpegUtility;
 
 import java.time.LocalDateTime;
@@ -117,7 +117,7 @@ public class AudioRecorderProxy extends AbstractProxy {
                     @Override
                     public void onSuccess() {
                         writeInfoLog("音频压缩完成，文件保存到：" + convertedFile);
-                        var uri = DeviceUtilities.pathToUri(convertedFile);
+                        var uri = DeviceUtility.pathToUri(convertedFile);
                         callback(CallbackParams.success(uri.toString()));
                     }
 

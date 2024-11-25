@@ -15,7 +15,7 @@ import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
@@ -62,9 +62,9 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                     XLog.v("图片已被相册收录：%s", uri);
                 });
 
-        Uri resultFileUri = DeviceUtilities.pathToUri(resultFile.getPath());
+        Uri resultFileUri = DeviceUtility.pathToUri(resultFile.getPath());
         bundle.putString(EXTRA_OUT_URI, resultFileUri.toString());
-        DeviceUtilities.registryLatestFile(resultFileUri);
+        DeviceUtility.registryLatestFile(resultFileUri);
 
         cameraResult.putExtras(bundle);
 
