@@ -55,7 +55,7 @@ public class HACApplication extends Application {
 
         XLog.v(">>>>>>> 应用启动 <<<<<<<");
 
-        initCrashHandler();
+        HACCrashHandler.getInstance().init(this);
 
         XLog.v("全局异常处理挂载完成");
 
@@ -105,11 +105,6 @@ public class HACApplication extends Application {
                 logConfig,
                 androidPrinter,
                 filePrinter);
-    }
-
-    private void initCrashHandler() {
-        HACCrashHandler handler = new HACCrashHandler(this);
-        Thread.setDefaultUncaughtExceptionHandler(handler);
     }
 
     private void initReadlm() {
