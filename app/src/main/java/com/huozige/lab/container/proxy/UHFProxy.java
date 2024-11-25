@@ -47,11 +47,17 @@ public class UHFProxy extends AbstractProxy {
                     result = "";
                 }
 
-                writeInfoLog("当次读取结果是：" + result);
-
                 // 多个结果按照回车来分隔，需要先拆解
+                result = result.replace("\n",",");
+                result = result.replace("\r",",");
+
                 // 与激光头不同，这里需要去重，所以用Hashset
                 _scanResultCache.addAll(Arrays.asList(result.split("\n")));
+
+                // 再去除因为上面处理导致的空值
+                _scanResultCache.removeIf((d)-> d.isBlank()|| d.isEmpty());
+
+                writeInfoLog("当次读取结果是：" + result);
 
                 // 输出，按照HAC的惯例，逗号分隔
                 callback(CallbackParams.success(String.join(",", _scanResultCache)));
@@ -115,5 +121,14 @@ public class UHFProxy extends AbstractProxy {
 
         // 记录日志
         writeInfoLog("UHF广播接收器已停止");
+    }
+
+    /**
+     * 页面销毁前，先停掉监听器
+     */
+    @Override
+    public void onActivityDestroy(){
+        stop();
+        super.onActivityDestroy();
     }
 }

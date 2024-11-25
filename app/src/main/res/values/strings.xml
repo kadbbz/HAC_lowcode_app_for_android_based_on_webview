@@ -99,12 +99,12 @@
     <string name="url_title">首页地址（URL）</string>
 
     <!-- Scanner Preferences -->
-    <string name="scanner_action_title">广播名称（Action）</string>
-    <string name="scanner_extra_key_title">存放结果的键（Extra Key）</string>
+    <string name="scanner_action_title">广播名称</string>
+    <string name="scanner_extra_key_title">数据键值</string>
 
     <!-- UHF Preferences -->
-    <string name="uhf_action_title">广播名称（Action）</string>
-    <string name="uhf_extra_key_title">存放结果的键（Extra Key）</string>
+    <string name="uhf_action_title">广播名称</string>
+    <string name="uhf_extra_key_title">数据键值（EPC）</string>
 
     <!-- Option Preferences -->
     <string name="skip_bcc_title">跳过WebView兼容性检查</string>

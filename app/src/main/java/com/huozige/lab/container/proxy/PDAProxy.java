@@ -287,4 +287,13 @@ public class PDAProxy extends AbstractProxy {
 
         }
     }
+
+    /**
+     * 销毁前，停止监听
+     */
+    @Override
+    public void onActivityDestroy(){
+        stopReceiver();
+        super.onActivityDestroy();
+    }
 }
