@@ -358,6 +358,11 @@
     };
 
     HAC.setCellValue = function(cellLocation, value){
+
+        if(cellLocation.cell){
+            cellLocation = cellLocation.cell;
+        }
+
         value = HAC.__HAC_decode(value);
         var currentWindow = window;
         if(cellLocation.iFrameName){
@@ -412,5 +417,5 @@
 
     console.log("HAC准备就绪。");
 
-    return "版本号：20240815.01";
+    return "版本号：20241125.01";
 })();

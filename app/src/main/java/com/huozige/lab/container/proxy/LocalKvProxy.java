@@ -97,22 +97,25 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void upsertV(String key, String valueString, String version) {
 
-        registryForFeatureUsageAnalyze("use_localdb_feature","upsert");
+        registryForFeatureUsageAnalyze("use_localdb_feature", "upsert");
 
         if (null == version) {
             version = VERSION_DEFAULT;
         }
 
         String finalVersion = version;
+        String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+
+        writeInfoLog("更新本地缓存中的项目，键：" + bKey + "，版本：" + finalVersion + "，值：" + valueString);
 
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
             LocalKv_Bundle bundle = new LocalKv_Bundle();
-            bundle.key = String.format(KEY_TEMPLATE, getEntryHost(), key);
+            bundle.key = bKey;
             bundle.value = valueString;
             bundle.version = finalVersion;
             transactionRealm.insertOrUpdate(bundle);
 
-            writeInfoLog("本地缓存已更新，键：" + key + "，服务器：" + getEntryHost() + "，值：" + valueString);
+            writeInfoLog("本地缓存已更新");
         });
     }
 
@@ -127,22 +130,24 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void retrieveV(String key, String version, String cell) {
 
-        registryForFeatureUsageAnalyze("use_localdb_feature","retrieve");
+        registryForFeatureUsageAnalyze("use_localdb_feature", "retrieve");
 
         if (null == version) {
             version = VERSION_DEFAULT;
         }
 
+        // 确保按照服务器隔离，在这里拼接出真实存储的Key
+        String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
         String finalVersion = version;
+
+        writeInfoLog("从本地缓存中读取项目，键：" + bKey + "，版本：" + finalVersion);
 
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
-            // 确保按照服务器隔离，在这里拼接出真实存储的Key
-            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
             if (bundle != null) {
-                writeInfoLog("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                writeInfoLog("从本地缓存中找到该项目的值：" + bundle.value);
                 callback(cell, bundle.value);
             } else {
                 writeInfoLog("本地缓存中没有找到该键：" + bKey);
@@ -161,24 +166,26 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public String retrieveV2(String key, String version) {
 
-        registryForFeatureUsageAnalyze("use_localdb_feature","retrieve2");
+        registryForFeatureUsageAnalyze("use_localdb_feature", "retrieve2");
 
         final String[] result = new String[1];
 
         if (null == version) {
             version = VERSION_DEFAULT;
         }
-
+        // 确保按照服务器隔离，在这里拼接出真实存储的Key
+        String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
         String finalVersion = version;
+
+        writeInfoLog("从本地缓存中读取项目，键：" + bKey + "，版本：" + finalVersion);
 
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
-            // 确保按照服务器隔离，在这里拼接出真实存储的Key
-            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).equalTo("version", finalVersion).findFirst();
 
             if (bundle != null) {
-                writeInfoLog("从本地缓存中找到该项目，键：" + bKey + "，值：" + bundle.value);
+                writeInfoLog("从本地缓存中找到该项目的值：" + bundle.value);
                 result[0] = bundle.value;
             } else {
                 writeInfoLog("本地缓存中没有找到该键：" + bKey);
@@ -198,16 +205,17 @@ public class LocalKvProxy extends AbstractProxy {
     @JavascriptInterface
     public void remove(String key) {
 
-        registryForFeatureUsageAnalyze("use_localdb_feature","remove");
+        registryForFeatureUsageAnalyze("use_localdb_feature", "remove");
+        String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+
+        writeInfoLog("删除本地缓存中的项目，键：" + bKey );
 
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
-            // 确保按照服务器隔离，在这里拼接出真实存储的Key
-            String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
             LocalKv_Bundle bundle = transactionRealm.where(LocalKv_Bundle.class).equalTo("key", bKey).findFirst();
             if (bundle != null) {
                 bundle.deleteFromRealm();
-                writeInfoLog("从本地缓存中移除该键：" + bKey);
+                writeInfoLog("已经从本地缓存中移除该键");
             }
         });
     }
@@ -221,6 +229,8 @@ public class LocalKvProxy extends AbstractProxy {
 
         final List<String> result = new ArrayList<>();
 
+        writeInfoLog("从本地缓存中获取所有键");
+
         Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
 
             var bundles = transactionRealm.where(LocalKv_Bundle.class).findAll();
@@ -229,7 +239,7 @@ public class LocalKvProxy extends AbstractProxy {
                 bundles.forEach((d) -> result.add(d.key));
             }
 
-            writeInfoLog("从本地缓存中获取所有键，数量：" + result.size());
+            writeInfoLog("本地缓存所有键的数量：" + result.size());
         });
 
         return JSON.toJSONString(result.toArray(new String[1]));

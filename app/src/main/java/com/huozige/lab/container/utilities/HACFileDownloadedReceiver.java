@@ -51,7 +51,7 @@ public class HACFileDownloadedReceiver extends BroadcastReceiver {
                                     //下载成功
 
                                     Uri target = dm.getUriForDownloadedFile(task.taskId);
-                                    DeviceUtilities.registryLatestFile(target);
+                                    DeviceUtility.registryLatestFile(target);
                                     task.handler.onSuccess(target);
 
                                     break;

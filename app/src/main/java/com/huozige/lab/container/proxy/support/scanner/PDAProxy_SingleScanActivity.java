@@ -1,16 +1,18 @@
 package com.huozige.lab.container.proxy.support.scanner;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
+
+import androidx.annotation.Nullable;
 
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
+import com.huozige.lab.container.utilities.BroadcastDispatcher;
 import com.huozige.lab.container.utilities.ConfigManager;
+
+import java.util.UUID;
 
 /**
  * 单次扫描：等待PDA扫码广播的页面，该页面支持用户自行取消
@@ -20,32 +22,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
     public final static int SCAN_STATUS_OK = 0;
     public final static int SCAN_STATUS_CANCEL = -1;
     public final static String BUNDLE_EXTRA_RESULT = "result";
-
-    /**
-     * 定义广播接收器
-     * 支持扫码的PDA通常支持以广播的方式，将扫码的结果通知到各App
-     * 广播的名称是通过内置应用来配置的，当用户按下扫码按钮时，该广播会以这个名称发出
-     */
-    BroadcastReceiver _scanReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            XLog.v("收到单次扫码结果的广播");
-
-            // 按照厂商的文档，从广播中获取扫码结果
-            String result = intent.getStringExtra(ConfigManager.getInstance().getScanExtra());
-
-            XLog.v("扫码结果是：" + result);
-
-            // 将其打包发给调用者
-            Intent res = new Intent();
-            res.putExtra(BUNDLE_EXTRA_RESULT, result);
-            PDAProxy_SingleScanActivity.this.setResult(SCAN_STATUS_OK, res);
-
-            // 关闭当前页面
-            PDAProxy_SingleScanActivity.this.finish();
-        }
-    };
+    private UUID _handlerId;
 
     /**
      * 定义按钮的事件，处理用户主动取消
@@ -79,16 +56,46 @@ public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
 
         super.onResume();
 
-        String intentF = ConfigManager.getInstance().getScanAction();
+        BroadcastDispatcher.BroadcastHandler handler = new BroadcastDispatcher.BroadcastHandler() {
+            @Override
+            public String getAction() {
+                return ConfigManager.getInstance().getScanAction();
+            }
 
-        // 按照名称来过滤出需要处理的广播
-        IntentFilter intentFilter = new IntentFilter(intentF);
-        intentFilter.setPriority(Integer.MAX_VALUE);
+            @Override
+            public boolean handle(@Nullable Bundle extras) {
 
-        // 注册广播监听
-        registerReceiver(_scanReceiver, intentFilter);
+                XLog.v("收到单次扫码结果的广播");
 
-        XLog.v("扫码结果广播已注册。广播：" + ConfigManager.getInstance().getScanAction() + "，键值：" + ConfigManager.getInstance().getScanExtra());
+                if (extras != null) {
+                    // 按照厂商的文档，从广播中获取扫码结果
+                    String result = extras.getString(ConfigManager.getInstance().getScanExtra());
+
+                    if(result == null) result = "";
+
+                    // 需要剔除每次扫码结果后的回车按键
+                    result = result.replace("\n", "");
+                    result = result.replace("\r", "");
+
+                    XLog.v("扫码结果是：" + result);
+
+                    // 将其打包发给调用者
+                    Intent res = new Intent();
+                    res.putExtra(BUNDLE_EXTRA_RESULT, result);
+                    PDAProxy_SingleScanActivity.this.setResult(SCAN_STATUS_OK, res);
+
+                    // 关闭当前页面
+                    PDAProxy_SingleScanActivity.this.finish();
+                }
+
+                return false;
+            }
+        };
+
+        _handlerId = handler.getID();
+        BroadcastDispatcher.getInstance().register(handler);
+
+        XLog.v("激光头扫码结果广播已注册（模态）。广播：" + ConfigManager.getInstance().getScanAction() + "，键值：" + ConfigManager.getInstance().getScanExtra());
 
     }
 
@@ -98,7 +105,7 @@ public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
     @Override
     protected void onPause() {
         // 取消监听
-        unregisterReceiver(_scanReceiver);
+        BroadcastDispatcher.getInstance().unregister(_handlerId);
 
         XLog.v("已取消注册扫码结果广播");
 

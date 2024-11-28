@@ -14,8 +14,9 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
+import com.huozige.lab.container.utilities.BroadcastDispatcher;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -55,7 +56,11 @@ public class HACApplication extends Application {
 
         XLog.v(">>>>>>> 应用启动 <<<<<<<");
 
-        initCrashHandler();
+        BroadcastDispatcher.getInstance().init(this);
+
+        XLog.v("全局广播派发器初始化完成");
+
+        HACCrashHandler.getInstance().init(this);
 
         XLog.v("全局异常处理挂载完成");
 
@@ -93,8 +98,8 @@ public class HACApplication extends Application {
                                 "\nDevice Model       : " + Build.MODEL +
                                 "\nAndroid Version    : " + Build.VERSION.RELEASE +
                                 "\nAndroid SDK        : " + Build.VERSION.SDK_INT +
-                                "\nApp VersionName    : " + DeviceUtilities.getPackageVersionName() +
-                                "\nWebView Version    : " + DeviceUtilities.getWebViewVersionName() +
+                                "\nApp VersionName    : " + DeviceUtility.getPackageVersionName() +
+                                "\nWebView Version    : " + DeviceUtility.getWebViewVersionName() +
                                 "\n<<<<<<<<<<<<<<<< File Header <<<<<<<<<<<<<<<<\n\n";
                         appendLog(header);
                     }
@@ -105,11 +110,6 @@ public class HACApplication extends Application {
                 logConfig,
                 androidPrinter,
                 filePrinter);
-    }
-
-    private void initCrashHandler() {
-        HACCrashHandler handler = new HACCrashHandler(this);
-        Thread.setDefaultUncaughtExceptionHandler(handler);
     }
 
     private void initReadlm() {

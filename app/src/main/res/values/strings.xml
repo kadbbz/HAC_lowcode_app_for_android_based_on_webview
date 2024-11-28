@@ -9,6 +9,10 @@
     <string name="feature_scanner_broadcast_name">com.android.server.scannerservice.broadcast</string>
     <string name="feature_scanner_extra_key_barcode_broadcast">scannerdata</string>
 
+    <!--UHF/RFID广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置，设置app_default_entry后才起效-->
+    <string name="feature_uhf_broadcast_name">com.android.server.scannerservice.broadcast</string>
+    <string name="feature_uhf_extra_key_barcode_broadcast">scannerdata</string>
+
     <!--APP的默认配置，您可以通过修改这部分的值定制APP的样式和行为，设置app_default_entry后才起效-->
     <string name="app_customize_should_show_action_bar">true</string>
     <string name="app_customize_should_bypass_compatible_check">false</string>
@@ -44,7 +48,6 @@
     <string name="ui_label_settings_dark_color">主题颜色</string>
     <string name="ui_button_settings_scan">应用入口（URL）</string>
     <string name="ui_label_settings_save">保存</string>
-    <string name="ui_label_settings_reset">重新配置APP</string>
     <string name="ui_label_settings_ha">启用硬件加速</string>
     <string name="ui_label_settings_lae">启用诊断日志</string>
     <string name="ui_label_settings_BCC">跳过WebView兼容性检查</string>
@@ -67,7 +70,6 @@
     <string name="ui_checkbox_remember">记住用户名和密码</string>
     <string name="ui_label_goto_setting">前往【设置】页面</string>
     <string name="ui_message_authentication_cancel">认证操作被取消，页面无法打开。</string>
-    <string name="ui_label_settings_clear">清理缓存和用户信息</string>
     <string name="ui_message_setting_clear">你确认要彻底删除全部数据缓存和已登录的用户信息吗？</string>
     <string name="title_pdf_downloading">下载中，请稍等</string>
     <string name="title_pdf_preview">PDF预览</string>
@@ -81,4 +83,36 @@
     <string name="ui_message_ble_connect_failed">无法连接到蓝牙BLE设备，请确保设备已启动并且在接收范围呢。</string>
     <string name="ui_message_ble_read_write_failed">无法从蓝牙BLE读写数据，请确认设备是否可以连接，服务与特征信息是否正确。</string>
     <string name="ui_message_ble_na">蓝牙BLE无法使用，请确认是否具备和启用该功能。</string>
+    
+    <!-- Preference Titles -->
+    <string name="title_activity_option_settings">设置</string>
+    <string name="menu_setting_reset">重新配置APP</string>
+    <string name="menu_settings_clear_cache">清理缓存和用户信息</string>
+    <string name="menu_setting_version">查看版本</string>
+
+    <string name="web_header">应用入口配置（重启后生效）</string>
+    <string name="scanner_header">扫描头配置</string>
+    <string name="uhf_header">UHF配置</string>
+    <string name="option_header">其他选项（重启后生效）</string>
+
+    <!-- Web Preferences -->
+    <string name="url_title">首页地址</string>
+
+    <!-- Scanner Preferences -->
+    <string name="scanner_action_title">广播名称</string>
+    <string name="scanner_extra_key_title">数据键值</string>
+
+    <!-- UHF Preferences -->
+    <string name="uhf_action_title">广播名称</string>
+    <string name="uhf_extra_key_title">数据键值（EPC）</string>
+
+    <!-- Option Preferences -->
+    <string name="skip_bcc_title">跳过WebView兼容性检查</string>
+    <string name="enable_ha_title">启用硬件加速</string>
+    <string name="attachment_title">运行日志</string>
+    <string name="attachment_summary_on">记录全部诊断日志</string>
+    <string name="attachment_summary_off">仅记录错误日志</string>
+    <string name="button_scancode_camera">拍照</string>
+    <string name="button_scancode_gallery">从相册选择</string>
+
 </resources>

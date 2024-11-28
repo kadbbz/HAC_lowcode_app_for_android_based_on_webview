@@ -10,11 +10,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.OptionSettingsActivity;
 import com.huozige.lab.container.QuickConfigActivity;
-import com.huozige.lab.container.SettingActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.LifecycleUtility;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
 /**
  * 让页面能对APP壳子进行操作
@@ -111,7 +111,7 @@ public class AppProxy extends AbstractProxy {
     public void openSettingPage() {
 
         runOnUiThread(() ->
-                _arcWoCallback.launch(createIntent(SettingActivity.class))
+                _arcWoCallback.launch(createIntent(OptionSettingsActivity.class))
         );
     }
 
@@ -331,7 +331,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getPackageName(String cell) {
-       callback(cell, DeviceUtilities.getPackageName());
+       callback(cell, DeviceUtility.getPackageName());
     }
 
     /**
@@ -342,7 +342,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getPackageName2() {
-        return DeviceUtilities.getPackageName();
+        return DeviceUtility.getPackageName();
     }
 
     /**
@@ -351,7 +351,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void getVersion(String cell) {
-        String finalVersionName = DeviceUtilities.getPackageVersionName();
+        String finalVersionName = DeviceUtility.getPackageVersionName();
         callback(cell, finalVersionName);
     }
 
@@ -363,7 +363,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String getVersion2() {
-        return DeviceUtilities.getPackageVersionName();
+        return DeviceUtility.getPackageVersionName();
     }
 
     /**
@@ -373,7 +373,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void toggleOfflineMode(boolean shouldOffline) {
-        DeviceUtilities.setOfflineMode(shouldOffline);
+        DeviceUtility.setOfflineMode(shouldOffline);
         writeInfoLog("离线模式已切换为：" + shouldOffline);
     }
 
@@ -394,7 +394,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void vibrate(long duration) {
-        DeviceUtilities.vibrate(duration);
+        DeviceUtility.vibrate(duration);
         writeInfoLog("执行震动：" + duration + "秒");
         registryForFeatureUsageAnalyze("use_vibrate_feature", "");
     }
@@ -404,7 +404,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playNotification() {
-        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_NOTIFICATION);
+        DeviceUtility.playRingtone(DeviceUtility.RINGTONE_TYPE_NOTIFICATION);
         writeInfoLog("播放NOTIFICATION铃声");
         registryForFeatureUsageAnalyze("use_ring_feature", "Notification");
     }
@@ -414,7 +414,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playAlarm() {
-        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_ALARM);
+        DeviceUtility.playRingtone(DeviceUtility.RINGTONE_TYPE_ALARM);
         writeInfoLog("播放ALARM铃声");
         registryForFeatureUsageAnalyze("use_ring_feature", "Alarm");
     }
@@ -424,7 +424,7 @@ public class AppProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void playRingtone() {
-        DeviceUtilities.playRingtone(DeviceUtilities.RINGTONE_TYPE_RINGTONE);
+        DeviceUtility.playRingtone(DeviceUtility.RINGTONE_TYPE_RINGTONE);
         writeInfoLog("播放RINGTONE铃声");
         registryForFeatureUsageAnalyze("use_ring_feature", "Ringtone");
     }

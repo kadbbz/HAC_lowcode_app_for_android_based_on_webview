@@ -26,7 +26,7 @@ import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
 import com.huozige.lab.container.utilities.ColorUtility;
 import com.huozige.lab.container.utilities.ConfigManager;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
 import com.huozige.lab.container.webview.HACWebChromeClient;
@@ -188,7 +188,7 @@ public class MainActivity extends BaseActivity {
         // 仅处理后退键
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
 
-            if (DeviceUtilities.isOfflineMode()) {
+            if (DeviceUtility.isOfflineMode()) {
                 // 离线模式不允许执行后退操作
                 Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
             } else {
@@ -273,7 +273,7 @@ public class MainActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case MENU_ID_HOME:
-                if (DeviceUtilities.isOfflineMode()) {
+                if (DeviceUtility.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法执行页面导航。", Toast.LENGTH_LONG).show();
                 } else {
@@ -282,7 +282,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_REFRESH:
-                if (DeviceUtilities.isOfflineMode()) {
+                if (DeviceUtility.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法执行页面刷新。", Toast.LENGTH_LONG).show();
                 } else {
@@ -291,15 +291,15 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_SETTINGS:
-                if (DeviceUtilities.isOfflineMode()) {
+                if (DeviceUtility.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
                 } else {
-                    startActivity(new Intent(this, SettingActivity.class));
+                    startActivity(new Intent(this, OptionSettingsActivity.class));
                 }
                 break;
             case MENU_ID_HELP:
-                if (DeviceUtilities.isOfflineMode()) {
+                if (DeviceUtility.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【帮助】页面。", Toast.LENGTH_LONG).show();
                 } else {
@@ -308,7 +308,7 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case MENU_ID_ABOUT:
-                if (DeviceUtilities.isOfflineMode()) {
+                if (DeviceUtility.isOfflineMode()) {
                     // 离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于离线模式，无法打开【关于】页面。", Toast.LENGTH_LONG).show();
                 } else {

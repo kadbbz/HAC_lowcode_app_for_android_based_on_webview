@@ -10,7 +10,7 @@ import android.os.Environment;
 import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.utilities.DeviceUtilities;
+import com.huozige.lab.container.utilities.DeviceUtility;
 import com.watermark.androidwm_light.WatermarkBuilder;
 import com.watermark.androidwm_light.bean.WatermarkText;
 
@@ -45,7 +45,7 @@ public class FileProxy extends AbstractProxy {
 
         registryForFeatureUsageAnalyze("use_file_feature", "loadLatestFile");
 
-        var uri = DeviceUtilities.getLatestFile();
+        var uri = DeviceUtility.getLatestFile();
         if (uri != null) {
             return loadFile(uri.toString());
         } else {
@@ -82,7 +82,7 @@ public class FileProxy extends AbstractProxy {
             String objUrl = "data:"
                     + type
                     + ";base64,"
-                    + Base64.getEncoder().encodeToString(DeviceUtilities.readFileToByteArray(Uri.parse(fileUri)));
+                    + Base64.getEncoder().encodeToString(DeviceUtility.readFileToByteArray(Uri.parse(fileUri)));
 
             writeInfoLog("文件读取完毕，Object Url的总长度为：" + objUrl.length());
 
@@ -99,10 +99,10 @@ public class FileProxy extends AbstractProxy {
     private void startDrawWatermarkForImage(String fileUri, String watermark, boolean isWatermarkTileMode, String color) {
         try {
             if (fileUri == null || fileUri.isEmpty()) {
-                fileUri = DeviceUtilities.getLatestFile().toString();
+                fileUri = DeviceUtility.getLatestFile().toString();
             }
 
-            byte[] source = DeviceUtilities.readFileToByteArray(Uri.parse(fileUri));
+            byte[] source = DeviceUtility.readFileToByteArray(Uri.parse(fileUri));
             Bitmap b = BitmapFactory.decodeByteArray(source, 0, source.length);
 
             if (b == null) {
@@ -155,8 +155,8 @@ public class FileProxy extends AbstractProxy {
                         writeInfoLog("图片已被相册收录：" + uri);
                     });
 
-            Uri resultFile = DeviceUtilities.pathToUri(imageFile.getPath());
-            DeviceUtilities.registryLatestFile(resultFile);
+            Uri resultFile = DeviceUtility.pathToUri(imageFile.getPath());
+            DeviceUtility.registryLatestFile(resultFile);
 
             writeInfoLog("水印处理完毕，即将返回");
             callback(CallbackParams.success(resultFile.toString()));

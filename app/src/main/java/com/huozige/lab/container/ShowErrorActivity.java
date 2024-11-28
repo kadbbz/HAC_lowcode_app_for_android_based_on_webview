@@ -26,7 +26,7 @@ public class ShowErrorActivity extends AppCompatActivity {
         _btnSetting = this.findViewById(R.id.btnGotoSettings);
 
         _btn.setOnClickListener((l)-> LifecycleUtility.close());
-        _btnSetting.setOnClickListener((l)-> startActivity(new Intent( ShowErrorActivity.this, SettingActivity.class)));
+        _btnSetting.setOnClickListener((l)-> startActivity(new Intent( ShowErrorActivity.this, OptionSettingsActivity.class)));
     }
 
     @Override
