@@ -14,6 +14,7 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.FileNameGenerator;
 import com.elvishew.xlog.printer.file.writer.SimpleWriter;
+import com.huozige.lab.container.utilities.BroadcastDispatcher;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.DeviceUtility;
 
@@ -54,6 +55,10 @@ public class HACApplication extends Application {
         initLogger();
 
         XLog.v(">>>>>>> 应用启动 <<<<<<<");
+
+        BroadcastDispatcher.getInstance().init(this);
+
+        XLog.v("全局广播派发器初始化完成");
 
         HACCrashHandler.getInstance().init(this);
 
