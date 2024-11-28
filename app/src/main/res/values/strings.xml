@@ -90,13 +90,13 @@
     <string name="menu_settings_clear_cache">清理缓存和用户信息</string>
     <string name="menu_setting_version">查看版本</string>
 
-    <string name="web_header">应用入口配置</string>
+    <string name="web_header">应用入口配置（重启后生效）</string>
     <string name="scanner_header">扫描头配置</string>
     <string name="uhf_header">UHF配置</string>
-    <string name="option_header">其他选项</string>
+    <string name="option_header">其他选项（重启后生效）</string>
 
     <!-- Web Preferences -->
-    <string name="url_title">首页地址（URL）</string>
+    <string name="url_title">首页地址</string>
 
     <!-- Scanner Preferences -->
     <string name="scanner_action_title">广播名称</string>
