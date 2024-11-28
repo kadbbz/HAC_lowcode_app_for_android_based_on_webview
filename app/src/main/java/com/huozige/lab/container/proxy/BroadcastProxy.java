@@ -53,7 +53,7 @@ public class BroadcastProxy extends AbstractProxy {
             intent.setData(Uri.parse(dataUri));
         }
 
-        writeInfoLog("准备发送广播：" + action);
+        writeInfoLog("准备发送广播：" + action + "|" + type + "|" + dataUri + "|" + extraInJSON);
 
         this.getWebView().getContext().sendBroadcast(ExtraData.fromJSON(intent, extraInJSON));
 
@@ -85,9 +85,11 @@ public class BroadcastProxy extends AbstractProxy {
             @Override
             public boolean handle(@androidx.annotation.Nullable Bundle extras) {
 
-                writeInfoLog("收到通用广播：" + action + "，监听器ID：" + getID().toString());
+                var extraJSON = ExtraData.toJSON(extras);
 
-                callback(CallbackParams.success(ExtraData.toJSON(extras), getID().toString()));
+                writeInfoLog("收到通用广播：" + action + "，监听器ID：" + getID().toString() + "，Extras：" + extraJSON);
+
+                callback(CallbackParams.success(extraJSON, getID().toString()));
 
                 return false;
             }
