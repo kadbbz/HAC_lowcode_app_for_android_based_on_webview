@@ -122,6 +122,7 @@ public class FileProxy extends AbstractProxy {
             }
 
 
+            // 设置透明度为50，避免tile模式下的混乱
             int COLOR_ALPHA = 50;
             var builder = new RubberStampConfig.RubberStampConfigBuilder()
                     .base(b)
@@ -134,16 +135,21 @@ public class FileProxy extends AbstractProxy {
 
 
             if (isWatermarkTileMode) {
+
+                // 铺满模式的配置
                 builder.rubberStampPosition(RubberStampPosition.TILE)
                         .margin(-fontSize * 2, fontSize * 2)
-
                         .rotation(-45);
             } else {
+
+                // 默认为中心模式
                 builder.rubberStampPosition(RubberStampPosition.CENTER);
             }
 
             var wmConfig = builder.build();
             RubberStamp rubberStamp = new RubberStamp(getWebView().getContext());
+
+            // 添加水印
             b = rubberStamp.addStamp(wmConfig);
 
             // 创建图片文件

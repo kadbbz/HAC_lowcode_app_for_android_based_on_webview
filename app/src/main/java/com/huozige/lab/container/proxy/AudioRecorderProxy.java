@@ -79,10 +79,11 @@ public class AudioRecorderProxy extends AbstractProxy {
         super.onActivityCreated(activity);
         _arcRecorder = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 
+            // 处理用户取消的场景
             if (result.getResultCode() == RESULT_OK && result.getData() != null && result.getData().getExtras() != null) {
                 var file = result.getData().getStringExtra(AudioRecorderActivity.BUNDLE_EXTRA_RESULT_FILE_URI);
                 writeInfoLog("录音操作完成，保存到：" + file);
-                // 从Intent中读取图片和视频的URI
+                // 从Intent中读取mp3文件的URI
                 callback(CallbackParams.success(file));
             } else {
                 writeInfoLog("用户取消，没有完成录音。");
