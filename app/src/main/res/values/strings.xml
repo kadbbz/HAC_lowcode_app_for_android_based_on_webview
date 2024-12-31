@@ -31,6 +31,7 @@
     <string name="ui_title_scanner_activity">扫码中</string>
     <string name="ui_title_nfc_activity">读取中</string>
     <string name="ui_title_ble_activity">读写中</string>
+    <string name="ui_title_recorder_activity">录音中</string>
     <string name="ui_button_ok">确定</string>
     <string name="ui_button_cancel">取消</string>
     <string name="ui_button_goto_settings">调整设置</string>
@@ -39,6 +40,8 @@
     <string name="ui_barscanner_wait_content">准备就绪\n请按扫码键</string>
     <string name="ui_nfc_wait_content">准备就绪\n请靠近NFC标签</string>
     <string name="ui_ble_wait_content">数据读写中\n请靠近蓝牙设备</string>
+    <string name="ui_recorder_wait_content">录音中\n结束时请点击下方按钮</string>
+    <string name="ui_recorder_complete_button">录制完成</string>
     <string name="ui_toast_permissions_denied_never">您选择了永久拒绝授权，应用无法正常运行。应用将自动导航到系统设置页面，请手动为应用授权。</string>
     <string name="ui_toast_permissions_denied">您没有为应用授权这些权限，应用无法正常运行。如授权过程中发生错误，请重启设备后重试。</string>
     <string name="ui_notification_config_changed">系统设置已经更新。</string>
@@ -83,7 +86,7 @@
     <string name="ui_message_ble_connect_failed">无法连接到蓝牙BLE设备，请确保设备已启动并且在接收范围呢。</string>
     <string name="ui_message_ble_read_write_failed">无法从蓝牙BLE读写数据，请确认设备是否可以连接，服务与特征信息是否正确。</string>
     <string name="ui_message_ble_na">蓝牙BLE无法使用，请确认是否具备和启用该功能。</string>
-    
+
     <!-- Preference Titles -->
     <string name="title_activity_option_settings">设置</string>
     <string name="menu_setting_reset">重新配置APP</string>

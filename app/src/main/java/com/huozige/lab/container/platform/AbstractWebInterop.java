@@ -88,15 +88,14 @@ public abstract class AbstractWebInterop {
             if (cint < 32)
                 switch (c) {
                     case 11:
-                    default:
-                        newLength--;
-                        someCharacterEscaped = true;
-                        break;
-
                     case '\t':
                     case '\n':
                     case '\f':
                     case '\r':
+                        break;
+                    default:
+                        newLength--;
+                        someCharacterEscaped = true;
                         break;
                 }
             else
