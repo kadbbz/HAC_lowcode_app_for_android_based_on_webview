@@ -18,7 +18,7 @@ public class HZGCacheFilter extends AbstractStaticFilesCacheFilter {
             "9.0.6.0", // 9.0
             "9.0.103.0",// 9.1
             "10.0.3.0", // 10.0
-            "10.0.102.0"}; // 10.1
+            "10.0.103.0"}; // 10.1
 
     /**
      * 执行缓存检查
