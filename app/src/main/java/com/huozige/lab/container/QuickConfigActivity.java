@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
@@ -45,6 +46,7 @@ public class QuickConfigActivity extends BaseActivity {
                 Boolean isOk = ConfigManager.getInstance().quickConfig(json);
 
                 if (isOk) {
+                    
 
                     XLog.v("配置码格式正确，已完成初始化");
 
