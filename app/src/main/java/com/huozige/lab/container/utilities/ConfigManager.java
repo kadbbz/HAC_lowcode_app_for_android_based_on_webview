@@ -37,6 +37,8 @@ public class ConfigManager {
     public static final String PREFERENCE_KEY_UHF_ACTION = "USA"; // 扫描广播的Action
     public static final String PREFERENCE_KEY_UHF_EXTRA = "USE"; // 扫描广播的Extra
 
+    public static final String PREFERENCE_KEY_BOOT_ON_RECEIVE = "BOR"; // 开机自启
+
     final Application _context;
 
     static ConfigManager __instance;
@@ -159,6 +161,9 @@ public class ConfigManager {
                 // UHF Extra
                 this.upsertStringEntry(PREFERENCE_KEY_UHF_EXTRA, config.getString(PREFERENCE_KEY_UHF_EXTRA));
 
+                // 是否开机自启
+                this.upsertBooleanEntry(PREFERENCE_KEY_BOOT_ON_RECEIVE, config.getString(PREFERENCE_KEY_BOOT_ON_RECEIVE));
+
                 XLog.v("应用初始化设置完成，配置数据：" + json);
 
                 EventUtility.logEvent("app_quick_config", config.getString(PREFERENCE_KEY_APP_ENTRY_URL));
@@ -266,6 +271,11 @@ public class ConfigManager {
 
     public boolean getBooleanValue(String key, boolean defValue) {
         return getPref().getBoolean(key, defValue);
+    }
+
+    public Boolean getBOR() {
+        // 从数据库中加载，默认为false
+        return getPref().getBoolean(PREFERENCE_KEY_BOOT_ON_RECEIVE, false);
     }
 
     /**

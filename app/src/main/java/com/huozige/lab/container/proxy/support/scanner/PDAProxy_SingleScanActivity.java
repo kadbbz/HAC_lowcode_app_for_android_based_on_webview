@@ -68,10 +68,17 @@ public class PDAProxy_SingleScanActivity extends BaseActivityNoActionBar {
                 XLog.v("收到单次扫码结果的广播");
 
                 if (extras != null) {
-                    // 按照厂商的文档，从广播中获取扫码结果
-                    String result = extras.getString(ConfigManager.getInstance().getScanExtra());
+                    // 获取键值
+                    String extraString = ConfigManager.getInstance().getScanExtra();
 
-                    if(result == null) result = "";
+                    //按照厂商的文档，从广播中获取扫码结果
+                    String result = extras.getString(extraString);
+
+                    //当获取不到扫码结果时，尝试使用byte array的方式获取结果
+                    if (result == null) {
+                        byte[] byteArrayResult = extras.getByteArray(extraString);
+                        result = byteArrayResult == null || byteArrayResult.length == 0 ? "" : new String(byteArrayResult);
+                    }
 
                     // 需要剔除每次扫码结果后的回车按键
                     result = result.replace("\n", "");

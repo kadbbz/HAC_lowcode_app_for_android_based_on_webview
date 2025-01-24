@@ -17,6 +17,8 @@ import com.elvishew.xlog.printer.file.writer.SimpleWriter;
 import com.huozige.lab.container.utilities.BroadcastDispatcher;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.DeviceUtility;
+import com.zlw.main.recorderlib.RecordManager;
+import com.zlw.main.recorderlib.recorder.RecordConfig;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -71,6 +73,11 @@ public class HACApplication extends Application {
         JPushInterface.init(this);
 
         XLog.v("JPush初始化完成");
+
+        RecordManager.getInstance().init(this, BuildConfig.DEBUG);
+        RecordManager.getInstance().changeFormat(RecordConfig.RecordFormat.MP3);
+
+        XLog.v("录音服务初始化完成");
     }
 
     private void initLogger() {

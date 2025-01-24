@@ -11,9 +11,11 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
+import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.DeviceUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 
 /**
  * HAC定制化的WebView控件，内置配置选项和浏览器控制台（Console）操作能力
@@ -88,6 +90,12 @@ public class HACWebView extends WebView {
         String versionName = DeviceUtility.getPackageVersionName();
         String ua = settings.getUserAgentString();//原来获取的UA
         settings.setUserAgentString(ua + " HAC/" + versionName);
+
+        if (ConfigManager.getInstance().getBOR()) {
+            PermissionsUtility.asyncRequirePermissions(_context, new String[]{
+                    Permission.SYSTEM_ALERT_WINDOW
+            }, () -> XLog.v("弹窗权限申请成功。"));
+        }
 
         // 渲染方式
         if (ConfigManager.getInstance().getHA()) {

@@ -11,8 +11,9 @@ import android.webkit.JavascriptInterface;
 
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.utilities.DeviceUtility;
-import com.watermark.androidwm_light.WatermarkBuilder;
-import com.watermark.androidwm_light.bean.WatermarkText;
+import com.vinaygaba.rubberstamp.RubberStamp;
+import com.vinaygaba.rubberstamp.RubberStampConfig;
+import com.vinaygaba.rubberstamp.RubberStampPosition;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +35,7 @@ public class FileProxy extends AbstractProxy {
     public String getName() {
         return "hac_file";
     }
+
 
     /**
      * 读取上次操作的文件
@@ -113,30 +115,42 @@ public class FileProxy extends AbstractProxy {
 
             writeInfoLog("准备加水印：" + watermark);
 
-            var fontSize = Integer.max(b.getHeight() / 200, 20);
+            var fontSize = Integer.max(b.getHeight() / 20, 20);
             var fontColor = Color.LTGRAY; // 默认颜色
             if (color != null && !color.isEmpty()) {
                 fontColor = Color.parseColor(color);
             }
 
-            WatermarkText watermarkText = new WatermarkText(watermark)
-                    .setTextColor(fontColor)
-                    .setTextShadow(0.1f, 1, 1, Color.WHITE)
-                    .setTextAlpha(150)
-                    .setPositionX(0.5)
-                    .setPositionY(0.5)
-                    .setTextSize(fontSize);
+
+            // 设置透明度为50，避免tile模式下的混乱
+            int COLOR_ALPHA = 50;
+            var builder = new RubberStampConfig.RubberStampConfigBuilder()
+                    .base(b)
+                    .rubberStamp(watermark)
+                    .alpha(COLOR_ALPHA)
+                    .textColor(fontColor)
+                    .textBackgroundColor(Color.WHITE)
+                    .textShadow(0.1f, 1, 1, Color.argb(COLOR_ALPHA, 255, 255, 255))
+                    .textSize(fontSize);
+
 
             if (isWatermarkTileMode) {
-                watermarkText.setRotation(30);
+
+                // 铺满模式的配置
+                builder.rubberStampPosition(RubberStampPosition.TILE)
+                        .margin(-fontSize * 2, fontSize * 2)
+                        .rotation(-45);
+            } else {
+
+                // 默认为中心模式
+                builder.rubberStampPosition(RubberStampPosition.CENTER);
             }
 
-            var builder = WatermarkBuilder
-                    .create(getWebView().getContext(), b)
-                    .loadWatermarkText(watermarkText)
-                    .setTileMode(isWatermarkTileMode);
+            var wmConfig = builder.build();
+            RubberStamp rubberStamp = new RubberStamp(getWebView().getContext());
 
-            b = builder.getWatermark().getOutputImage();
+            // 添加水印
+            b = rubberStamp.addStamp(wmConfig);
 
             // 创建图片文件
             File imageFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "HAC_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "_WM.jpg");

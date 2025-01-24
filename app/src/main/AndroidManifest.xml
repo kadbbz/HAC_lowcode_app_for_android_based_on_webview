@@ -26,6 +26,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <queries>
 
@@ -62,12 +64,16 @@
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
+        <activity
+            android:name=".proxy.support.capture.AudioRecorderActivity"
+            android:exported="false" />
         <activity
             android:name=".OptionSettingsActivity"
             android:exported="false"
@@ -106,6 +112,7 @@
         <activity
             android:name=".QuickConfigActivity"
             android:exported="false" />
+
         <meta-data
             android:name="ScopedStorage"
             android:value="true" />
@@ -163,6 +170,19 @@
                 <category android:name="com.huozige.lab.container" />
             </intent-filter>
         </service>
+
+        <service android:name="com.zlw.main.recorderlib.recorder.RecordService" />
+
+        <receiver
+            android:name=".utilities.BootReceiver"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

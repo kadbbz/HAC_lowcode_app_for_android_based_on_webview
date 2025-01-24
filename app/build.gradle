@@ -15,7 +15,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 29 // 超过29后，文件权限要大改
         versionCode 4
-        versionName '1.19.0-release'
+        versionName '1.19.1-release'
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
                 JPUSH_APPKEY : "599fe3f0f0f55d42155fae05", //JPush上注册的包名对应的Appkey，与包名相关，如果修改package name，需要自行注册极光推送账号，并修改这个选项
@@ -36,12 +36,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-    }
-    packagingOptions {
-        pickFirst 'lib/x86/libc++_shared.so'
-        pickFirst 'lib/x86_64/libc++_shared.so'
-        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
-        pickFirst 'lib/arm64-v8a/libc++_shared.so'
     }
 
     buildFeatures {
@@ -68,35 +62,35 @@ apply plugin: "realm-android"
 
 dependencies {
     // Import the BoM for the Firebase platform
-    implementation(platform('com.google.firebase:firebase-bom:33.6.0'))
-    implementation 'com.google.firebase:firebase-perf:21.0.2'
-    implementation 'com.google.firebase:firebase-crashlytics:19.2.1'
+    implementation(platform('com.google.firebase:firebase-bom:33.7.0'))
+    implementation 'com.google.firebase:firebase-perf:21.0.3'
+    implementation 'com.google.firebase:firebase-crashlytics:19.3.0'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
     // Android使用的类库
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.activity:activity:1.9.3'
     // 其他类库
     implementation 'commons-io:commons-io:2.16.1' // 文件与路径处理
     implementation 'com.github.getActivity:XXPermissions:18.2' // 权限控制
     implementation files('libs/LPAPI-2024-10-21-R.jar') // 德佟打印机
-    implementation 'com.zhihu.android:matisse:0.5.3-beta3' // 图片选择
+    implementation 'com.github.REBOOTERS:Matisse:v0.6.0' // 图片选择
     implementation 'com.github.bumptech.glide:glide:4.16.0' // matisse依赖
     implementation 'com.github.jenly1314:zxing-lite:3.1.1' // 二维码识别：扫描
     implementation 'com.github.jenly1314:camera-scan:1.1.1' // 二维码识别：识别
     implementation 'com.github.david-serrano:locationprovider:1.2' // 读取GPS
     implementation 'com.alibaba:fastjson:2.0.49' // JSON处理
-    implementation 'com.github.barteksc:android-pdf-viewer:3.2.0-beta.1' // 预览PDF
+    implementation 'com.github.DImuthuUpe:AndroidPdfViewer:3.1.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.3.1' // 极光推送
-    implementation 'com.google.firebase:firebase-messaging:24.1.0'
-    implementation 'cn.jiguang.sdk.plugin:fcm:5.0.0'
+    implementation 'com.google.firebase:firebase-messaging:24.1.0' // 极光推送
+    implementation 'cn.jiguang.sdk.plugin:fcm:5.0.0' // 极光推送
     implementation 'com.github.Jasonchenlijian:FastBle:2.4.0' // BLE设备
     implementation 'com.elvishew:xlog:1.11.0' // 日志文件记录
     implementation 'com.otaliastudios:cameraview:2.7.2' // 拍照与图像预处理
-    implementation 'com.huangyz0918:androidwm-light:0.1.2' // 图片水印
+    implementation 'com.vinaygaba:rubberstamp:1.0.0' // 图片水印
     implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0' // ECS蓝牙打印机
-    implementation 'com.github.adrielcafe:AndroidAudioRecorder:0.3.0' // 录音机
-    implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
-    implementation 'androidx.preference:preference:1.2.1'// 音视频压缩处理用
+    implementation 'com.github.zhaolewei:ZlwAudioRecorder:v1.08' // 录音机
 }

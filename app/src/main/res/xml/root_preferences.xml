@@ -53,6 +53,10 @@
             app:summaryOn="@string/attachment_summary_on"
             app:title="@string/attachment_title" />
 
+        <SwitchPreferenceCompat
+            app:key="BOR"
+            app:title="@string/boot_on_receive_title" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
