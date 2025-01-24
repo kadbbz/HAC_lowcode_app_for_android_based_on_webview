@@ -46,7 +46,6 @@ public class QuickConfigActivity extends BaseActivity {
                 Boolean isOk = ConfigManager.getInstance().quickConfig(json);
 
                 if (isOk) {
-                    
 
                     XLog.v("配置码格式正确，已完成初始化");
 

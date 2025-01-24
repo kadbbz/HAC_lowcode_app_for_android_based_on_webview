@@ -11,9 +11,8 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        XLog.v("BootOnReceive" + intent.getAction());
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())){
-
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) && ConfigManager.getInstance().getBOR()){
+            XLog.v("BootOnReceive" + intent.getAction());
             Intent currentIntent = new Intent(context, MainActivity.class);
             currentIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(currentIntent);
