@@ -39,6 +39,8 @@ public class ConfigManager {
 
     public static final String PREFERENCE_KEY_BOOT_ON_RECEIVE = "BOR"; // 开机自启
 
+    public static final String PREFERENCE_KEY_ON_KEY_DOWN_LISTEN = "OKDL"; // 监听物理按键
+
     final Application _context;
 
     static ConfigManager __instance;
@@ -276,6 +278,10 @@ public class ConfigManager {
     public Boolean getBOR() {
         // 从数据库中加载，默认为false
         return getPref().getBoolean(PREFERENCE_KEY_BOOT_ON_RECEIVE, false);
+    }
+
+    public String getOnKeyDownListen() {
+        return getStringValue(PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, ",");
     }
 
     /**

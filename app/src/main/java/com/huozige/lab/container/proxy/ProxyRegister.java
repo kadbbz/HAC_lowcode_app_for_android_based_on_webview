@@ -67,6 +67,8 @@ public class ProxyRegister {
 
         this._proxies.add(new BroadcastProxy()); // 广播接收和发送
 
+        this._proxies.add(new OnKeyDownListenProxy()); //监听物理按键
+
         __instance = this;
     }
 }
