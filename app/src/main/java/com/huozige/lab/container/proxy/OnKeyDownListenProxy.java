@@ -16,7 +16,7 @@ public class OnKeyDownListenProxy extends AbstractProxy {
 
     @Override
     public String getName() {
-        return "onKeyDown";
+        return "onKeyDownListen";
     }
 
     @JavascriptInterface
@@ -32,7 +32,7 @@ public class OnKeyDownListenProxy extends AbstractProxy {
     }
 
     @JavascriptInterface
-    public void stopOnKeyDownListenAsync(String theKey) {
+    public void stopOnKeyDownListen(String theKey) {
 
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, getConfigManager().getOnKeyDownListen().replace("," + theKey + ",", ","));
 
@@ -40,7 +40,7 @@ public class OnKeyDownListenProxy extends AbstractProxy {
     }
 
     @JavascriptInterface
-    public void stopAllOnKeyDownListenAsync() {
+    public void stopAllOnKeyDownListen() {
 
         String[] currentListen = getConfigManager().getOnKeyDownListen().split(",");
 
