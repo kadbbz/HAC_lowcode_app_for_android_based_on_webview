@@ -42,6 +42,8 @@ public class MainActivity extends BaseActivity {
     public static final String INTENT_NAVIGATE_TO = "com.huozige.lab.container.navigate";
     public static final String EXTRA_URL = "url";
 
+    public static final String ON_KRY_DOWN_ACTION_STRING = "On_Key_Down_";
+
     // 构造Web平台相关的策略，用于组合
     AbstractWebInterop _webInterop = new HZGWebInterop();
     AbstractStaticFilesCacheFilter _cacheFilter = new HZGCacheFilter();
@@ -180,10 +182,19 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
+     * 判断是否监听物理按键，并发送自定义广播
      * 处理“后退”按键，避免误触导致退出应用
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        //当前监听按键
+        String currentListen = ConfigManager.getInstance().getOnKeyDownListen();
+
+        //判断是否包含当前按键
+        if (currentListen.contains("," + keyCode + ",")) {
+            _webView.getContext().sendBroadcast(new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode));
+        }
 
         // 仅处理后退键
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
