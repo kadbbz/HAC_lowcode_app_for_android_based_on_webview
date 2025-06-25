@@ -24,11 +24,9 @@ public class OnKeyDownListenProxy extends AbstractProxy {
 
         registryForFeatureUsageAnalyze("listen_keydown_feature", "onKeyDownAsync");
 
-        registryCallbackTicket(ticket);
-
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, getConfigManager().getOnKeyDownListen() + theKey + ",");
 
-        startReceiver(theKey);
+        startReceiver(theKey, ticket);
     }
 
     @JavascriptInterface
@@ -53,7 +51,7 @@ public class OnKeyDownListenProxy extends AbstractProxy {
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, ",");
     }
 
-    private void startReceiver(String theKey) {
+    private void startReceiver(String theKey, String ticket) {
 
         BroadcastDispatcher.BroadcastHandler handler = new BroadcastDispatcher.BroadcastHandler() {
 
@@ -66,8 +64,9 @@ public class OnKeyDownListenProxy extends AbstractProxy {
             @Override
             public boolean handle(@Nullable Bundle extras) {
 
+                // 调用注册的回调，不要自动派发的方式，需要显式设置回调的标识
+                callback(ticket, CallbackParams.success(this.getAction()));
 
-                callback(CallbackParams.success(this.getAction()));
                 return false;
             }
         };

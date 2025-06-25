@@ -211,6 +211,17 @@ public abstract class AbstractProxy {
 
     /**
      * 将处理结果返回到WebView
+     * 仅支持派发到指定的异步回调
+     *
+     * @param params 参数
+     * @param ticket 异步回调的标识
+     */
+    protected void callback(String ticket, CallbackParams params) {
+        getInterop().callback(ticket, params);
+    }
+
+    /**
+     * 将处理结果返回到WebView
      * 采用简化方式完成，仅支持写入单元格
      *
      * @param cellLocation 单元格名称
