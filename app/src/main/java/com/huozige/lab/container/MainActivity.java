@@ -193,7 +193,11 @@ public class MainActivity extends BaseActivity {
 
         //判断是否包含当前按键
         if (currentListen.contains("," + keyCode + ",")) {
-            _webView.getContext().sendBroadcast(new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode));
+            var intent = new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode);
+            intent.putExtra("keyCode", keyCode);
+            _webView.getContext().sendBroadcast(intent);
+            //_webView.evaluateJavascript("console.log(\"发送intent keycode为：\""+ keyCode +");", null);
+            Toast.makeText(this, "发送intent keycode为：" + keyCode, Toast.LENGTH_LONG).show();
         }
 
         // 仅处理后退键

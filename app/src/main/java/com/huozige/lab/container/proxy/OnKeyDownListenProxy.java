@@ -67,6 +67,10 @@ public class OnKeyDownListenProxy extends AbstractProxy {
             public boolean handle(@Nullable Bundle extras) {
 
 
+                if (extras != null) {
+                    writeInfoLog("触发handle keycode为：" + extras.getInt("keyCode"));
+                }
+
                 callback(CallbackParams.success(this.getAction()));
                 return false;
             }
