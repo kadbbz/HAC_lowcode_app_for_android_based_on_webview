@@ -192,8 +192,13 @@ public class MainActivity extends BaseActivity {
         String currentListen = ConfigManager.getInstance().getOnKeyDownListen();
 
         //判断是否包含当前按键
-        if (currentListen.contains("," + keyCode + ",")) {
-            _webView.getContext().sendBroadcast(new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode));
+        if (currentListen.contains("," + keyCode + "-")) {
+
+            if (currentListen.contains("," + keyCode + "-T")) {
+                _webView.getContext().sendBroadcast(new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode + "-T"));
+                return true;
+            }
+            _webView.getContext().sendBroadcast(new Intent(ON_KRY_DOWN_ACTION_STRING + keyCode + "-F"));
         }
 
         // 仅处理后退键
