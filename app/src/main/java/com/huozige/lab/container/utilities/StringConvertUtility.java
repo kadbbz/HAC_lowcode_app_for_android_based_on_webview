@@ -52,6 +52,15 @@ public class StringConvertUtility {
             }
         }
 
+        // 使用服务端命令的下载文件命令时，附件名会放在fileName参数中，如https://hac.app.hzgcloud.cn/demo/downloadfile/downloadforplugin?fileName=test.png
+        if (url.toLowerCase().contains("/downloadfile/downloadforplugin?")) {
+            String hzgFileName = StringConvertUtility.getUrlParameter(url, "fileName");
+            if (hzgFileName != null && !hzgFileName.isBlank()) {
+                fileName = hzgFileName;
+                targetMime = URLConnection.guessContentTypeFromName(fileName);
+            }
+        }
+
         // 活字格报表模块生成报表文件时，会将文件类型存放在exportType参数中,如https://hac.app.hzgcloud.cn/demo/ARExport/ExportReport?CacheGuid=64de400e-7fc7-4464-819c-c899376a4797&exportType=0
         // 0：pdf
         // 1: word

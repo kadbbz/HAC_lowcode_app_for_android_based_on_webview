@@ -84,7 +84,8 @@ public class HACDownloadManager {
 
         // 1. 处理文件名
         FileNameInfo fileInfo = StringConvertUtility.guessFileName(url, mimeType);
-        task.fileName = contentDisposition == null ? fileInfo.fileName : parseContentDisposition(contentDisposition);
+
+        task.fileName = contentDisposition == null || contentDisposition.isBlank() ? fileInfo.fileName : parseContentDisposition(contentDisposition);
         mimeType = fileInfo.mimeType;
         File tempFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), task.fileName);
         tempFile.deleteOnExit();
