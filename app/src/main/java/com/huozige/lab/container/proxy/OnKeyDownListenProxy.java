@@ -20,21 +20,27 @@ public class OnKeyDownListenProxy extends AbstractProxy {
     }
 
     @JavascriptInterface
-    public void startOnKeyDownListenAsync(String ticket, String theKey) {
+    public void startOnKeyDownListenAsync(String ticket, String theKey, boolean isCover) {
 
         registryForFeatureUsageAnalyze("listen_keydown_feature", "onKeyDownAsync");
 
-        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, getConfigManager().getOnKeyDownListen() + theKey + ",");
+        String keyWord = ContactKerWord(theKey, isCover);
 
-        startReceiver(theKey, ticket);
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, getConfigManager().getOnKeyDownListen() + keyWord + ",");
+
+        startReceiver(keyWord, ticket);
     }
 
     @JavascriptInterface
     public void stopOnKeyDownListen(String theKey) {
 
-        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, getConfigManager().getOnKeyDownListen().replace("," + theKey + ",", ","));
+        String originListen = getConfigManager().getOnKeyDownListen();
 
-        stopReceiver(theKey);
+        String keyWord = ContactKerWord(theKey, originListen.contains("," + ContactKerWord(theKey, true)));
+
+        getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, originListen.replace("," + keyWord + ",", ","));
+
+        stopReceiver(keyWord);
     }
 
     @JavascriptInterface
@@ -51,14 +57,14 @@ public class OnKeyDownListenProxy extends AbstractProxy {
         getConfigManager().upsertStringEntry(ConfigManager.PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, ",");
     }
 
-    private void startReceiver(String theKey, String ticket) {
+    private void startReceiver(String keyWord, String ticket) {
 
         BroadcastDispatcher.BroadcastHandler handler = new BroadcastDispatcher.BroadcastHandler() {
 
             @Override
             public String getAction() {
 
-                return MainActivity.ON_KRY_DOWN_ACTION_STRING + theKey;
+                return MainActivity.ON_KRY_DOWN_ACTION_STRING + keyWord;
             }
 
             @Override
@@ -75,13 +81,17 @@ public class OnKeyDownListenProxy extends AbstractProxy {
         BroadcastDispatcher.getInstance().register(handler);
 
         // 记录日志
-        writeInfoLog("物理按键" + MainActivity.ON_KRY_DOWN_ACTION_STRING + theKey + "监听已启动");
+        writeInfoLog("物理按键" + MainActivity.ON_KRY_DOWN_ACTION_STRING + keyWord + "监听已启动");
     }
 
-    private void stopReceiver(String theKey) {
+    private void stopReceiver(String keyWord) {
 
-        BroadcastDispatcher.getInstance().unregister(MainActivity.ON_KRY_DOWN_ACTION_STRING + theKey);
+        BroadcastDispatcher.getInstance().unregister(MainActivity.ON_KRY_DOWN_ACTION_STRING + keyWord);
         // 记录日志
-        writeInfoLog(MainActivity.ON_KRY_DOWN_ACTION_STRING + theKey + "广播接收器已停止");
+        writeInfoLog(MainActivity.ON_KRY_DOWN_ACTION_STRING + keyWord + "广播接收器已停止");
+    }
+
+    private String ContactKerWord(String keyCode, boolean isCover) {
+        return  keyCode + "-" + (isCover ? "T" : "F");
     }
 }

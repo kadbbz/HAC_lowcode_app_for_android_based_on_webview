@@ -26,7 +26,7 @@ public class HACDownloadListener implements DownloadListener {
         ((Activity) this._webView.getContext()).setTitle(R.string.title_pdf_downloading);
 
         // 执行下载
-        HACDownloadManager.getInstance().startDownloadTask(url, mimetype, new HACDownloadTask.IHACDownloadHandler() {
+        HACDownloadManager.getInstance().startDownloadTask(url, mimetype, contentDisposition, new HACDownloadTask.IHACDownloadHandler() {
             @Override
             public void onSuccess(Uri targetFileUri) {
                 Toast.makeText(_webView.getContext(), R.string.ui_message_download_to_dir, Toast.LENGTH_LONG).show();
