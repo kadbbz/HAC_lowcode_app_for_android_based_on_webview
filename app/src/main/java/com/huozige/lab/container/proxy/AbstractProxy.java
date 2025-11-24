@@ -12,6 +12,13 @@ import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.EventUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+
 /**
  * JavaScript桥的抽象类
  * 未来可以做更多功能，但暂时没有具体的实现
@@ -184,6 +191,14 @@ public abstract class AbstractProxy {
         return new Intent(this.getInterop().getActivityContext(), targetActivityClass);
     }
 
+    protected Intent createIntent(Class<?> targetActivityClass, HashMap<String, String> extraMap) {
+        Intent intent = new Intent(this.getInterop().getActivityContext(), targetActivityClass);
+
+        extraMap.forEach(intent::putExtra);
+
+        return intent;
+    }
+
     /**
      * 将处理结果返回到WebView
      * 采用标准回调的方式来完成，支持写入单元格和回调函数
@@ -268,5 +283,4 @@ public abstract class AbstractProxy {
     protected void registryForFeatureUsageAnalyze(String featureName, String extra) {
         EventUtility.logEvent(featureName, extra);
     }
-
 }
