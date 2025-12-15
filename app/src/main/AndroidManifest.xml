@@ -143,6 +143,9 @@
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
 
+        <activity android:name=".CustomFormActivity"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.huozige.lab.container"

@@ -41,6 +41,8 @@ public class ConfigManager {
 
     public static final String PREFERENCE_KEY_ON_KEY_DOWN_LISTEN = "OKDL"; // 监听物理按键
 
+    public static final String PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU = "MOPV"; // 是否显示设置菜单
+
     final Application _context;
 
     static ConfigManager __instance;
@@ -142,7 +144,7 @@ public class ConfigManager {
                 // 标题栏颜色
                 this.upsertHexIntEntry(PREFERENCE_KEY_ACTION_BAR_COLOR, config.getString(PREFERENCE_KEY_ACTION_BAR_COLOR));
 
-                // 菜单是否可见
+                // 设置菜单是否可见
                 this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_SETTING_MENU, config.getString(PREFERENCE_KEY_SHOW_SETTING_MENU));
 
                 // 标题栏是否可见
@@ -165,6 +167,9 @@ public class ConfigManager {
 
                 // 是否开机自启
                 this.upsertBooleanEntry(PREFERENCE_KEY_BOOT_ON_RECEIVE, config.getString(PREFERENCE_KEY_BOOT_ON_RECEIVE));
+
+                // 超级离线模式菜单是否显示
+                this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU, config.getString(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU));
 
                 XLog.v("应用初始化设置完成，配置数据：" + json);
 
@@ -282,6 +287,14 @@ public class ConfigManager {
 
     public String getOnKeyDownListen() {
         return getStringValue(PREFERENCE_KEY_ON_KEY_DOWN_LISTEN, ",");
+    }
+
+    public boolean getOfflinePlusMenuVisible() {
+        // 配置文件中的默认值
+        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_setting_menu));
+
+        // 从数据库中加载
+        return getPref().getBoolean(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU, defaultVisible);
     }
 
     /**

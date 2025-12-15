@@ -61,6 +61,7 @@ public class MainActivity extends BaseActivity {
     static final int MENU_ID_SETTINGS = 2;
     static final int MENU_ID_HELP = 3;
     static final int MENU_ID_ABOUT = 4;
+    static final int MENU_ID_OFFLINE_PLUS = 5;
 
     @SuppressLint({"JavascriptInterface", "SetJavaScriptEnabled"})
     @Override
@@ -312,6 +313,7 @@ public class MainActivity extends BaseActivity {
                     Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
                 } else {
                     startActivity(new Intent(this, OptionSettingsActivity.class));
+                    //startActivity(new Intent(this, CustomFormActivity.class));
                 }
                 break;
             case MENU_ID_HELP:
