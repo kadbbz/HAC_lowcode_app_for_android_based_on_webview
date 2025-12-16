@@ -20,6 +20,7 @@
     <string name="app_customize_should_show_setting_menu">true</string>
     <string name="app_customize_url_for_help_menu" />
     <string name="app_customize_url_for_about_menu" />
+    <string name="app_customize_should_show_offlineplus_menu">true</string>
 
     <!-- 界面文字，修改前建议确认字符串长度-->
     <string name="ui_menu_home">首页</string>
@@ -27,6 +28,7 @@
     <string name="ui_menu_settings">设置</string>
     <string name="ui_menu_help">帮助</string>
     <string name="ui_menu_about">关于</string>
+    <string name="ui_menu_offlineplus">超级离线模式</string>
     <string name="ui_title_loading">加载中，请稍等……</string>
     <string name="ui_title_scanner_activity">扫码中</string>
     <string name="ui_title_nfc_activity">读取中</string>

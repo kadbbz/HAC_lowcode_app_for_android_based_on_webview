@@ -251,6 +251,11 @@ public class MainActivity extends BaseActivity {
             menu.add(0, MENU_ID_SETTINGS, MENU_ID_SETTINGS, getString(R.string.ui_menu_settings));
         }
 
+        // 超级离线模式
+        if (ConfigManager.getInstance().getOfflinePlusMenuVisible()) {
+            menu.add(0, MENU_ID_OFFLINE_PLUS, MENU_ID_OFFLINE_PLUS, getString(R.string.ui_menu_offlineplus));
+        }
+
         // 帮助
         if (!ConfigManager.getInstance().getHelpUrl().isEmpty()) {
             menu.add(0, MENU_ID_HELP, MENU_ID_HELP, getString(R.string.ui_menu_help));
@@ -313,7 +318,6 @@ public class MainActivity extends BaseActivity {
                     Toast.makeText(this, "应用处于离线模式，无法打开【设置】页面。", Toast.LENGTH_LONG).show();
                 } else {
                     startActivity(new Intent(this, OptionSettingsActivity.class));
-                    //startActivity(new Intent(this, CustomFormActivity.class));
                 }
                 break;
             case MENU_ID_HELP:
@@ -332,6 +336,14 @@ public class MainActivity extends BaseActivity {
                 } else {
                     XLog.v("点击菜单【关于】");
                     _webView.loadUrl(ConfigManager.getInstance().getAboutUrl());
+                }
+                break;
+            case MENU_ID_OFFLINE_PLUS:
+                if (DeviceUtility.isOfflineMode()) {
+                    // 普通离线模式不允许执行后退操作
+                    Toast.makeText(this, "应用处于普通离线模式，无法打开【超级离线填报】页面。", Toast.LENGTH_LONG).show();
+                } else {
+                    startActivity(new Intent(this, CustomFormActivity.class));
                 }
                 break;
             // 你可以在这里处理新创建菜单的点击事件

@@ -291,7 +291,7 @@ public class ConfigManager {
 
     public boolean getOfflinePlusMenuVisible() {
         // 配置文件中的默认值
-        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_setting_menu));
+        boolean defaultVisible = Boolean.parseBoolean(_context.getString(R.string.app_customize_should_show_offlineplus_menu));
 
         // 从数据库中加载
         return getPref().getBoolean(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU, defaultVisible);
