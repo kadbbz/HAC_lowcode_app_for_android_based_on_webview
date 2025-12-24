@@ -343,7 +343,7 @@ public class MainActivity extends BaseActivity {
                     // 普通离线模式不允许执行后退操作
                     Toast.makeText(this, "应用处于普通离线模式，无法打开【超级离线填报】页面。", Toast.LENGTH_LONG).show();
                 } else {
-                    startActivity(new Intent(this, CustomFormActivity.class));
+                    startActivity(new Intent(this, OfflinePlusListActivity.class));
                 }
                 break;
             // 你可以在这里处理新创建菜单的点击事件

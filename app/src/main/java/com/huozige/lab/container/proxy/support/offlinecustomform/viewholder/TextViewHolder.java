@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.customform.viewholder;
+package com.huozige.lab.container.proxy.support.offlinecustomform.viewholder;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -7,8 +7,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.customform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.customform.model.TextFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
 
 public class TextViewHolder extends BaseViewHolder {
     private TextView tvTitle;

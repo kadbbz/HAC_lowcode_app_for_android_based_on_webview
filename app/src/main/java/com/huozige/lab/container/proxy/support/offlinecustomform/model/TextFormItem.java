@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.customform.model;
+package com.huozige.lab.container.proxy.support.offlinecustomform.model;
 
 public class TextFormItem extends BaseFormItem {
     private String value = "";

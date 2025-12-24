@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.customform;
+package com.huozige.lab.container.proxy.support.offlinecustomform;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,10 +8,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.customform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.customform.viewholder.BaseViewHolder;
-import com.huozige.lab.container.proxy.support.customform.viewholder.SelectViewHolder;
-import com.huozige.lab.container.proxy.support.customform.viewholder.TextViewHolder;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
+import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.SelectViewHolder;
+import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.TextViewHolder;
 
 import java.util.ArrayList;
 import java.util.HashMap;

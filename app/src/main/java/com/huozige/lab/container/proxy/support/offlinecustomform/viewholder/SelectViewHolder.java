@@ -1,14 +1,13 @@
-package com.huozige.lab.container.proxy.support.customform.viewholder;
+package com.huozige.lab.container.proxy.support.offlinecustomform.viewholder;
 
 import android.app.AlertDialog;
 import android.view.View;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.customform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.customform.model.SelectFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SelectViewHolder extends BaseViewHolder {

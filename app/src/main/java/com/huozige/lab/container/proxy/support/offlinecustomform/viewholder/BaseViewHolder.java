@@ -1,10 +1,10 @@
-package com.huozige.lab.container.proxy.support.customform.viewholder;
+package com.huozige.lab.container.proxy.support.offlinecustomform.viewholder;
 
 import android.view.View;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.proxy.support.customform.model.BaseFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
 
 public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 

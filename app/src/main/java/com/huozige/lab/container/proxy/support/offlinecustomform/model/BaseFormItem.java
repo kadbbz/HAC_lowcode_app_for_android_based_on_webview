@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.customform.model;
+package com.huozige.lab.container.proxy.support.offlinecustomform.model;
 
 public abstract class BaseFormItem {
     public static final int TYPE_TEXT = 1;

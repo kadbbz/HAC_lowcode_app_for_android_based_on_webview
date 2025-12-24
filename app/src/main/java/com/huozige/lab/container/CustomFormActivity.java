@@ -9,11 +9,10 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.proxy.LocalKvProxy;
-import com.huozige.lab.container.proxy.support.customform.FormAdapter;
-import com.huozige.lab.container.proxy.support.customform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.customform.model.SelectFormItem;
-import com.huozige.lab.container.proxy.support.customform.model.TextFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
 import com.huozige.lab.container.proxy.support.realm.LocalKvHelper;
 
 import java.util.ArrayList;
@@ -59,29 +58,32 @@ public class CustomFormActivity extends AppCompatActivity {
     private void loadFormData() {
         List<BaseFormItem> formItems = new ArrayList<>();
 
+        String title = getIntent().getStringExtra("title");
+
         // 用户名
         TextFormItem usernameItem = new TextFormItem("username", "用户名", "请输入用户名", true);
         usernameItem.setMinLength(1);
         usernameItem.setMaxLength(20);
+        usernameItem.setValue(title);
         formItems.add(usernameItem);
 
         // 密码
         TextFormItem passwordItem = new TextFormItem("password", "密码", "请输入密码", true);
         passwordItem.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
                 android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        //formItems.add(passwordItem);
+        formItems.add(passwordItem);
 
         // 邮箱
         TextFormItem emailItem = new TextFormItem("email", "邮箱", "请输入邮箱", true);
         emailItem.setRegexPattern("^[A-Za-z0-9+_.-]+@(.+)$");
-        //formItems.add(emailItem);
+        formItems.add(emailItem);
 
         // 性别选择
         SelectFormItem genderItem = new SelectFormItem("gender", "性别", "请选择性别", true);
         genderItem.addOption("male", "男");
         genderItem.addOption("female", "女");
         genderItem.addOption("other", "其他");
-        //formItems.add(genderItem);
+        formItems.add(genderItem);
 
         // 城市选择
         SelectFormItem cityItem = new SelectFormItem("city", "城市", "请选择城市", false);
@@ -89,7 +91,7 @@ public class CustomFormActivity extends AppCompatActivity {
         cityItem.addOption("shanghai", "上海");
         cityItem.addOption("guangzhou", "广州");
         cityItem.addOption("shenzhen", "深圳");
-        //formItems.add(cityItem);
+        formItems.add(cityItem);
 
         adapter.setFormItems(formItems);
     }

@@ -142,8 +142,9 @@
         <activity
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
-
         <activity android:name=".CustomFormActivity"
+            android:exported="false" />
+        <activity android:name=".OfflinePlusListActivity"
             android:exported="false" />
 
         <provider
