@@ -2,21 +2,21 @@ package com.huozige.lab.container;
 
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflinePlusListCardItem;
+import com.huozige.lab.container.utilities.JsonFileHelper;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfflinePlusListActivity extends AppCompatActivity {
-
-    private RecyclerView recyclerView;
-    private OfflinePlusCardAdapter adapter;
-    private List<OfflinePlusListCardItem> cardItemList;
+public class OfflinePlusListActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,49 +24,81 @@ public class OfflinePlusListActivity extends AppCompatActivity {
         setContentView(R.layout.offline_list_activity);
 
         // 初始化RecyclerView
-        recyclerView = findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // 初始化数据
-        cardItemList = generateSampleData();
+        List<OfflinePlusListCardItem> cardItemList = generateSampleData();
 
         // 设置适配器
-        adapter = new OfflinePlusCardAdapter(cardItemList, this);
+        OfflinePlusCardAdapter adapter = new OfflinePlusCardAdapter(cardItemList, this);
         recyclerView.setAdapter(adapter);
     }
 
     private List<OfflinePlusListCardItem> generateSampleData() {
+
+        JsonFileHelper.writeJsonToExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_LIST, createSampleJson());
+
+        JSONObject json = JsonFileHelper.readJsonFromExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_LIST);
+
+        return json == null ? new ArrayList<>() : parseJsonData(json);
+
+    }
+
+    // 创建示例JSON数据
+    private JSONObject createSampleJson() {
+        JSONObject jsonObject = new JSONObject();
+
+        try {
+            JSONObject item = new JSONObject();
+            item.put("title", "张三");
+            item.put("description", "一些描述");
+            item.put("status", "未完成");
+            item.put("patternId", "1");
+
+            JSONObject item2 = new JSONObject();
+            item2.put("title", "李四");
+            item2.put("description", "一些描述");
+            item2.put("status", "未完成");
+            item2.put("patternId", "2");
+
+            // JSONArray
+            JSONArray project = new JSONArray();
+            project.put(item);
+            project.put(item2);
+            jsonObject.put("project", project);
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return jsonObject;
+    }
+
+    // 解析JSON数据
+    public List<OfflinePlusListCardItem> parseJsonData(JSONObject jsonObject) {
+
         List<OfflinePlusListCardItem> items = new ArrayList<>();
-        items.add(new OfflinePlusListCardItem(
-                "Android开发入门",
-                "学习Android开发的基础知识，包括Activity、Fragment、UI组件等",
-                "未填写",
-                "1"
-        ));
-        items.add(new OfflinePlusListCardItem(
-                "RecyclerView使用指南",
-                "详细介绍RecyclerView的使用方法和最佳实践",
-                "2024-01-14",
-                "2"
-        ));
-        items.add(new OfflinePlusListCardItem(
-                "Material Design设计原则",
-                "了解Material Design的核心设计理念和实现方式",
-                "2024-01-13",
-                "3"
-        ));
-        items.add(new OfflinePlusListCardItem(
-                "网络请求与数据解析",
-                "学习如何使用Retrofit和Gson进行网络请求",
-                "2024-01-12",
-                "4"
-        ));
-        items.add(new OfflinePlusListCardItem(
-                "数据库存储方案",
-                "Room数据库的使用和最佳实践",
-                "2024-01-11",
-                "5"
-        ));
+
+        try {
+            JSONArray project = jsonObject.getJSONArray("project");
+
+            for (int i = 0; i < project.length(); i++) {
+                JSONObject item = project.getJSONObject(i);
+                items.add(new OfflinePlusListCardItem(
+                        item.getString("title"),
+                        item.getString("description"),
+                        item.getString("status"),
+                        item.getString("patternId")));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         return items;
     }
+
+
 }
