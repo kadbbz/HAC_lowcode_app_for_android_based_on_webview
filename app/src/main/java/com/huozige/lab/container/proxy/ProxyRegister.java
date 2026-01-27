@@ -69,6 +69,8 @@ public class ProxyRegister {
 
         this._proxies.add(new OnKeyDownListenProxy()); //监听物理按键
 
+        this._proxies.add(new BiometricAuthProxy()); //指纹认证
+
         __instance = this;
     }
 }

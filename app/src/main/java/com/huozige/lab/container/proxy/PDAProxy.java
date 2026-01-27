@@ -253,7 +253,7 @@ public class PDAProxy extends AbstractProxy {
                         writeInfoLog("当前处在连续扫描模式，收到了新的扫描结果，当次结果为：" + result + "，总体结果为：" + rc);
 
                         // 输出
-                        callback(CallbackParams.success(rc));
+                        callback(CallbackParams.success(rc, result));
 
                         if (_resultCache.size() >= continueScanLimit) {
 
