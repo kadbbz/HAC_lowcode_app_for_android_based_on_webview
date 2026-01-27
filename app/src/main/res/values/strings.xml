@@ -3,7 +3,7 @@
     <string name="app_name">业务平台</string>
     <!--您需要承载的活字格应用的首页地址，您可通过修改这个值，实现”开箱即用”-->
     <!--suppress CheckTagEmptyBody -->
-    <string name="app_default_entry"></string>
+    <string name="app_default_entry">https://hac.app.hzgcloud.cn/demo</string>
 
     <!--扫码枪广播模式用到的字段名称，需要与设备厂商提供的文档匹配，通常可以支持配置，设置app_default_entry后才起效-->
     <string name="feature_scanner_broadcast_name">com.android.server.scannerservice.broadcast</string>

@@ -17,12 +17,12 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflinePl
 import java.util.List;
 
 public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCardAdapter.ViewHolder> {
-    private List<OfflinePlusListCardItem> cardItems;
-    private Context context;
+    private List<OfflinePlusListCardItem> _cardItems;
+    private Context _context;
 
     public OfflinePlusCardAdapter(List<OfflinePlusListCardItem> cardItems, Context context) {
-        this.cardItems = cardItems;
-        this.context = context;
+        this._cardItems = cardItems;
+        _context = context;
     }
 
     @NonNull
@@ -35,7 +35,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        OfflinePlusListCardItem item = cardItems.get(position);
+        OfflinePlusListCardItem item = _cardItems.get(position);
 
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
@@ -44,22 +44,22 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
         // 设置点击事件
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, CustomFormActivity.class);
-            intent.putExtra("id", item.getPatternId());
+            Intent intent = new Intent(_context, CustomFormActivity.class);
+            intent.putExtra("patternId", item.getPatternId());
             intent.putExtra("title", item.getTitle());
             intent.putExtra("description", item.getDescription());
-            intent.putExtra("date", item.getStatus());
-            context.startActivity(intent);
+            intent.putExtra("status", item.getStatus());
+            _context.startActivity(intent);
         });
     }
 
     @Override
     public int getItemCount() {
-        return cardItems.size();
+        return _cardItems.size();
     }
 
     public void updateData(List<OfflinePlusListCardItem> newItems) {
-        cardItems = newItems;
+        _cardItems = newItems;
         notifyDataSetChanged();
     }
 

@@ -1,9 +1,10 @@
 package com.huozige.lab.container;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
-import android.text.InputType; // Added import for InputType
+import android.text.InputType;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -16,111 +17,62 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFor
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
 import com.huozige.lab.container.proxy.support.realm.LocalKvHelper;
 
-import com.alibaba.fastjson.JSON; // Added import for FastJSON
-import com.alibaba.fastjson.JSONArray; // Added import for FastJSON
-import com.alibaba.fastjson.JSONObject; // Added import for FastJSON
+import com.huozige.lab.container.utilities.JsonFileHelper;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class CustomFormActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
-    private FormAdapter adapter;
-    private Button btnSubmit;
+    private RecyclerView _recyclerView;
+    private FormAdapter _adapter;
+    private Button _btnSubmit;
+    private Intent _intent;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.custom_form_activity);
 
+        _intent = getIntent();
+
         initViews();
         setupRecyclerView();
-        // loadFormData(); // You can call loadFormDataFromJson instead
-        // Example of calling the new function with a dummy JSON string
-        String dummyJson = "";
-//        [
-//          {
-//            "type": "text",
-//            "id": "username",
-//            "label": "用户名",
-//            "hint": "请输入用户名",
-//            "required": true,
-//            "minLength": 1,
-//            "maxLength": 20,
-//            "value": "initial_username_from_json"
-//          },
-//          {
-//            "type": "text",
-//            "id": "password",
-//            "label": "密码",
-//            "hint": "请输入密码",
-//            "required": true,
-//            "inputType": "password"
-//          },
-//          {
-//            "type": "text",
-//            "id": "email",
-//            "label": "邮箱",
-//            "hint": "请输入邮箱",
-//            "required": true,
-//            "regexPattern": "^[A-Za-z0-9+_.-]+@(.+)$"
-//          },
-//          {
-//            "type": "select",
-//            "id": "gender",
-//            "label": "性别",
-//            "hint": "请选择性别",
-//            "required": true,
-//            "options": [
-//              { "key": "male", "value": "男" },
-//              { "key": "female", "value": "女" },
-//              { "key": "other", "value": "其他" }
-//            ]
-//          },
-//          {
-//            "type": "select",
-//            "id": "city",
-//            "label": "城市",
-//            "hint": "请选择城市",
-//            "required": false,
-//            "options": [
-//              { "key": "beijing", "value": "北京" },
-//              { "key": "shanghai", "value": "上海" },
-//              { "key": "guangzhou", "value": "广州" },
-//              { "key": "shenzhen", "value": "深圳" }
-//            ]
-//          }
-//        ]
-//        """;
-        loadFormDataFromJson(dummyJson); // Call the new function
+        // loadFormData();
+        loadFormDataFromJson();
         setupListeners();
     }
 
     private void initViews() {
-        recyclerView = findViewById(R.id.recycler_view);
-        btnSubmit = findViewById(R.id.btn_submit);
+        _recyclerView = findViewById(R.id.recycler_view);
+        _btnSubmit = findViewById(R.id.btn_submit);
     }
 
     private void setupRecyclerView() {
-        adapter = new FormAdapter();
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
+        _adapter = new FormAdapter();
+        _recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        _recyclerView.setAdapter(_adapter);
 
         // 添加item间距
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
-                recyclerView.getContext(),
+                _recyclerView.getContext(),
                 LinearLayoutManager.VERTICAL
         );
 
-        recyclerView.addItemDecoration(dividerItemDecoration);
+        _recyclerView.addItemDecoration(dividerItemDecoration);
     }
 
     private void loadFormData() {
         List<BaseFormItem> formItems = new ArrayList<>();
 
-        String title = getIntent().getStringExtra("title");
+        String title = _intent.getStringExtra("title");
 
         // 用户名
         TextFormItem usernameItem = new TextFormItem("username", "用户名", "请输入用户名", true);
@@ -155,74 +107,46 @@ public class CustomFormActivity extends AppCompatActivity {
         cityItem.addOption("shenzhen", "深圳");
         formItems.add(cityItem);
 
-        adapter.setFormItems(formItems);
+        _adapter.setFormItems(formItems);
     }
 
-    private void loadFormDataFromJson(String jsonString) {
-        List<BaseFormItem> formItems = new ArrayList<>();
-        try {
-            JSONArray jsonArray = JSON.parseArray(jsonString);
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject itemObject = jsonArray.getJSONObject(i);
-                String type = itemObject.getString("type");
-                String id = itemObject.getString("id");
-                String label = itemObject.getString("label");
-                String hint = itemObject.getString("hint");
-                boolean required = itemObject.getBooleanValue("required");
+    private void loadFormDataFromJson() {
 
-                if ("text".equals(type)) {
-                    TextFormItem textItem = new TextFormItem(id, label, hint, required);
-                    if (itemObject.containsKey("minLength")) {
-                        textItem.setMinLength(itemObject.getIntValue("minLength"));
-                    }
-                    if (itemObject.containsKey("maxLength")) {
-                        textItem.setMaxLength(itemObject.getIntValue("maxLength"));
-                    }
-                    if (itemObject.containsKey("regexPattern")) {
-                        textItem.setRegexPattern(itemObject.getString("regexPattern"));
-                    }
-                    if (itemObject.containsKey("inputType")) {
-                        String inputTypeString = itemObject.getString("inputType");
-                        if ("password".equals(inputTypeString)) {
-                            textItem.setInputType(InputType.TYPE_CLASS_TEXT |
-                                    InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                        } else {
-                            // Default to text if not recognized or handle other types
-                            textItem.setInputType(InputType.TYPE_CLASS_TEXT);
-                        }
-                    }
-                    if (itemObject.containsKey("value")) {
-                         textItem.setValue(itemObject.getString("value"));
-                    }
-                    formItems.add(textItem);
-                } else if ("select".equals(type)) {
-                    SelectFormItem selectItem = new SelectFormItem(id, label, hint, required);
-                    if (itemObject.containsKey("options")) {
-                        JSONArray optionsArray = itemObject.getJSONArray("options");
-                        for (int j = 0; j < optionsArray.size(); j++) {
-                            JSONObject optionObject = optionsArray.getJSONObject(j);
-                            selectItem.addOption(optionObject.getString("key"), optionObject.getString("value"));
-                        }
-                    }
-                    formItems.add(selectItem);
-                }
+        String patternId = _intent.getStringExtra("patternId");
+
+        //JSONObject jsonObject = JsonFileHelper.readJsonToExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId);
+        JSONObject jsonObject = JsonFileHelper.readTemplateJson();
+
+        List<BaseFormItem> formItems = new ArrayList<>();
+
+        try {
+            if (!Objects.equals(patternId, jsonObject.getString("patternId"))) return;
+
+            JSONArray customForm = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_FORM);
+
+            for (int i = 0; i < customForm.length(); i++) {
+
+                JSONObject formItem = customForm.getJSONObject(i);
+                formItems.add(buildFormItem(formItem));
+
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Error parsing form data: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        adapter.setFormItems(formItems);
+        _adapter.setFormItems(formItems);
     }
 
     private void setupListeners() {
-        btnSubmit.setOnClickListener(v -> onSubmit());
+        _btnSubmit.setOnClickListener(v -> onSubmit());
     }
 
     private void onSubmit() {
         // 验证表单
-        if (adapter.validateAll()) {
+        if (_adapter.validateAll()) {
             // 收集数据
-            Map<String, String> formData = adapter.collectFormData();
+            Map<String, String> formData = _adapter.collectFormData();
 
             LocalKvHelper.upsertVRange(formData, null);
 
@@ -235,12 +159,110 @@ public class CustomFormActivity extends AppCompatActivity {
     }
 
     private void scrollToFirstError() {
-        List<BaseFormItem> items = adapter.getFormItems();
+        List<BaseFormItem> items = _adapter.getFormItems();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i).getErrorMessage() != null) {
-                recyclerView.scrollToPosition(i);
+                _recyclerView.scrollToPosition(i);
                 break;
             }
         }
     }
+
+    private BaseFormItem buildFormItem(JSONObject jsonObject) {
+
+        try {
+
+
+            String itemType = jsonObject.getString("itemType");
+
+            switch (itemType) {
+                case "textItem":
+                    return buildTextFormItem(jsonObject);
+                case "passwordItem":
+                    return buildPasswordFormItem(jsonObject);
+                case "selectItem":
+                    return buildSelectFormItem(jsonObject);
+                default:
+                    throw new IllegalArgumentException("Unknown item type: " + itemType);
+            }
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private TextFormItem buildTextFormItem(JSONObject jsonObject) {
+
+        try {
+
+            String itemId = jsonObject.getString("id");
+            String title = jsonObject.getString("title");
+            String hint = jsonObject.getString("hint");
+            boolean required = jsonObject.getBoolean("required");
+
+            TextFormItem textItem = new TextFormItem(itemId, title, hint, required);
+
+            if (jsonObject.has("value")) {
+                textItem.setValue(jsonObject.getString("value"));
+            }
+
+            JSONObject options = jsonObject.getJSONObject("options");
+
+            if (options.has("minLength")) {
+                textItem.setMinLength(options.getInt("minLength"));
+            }
+
+            if (options.has("maxLength")) {
+                textItem.setMaxLength(options.getInt("maxLength"));
+            }
+
+            if (options.has("regexPattern")) {
+                textItem.setRegexPattern(options.getString("regexPattern"));
+            }
+
+            return textItem;
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private TextFormItem buildPasswordFormItem(JSONObject jsonObject) {
+        TextFormItem textItem = buildTextFormItem(jsonObject);
+        textItem.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        return textItem;
+    }
+
+    private SelectFormItem buildSelectFormItem(JSONObject jsonObject) {
+
+        try {
+
+            String itemId = jsonObject.getString("id");
+            String title = jsonObject.getString("title");
+            String hint = jsonObject.getString("hint");
+            boolean required = jsonObject.getBoolean("required");
+
+            SelectFormItem selectItem = new SelectFormItem(itemId, title, hint, required);
+
+            if (jsonObject.has("value")) {
+                selectItem.setSelectedValue(jsonObject.getString("value"));
+            }
+
+            JSONObject options = jsonObject.getJSONObject("options");
+            JSONArray selectOptions = options.getJSONArray("selectOptions");
+            for (int i = 0; i < selectOptions.length(); i++) {
+
+                JSONObject selectOption = selectOptions.getJSONObject(i);
+                selectItem.addOption(selectOption.getString("value"), selectOption.getString("label"));
+
+            }
+
+            return selectItem;
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

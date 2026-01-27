@@ -66,7 +66,7 @@ public class OfflinePlusListActivity extends BaseActivity {
             JSONArray project = new JSONArray();
             project.put(item);
             project.put(item2);
-            jsonObject.put("project", project);
+            jsonObject.put(JsonFileHelper.FILE_FLAG_OFFLINE_LIST, project);
 
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -82,7 +82,7 @@ public class OfflinePlusListActivity extends BaseActivity {
         List<OfflinePlusListCardItem> items = new ArrayList<>();
 
         try {
-            JSONArray project = jsonObject.getJSONArray("project");
+            JSONArray project = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_LIST);
 
             for (int i = 0; i < project.length(); i++) {
                 JSONObject item = project.getJSONObject(i);
