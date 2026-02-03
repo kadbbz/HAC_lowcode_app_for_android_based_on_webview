@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
-import android.text.InputType;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -12,12 +11,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflinePlusParseJsonData;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
 import com.huozige.lab.container.proxy.support.realm.LocalKvHelper;
 
-import com.huozige.lab.container.utilities.JsonFileHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.JsonFileHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -114,22 +114,17 @@ public class CustomFormActivity extends AppCompatActivity {
 
         String patternId = _intent.getStringExtra("patternId");
 
-        //JSONObject jsonObject = JsonFileHelper.readJsonToExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId);
-        JSONObject jsonObject = JsonFileHelper.readTemplateJson();
+        JSONObject jsonObject = JsonFileHelper.readJsonFromExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId);
 
         List<BaseFormItem> formItems = new ArrayList<>();
 
         try {
             if (!Objects.equals(patternId, jsonObject.getString("patternId"))) return;
 
-            JSONArray customForm = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_FORM);
+            JSONArray jsonArray = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_FORM);
 
-            for (int i = 0; i < customForm.length(); i++) {
+            formItems = OfflinePlusParseJsonData.parseJsonToFormItem(jsonArray);
 
-                JSONObject formItem = customForm.getJSONObject(i);
-                formItems.add(buildFormItem(formItem));
-
-            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -168,101 +163,6 @@ public class CustomFormActivity extends AppCompatActivity {
         }
     }
 
-    private BaseFormItem buildFormItem(JSONObject jsonObject) {
 
-        try {
-
-
-            String itemType = jsonObject.getString("itemType");
-
-            switch (itemType) {
-                case "textItem":
-                    return buildTextFormItem(jsonObject);
-                case "passwordItem":
-                    return buildPasswordFormItem(jsonObject);
-                case "selectItem":
-                    return buildSelectFormItem(jsonObject);
-                default:
-                    throw new IllegalArgumentException("Unknown item type: " + itemType);
-            }
-
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private TextFormItem buildTextFormItem(JSONObject jsonObject) {
-
-        try {
-
-            String itemId = jsonObject.getString("id");
-            String title = jsonObject.getString("title");
-            String hint = jsonObject.getString("hint");
-            boolean required = jsonObject.getBoolean("required");
-
-            TextFormItem textItem = new TextFormItem(itemId, title, hint, required);
-
-            if (jsonObject.has("value")) {
-                textItem.setValue(jsonObject.getString("value"));
-            }
-
-            JSONObject options = jsonObject.getJSONObject("options");
-
-            if (options.has("minLength")) {
-                textItem.setMinLength(options.getInt("minLength"));
-            }
-
-            if (options.has("maxLength")) {
-                textItem.setMaxLength(options.getInt("maxLength"));
-            }
-
-            if (options.has("regexPattern")) {
-                textItem.setRegexPattern(options.getString("regexPattern"));
-            }
-
-            return textItem;
-
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    private TextFormItem buildPasswordFormItem(JSONObject jsonObject) {
-        TextFormItem textItem = buildTextFormItem(jsonObject);
-        textItem.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        return textItem;
-    }
-
-    private SelectFormItem buildSelectFormItem(JSONObject jsonObject) {
-
-        try {
-
-            String itemId = jsonObject.getString("id");
-            String title = jsonObject.getString("title");
-            String hint = jsonObject.getString("hint");
-            boolean required = jsonObject.getBoolean("required");
-
-            SelectFormItem selectItem = new SelectFormItem(itemId, title, hint, required);
-
-            if (jsonObject.has("value")) {
-                selectItem.setSelectedValue(jsonObject.getString("value"));
-            }
-
-            JSONObject options = jsonObject.getJSONObject("options");
-            JSONArray selectOptions = options.getJSONArray("selectOptions");
-            for (int i = 0; i < selectOptions.length(); i++) {
-
-                JSONObject selectOption = selectOptions.getJSONObject(i);
-                selectItem.addOption(selectOption.getString("value"), selectOption.getString("label"));
-
-            }
-
-            return selectItem;
-
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 }

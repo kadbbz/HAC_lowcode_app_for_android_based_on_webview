@@ -6,11 +6,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflinePlusParseJsonData;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflinePlusListCardItem;
-import com.huozige.lab.container.utilities.JsonFileHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.JsonFileHelper;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -28,77 +27,19 @@ public class OfflinePlusListActivity extends BaseActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // 初始化数据
-        List<OfflinePlusListCardItem> cardItemList = generateSampleData();
+        List<OfflinePlusListCardItem> cardItemList = generateData();
 
         // 设置适配器
         OfflinePlusCardAdapter adapter = new OfflinePlusCardAdapter(cardItemList, this);
         recyclerView.setAdapter(adapter);
     }
 
-    private List<OfflinePlusListCardItem> generateSampleData() {
-
-        JsonFileHelper.writeJsonToExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_LIST, createSampleJson());
+    private List<OfflinePlusListCardItem> generateData() {
 
         JSONObject json = JsonFileHelper.readJsonFromExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_LIST);
 
-        return json == null ? new ArrayList<>() : parseJsonData(json);
+        return json == null ? new ArrayList<>() : OfflinePlusParseJsonData.parseJsonToCardList(json);
 
     }
-
-    // 创建示例JSON数据
-    private JSONObject createSampleJson() {
-        JSONObject jsonObject = new JSONObject();
-
-        try {
-            JSONObject item = new JSONObject();
-            item.put("title", "张三");
-            item.put("description", "一些描述");
-            item.put("status", "未完成");
-            item.put("patternId", "1");
-
-            JSONObject item2 = new JSONObject();
-            item2.put("title", "李四");
-            item2.put("description", "一些描述");
-            item2.put("status", "未完成");
-            item2.put("patternId", "2");
-
-            // JSONArray
-            JSONArray project = new JSONArray();
-            project.put(item);
-            project.put(item2);
-            jsonObject.put(JsonFileHelper.FILE_FLAG_OFFLINE_LIST, project);
-
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-
-
-        return jsonObject;
-    }
-
-    // 解析JSON数据
-    public List<OfflinePlusListCardItem> parseJsonData(JSONObject jsonObject) {
-
-        List<OfflinePlusListCardItem> items = new ArrayList<>();
-
-        try {
-            JSONArray project = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_LIST);
-
-            for (int i = 0; i < project.length(); i++) {
-                JSONObject item = project.getJSONObject(i);
-                items.add(new OfflinePlusListCardItem(
-                        item.getString("title"),
-                        item.getString("description"),
-                        item.getString("status"),
-                        item.getString("patternId")));
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return items;
-    }
-
 
 }

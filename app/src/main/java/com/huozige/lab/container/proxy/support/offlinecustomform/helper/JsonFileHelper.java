@@ -1,9 +1,8 @@
-package com.huozige.lab.container.utilities;
+package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
 import android.content.Context;
 import android.os.Environment;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -54,7 +53,7 @@ public class JsonFileHelper {
         }
     }
 
-    public static JSONObject readJsonToExternalStorage(Context context, String fileName, String patternId) {
+    public static JSONObject readJsonFromExternalStorage(Context context, String fileName, String patternId) {
         return readJsonFromExternalStorage(context, String.format(fileName, patternId));
     }
 
@@ -97,44 +96,6 @@ public class JsonFileHelper {
         }
     }
 
-    public static JSONObject readTemplateJson() {
-        if (!isExternalStorageReadable()) {
-            return null;
-        }
-
-        File file = new File("TemplateCustomForm.json");
-        if (!file.exists()) {
-            return null;
-        }
-
-        FileInputStream fis;
-        BufferedReader reader = null;
-        try {
-            fis = new FileInputStream(file);
-            reader = new BufferedReader(new InputStreamReader(fis));
-
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-
-            String jsonString = stringBuilder.toString();
-            return new JSONObject(jsonString);
-
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
     private static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);

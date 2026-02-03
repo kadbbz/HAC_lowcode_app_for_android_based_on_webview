@@ -71,6 +71,8 @@ public class ProxyRegister {
 
         this._proxies.add(new BiometricAuthProxy()); //指纹认证
 
+        this._proxies.add(new OfflinePlusProxy()); //超级离线
+
         __instance = this;
     }
 }
