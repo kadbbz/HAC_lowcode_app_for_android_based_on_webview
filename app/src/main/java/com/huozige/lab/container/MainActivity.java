@@ -252,7 +252,7 @@ public class MainActivity extends BaseActivity {
         }
 
         // 超级离线模式
-        if (ConfigManager.getInstance().getOfflinePlusMenuVisible()) {
+        if (!ConfigManager.getInstance().getOfflinePlusMenuVisible()) {
             menu.add(0, MENU_ID_OFFLINE_PLUS, MENU_ID_OFFLINE_PLUS, getString(R.string.ui_menu_offlineplus));
         }
 

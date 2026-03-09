@@ -30,6 +30,15 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
+    public void getAllPatternsAsync(String ticket) {
+
+        writeInfoLog("OfflinePlusGetAllPatterns");
+
+
+
+    }
+
+    @JavascriptInterface
     public void offlinePlusAddPatternAsync(String input) {
         writeInfoLog("OfflinePlusAddPattern");
 
