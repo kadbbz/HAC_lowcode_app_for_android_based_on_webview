@@ -11,22 +11,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflinePlusParseJsonData;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
-import com.huozige.lab.container.proxy.support.realm.LocalKvHelper;
-
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.JsonFileHelper;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class CustomFormActivity extends AppCompatActivity {
 
@@ -45,7 +37,6 @@ public class CustomFormActivity extends AppCompatActivity {
 
         initViews();
         setupRecyclerView();
-        // loadFormData();
         loadFormDataFromJson();
         setupListeners();
     }
@@ -69,63 +60,16 @@ public class CustomFormActivity extends AppCompatActivity {
         _recyclerView.addItemDecoration(dividerItemDecoration);
     }
 
-    private void loadFormData() {
-        List<BaseFormItem> formItems = new ArrayList<>();
-
-        String title = _intent.getStringExtra("title");
-
-        // 用户名
-        TextFormItem usernameItem = new TextFormItem("username", "用户名", "请输入用户名", true);
-        usernameItem.setMinLength(1);
-        usernameItem.setMaxLength(20);
-        usernameItem.setValue(title);
-        formItems.add(usernameItem);
-
-        // 密码
-        TextFormItem passwordItem = new TextFormItem("password", "密码", "请输入密码", true);
-        passwordItem.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
-                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        formItems.add(passwordItem);
-
-        // 邮箱
-        TextFormItem emailItem = new TextFormItem("email", "邮箱", "请输入邮箱", true);
-        emailItem.setRegexPattern("^[A-Za-z0-9+_.-]+@(.+)$");
-        formItems.add(emailItem);
-
-        // 性别选择
-        SelectFormItem genderItem = new SelectFormItem("gender", "性别", "请选择性别", true);
-        genderItem.addOption("male", "男");
-        genderItem.addOption("female", "女");
-        genderItem.addOption("other", "其他");
-        formItems.add(genderItem);
-
-        // 城市选择
-        SelectFormItem cityItem = new SelectFormItem("city", "城市", "请选择城市", false);
-        cityItem.addOption("beijing", "北京");
-        cityItem.addOption("shanghai", "上海");
-        cityItem.addOption("guangzhou", "广州");
-        cityItem.addOption("shenzhen", "深圳");
-        formItems.add(cityItem);
-
-        _adapter.setFormItems(formItems);
-    }
-
     private void loadFormDataFromJson() {
 
         String patternId = _intent.getStringExtra("patternId");
-
-        JSONObject jsonObject = JsonFileHelper.readJsonFromExternalStorage(this, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId);
-
         List<BaseFormItem> formItems = new ArrayList<>();
 
         try {
-            if (!Objects.equals(patternId, jsonObject.getString("patternId"))) return;
-
-            JSONArray jsonArray = jsonObject.getJSONArray(JsonFileHelper.FILE_FLAG_OFFLINE_FORM);
-
-            formItems = OfflinePlusParseJsonData.parseJsonToFormItem(jsonArray);
-
-
+            OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(this, patternId);
+            if (definitionFile != null && patternId.equals(definitionFile.getJsonSchema().getPatternId())) {
+                formItems = definitionFile.getJsonSchema().getFormItems();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Error parsing form data: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -142,8 +86,12 @@ public class CustomFormActivity extends AppCompatActivity {
         if (_adapter.validateAll()) {
             // 收集数据
             Map<String, String> formData = _adapter.collectFormData();
+            String patternId = _intent.getStringExtra("patternId");
+            String schemaVersion = _intent.getStringExtra("schemaVersion");
+            OfflineFormRecord record = OfflineFormRecord.createSubmitted(patternId, schemaVersion, formData);
+            // 离线填报数据按表单定义目录保存，删除表单定义时可直接清理对应文件夹。
+            OfflineFormFileHelper.writeRecord(this, record);
 
-            LocalKvHelper.upsertVRange(formData, null);
 
             Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
         } else {

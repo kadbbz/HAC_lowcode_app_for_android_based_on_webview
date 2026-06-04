@@ -5,15 +5,16 @@ import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.FormItemInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.dto.PatternInput;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.JsonFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflinePlusParseJsonData;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflinePlusListCardItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineComputedInfo;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFactory;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndex;
+import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
 
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class OfflinePlusProxy extends AbstractProxy{
@@ -56,34 +57,42 @@ public class OfflinePlusProxy extends AbstractProxy{
 
         Context context = this.getWebView().getContext();
 
-        parseJsonToPatternListFile(context, input);
+        OfflineFormDefinitionIndexItem listItem = parseJsonToPatternListFile(context, input);
 
-        parseJsonToCustomFormFile(context, input.formItems, input.patternId);
+        parseJsonToCustomFormFile(context, input, listItem);
     }
 
-    private void parseJsonToPatternListFile(Context context, PatternInput input) {
+    private OfflineFormDefinitionIndexItem parseJsonToPatternListFile(Context context, PatternInput input) {
 
-        OfflinePlusListCardItem newPattern = new OfflinePlusListCardItem(input.title, input.description, "未完成", input.patternId);
+        OfflineFormDefinitionIndex index = OfflineFormFileHelper.readDefinitionIndex(context);
+        List<OfflineFormDefinitionIndexItem> list = index.getItems();
 
-        JSONObject oldJson = JsonFileHelper.readJsonFromExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_FORM);
-
-        List<OfflinePlusListCardItem> list;
-        if (oldJson == null) list = new ArrayList<>();
-        else list = OfflinePlusParseJsonData.parseJsonToCardList(oldJson);
+        String theme = "";
+        for (OfflineFormDefinitionIndexItem item : list) {
+            if (item.getPatternId().equals(input.patternId)) {
+                theme = item.getTheme();
+                break;
+            }
+        }
 
         list.removeIf(i -> i.getPatternId().equals(input.patternId));
+
+        // 同一个项目编号重复导入时沿用旧主题色；只有新增项目才按导入顺序分配主题色。
+        if (theme.isEmpty()) {
+            theme = OfflineComputedHelper.getThemeColor(list.size());
+        }
+        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, new OfflineComputedInfo(theme));
         list.add(newPattern);
 
-        JSONObject newJson = OfflinePlusParseJsonData.parseCardListToJson(list);
-
-        JsonFileHelper.writeJsonToExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_LIST, newJson);
+        OfflineFormFileHelper.writeDefinitionIndex(context, index);
+        return newPattern;
 
     }
 
-    private void parseJsonToCustomFormFile(Context context, List<FormItemInput> formItems, String patternId) {
+    private void parseJsonToCustomFormFile(Context context, PatternInput input, OfflineFormDefinitionIndexItem listItem) {
 
-        JSONObject jsonObject = OfflinePlusParseJsonData.parseFormItemToJson(formItems, patternId);
-
-        JsonFileHelper.writeJsonToExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId, jsonObject);
+        OfflineFormDefinition definition = OfflineFormDefinitionFactory.fromPatternInput(input);
+        OfflineFormDefinitionFile definitionFile = new OfflineFormDefinitionFile(definition, listItem.getComputed());
+        OfflineFormFileHelper.writeDefinition(context, input.patternId, definitionFile);
     }
 }

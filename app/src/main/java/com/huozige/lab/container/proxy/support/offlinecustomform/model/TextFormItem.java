@@ -66,6 +66,22 @@ public class TextFormItem extends BaseFormItem {
         return inputType;
     }
 
+    public int getMaxLength() {
+        return maxLength;
+    }
+
+    public int getMinLength() {
+        return minLength;
+    }
+
+    public String getRegexPattern() {
+        return regexPattern;
+    }
+
+    public boolean isPassword() {
+        return (inputType & android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD) == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
+    }
+
     public void setMaxLength(int maxLength) {
         this.maxLength = maxLength;
     }

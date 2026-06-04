@@ -6,6 +6,7 @@ public class PatternInput {
     public String ticket;
 
     public String patternId;
+    public String schemaVersion;
     public String title;
     public String description;
 

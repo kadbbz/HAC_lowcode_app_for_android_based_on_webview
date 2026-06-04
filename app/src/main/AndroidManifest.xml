@@ -144,6 +144,8 @@
             android:exported="false" />
         <activity android:name=".CustomFormActivity"
             android:exported="false" />
+        <activity android:name=".OfflineEntryActivity"
+            android:exported="false" />
         <activity android:name=".OfflinePlusListActivity"
             android:exported="false" />
 

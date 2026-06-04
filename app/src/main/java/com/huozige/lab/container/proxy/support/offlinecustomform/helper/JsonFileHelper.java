@@ -13,26 +13,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class JsonFileHelper {
-    public static final String FILE_NAME_OFFLINE_LIST = "HAC_OfflinePlusList.json";
-    public static final String FILE_FLAG_OFFLINE_LIST  = "project";
+class JsonFileHelper {
+    static final String FILE_NAME_OFFLINE_LIST = "HAC_OfflinePlusList.json";
 
-    public static final String FILE_NAME_OFFLINE_FORM = "HAC_OfflinePlusForm_%s.json";
-    public static final String FILE_FLAG_OFFLINE_FORM = "customForm";
-
-
-    public static void writeJsonToExternalStorage(Context context, String fileName, String patternId, JSONObject jsonObject) {
-        writeJsonToExternalStorage(context, String.format(fileName, patternId), jsonObject);
-    }
-
-    public static void writeJsonToExternalStorage(Context context, String fileName, JSONObject jsonObject) {
+    static void writeJsonToExternalStorage(Context context, String fileName, JSONObject jsonObject) {
         if (!isExternalStorageWritable()) {
             return;
         }
 
+        writeJsonToFile(new File(context.getExternalFilesDir(null), fileName), jsonObject);
+    }
+
+    static void writeJsonToFile(File file, JSONObject jsonObject) {
         FileOutputStream fos = null;
         try {
-            File file = new File(context.getExternalFilesDir(null), fileName);
+            File parentFile = file.getParentFile();
+            if (parentFile != null && !parentFile.exists()) {
+                parentFile.mkdirs();
+            }
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -53,16 +51,30 @@ public class JsonFileHelper {
         }
     }
 
-    public static JSONObject readJsonFromExternalStorage(Context context, String fileName, String patternId) {
-        return readJsonFromExternalStorage(context, String.format(fileName, patternId));
+    static boolean deleteFileOrDirectory(File file) {
+        if (file == null || !file.exists()) {
+            return true;
+        }
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteFileOrDirectory(child);
+                }
+            }
+        }
+        return file.delete();
     }
 
-    public static JSONObject readJsonFromExternalStorage(Context context, String fileName) {
+    static JSONObject readJsonFromExternalStorage(Context context, String fileName) {
         if (!isExternalStorageReadable()) {
             return null;
         }
 
-        File file = new File(context.getExternalFilesDir(null), fileName);
+        return readJsonFromFile(new File(context.getExternalFilesDir(null), fileName));
+    }
+
+    static JSONObject readJsonFromFile(File file) {
         if (!file.exists()) {
             return null;
         }
