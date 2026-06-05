@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.offlineform;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
@@ -32,7 +33,7 @@ public class CustomFormActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.custom_form_activity);
+        setContentView(R.layout.offline_form_custom_form_activity);
 
         _intent = getIntent();
 

@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.offlineform;
 
 import android.os.Bundle;
 import android.widget.TextView;
@@ -6,6 +6,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;

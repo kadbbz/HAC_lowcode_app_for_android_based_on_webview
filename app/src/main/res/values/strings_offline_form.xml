@@ -1,0 +1,31 @@
+<resources>
+    <string name="offline_title_project_list">表单列表</string>
+    <string name="offline_title_project_record">填报记录</string>
+    <string name="offline_title_record_history">历史填报记录</string>
+    <string name="offline_title_new">填报新单</string>
+    <string name="offline_summary_new_record">基于当前表单创建一条新的离线填报记录。</string>
+    <string name="offline_hint_search">搜索名称或备注</string>
+    <string name="offline_button_sort">排序</string>
+    <string name="offline_button_finish_sort">结束排序</string>
+    <string name="offline_button_delete">删除</string>
+    <string name="offline_button_save">保存</string>
+    <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
+    <string name="offline_toast_drag_to_sort">拖拽以调整顺序</string>
+    <string name="offline_toast_sort_saved">排序已保存</string>
+    <string name="offline_dialog_delete_title">确认删除</string>
+    <string name="offline_dialog_delete_config_message">删除后将同时移除该离线表单配置及其所有历史填报数据，删除后不可恢复。是否继续？</string>
+    <string name="offline_toast_delete_success">删除成功</string>
+    <string name="offline_toast_delete_failed">删除失败，请稍后重试</string>
+    <string name="offline_toast_config_missing">未找到本地表单配置</string>
+    <string name="offline_toast_record_saved">保存成功</string>
+    <string name="offline_toast_check_form_input">请检查表单输入</string>
+    <string name="offline_toast_parse_form_failed">解析表单失败：%1$s</string>
+    <string name="offline_menu_config_manage">配置管理</string>
+    <string name="offline_menu_config_detail">表单配置详情</string>
+    <string name="offline_menu_delete_config">删除表单配置</string>
+    <string name="offline_text_no_records">暂无历史填报记录</string>
+    <string name="offline_text_unknown_record_time">未知填报时间</string>
+    <string name="offline_text_record_summary">版本号：%1$s    字段数：%2$d</string>
+    <string name="offline_title_raw_config">原始配置</string>
+    <string name="offline_text_config_basic_info">项目编号：%1$s\n版本号：%2$s\n名称：%3$s\n备注：%4$s\n字段数：%5$d\n文件路径：%6$s</string>
+</resources>

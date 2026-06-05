@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.offlineform;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
 
@@ -33,7 +35,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.offline_project_record_activity);
+        setContentView(R.layout.offline_form_project_record_activity);
 
         _patternId = getIntent().getStringExtra("patternId");
         _title = getIntent().getStringExtra("title");

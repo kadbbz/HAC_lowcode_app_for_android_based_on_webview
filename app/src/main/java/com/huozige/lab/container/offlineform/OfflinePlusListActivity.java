@@ -1,4 +1,4 @@
-package com.huozige.lab.container;
+package com.huozige.lab.container.offlineform;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
@@ -30,7 +32,7 @@ public class OfflinePlusListActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(R.string.offline_title_project_list);
-        setContentView(R.layout.offline_list_activity);
+        setContentView(R.layout.offline_form_list_activity);
 
         _searchEditText = findViewById(R.id.searchEditText);
         _cmdSort = findViewById(R.id.cmdSort);
