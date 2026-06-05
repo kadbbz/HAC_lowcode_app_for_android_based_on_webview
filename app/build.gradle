@@ -85,6 +85,8 @@ dependencies {
     implementation 'com.github.jenly1314:camera-scan:1.1.1' // 二维码识别：识别
     implementation 'com.github.david-serrano:locationprovider:1.2' // 读取GPS
     implementation 'com.alibaba:fastjson:2.0.49' // JSON处理
+    compileOnly 'org.projectlombok:lombok:1.18.34' // 简化离线填报模型类模板代码
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
     implementation 'com.github.DImuthuUpe:AndroidPdfViewer:3.1.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.3.1' // 极光推送
     implementation 'com.google.firebase:firebase-messaging:24.1.0' // 极光推送

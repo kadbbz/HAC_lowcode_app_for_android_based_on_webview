@@ -2,13 +2,12 @@ package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
 import android.content.Context;
 
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionOrder;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -23,7 +22,6 @@ public class OfflineFormFileHelper {
     private static final String DEFINITION_FILE = "definition.json";
     private static final String ORDER_FILE = "order.json";
     private static final String RECORDS_DIR = "records";
-    private static final String FIELD_ORDER_PATTERN_IDS = "patternIds";
 
     public static List<OfflineFormDefinitionIndexItem> readDefinitions(Context context) {
         List<OfflineFormDefinitionIndexItem> definitions = readDefinitionsFromFolders(context);
@@ -33,20 +31,13 @@ public class OfflineFormFileHelper {
 
     public static void writeDefinitionOrder(Context context, List<OfflineFormDefinitionIndexItem> definitions) {
         // 排序文件只保存项目编号顺序，标题、备注、版本号等内容统一从各项目 definition.json 读取。
-        JSONArray patternIds = new JSONArray();
-        try {
-            if (definitions != null) {
-                for (OfflineFormDefinitionIndexItem definition : definitions) {
-                    patternIds.put(definition.getPatternId());
-                }
+        OfflineFormDefinitionOrder order = new OfflineFormDefinitionOrder();
+        if (definitions != null) {
+            for (OfflineFormDefinitionIndexItem definition : definitions) {
+                order.getPatternIds().add(definition.getPatternId());
             }
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(FIELD_ORDER_PATTERN_IDS, patternIds);
-            JsonFileHelper.writeJsonToFile(getOrderFile(context), jsonObject);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
         }
+        JsonFileHelper.writeObjectToFile(getOrderFile(context), order);
     }
 
     public static void removeDefinitionOrder(Context context, String patternId) {
@@ -56,12 +47,12 @@ public class OfflineFormFileHelper {
     }
 
     public static void writeDefinition(Context context, String patternId, OfflineFormDefinitionFile definitionFile) {
-        JsonFileHelper.writeJsonToFile(getDefinitionFile(context, patternId), OfflineFormJsonSerializer.parseDefinitionFileToJson(definitionFile));
+        JsonFileHelper.writeObjectToFile(getDefinitionFile(context, patternId), OfflineFormJsonSerializer.prepareDefinitionFileForJson(definitionFile));
     }
 
     public static OfflineFormDefinitionFile readDefinition(Context context, String patternId) {
-        JSONObject jsonObject = JsonFileHelper.readJsonFromFile(getDefinitionFile(context, patternId));
-        return jsonObject == null ? null : OfflineFormJsonSerializer.parseJsonToDefinitionFile(jsonObject);
+        com.alibaba.fastjson.JSONObject jsonObject = JsonFileHelper.readFastJsonFromFile(getDefinitionFile(context, patternId));
+        return jsonObject == null ? null : OfflineFormJsonSerializer.restoreDefinitionFileFromJson(jsonObject);
     }
 
     public static JSONObject readRawDefinitionJson(Context context, String patternId) {
@@ -73,7 +64,7 @@ public class OfflineFormFileHelper {
     }
 
     public static void writeRecord(Context context, OfflineFormRecord record) {
-        JsonFileHelper.writeJsonToFile(new File(getRecordsDir(context, record.getPatternId()), record.getRecordId() + ".json"), OfflineFormJsonSerializer.parseRecordToJson(record));
+        JsonFileHelper.writeObjectToFile(new File(getRecordsDir(context, record.getPatternId()), record.getRecordId() + ".json"), record);
     }
 
     public static List<OfflineFormRecord> readRecords(Context context, String patternId) {
@@ -85,13 +76,13 @@ public class OfflineFormFileHelper {
         }
 
         for (File file : files) {
-            JSONObject jsonObject = JsonFileHelper.readJsonFromFile(file);
-            if (jsonObject != null) {
-                try {
-                    records.add(OfflineFormJsonSerializer.parseJsonToRecord(jsonObject));
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
+            try {
+                OfflineFormRecord record = JsonFileHelper.readObjectFromFile(file, OfflineFormRecord.class);
+                if (record != null) {
+                    records.add(record);
                 }
+            } catch (RuntimeException e) {
+                e.printStackTrace();
             }
         }
         Collections.sort(records, (left, right) -> Long.compare(right.getUpdatedAt(), left.getUpdatedAt()));
@@ -113,10 +104,10 @@ public class OfflineFormFileHelper {
         }
 
         for (File patternDir : patternDirs) {
-            JSONObject jsonObject = JsonFileHelper.readJsonFromFile(new File(patternDir, DEFINITION_FILE));
-            if (jsonObject != null) {
-                try {
-                    OfflineFormDefinitionFile definitionFile = OfflineFormJsonSerializer.parseJsonToDefinitionFile(jsonObject);
+            try {
+                com.alibaba.fastjson.JSONObject jsonObject = JsonFileHelper.readFastJsonFromFile(new File(patternDir, DEFINITION_FILE));
+                if (jsonObject != null) {
+                    OfflineFormDefinitionFile definitionFile = OfflineFormJsonSerializer.restoreDefinitionFileFromJson(jsonObject);
                     OfflineFormDefinition definition = definitionFile.getJsonSchema();
                     definitions.add(new OfflineFormDefinitionIndexItem(
                             definition.getTitle(),
@@ -125,9 +116,9 @@ public class OfflineFormFileHelper {
                             definition.getPatternId(),
                             definition.getSchemaVersion(),
                             definitionFile.getComputed()));
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
                 }
+            } catch (RuntimeException e) {
+                e.printStackTrace();
             }
         }
         return definitions;
@@ -162,21 +153,8 @@ public class OfflineFormFileHelper {
     }
 
     private static List<String> readDefinitionOrder(Context context) {
-        List<String> patternIds = new ArrayList<>();
-        JSONObject jsonObject = JsonFileHelper.readJsonFromFile(getOrderFile(context));
-        if (jsonObject == null) {
-            return patternIds;
-        }
-
-        JSONArray jsonArray = jsonObject.optJSONArray(FIELD_ORDER_PATTERN_IDS);
-        if (jsonArray == null) {
-            return patternIds;
-        }
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            patternIds.add(jsonArray.optString(i));
-        }
-        return patternIds;
+        OfflineFormDefinitionOrder order = JsonFileHelper.readObjectFromFile(getOrderFile(context), OfflineFormDefinitionOrder.class);
+        return order == null || order.getPatternIds() == null ? new ArrayList<>() : order.getPatternIds();
     }
 
     private static File getOrderFile(Context context) {

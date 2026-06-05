@@ -1,6 +1,6 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
-import org.json.JSONException;
+import com.alibaba.fastjson.JSON;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -11,7 +11,50 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 class JsonFileHelper {
-    static void writeJsonToFile(File file, JSONObject jsonObject) {
+    static void writeObjectToFile(File file, Object value) {
+        writeStringToFile(file, JSON.toJSONString(value));
+    }
+
+    static <T> T readObjectFromFile(File file, Class<T> clazz) {
+        String jsonString = readStringFromFile(file);
+        if (jsonString == null || jsonString.isEmpty()) {
+            return null;
+        }
+        try {
+            return JSON.parseObject(jsonString, clazz);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    static JSONObject readJsonFromFile(File file) {
+        String jsonString = readStringFromFile(file);
+        if (jsonString == null || jsonString.isEmpty()) {
+            return null;
+        }
+        try {
+            return new JSONObject(jsonString);
+        } catch (org.json.JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    static com.alibaba.fastjson.JSONObject readFastJsonFromFile(File file) {
+        String jsonString = readStringFromFile(file);
+        if (jsonString == null || jsonString.isEmpty()) {
+            return null;
+        }
+        try {
+            return JSON.parseObject(jsonString);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static void writeStringToFile(File file, String value) {
         FileOutputStream fos = null;
         try {
             File parentFile = file.getParentFile();
@@ -23,8 +66,7 @@ class JsonFileHelper {
             }
 
             fos = new FileOutputStream(file);
-            String jsonString = jsonObject.toString();
-            fos.write(jsonString.getBytes());
+            fos.write(value.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -55,7 +97,7 @@ class JsonFileHelper {
         return file.delete();
     }
 
-    static JSONObject readJsonFromFile(File file) {
+    private static String readStringFromFile(File file) {
         if (!file.exists()) {
             return null;
         }
@@ -72,10 +114,9 @@ class JsonFileHelper {
                 stringBuilder.append(line);
             }
 
-            String jsonString = stringBuilder.toString();
-            return new JSONObject(jsonString);
+            return stringBuilder.toString();
 
-        } catch (IOException | JSONException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         } finally {

@@ -1,5 +1,10 @@
 package com.huozige.lab.container.offlineform.model.formitem;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class TextFormItem extends BaseFormItem {
     private String value = "";
     private int inputType = android.text.InputType.TYPE_CLASS_TEXT;
@@ -19,10 +24,6 @@ public class TextFormItem extends BaseFormItem {
     @Override
     public String getValue() {
         return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 
     @Override
@@ -57,40 +58,7 @@ public class TextFormItem extends BaseFormItem {
         setErrorMessage(null);
     }
 
-    // 扩展方法
-    public void setInputType(int inputType) {
-        this.inputType = inputType;
-    }
-
-    public int getInputType() {
-        return inputType;
-    }
-
-    public int getMaxLength() {
-        return maxLength;
-    }
-
-    public int getMinLength() {
-        return minLength;
-    }
-
-    public String getRegexPattern() {
-        return regexPattern;
-    }
-
     public boolean isPassword() {
         return (inputType & android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD) == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
-    }
-
-    public void setMaxLength(int maxLength) {
-        this.maxLength = maxLength;
-    }
-
-    public void setMinLength(int minLength) {
-        this.minLength = minLength;
-    }
-
-    public void setRegexPattern(String regexPattern) {
-        this.regexPattern = regexPattern;
     }
 }

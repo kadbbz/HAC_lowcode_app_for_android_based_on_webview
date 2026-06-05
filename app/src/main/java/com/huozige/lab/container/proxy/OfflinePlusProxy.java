@@ -73,7 +73,7 @@ public class OfflinePlusProxy extends AbstractProxy{
             if (item.getPatternId().equals(input.patternId)) {
                 oldIndex = i;
                 if (theme.isEmpty()) {
-                    theme = item.getTheme();
+                    theme = item.getComputed().getTheme();
                 }
                 break;
             }

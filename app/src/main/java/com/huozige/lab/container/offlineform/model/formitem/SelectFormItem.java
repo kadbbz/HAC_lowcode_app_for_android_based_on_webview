@@ -3,18 +3,15 @@ package com.huozige.lab.container.offlineform.model.formitem;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 public class SelectFormItem extends BaseFormItem {
+    @Getter
+    @AllArgsConstructor
     public static class Option {
         private String value;
         private String displayText;
-
-        public Option(String value, String displayText) {
-            this.value = value;
-            this.displayText = displayText;
-        }
-
-        public String getValue() { return value; }
-        public String getDisplayText() { return displayText; }
     }
 
     private List<Option> options = new ArrayList<>();

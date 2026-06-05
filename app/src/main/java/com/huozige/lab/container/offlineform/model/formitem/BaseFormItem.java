@@ -1,5 +1,10 @@
 package com.huozige.lab.container.offlineform.model.formitem;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public abstract class BaseFormItem {
     public static final int TYPE_TEXT = 1;
     public static final int TYPE_SELECT = 2;
@@ -20,14 +25,6 @@ public abstract class BaseFormItem {
     }
 
     public abstract int getItemType();
-
-    // Getter/Setter
-    public String getId() { return id; }
-    public String getTitle() { return title; }
-    public String getHint() { return hint; }
-    public boolean isRequired() { return required; }
-    public String getErrorMessage() { return errorMessage; }
-    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 
     public abstract String getValue();
     public abstract boolean validate();

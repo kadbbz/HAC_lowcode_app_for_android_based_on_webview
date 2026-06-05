@@ -1,15 +1,19 @@
 package com.huozige.lab.container.offlineform.model.formitem;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Data;
+
+@Data
 public class FormItemInput {
-    public String itemId;
-    public String title;
+    public String itemId = "";
+    public String title = "";
     public String hint = "";
     public boolean required;
-    public String itemType;
-    public String value;
+    public String itemType = "";
+    public String value = "";
 
     public FormItemValidationInput checkOptions;
-    public List<SelectOptionsInput> selectOptionsList;
+    public List<SelectOptionsInput> selectOptionsList = new ArrayList<>();
 }
