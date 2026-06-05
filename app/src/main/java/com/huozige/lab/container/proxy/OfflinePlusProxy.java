@@ -14,6 +14,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OfflinePlusProxy extends AbstractProxy{
@@ -83,7 +84,7 @@ public class OfflinePlusProxy extends AbstractProxy{
         if (theme.isEmpty()) {
             theme = OfflineComputedHelper.getThemeColor(list.size());
         }
-        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, new OfflineComputedInfo(theme));
+        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, new OfflineComputedInfo(theme, input.displayColumns == null ? new ArrayList<>() : input.displayColumns));
         if (oldIndex >= 0) {
             list.set(oldIndex, newPattern);
         } else {

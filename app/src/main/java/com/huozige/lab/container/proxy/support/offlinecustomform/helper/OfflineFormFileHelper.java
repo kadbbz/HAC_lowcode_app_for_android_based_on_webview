@@ -67,6 +67,20 @@ public class OfflineFormFileHelper {
         JsonFileHelper.writeObjectToFile(new File(getRecordsDir(context, record.getPatternId()), record.getRecordId() + ".json"), record);
     }
 
+    public static OfflineFormRecord readRecord(Context context, String patternId, String recordId) {
+        if (patternId == null || patternId.isEmpty() || recordId == null || recordId.isEmpty()) {
+            return null;
+        }
+        return JsonFileHelper.readObjectFromFile(new File(getRecordsDir(context, patternId), recordId + ".json"), OfflineFormRecord.class);
+    }
+
+    public static boolean deleteRecord(Context context, String patternId, String recordId) {
+        if (patternId == null || patternId.isEmpty() || recordId == null || recordId.isEmpty()) {
+            return false;
+        }
+        return JsonFileHelper.deleteFileOrDirectory(new File(getRecordsDir(context, patternId), recordId + ".json"));
+    }
+
     public static List<OfflineFormRecord> readRecords(Context context, String patternId) {
         List<OfflineFormRecord> records = new ArrayList<>();
         File recordsDir = getRecordsDir(context, patternId);

@@ -17,4 +17,5 @@ public class PatternInput {
     public String description = "";
 
     public List<FormItemInput> formItems = new ArrayList<>();
+    public List<String> displayColumns = new ArrayList<>();
 }

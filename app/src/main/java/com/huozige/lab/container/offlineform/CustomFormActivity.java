@@ -11,23 +11,28 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class CustomFormActivity extends AppCompatActivity {
+    public static final String EXTRA_RECORD_ID = "recordId";
 
     private RecyclerView _recyclerView;
     private FormAdapter _adapter;
     private Button _btnSubmit;
     private Intent _intent;
     private boolean _formLoaded;
+    private boolean _editRecordMissingOrOutdated;
+    private OfflineFormRecord _editingRecord;
 
 
     @Override
@@ -76,6 +81,7 @@ public class CustomFormActivity extends AppCompatActivity {
             OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(this, patternId);
             if (definitionFile != null && patternId.equals(definitionFile.getJsonSchema().getPatternId())) {
                 formItems = definitionFile.getJsonSchema().getFormItems();
+                loadEditingRecord(patternId, definitionFile.getJsonSchema().getSchemaVersion(), formItems);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -94,6 +100,10 @@ public class CustomFormActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
             return;
         }
+        if (_editRecordMissingOrOutdated) {
+            Toast.makeText(this, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         // 验证表单
         if (_adapter.validateAll()) {
@@ -101,7 +111,14 @@ public class CustomFormActivity extends AppCompatActivity {
             Map<String, String> formData = _adapter.collectFormData();
             String patternId = _intent.getStringExtra("patternId");
             String schemaVersion = _intent.getStringExtra("schemaVersion");
-            OfflineFormRecord record = OfflineFormRecord.createSubmitted(patternId, schemaVersion, formData);
+            OfflineFormRecord record;
+            if (_editingRecord == null) {
+                record = OfflineFormRecord.createSubmitted(patternId, schemaVersion, formData);
+            } else {
+                _editingRecord.setValues(formData);
+                _editingRecord.setUpdatedAt(System.currentTimeMillis());
+                record = _editingRecord;
+            }
             // 离线填报数据按表单定义目录保存，删除表单定义时可直接清理对应文件夹。
             OfflineFormFileHelper.writeRecord(this, record);
 
@@ -115,6 +132,41 @@ public class CustomFormActivity extends AppCompatActivity {
         }
     }
 
+    private void loadEditingRecord(String patternId, String currentSchemaVersion, List<BaseFormItem> formItems) {
+        String recordId = _intent.getStringExtra(EXTRA_RECORD_ID);
+        if (recordId == null || recordId.isEmpty()) {
+            return;
+        }
+
+        OfflineFormRecord record = OfflineFormFileHelper.readRecord(this, patternId, recordId);
+        if (record == null || !currentSchemaVersion.equals(record.getSchemaVersion())) {
+            _editRecordMissingOrOutdated = true;
+            Toast.makeText(this, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        _editingRecord = record;
+        applyRecordValues(formItems, record.getValues());
+    }
+
+    private void applyRecordValues(List<BaseFormItem> formItems, Map<String, String> values) {
+        if (values == null) {
+            return;
+        }
+
+        for (BaseFormItem formItem : formItems) {
+            String value = values.get(formItem.getId());
+            if (value == null) {
+                continue;
+            }
+            if (formItem instanceof TextFormItem) {
+                ((TextFormItem) formItem).setValue(value);
+            } else if (formItem instanceof SelectFormItem) {
+                ((SelectFormItem) formItem).setSelectedValue(value);
+            }
+        }
+    }
+
     private void scrollToFirstError() {
         List<BaseFormItem> items = _adapter.getFormItems();
         for (int i = 0; i < items.size(); i++) {
@@ -124,7 +176,5 @@ public class CustomFormActivity extends AppCompatActivity {
             }
         }
     }
-
-
 
 }

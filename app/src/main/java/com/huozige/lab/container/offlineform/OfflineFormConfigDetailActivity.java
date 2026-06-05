@@ -1,6 +1,8 @@
 package com.huozige.lab.container.offlineform;
 
 import android.os.Bundle;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -11,14 +13,19 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OfflineFormConfigDetailActivity extends BaseActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
 
     private String _patternId;
+    private OfflineFormDefinitionFile _definitionFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +45,15 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
             return;
         }
 
-        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(this, _patternId);
-        if (definitionFile == null) {
+        _definitionFile = OfflineFormFileHelper.readDefinition(this, _patternId);
+        if (_definitionFile == null) {
             Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        OfflineFormDefinition definition = definitionFile.getJsonSchema();
+        OfflineFormDefinition definition = _definitionFile.getJsonSchema();
         String definitionFilePath = OfflineFormFileHelper.getDefinitionFilePath(this, _patternId);
-        JSONObject rawDefinitionJson = OfflineFormFileHelper.readRawDefinitionJson(this, _patternId);
 
         TextView basicInfoTextView = findViewById(R.id.basicInfoTextView);
         basicInfoTextView.setText(getString(
@@ -59,6 +65,57 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
                 definition.getFormItems().size(),
                 definitionFilePath));
 
+        renderDisplayColumns(definition);
+        refreshRawConfig();
+    }
+
+    private void renderDisplayColumns(OfflineFormDefinition definition) {
+        LinearLayout displayColumnListLayout = findViewById(R.id.displayColumnListLayout);
+        displayColumnListLayout.removeAllViews();
+
+        List<String> displayColumns = getDisplayColumns();
+        for (BaseFormItem formItem : definition.getFormItems()) {
+            CheckBox checkBox = new CheckBox(this);
+            checkBox.setText(formItem.getTitle() == null || formItem.getTitle().isEmpty() ? formItem.getId() : formItem.getTitle());
+            checkBox.setTextSize(14);
+            checkBox.setTag(formItem.getId());
+            checkBox.setChecked(displayColumns.contains(formItem.getId()));
+            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> saveDisplayColumns());
+            displayColumnListLayout.addView(checkBox);
+        }
+    }
+
+    private void saveDisplayColumns() {
+        if (_definitionFile == null || _definitionFile.getComputed() == null) {
+            return;
+        }
+
+        LinearLayout displayColumnListLayout = findViewById(R.id.displayColumnListLayout);
+        List<String> selectedColumns = new ArrayList<>();
+        int checkBoxCount = displayColumnListLayout.getChildCount();
+        for (int i = 0; i < checkBoxCount; i++) {
+            CheckBox checkBox = (CheckBox) displayColumnListLayout.getChildAt(i);
+            if (checkBox.isChecked()) {
+                selectedColumns.add((String) checkBox.getTag());
+            }
+        }
+
+        _definitionFile.getComputed().setDisplayColumns(selectedColumns);
+        OfflineFormFileHelper.writeDefinition(this, _patternId, _definitionFile);
+        refreshRawConfig();
+    }
+
+    private List<String> getDisplayColumns() {
+        if (_definitionFile == null
+                || _definitionFile.getComputed() == null
+                || _definitionFile.getComputed().getDisplayColumns() == null) {
+            return new ArrayList<>();
+        }
+        return _definitionFile.getComputed().getDisplayColumns();
+    }
+
+    private void refreshRawConfig() {
+        JSONObject rawDefinitionJson = OfflineFormFileHelper.readRawDefinitionJson(this, _patternId);
         TextView rawConfigTextView = findViewById(R.id.rawConfigTextView);
         rawConfigTextView.setText(formatJson(rawDefinitionJson));
     }
