@@ -1,8 +1,5 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
-import android.content.Context;
-import android.os.Environment;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -14,16 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 class JsonFileHelper {
-    static final String FILE_NAME_OFFLINE_LIST = "HAC_OfflinePlusList.json";
-
-    static void writeJsonToExternalStorage(Context context, String fileName, JSONObject jsonObject) {
-        if (!isExternalStorageWritable()) {
-            return;
-        }
-
-        writeJsonToFile(new File(context.getExternalFilesDir(null), fileName), jsonObject);
-    }
-
     static void writeJsonToFile(File file, JSONObject jsonObject) {
         FileOutputStream fos = null;
         try {
@@ -59,19 +46,13 @@ class JsonFileHelper {
             File[] children = file.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    deleteFileOrDirectory(child);
+                    if (!deleteFileOrDirectory(child)) {
+                        return false;
+                    }
                 }
             }
         }
         return file.delete();
-    }
-
-    static JSONObject readJsonFromExternalStorage(Context context, String fileName) {
-        if (!isExternalStorageReadable()) {
-            return null;
-        }
-
-        return readJsonFromFile(new File(context.getExternalFilesDir(null), fileName));
     }
 
     static JSONObject readJsonFromFile(File file) {
@@ -108,14 +89,4 @@ class JsonFileHelper {
         }
     }
 
-    private static boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
-    }
-
-    private static boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
-    }
 }

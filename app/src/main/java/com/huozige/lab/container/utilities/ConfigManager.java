@@ -168,7 +168,7 @@ public class ConfigManager {
                 // 是否开机自启
                 this.upsertBooleanEntry(PREFERENCE_KEY_BOOT_ON_RECEIVE, config.getString(PREFERENCE_KEY_BOOT_ON_RECEIVE));
 
-                // 超级离线模式菜单是否显示
+                // 离线填报菜单是否显示
                 this.upsertBooleanEntry(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU, config.getString(PREFERENCE_KEY_SHOW_OFFLINE_PLUS_MENU));
 
                 XLog.v("应用初始化设置完成，配置数据：" + json);

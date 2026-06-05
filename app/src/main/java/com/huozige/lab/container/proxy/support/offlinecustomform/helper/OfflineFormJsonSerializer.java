@@ -4,9 +4,7 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormI
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineComputedInfo;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndex;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
 
@@ -15,7 +13,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class OfflineFormJsonSerializer {
     private static final String FIELD_JSON_SCHEMA = "jsonSchema";
@@ -30,7 +30,6 @@ class OfflineFormJsonSerializer {
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
     private static final String FIELD_VALUES = "values";
-    private static final String FIELD_DEFINITION_INDEX_ITEMS = "project";
     private static final String FIELD_DEFINITION_FORM_ITEMS = "customForm";
     private static final String FIELD_ID = "id";
     private static final String FIELD_HINT = "hint";
@@ -46,57 +45,6 @@ class OfflineFormJsonSerializer {
     private static final String TYPE_TEXT = "textItem";
     private static final String TYPE_PASSWORD = "passwordItem";
     private static final String TYPE_SELECT = "selectItem";
-
-    static OfflineFormDefinitionIndex parseJsonToDefinitionIndex(JSONObject jsonObject) {
-
-        List<OfflineFormDefinitionIndexItem> items = new ArrayList<>();
-
-        try {
-            JSONArray project = jsonObject.getJSONArray(FIELD_DEFINITION_INDEX_ITEMS);
-
-            for (int i = 0; i < project.length(); i++) {
-                JSONObject item = project.getJSONObject(i);
-                items.add(new OfflineFormDefinitionIndexItem(
-                        item.getString(FIELD_TITLE),
-                        item.getString(FIELD_DESCRIPTION),
-                        item.getString(FIELD_STATUS),
-                        item.getString(FIELD_PATTERN_ID),
-                        item.optString(FIELD_SCHEMA_VERSION),
-                        parseJsonToComputed(item.optJSONObject(FIELD_COMPUTED))));
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return new OfflineFormDefinitionIndex(items);
-    }
-
-    static JSONObject parseDefinitionIndexToJson(OfflineFormDefinitionIndex index) {
-
-        JSONObject jsonObject = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
-
-        try {
-            for (OfflineFormDefinitionIndexItem indexItem : index.getItems()) {
-                JSONObject item = new JSONObject();
-                item.put(FIELD_PATTERN_ID, indexItem.getPatternId());
-                item.put(FIELD_DESCRIPTION, indexItem.getDescription());
-                item.put(FIELD_TITLE, indexItem.getTitle());
-                item.put(FIELD_STATUS, indexItem.getStatus());
-                item.put(FIELD_SCHEMA_VERSION, indexItem.getSchemaVersion());
-                item.put(FIELD_COMPUTED, parseComputedToJson(indexItem.getComputed()));
-
-                jsonArray.put(item);
-            }
-            jsonObject.put(FIELD_DEFINITION_INDEX_ITEMS, jsonArray);
-
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-
-        return jsonObject;
-    }
 
     static JSONObject parseDefinitionFileToJson(OfflineFormDefinitionFile definitionFile) {
         JSONObject jsonObject = new JSONObject();
@@ -135,6 +83,35 @@ class OfflineFormJsonSerializer {
         }
 
         return jsonObject;
+    }
+
+    // 将 records/{recordId}.json 中的一条本地填报记录解析为 Java 对象，供历史填报列表读取展示。
+    static OfflineFormRecord parseJsonToRecord(JSONObject jsonObject) {
+        try {
+            JSONObject valuesJson = jsonObject.optJSONObject(FIELD_VALUES);
+            Map<String, String> values = new HashMap<>();
+            if (valuesJson != null) {
+                JSONArray names = valuesJson.names();
+                if (names != null) {
+                    // values 的 key 来自表单项 id，字段数量和名称都是动态的，因此这里逐个读取后放入 Map。
+                    for (int i = 0; i < names.length(); i++) {
+                        String key = names.getString(i);
+                        values.put(key, valuesJson.optString(key));
+                    }
+                }
+            }
+
+            return new OfflineFormRecord(
+                    jsonObject.optString(FIELD_RECORD_ID),
+                    jsonObject.optString(FIELD_PATTERN_ID),
+                    jsonObject.optString(FIELD_SCHEMA_VERSION),
+                    jsonObject.optString(FIELD_STATUS),
+                    jsonObject.optLong(FIELD_CREATED_AT),
+                    jsonObject.optLong(FIELD_UPDATED_AT),
+                    values);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static JSONObject parseDefinitionToJson(OfflineFormDefinition definition) {

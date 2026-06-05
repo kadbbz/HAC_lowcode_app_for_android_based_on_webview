@@ -1,22 +1,18 @@
 package com.huozige.lab.container;
 
 import android.os.Bundle;
-import android.graphics.Color;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndex;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.ArrayList;
@@ -27,24 +23,17 @@ public class OfflinePlusListActivity extends BaseActivity {
     private List<OfflineFormDefinitionIndexItem> _cardItemList;
     private List<OfflineFormDefinitionIndexItem> _displayedCardItemList;
     private boolean _sortMode;
-    private ItemTouchHelper _itemTouchHelper;
     private EditText _searchEditText;
     private Button _cmdSort;
-    private Button _cmdManage;
-    private Button _cmdDelete;
-    private Button _cmdCancelManage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(R.string.offline_title_history);
+        setTitle(R.string.offline_title_project_list);
         setContentView(R.layout.offline_list_activity);
 
         _searchEditText = findViewById(R.id.searchEditText);
         _cmdSort = findViewById(R.id.cmdSort);
-        _cmdManage = findViewById(R.id.cmdManage);
-        _cmdDelete = findViewById(R.id.cmdDelete);
-        _cmdCancelManage = findViewById(R.id.cmdCancelManage);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -59,18 +48,32 @@ public class OfflinePlusListActivity extends BaseActivity {
         setupActions();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (_sortMode) {
+            return;
+        }
+        reloadList();
+    }
+
     private List<OfflineFormDefinitionIndexItem> generateData() {
 
-        return OfflineFormFileHelper.readDefinitionIndex(this).getItems();
+        return OfflineFormFileHelper.readDefinitions(this);
 
     }
 
+    private void reloadList() {
+        if (_adapter == null) {
+            return;
+        }
+
+        _cardItemList = generateData();
+        applySearch(_searchEditText.getText().toString());
+    }
+
     private void setupActions() {
-        _cmdDelete.setTextColor(Color.RED);
         _cmdSort.setOnClickListener(v -> setSortMode(!_sortMode));
-        _cmdManage.setOnClickListener(v -> setManageMode(true));
-        _cmdCancelManage.setOnClickListener(v -> setManageMode(false));
-        _cmdDelete.setOnClickListener(v -> confirmDeleteSelectedItems());
         _searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -88,7 +91,7 @@ public class OfflinePlusListActivity extends BaseActivity {
     }
 
     private void setupItemTouchHelper(RecyclerView recyclerView) {
-        _itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
             @Override
             public boolean isLongPressDragEnabled() {
                 return _sortMode;
@@ -108,7 +111,7 @@ public class OfflinePlusListActivity extends BaseActivity {
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
             }
         });
-        _itemTouchHelper.attachToRecyclerView(recyclerView);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     private void setSortMode(boolean sortMode) {
@@ -119,7 +122,6 @@ public class OfflinePlusListActivity extends BaseActivity {
 
         _sortMode = sortMode;
         _cmdSort.setText(sortMode ? R.string.offline_button_finish_sort : R.string.offline_button_sort);
-        _cmdManage.setVisibility(sortMode ? View.GONE : View.VISIBLE);
         _adapter.setSortMode(sortMode);
 
         if (sortMode) {
@@ -128,47 +130,6 @@ public class OfflinePlusListActivity extends BaseActivity {
             saveList();
             Toast.makeText(this, R.string.offline_toast_sort_saved, Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void setManageMode(boolean manageMode) {
-        if (manageMode && _sortMode) {
-            setSortMode(false);
-        }
-        _cmdSort.setVisibility(manageMode ? View.GONE : View.VISIBLE);
-        _cmdManage.setVisibility(manageMode ? View.GONE : View.VISIBLE);
-        _cmdDelete.setVisibility(manageMode ? View.VISIBLE : View.GONE);
-        _cmdCancelManage.setVisibility(manageMode ? View.VISIBLE : View.GONE);
-        _adapter.setManageMode(manageMode);
-    }
-
-    private void confirmDeleteSelectedItems() {
-        List<String> selectedPatternIds = _adapter.getSelectedPatternIds();
-        if (selectedPatternIds.isEmpty()) {
-            Toast.makeText(this, R.string.offline_toast_select_before_delete, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.offline_dialog_delete_title)
-                .setMessage(R.string.offline_dialog_delete_message)
-                .setPositiveButton(R.string.offline_button_delete, (dialog, which) -> deleteSelectedItems(selectedPatternIds))
-                .setNegativeButton(R.string.ui_button_cancel, null)
-                .show();
-    }
-
-    private void deleteSelectedItems(List<String> selectedPatternIds) {
-        _cardItemList.removeIf(item -> {
-            boolean selected = selectedPatternIds.contains(item.getPatternId());
-            if (selected) {
-                OfflineFormFileHelper.deletePatternDirectory(this, item.getPatternId());
-            }
-            return selected;
-        });
-
-        saveList();
-        applySearch(_searchEditText.getText().toString());
-        setManageMode(false);
-        Toast.makeText(this, R.string.offline_toast_delete_success, Toast.LENGTH_SHORT).show();
     }
 
     private void applySearch(String keyword) {
@@ -192,7 +153,7 @@ public class OfflinePlusListActivity extends BaseActivity {
     }
 
     private void saveList() {
-        OfflineFormFileHelper.writeDefinitionIndex(this, new OfflineFormDefinitionIndex(_cardItemList));
+        OfflineFormFileHelper.writeDefinitionOrder(this, _cardItemList);
     }
 
 }

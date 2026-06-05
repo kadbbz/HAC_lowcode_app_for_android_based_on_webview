@@ -26,6 +26,7 @@ public class CustomFormActivity extends AppCompatActivity {
     private FormAdapter _adapter;
     private Button _btnSubmit;
     private Intent _intent;
+    private boolean _formLoaded;
 
 
     @Override
@@ -64,6 +65,11 @@ public class CustomFormActivity extends AppCompatActivity {
 
         String patternId = _intent.getStringExtra("patternId");
         List<BaseFormItem> formItems = new ArrayList<>();
+        if (patternId == null || patternId.isEmpty()) {
+            Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
+            _adapter.setFormItems(formItems);
+            return;
+        }
 
         try {
             OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(this, patternId);
@@ -72,8 +78,9 @@ public class CustomFormActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error parsing form data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.offline_toast_parse_form_failed, e.getMessage()), Toast.LENGTH_LONG).show();
         }
+        _formLoaded = !formItems.isEmpty();
         _adapter.setFormItems(formItems);
     }
 
@@ -82,6 +89,11 @@ public class CustomFormActivity extends AppCompatActivity {
     }
 
     private void onSubmit() {
+        if (!_formLoaded) {
+            Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // 验证表单
         if (_adapter.validateAll()) {
             // 收集数据
@@ -93,9 +105,10 @@ public class CustomFormActivity extends AppCompatActivity {
             OfflineFormFileHelper.writeRecord(this, record);
 
 
-            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.offline_toast_record_saved, Toast.LENGTH_SHORT).show();
+            finish();
         } else {
-            Toast.makeText(this, "请检查表单输入", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.offline_toast_check_form_input, Toast.LENGTH_SHORT).show();
             // 滚动到第一个错误项
             scrollToFirstError();
         }

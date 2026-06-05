@@ -12,7 +12,6 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineCo
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFactory;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndex;
 import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.List;
@@ -57,34 +56,41 @@ public class OfflinePlusProxy extends AbstractProxy{
 
         Context context = this.getWebView().getContext();
 
-        OfflineFormDefinitionIndexItem listItem = parseJsonToPatternListFile(context, input);
+        OfflineFormDefinitionIndexItem listItem = updateDefinitionOrder(context, input);
 
         parseJsonToCustomFormFile(context, input, listItem);
     }
 
-    private OfflineFormDefinitionIndexItem parseJsonToPatternListFile(Context context, PatternInput input) {
+    private OfflineFormDefinitionIndexItem updateDefinitionOrder(Context context, PatternInput input) {
 
-        OfflineFormDefinitionIndex index = OfflineFormFileHelper.readDefinitionIndex(context);
-        List<OfflineFormDefinitionIndexItem> list = index.getItems();
+        List<OfflineFormDefinitionIndexItem> list = OfflineFormFileHelper.readDefinitions(context);
+        OfflineFormDefinitionFile oldDefinition = OfflineFormFileHelper.readDefinition(context, input.patternId);
+        String theme = oldDefinition == null ? "" : oldDefinition.getComputed().getTheme();
 
-        String theme = "";
-        for (OfflineFormDefinitionIndexItem item : list) {
+        int oldIndex = -1;
+        for (int i = 0; i < list.size(); i++) {
+            OfflineFormDefinitionIndexItem item = list.get(i);
             if (item.getPatternId().equals(input.patternId)) {
-                theme = item.getTheme();
+                oldIndex = i;
+                if (theme.isEmpty()) {
+                    theme = item.getTheme();
+                }
                 break;
             }
         }
-
-        list.removeIf(i -> i.getPatternId().equals(input.patternId));
 
         // 同一个项目编号重复导入时沿用旧主题色；只有新增项目才按导入顺序分配主题色。
         if (theme.isEmpty()) {
             theme = OfflineComputedHelper.getThemeColor(list.size());
         }
         OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, new OfflineComputedInfo(theme));
-        list.add(newPattern);
+        if (oldIndex >= 0) {
+            list.set(oldIndex, newPattern);
+        } else {
+            list.add(newPattern);
+        }
 
-        OfflineFormFileHelper.writeDefinitionIndex(context, index);
+        OfflineFormFileHelper.writeDefinitionOrder(context, list);
         return newPattern;
 
     }

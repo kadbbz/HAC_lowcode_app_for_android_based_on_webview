@@ -32,29 +32,6 @@
             android:layout_height="wrap_content"
             android:text="@string/offline_button_sort" />
 
-        <Button
-            android:id="@+id/cmdManage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/offline_button_manage" />
-
-        <Button
-            android:id="@+id/cmdDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/offline_button_delete"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/cmdCancelManage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/ui_button_cancel"
-            android:visibility="gone" />
-
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

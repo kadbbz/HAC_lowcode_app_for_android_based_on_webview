@@ -10,6 +10,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class OfflineComputedHelper {
+    private static final String DEFAULT_THEME_COLOR = "#999999";
+
     // 固定 16 色主题色环。新增表单定义按导入顺序取色；重复导入同一项目编号时复用旧颜色。
     private static final String[] THEME_COLORS = {
             "#F44336", "#E91E63", "#9C27B0", "#673AB7",
@@ -21,6 +23,22 @@ public class OfflineComputedHelper {
     // 根据导入顺序获取主题色，超过 16 个后从色环开头循环使用。
     public static String getThemeColor(int index) {
         return THEME_COLORS[Math.max(index, 0) % THEME_COLORS.length];
+    }
+
+    public static String resolveThemeColor(String themeColor) {
+        if (themeColor == null || themeColor.isEmpty()) {
+            return DEFAULT_THEME_COLOR;
+        }
+        try {
+            Color.parseColor(themeColor);
+            return themeColor;
+        } catch (IllegalArgumentException e) {
+            return DEFAULT_THEME_COLOR;
+        }
+    }
+
+    public static int parseColor(String themeColor) {
+        return Color.parseColor(resolveThemeColor(themeColor));
     }
 
     // 根据项目编号生成本地 identicon，不把图片写入文件或 JSON，避免 base64 占用空间。
@@ -36,7 +54,7 @@ public class OfflineComputedHelper {
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.rgb(245, 245, 245));
         canvas.drawRect(0, 0, size, size, paint);
-        paint.setColor(Color.parseColor(themeColor));
+        paint.setColor(parseColor(themeColor));
 
         // 只读取左侧 3 列的 hash 结果，右侧 2 列镜像生成，保证图案左右对称且稳定。
         for (int row = 0; row < 5; row++) {

@@ -28,7 +28,7 @@
             android:id="@+id/btn_submit"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="保存"
+            android:text="@string/offline_button_save"
             android:backgroundTint="@color/colorPrimary"
             android:textColor="@color/white"
             android:textSize="16sp"/>
