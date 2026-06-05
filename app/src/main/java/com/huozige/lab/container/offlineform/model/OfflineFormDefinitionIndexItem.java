@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
 
 public class OfflineFormDefinitionIndexItem {
     // 表单定义名称，用于历史填报列表主标题展示。

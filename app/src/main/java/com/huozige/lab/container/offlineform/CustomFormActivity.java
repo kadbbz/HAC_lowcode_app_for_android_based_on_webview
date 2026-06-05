@@ -13,9 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 
 import java.util.ArrayList;
 import java.util.List;

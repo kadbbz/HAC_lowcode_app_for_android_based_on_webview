@@ -5,8 +5,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
 
 public class OfflineFormDefinitionFile {
     // 插件下发的表单定义内容。

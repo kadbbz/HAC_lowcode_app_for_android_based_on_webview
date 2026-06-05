@@ -1,12 +1,12 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineComputedInfo;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.SelectFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -7,8 +7,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.BaseFormItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.TextFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
 
 public class TextViewHolder extends BaseViewHolder {
     private TextView tvTitle;

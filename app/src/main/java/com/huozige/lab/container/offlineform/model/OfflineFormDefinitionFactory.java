@@ -1,8 +1,10 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
 
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.FormItemInput;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.PatternInput;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.SelectOptionsInput;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.SelectOptionsInput;
+import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
 
 import java.util.ArrayList;
 import java.util.List;

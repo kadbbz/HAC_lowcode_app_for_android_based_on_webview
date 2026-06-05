@@ -2,10 +2,10 @@ package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
 import android.content.Context;
 
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 
 import org.json.JSONArray;
 import org.json.JSONException;

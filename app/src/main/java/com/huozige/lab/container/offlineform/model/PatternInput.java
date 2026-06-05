@@ -1,4 +1,6 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.dto;
+package com.huozige.lab.container.offlineform.model;
+
+import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
 
 import java.util.List;
 

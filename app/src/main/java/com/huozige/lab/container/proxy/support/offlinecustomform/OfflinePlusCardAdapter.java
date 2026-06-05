@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.huozige.lab.container.offlineform.OfflineProjectRecordActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.List;
 

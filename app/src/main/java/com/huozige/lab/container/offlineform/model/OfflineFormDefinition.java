@@ -1,4 +1,6 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
+
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 
 import java.util.ArrayList;
 import java.util.List;

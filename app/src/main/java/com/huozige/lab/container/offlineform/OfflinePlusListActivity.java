@@ -15,7 +15,7 @@ import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.ArrayList;
 import java.util.List;

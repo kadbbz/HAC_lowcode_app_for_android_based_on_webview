@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;

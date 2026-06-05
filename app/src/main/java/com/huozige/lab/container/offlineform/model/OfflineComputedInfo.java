@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.model;
+package com.huozige.lab.container.offlineform.model;
 
 public class OfflineComputedInfo {
     // HAC 本地为表单定义计算出的主题色，用于列表卡片边条和头像。

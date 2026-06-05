@@ -5,14 +5,14 @@ import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.PatternInput;
+import com.huozige.lab.container.offlineform.model.PatternInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineComputedInfo;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinition;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFactory;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.List;
 

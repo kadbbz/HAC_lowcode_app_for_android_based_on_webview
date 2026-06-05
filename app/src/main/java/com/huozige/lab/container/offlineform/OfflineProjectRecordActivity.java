@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
