@@ -5,6 +5,8 @@ import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
 import com.huozige.lab.container.platform.CallbackParams;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.PatternInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
@@ -53,6 +55,41 @@ public class OfflinePlusProxy extends AbstractProxy{
 
         callback(CallbackParams.success("success"));
 
+    }
+
+    @JavascriptInterface
+    public String offlinePlusGetRecords(String projectId) {
+        writeInfoLog("OfflinePlusGetRecords");
+
+        if (projectId == null || projectId.isEmpty()) {
+            return "";
+        }
+
+        Context context = this.getWebView().getContext();
+        List<OfflineFormRecord> records = OfflineFormFileHelper.readRecords(context, projectId);
+        return JSON.toJSONString(records);
+    }
+
+    @JavascriptInterface
+    public String offlinePlusMarkRecordExported(String projectId, String recordId) {
+        writeInfoLog("OfflinePlusMarkRecordExported");
+
+        if (projectId == null || projectId.isEmpty()) {
+            return "projectId is empty.";
+        }
+        if (recordId == null || recordId.isEmpty()) {
+            return "recordId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, recordId);
+        if (record == null) {
+            return "record not found.";
+        }
+
+        record.setStatus(OfflineFormRecordStatus.EXPORTED);
+        OfflineFormFileHelper.writeRecord(context, record);
+        return "success";
     }
 
     private void parseJsonToFile(PatternInput input) {

@@ -21,8 +21,8 @@ public class OfflineFormRecord {
     private String patternId = "";
     // 填报时使用的表单定义版本号。
     private String schemaVersion = "";
-    // 当前记录状态，第一阶段提交后直接保存为 submitted。
-    private String status = "";
+    // 当前记录状态，包含草稿、已提交、已导出。
+    private OfflineFormRecordStatus status = OfflineFormRecordStatus.DRAFT;
     // 记录创建时间戳。
     private long createdAt;
     // 记录最后更新时间戳。
@@ -32,7 +32,7 @@ public class OfflineFormRecord {
 
     public static OfflineFormRecord createSubmitted(String patternId, String schemaVersion, Map<String, String> values) {
         long now = System.currentTimeMillis();
-        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, "submitted", now, now, values);
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values);
     }
 
     private static String createRecordId() {
