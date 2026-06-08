@@ -15,6 +15,8 @@
     <string name="offline_button_save">保存</string>
     <string name="offline_button_previous_step">上一步</string>
     <string name="offline_button_next_step">下一步</string>
+    <string name="offline_button_previous_page">上一页</string>
+    <string name="offline_button_next_page">下一页</string>
     <string name="offline_button_submit">提交</string>
     <string name="offline_button_continue_draft">继续填报</string>
     <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
@@ -38,11 +40,13 @@
     <string name="offline_text_no_records">暂无历史填报记录</string>
     <string name="offline_text_unknown_record_time">未知填报时间</string>
     <string name="offline_text_record_summary">版本号：%1$s    字段数：%2$d</string>
+    <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>
     <string name="offline_table_column_version">版本号</string>
     <string name="offline_table_column_updated_at">更新时间</string>
     <string name="offline_table_column_actions">操作</string>
     <string name="offline_toast_old_record_edit_not_supported">该记录由旧版本表单创建，当前版本不支持编辑</string>
     <string name="offline_title_display_columns">显示列</string>
+    <string name="offline_title_record_page_size">历史记录每页条数</string>
     <string name="offline_title_raw_config">原始配置</string>
     <string name="offline_title_record_cleanup">记录清理</string>
     <string name="offline_menu_delete_draft_records">清理所有草稿</string>

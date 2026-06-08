@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
@@ -47,6 +48,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     private static final int MENU_ID_RECORD_DELETE = 2;
     private static final int MENU_ID_DRAFT_CONTINUE = 1;
     private static final int MENU_ID_DRAFT_DELETE = 2;
+    private static final int[] RECORD_PAGE_SIZE_OPTIONS = new int[]{10, 20, 50, 100};
 
     private String _patternId;
     private String _title;
@@ -55,6 +57,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     private LinearLayout _draftListLayout;
     private LinearLayout _recordListLayout;
     private TextView _emptyRecordTextView;
+    private int _recordPageIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -221,6 +224,21 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     }
 
     private View createRecordTable(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
+        int pageSize = getRecordPageSize(definitionFile);
+        int pageCount = (records.size() + pageSize - 1) / pageSize;
+        if (_recordPageIndex >= pageCount) {
+            _recordPageIndex = Math.max(0, pageCount - 1);
+        }
+        int fromIndex = _recordPageIndex * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, records.size());
+        List<OfflineFormRecord> currentPageRecords = records.subList(fromIndex, toIndex);
+
+        LinearLayout wrapper = new LinearLayout(this);
+        wrapper.setOrientation(LinearLayout.VERTICAL);
+        wrapper.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
         CardView cardView = new CardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -264,7 +282,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
         dataTableLayout.addView(createHeaderRow(displayColumns, columnTitles));
         actionTableLayout.addView(createActionHeaderRow());
-        for (OfflineFormRecord record : records) {
+        for (OfflineFormRecord record : currentPageRecords) {
             dataTableLayout.addView(createRecordRow(record, displayColumns, formItems, currentSchemaVersion));
             actionTableLayout.addView(createActionRow(record, currentSchemaVersion));
         }
@@ -273,7 +291,64 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         tableContainer.addView(scrollView);
         tableContainer.addView(actionTableLayout);
         cardView.addView(tableContainer);
-        return cardView;
+        wrapper.addView(cardView);
+        if (records.size() > pageSize) {
+            wrapper.addView(createPaginationBar(pageCount));
+        }
+        return wrapper;
+    }
+
+    private View createPaginationBar(int pageCount) {
+        LinearLayout paginationLayout = new LinearLayout(this);
+        paginationLayout.setOrientation(LinearLayout.HORIZONTAL);
+        paginationLayout.setGravity(Gravity.CENTER);
+        paginationLayout.setPadding(0, dp(this, 8), 0, dp(this, 4));
+
+        TextView previousButton = createPaginationButton(getString(R.string.offline_button_previous_page), _recordPageIndex > 0);
+        previousButton.setOnClickListener(v -> {
+            if (_recordPageIndex <= 0) {
+                return;
+            }
+            _recordPageIndex--;
+            renderRecords();
+        });
+
+        TextView pageInfoTextView = new TextView(this);
+        pageInfoTextView.setText(getString(R.string.offline_text_record_page_info, _recordPageIndex + 1, pageCount));
+        pageInfoTextView.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+        pageInfoTextView.setTextSize(14);
+        pageInfoTextView.setGravity(Gravity.CENTER);
+        pageInfoTextView.setPadding(dp(this, 14), 0, dp(this, 14), 0);
+
+        TextView nextButton = createPaginationButton(getString(R.string.offline_button_next_page), _recordPageIndex < pageCount - 1);
+        nextButton.setOnClickListener(v -> {
+            if (_recordPageIndex >= pageCount - 1) {
+                return;
+            }
+            _recordPageIndex++;
+            renderRecords();
+        });
+
+        paginationLayout.addView(previousButton);
+        paginationLayout.addView(pageInfoTextView);
+        paginationLayout.addView(nextButton);
+        return paginationLayout;
+    }
+
+    private TextView createPaginationButton(String text, boolean enabled) {
+        TextView button = new TextView(this);
+        button.setText(text);
+        button.setTextSize(14);
+        button.setGravity(Gravity.CENTER);
+        button.setMinWidth(dp(this, 72));
+        button.setPadding(dp(this, 10), dp(this, 8), dp(this, 10), dp(this, 8));
+        button.setEnabled(enabled);
+        button.setClickable(enabled);
+        button.setTextColor(ContextCompat.getColor(this, enabled ? R.color.huozige_blue : android.R.color.darker_gray));
+        if (enabled) {
+            button.setBackgroundResource(android.R.drawable.list_selector_background);
+        }
+        return button;
     }
 
     private TableRow createHeaderRow(List<String> displayColumns, Map<String, String> columnTitles) {
@@ -435,6 +510,19 @@ public class OfflineProjectRecordActivity extends BaseActivity {
             return definitionFile.getComputed().getDisplayColumns();
         }
         return new ArrayList<>();
+    }
+
+    private int getRecordPageSize(OfflineFormDefinitionFile definitionFile) {
+        if (definitionFile.getComputed() == null || definitionFile.getComputed().getRecordPageSize() <= 0) {
+            return OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE;
+        }
+        int pageSize = definitionFile.getComputed().getRecordPageSize();
+        for (int option : RECORD_PAGE_SIZE_OPTIONS) {
+            if (option == pageSize) {
+                return pageSize;
+            }
+        }
+        return OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE;
     }
 
     private Map<String, String> buildColumnTitles(OfflineFormDefinitionFile definitionFile) {

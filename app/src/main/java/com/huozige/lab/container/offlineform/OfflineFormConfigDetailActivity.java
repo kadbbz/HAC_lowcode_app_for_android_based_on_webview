@@ -1,8 +1,12 @@
 package com.huozige.lab.container.offlineform;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -10,6 +14,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
@@ -25,9 +30,11 @@ import java.util.List;
 
 public class OfflineFormConfigDetailActivity extends BaseActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
+    private static final Integer[] RECORD_PAGE_SIZE_OPTIONS = new Integer[]{1, 10, 20, 50, 100};
 
     private String _patternId;
     private OfflineFormDefinitionFile _definitionFile;
+    private boolean _recordPageSizeRendering;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +81,41 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
                 definitionFilePath));
 
         renderDisplayColumns(definition);
+        renderRecordPageSize();
         refreshRawConfig();
+    }
+
+    private void renderRecordPageSize() {
+        Spinner recordPageSizeSpinner = findViewById(R.id.recordPageSizeSpinner);
+        ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, RECORD_PAGE_SIZE_OPTIONS);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        recordPageSizeSpinner.setAdapter(adapter);
+
+        _recordPageSizeRendering = true;
+        int recordPageSize = getRecordPageSize();
+        int selectedIndex = 0;
+        for (int i = 0; i < RECORD_PAGE_SIZE_OPTIONS.length; i++) {
+            if (RECORD_PAGE_SIZE_OPTIONS[i] == recordPageSize) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        recordPageSizeSpinner.setSelection(selectedIndex);
+        _recordPageSizeRendering = false;
+
+        recordPageSizeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (_recordPageSizeRendering) {
+                    return;
+                }
+                saveRecordPageSize(RECORD_PAGE_SIZE_OPTIONS[position]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void renderDisplayColumns(OfflineFormDefinition definition) {
@@ -120,6 +161,32 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
             return new ArrayList<>();
         }
         return _definitionFile.getComputed().getDisplayColumns();
+    }
+
+    private int getRecordPageSize() {
+        if (_definitionFile == null || _definitionFile.getComputed() == null) {
+            return OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE;
+        }
+        return normalizeRecordPageSize(_definitionFile.getComputed().getRecordPageSize());
+    }
+
+    private int normalizeRecordPageSize(int pageSize) {
+        for (int option : RECORD_PAGE_SIZE_OPTIONS) {
+            if (option == pageSize) {
+                return pageSize;
+            }
+        }
+        return OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE;
+    }
+
+    private void saveRecordPageSize(int recordPageSize) {
+        if (_definitionFile == null || _definitionFile.getComputed() == null) {
+            return;
+        }
+
+        _definitionFile.getComputed().setRecordPageSize(recordPageSize);
+        OfflineFormFileHelper.writeDefinition(this, _patternId, _definitionFile);
+        refreshRawConfig();
     }
 
     private void refreshRawConfig() {

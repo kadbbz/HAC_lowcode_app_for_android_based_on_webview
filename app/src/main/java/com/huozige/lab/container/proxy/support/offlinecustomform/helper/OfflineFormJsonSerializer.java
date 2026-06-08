@@ -21,6 +21,7 @@ class OfflineFormJsonSerializer {
     private static final String FIELD_COMPUTED = "computed";
     private static final String FIELD_THEME = "theme";
     private static final String FIELD_DISPLAY_COLUMNS = "displayColumns";
+    private static final String FIELD_RECORD_PAGE_SIZE = "recordPageSize";
     private static final String FIELD_PATTERN_ID = "patternId";
     private static final String FIELD_SCHEMA_VERSION = "schemaVersion";
     private static final String FIELD_TITLE = "title";
@@ -49,6 +50,7 @@ class OfflineFormJsonSerializer {
         JSONObject computedJson = new JSONObject();
         computedJson.put(FIELD_THEME, computed.getTheme());
         computedJson.put(FIELD_DISPLAY_COLUMNS, computed.getDisplayColumns());
+        computedJson.put(FIELD_RECORD_PAGE_SIZE, computed.getRecordPageSize());
 
         JSONObject definitionJson = new JSONObject();
         definitionJson.put(FIELD_JSON_SCHEMA, jsonSchema);

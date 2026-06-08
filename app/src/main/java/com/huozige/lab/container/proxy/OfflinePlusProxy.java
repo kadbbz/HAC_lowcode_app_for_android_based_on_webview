@@ -108,6 +108,7 @@ public class OfflinePlusProxy extends AbstractProxy{
         OfflineFormDefinitionFile oldDefinition = OfflineFormFileHelper.readDefinition(context, input.patternId);
         String theme = oldDefinition == null ? "" : oldDefinition.getComputed().getTheme();
         List<String> displayColumns = oldDefinition == null ? buildDefaultDisplayColumns(definition) : oldDefinition.getComputed().getDisplayColumns();
+        int recordPageSize = oldDefinition == null ? OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE : oldDefinition.getComputed().getRecordPageSize();
 
         int oldIndex = -1;
         for (int i = 0; i < list.size(); i++) {
@@ -125,7 +126,11 @@ public class OfflinePlusProxy extends AbstractProxy{
         if (theme.isEmpty()) {
             theme = OfflineComputedHelper.getThemeColor(list.size());
         }
-        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, new OfflineComputedInfo(theme, displayColumns));
+        OfflineComputedInfo computedInfo = new OfflineComputedInfo();
+        computedInfo.setTheme(theme);
+        computedInfo.setDisplayColumns(displayColumns);
+        computedInfo.setRecordPageSize(recordPageSize);
+        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, computedInfo);
         if (oldIndex >= 0) {
             list.set(oldIndex, newPattern);
         } else {
