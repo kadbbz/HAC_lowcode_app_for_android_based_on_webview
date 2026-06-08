@@ -1,7 +1,5 @@
 package com.huozige.lab.container.offlineform.model;
 
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +19,7 @@ public class OfflineFormDefinition {
     private String title = "";
     // 表单定义备注，用于历史填报列表描述展示。
     private String description = "";
-    // 表单字段定义，原生填报页根据该列表渲染控件。
-    private List<BaseFormItem> formItems = new ArrayList<>();
+    // 表单步骤定义，原生填报页根据步骤中的节点树渲染控件。
+    private List<OfflineFormStep> steps = new ArrayList<>();
 
 }

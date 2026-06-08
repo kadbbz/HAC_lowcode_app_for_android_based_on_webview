@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
+import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
+
 public final class ReadOnlyFormItemViews {
     private ReadOnlyFormItemViews() {
     }
@@ -26,7 +28,4 @@ public final class ReadOnlyFormItemViews {
         return textView;
     }
 
-    private static int dp(Context context, int value) {
-        return (int) (value * context.getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

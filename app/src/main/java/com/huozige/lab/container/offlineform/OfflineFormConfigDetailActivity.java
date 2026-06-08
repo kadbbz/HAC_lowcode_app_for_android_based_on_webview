@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
@@ -62,7 +63,7 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
                 definition.getSchemaVersion(),
                 definition.getTitle(),
                 definition.getDescription(),
-                definition.getFormItems().size(),
+                OfflineFormDefinitionFlattener.flattenFields(definition).size(),
                 definitionFilePath));
 
         renderDisplayColumns(definition);
@@ -74,7 +75,7 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
         displayColumnListLayout.removeAllViews();
 
         List<String> displayColumns = getDisplayColumns();
-        for (BaseFormItem formItem : definition.getFormItems()) {
+        for (BaseFormItem formItem : OfflineFormDefinitionFlattener.flattenFields(definition)) {
             CheckBox checkBox = new CheckBox(this);
             checkBox.setText(formItem.getTitle() == null || formItem.getTitle().isEmpty() ? formItem.getId() : formItem.getTitle());
             checkBox.setTextSize(14);

@@ -1,7 +1,5 @@
 package com.huozige.lab.container.offlineform.model;
 
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +14,6 @@ public class PatternInput {
     public String title = "";
     public String description = "";
 
-    public List<FormItemInput> formItems = new ArrayList<>();
+    public List<PatternStepInput> steps = new ArrayList<>();
     public List<String> displayColumns = new ArrayList<>();
 }

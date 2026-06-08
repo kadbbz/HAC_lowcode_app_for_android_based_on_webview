@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
@@ -34,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
 public class OfflineProjectRecordActivity extends BaseActivity {
     private static final int MENU_ID_CONFIG_MANAGE = 1;
@@ -136,13 +139,13 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(0, dp(4), 0, dp(8));
+        cardParams.setMargins(0, dp(this, 4), 0, dp(this, 8));
         cardView.setLayoutParams(cardParams);
         cardView.setCardBackgroundColor(ContextCompat.getColor(this, android.R.color.white));
-        cardView.setRadius(dp(8));
-        cardView.setCardElevation(dp(2));
+        cardView.setRadius(dp(this, 8));
+        cardView.setCardElevation(dp(this, 2));
         cardView.setUseCompatPadding(true);
-        cardView.setContentPadding(dp(8), dp(8), dp(8), dp(8));
+        cardView.setContentPadding(dp(this, 8), dp(this, 8), dp(this, 8), dp(this, 8));
 
         LinearLayout tableContainer = new LinearLayout(this);
         tableContainer.setOrientation(LinearLayout.HORIZONTAL);
@@ -163,7 +166,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
         TableLayout actionTableLayout = new TableLayout(this);
         actionTableLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                dp(44),
+                dp(this, 44),
                 LinearLayout.LayoutParams.WRAP_CONTENT));
         actionTableLayout.setShrinkAllColumns(false);
         actionTableLayout.setStretchAllColumns(false);
@@ -224,9 +227,9 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
     private TextView createCell(String text, boolean header) {
         TextView textView = new TextView(this);
-        textView.setMinWidth(dp(120));
-        textView.setMaxWidth(dp(220));
-        textView.setPadding(dp(12), dp(10), dp(12), dp(10));
+        textView.setMinWidth(dp(this, 120));
+        textView.setMaxWidth(dp(this, 220));
+        textView.setPadding(dp(this, 12), dp(this, 10), dp(this, 12), dp(this, 10));
         textView.setSingleLine(true);
         textView.setEllipsize(TextUtils.TruncateAt.END);
         textView.setText(text == null ? "" : text);
@@ -249,8 +252,8 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     private View createActionCell(OfflineFormRecord record, String currentSchemaVersion) {
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
-        actions.setPadding(dp(4), dp(2), dp(4), dp(2));
-        actions.setMinimumWidth(dp(24));
+        actions.setPadding(dp(this, 4), dp(this, 2), dp(this, 4), dp(this, 2));
+        actions.setMinimumWidth(dp(this, 24));
 
         TextView moreButton = createActionButton(getString(R.string.offline_button_more), android.R.color.black);
         moreButton.setOnClickListener(v -> showRecordActionMenu(moreButton, record, currentSchemaVersion));
@@ -266,8 +269,8 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         button.setTypeface(null, Typeface.BOLD);
         button.setTextColor(ContextCompat.getColor(this, colorResId));
         button.setGravity(android.view.Gravity.CENTER);
-        button.setPadding(dp(6), dp(8), dp(6), dp(8));
-        button.setMinWidth(dp(36));
+        button.setPadding(dp(this, 6), dp(this, 8), dp(this, 6), dp(this, 8));
+        button.setMinWidth(dp(this, 36));
         button.setClickable(true);
         button.setBackgroundResource(android.R.drawable.list_selector_background);
         return button;
@@ -332,10 +335,10 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
     private Map<String, String> buildColumnTitles(OfflineFormDefinitionFile definitionFile) {
         Map<String, String> titles = new HashMap<>();
-        if (definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getFormItems() == null) {
+        if (definitionFile.getJsonSchema() == null) {
             return titles;
         }
-        for (BaseFormItem formItem : definitionFile.getJsonSchema().getFormItems()) {
+        for (BaseFormItem formItem : OfflineFormDefinitionFlattener.flattenFields(definitionFile.getJsonSchema())) {
             titles.put(formItem.getId(), formItem.getTitle());
         }
         return titles;
@@ -343,10 +346,10 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
     private Map<String, BaseFormItem> buildFormItems(OfflineFormDefinitionFile definitionFile) {
         Map<String, BaseFormItem> formItems = new HashMap<>();
-        if (definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getFormItems() == null) {
+        if (definitionFile.getJsonSchema() == null) {
             return formItems;
         }
-        for (BaseFormItem formItem : definitionFile.getJsonSchema().getFormItems()) {
+        for (BaseFormItem formItem : OfflineFormDefinitionFlattener.flattenFields(definitionFile.getJsonSchema())) {
             formItems.put(formItem.getId(), formItem);
         }
         return formItems;
@@ -387,7 +390,4 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         return _patternId != null && !_patternId.isEmpty();
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

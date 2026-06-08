@@ -20,6 +20,8 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexIte
 
 import java.util.List;
 
+import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
+
 // 历史填报列表的卡片适配器，只负责列表 UI 展示、拖拽排序和进入项目填报记录页。
 public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCardAdapter.ViewHolder> {
     // 普通模式下卡片内容左侧内边距。
@@ -54,7 +56,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         String theme = OfflineComputedHelper.resolveThemeColor(item.getComputed().getTheme());
         holder.themeView.setBackgroundColor(OfflineComputedHelper.parseColor(theme));
         holder.imageView.setImageBitmap(createIconBitmap(item.getPatternId(), item.getSchemaVersion(), theme));
-        setContentPaddingStart(holder, dp(CONTENT_PADDING_DP));
+        setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
 
 
         // 排序时点击不进入详情，避免拖拽过程中误打开项目填报记录页。
@@ -105,10 +107,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
     private void setContentPaddingStart(ViewHolder holder, int paddingStart) {
         holder.contentLayout.setPadding(paddingStart, holder.contentLayout.getPaddingTop(), holder.contentLayout.getPaddingRight(), holder.contentLayout.getPaddingBottom());
-    }
-
-    private int dp(int value) {
-        return (int) (value * _context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

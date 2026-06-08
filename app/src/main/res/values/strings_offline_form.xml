@@ -11,6 +11,9 @@
     <string name="offline_button_more">⋮</string>
     <string name="offline_button_delete">删除</string>
     <string name="offline_button_save">保存</string>
+    <string name="offline_button_previous_step">上一步</string>
+    <string name="offline_button_next_step">下一步</string>
+    <string name="offline_button_submit">提交</string>
     <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
     <string name="offline_toast_drag_to_sort">拖拽以调整顺序</string>
     <string name="offline_toast_sort_saved">排序已保存</string>

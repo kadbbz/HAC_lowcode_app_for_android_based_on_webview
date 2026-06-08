@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/offline_form_page_bg">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -13,7 +14,8 @@
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"/>
+            android:padding="8dp"
+            android:clipToPadding="false" />
 
     </androidx.core.widget.NestedScrollView>
 
@@ -25,11 +27,23 @@
         android:background="@color/white">
 
         <Button
-            android:id="@+id/btn_submit"
-            android:layout_width="match_parent"
+            android:id="@+id/btn_previous_step"
+            android:layout_width="0dp"
             android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:text="@string/offline_button_previous_step"
+            android:backgroundTint="@color/gray"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_submit"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
             android:text="@string/offline_button_save"
-            android:backgroundTint="@color/colorPrimary"
+            android:backgroundTint="@color/huozige_blue"
             android:textColor="@color/white"
             android:textSize="16sp"/>
 

@@ -1,5 +1,7 @@
 package com.huozige.lab.container.offlineform.model.formitem;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,5 +17,6 @@ public class FormItemInput {
     public String value = "";
 
     public FormItemValidationInput checkOptions;
+    @JSONField(name = "options")
     public List<SelectOptionsInput> selectOptionsList = new ArrayList<>();
 }
