@@ -66,7 +66,7 @@ public class OfflinePlusProxy extends AbstractProxy{
         }
 
         Context context = this.getWebView().getContext();
-        List<OfflineFormRecord> records = OfflineFormFileHelper.readRecords(context, projectId);
+        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
         return JSON.toJSONString(records);
     }
 
@@ -86,10 +86,26 @@ public class OfflinePlusProxy extends AbstractProxy{
         if (record == null) {
             return "record not found.";
         }
+        if (record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+            return "record already exported.";
+        }
+        if (record.getStatus() != OfflineFormRecordStatus.SUBMITTED) {
+            return "record is not submitted.";
+        }
 
         record.setStatus(OfflineFormRecordStatus.EXPORTED);
         OfflineFormFileHelper.writeRecord(context, record);
         return "success";
+    }
+
+    private List<OfflineFormRecord> filterSubmittedRecords(List<OfflineFormRecord> records) {
+        List<OfflineFormRecord> submittedRecords = new ArrayList<>();
+        for (OfflineFormRecord record : records) {
+            if (record.getStatus() == OfflineFormRecordStatus.SUBMITTED) {
+                submittedRecords.add(record);
+            }
+        }
+        return submittedRecords;
     }
 
     private void parseJsonToFile(PatternInput input) {
