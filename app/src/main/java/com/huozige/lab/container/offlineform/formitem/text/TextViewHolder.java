@@ -1,4 +1,4 @@
-package com.huozige.lab.container.proxy.support.offlinecustomform.viewholder;
+package com.huozige.lab.container.offlineform.formitem.text;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -9,6 +9,7 @@ import android.widget.TextView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
+import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 public class TextViewHolder extends BaseViewHolder {
     private TextView tvTitle;
@@ -16,7 +17,7 @@ public class TextViewHolder extends BaseViewHolder {
     private TextView tvError;
     private TextView tvRequired;
 
-    private TextFormItem textItem;
+    private TextFormItem item;
 
     public TextViewHolder(View itemView) {
         super(itemView);
@@ -39,14 +40,12 @@ public class TextViewHolder extends BaseViewHolder {
             @Override
             public void afterTextChanged(Editable s) {
                 if (item != null) {
-                    ((TextFormItem) item).setValue(s.toString());
+                    item.setValue(s.toString());
                     updateErrorState();
                 }
             }
         });
     }
-
-    private TextFormItem item;
 
     @Override
     public void bind(BaseFormItem item) {
@@ -61,10 +60,8 @@ public class TextViewHolder extends BaseViewHolder {
 
         tvTitle.setText(textItem.getTitle());
         etInput.setHint(textItem.getHint());
-        etInput.setText(textItem.getValue() != null ? textItem.getValue().toString() : "");
+        etInput.setText(textItem.getValue() != null ? textItem.getValue() : "");
         etInput.setInputType(textItem.getInputType());
-
-        // 显示必填标记
         tvRequired.setVisibility(textItem.isRequired() ? View.VISIBLE : View.GONE);
 
         updateErrorState();
@@ -77,7 +74,6 @@ public class TextViewHolder extends BaseViewHolder {
         if (item.getErrorMessage() != null) {
             tvError.setVisibility(View.VISIBLE);
             tvError.setText(item.getErrorMessage());
-            // 可以添加错误样式
             etInput.setBackgroundResource(R.drawable.custom_form_bg_edittext_error);
         } else {
             tvError.setVisibility(View.GONE);

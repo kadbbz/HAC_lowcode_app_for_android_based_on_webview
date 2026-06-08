@@ -1,17 +1,14 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform;
 
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
-import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.SelectViewHolder;
-import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.TextViewHolder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +18,7 @@ import java.util.Map;
 public class FormAdapter extends RecyclerView.Adapter<BaseViewHolder> {
 
     private List<BaseFormItem> formItems = new ArrayList<>();
+    private Map<Integer, OfflineFormItemHandler> handlersByViewType = new HashMap<>();
 
     public void setFormItems(List<BaseFormItem> items) {
         this.formItems = new ArrayList<>(items);
@@ -39,28 +37,11 @@ public class FormAdapter extends RecyclerView.Adapter<BaseViewHolder> {
     @NonNull
     @Override
     public BaseViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-
-        switch (viewType) {
-            case BaseFormItem.TYPE_TEXT:
-                View textView = inflater.inflate(R.layout.custom_form_item_form_text, parent, false);
-                return new TextViewHolder(textView);
-
-            case BaseFormItem.TYPE_SELECT:
-                View selectView = inflater.inflate(R.layout.custom_form_item_form_select, parent, false);
-                return new SelectViewHolder(selectView);
-
-//            case BaseFormItem.TYPE_SWITCH:
-//                View switchView = inflater.inflate(R.layout.item_form_switch, parent, false);
-//                return new SwitchViewHolder(switchView);
-//
-//            case BaseFormItem.TYPE_DATE:
-//                View dateView = inflater.inflate(R.layout.item_form_date, parent, false);
-//                return new DateViewHolder(dateView);
-
-            default:
-                throw new IllegalArgumentException("Unknown view type: " + viewType);
+        OfflineFormItemHandler handler = handlersByViewType.get(viewType);
+        if (handler == null) {
+            throw new IllegalArgumentException("Unknown view type: " + viewType);
         }
+        return handler.createEditViewHolder(parent);
     }
 
     @Override
@@ -76,7 +57,10 @@ public class FormAdapter extends RecyclerView.Adapter<BaseViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        return formItems.get(position).getItemType();
+        OfflineFormItemHandler handler = OfflineFormItemRegistry.getHandler(formItems.get(position).getItemType());
+        int viewType = handler.getViewType();
+        handlersByViewType.put(viewType, handler);
+        return viewType;
     }
 
     // 验证所有表单项

@@ -18,13 +18,8 @@ public class SelectFormItem extends BaseFormItem {
     private String selectedValue;
     private String selectedDisplayText;
 
-    public SelectFormItem(String id, String title, String hint, boolean required) {
-        super(id, title, hint, required);
-    }
-
-    @Override
-    public int getItemType() {
-        return TYPE_SELECT;
+    public SelectFormItem(String itemType, String id, String title, String hint, boolean required) {
+        super(itemType, id, title, hint, required);
     }
 
     @Override

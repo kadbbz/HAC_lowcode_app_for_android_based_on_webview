@@ -12,13 +12,8 @@ public class TextFormItem extends BaseFormItem {
     private int minLength = -1;
     private String regexPattern;
 
-    public TextFormItem(String id, String title, String hint, boolean required) {
-        super(id, title, hint, required);
-    }
-
-    @Override
-    public int getItemType() {
-        return TYPE_TEXT;
+    public TextFormItem(String itemType, String id, String title, String hint, boolean required) {
+        super(itemType, id, title, hint, required);
     }
 
     @Override

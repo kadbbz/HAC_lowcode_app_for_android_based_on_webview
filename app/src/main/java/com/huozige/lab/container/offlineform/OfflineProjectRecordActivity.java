@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
@@ -169,12 +170,13 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
         List<String> displayColumns = getDisplayColumns(definitionFile);
         Map<String, String> columnTitles = buildColumnTitles(definitionFile);
+        Map<String, BaseFormItem> formItems = buildFormItems(definitionFile);
         String currentSchemaVersion = definitionFile.getJsonSchema().getSchemaVersion();
 
         dataTableLayout.addView(createHeaderRow(displayColumns, columnTitles));
         actionTableLayout.addView(createActionHeaderRow());
         for (OfflineFormRecord record : records) {
-            dataTableLayout.addView(createRecordRow(record, displayColumns, currentSchemaVersion));
+            dataTableLayout.addView(createRecordRow(record, displayColumns, formItems, currentSchemaVersion));
             actionTableLayout.addView(createActionRow(record, currentSchemaVersion));
         }
 
@@ -201,12 +203,12 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         return row;
     }
 
-    private TableRow createRecordRow(OfflineFormRecord record, List<String> displayColumns, String currentSchemaVersion) {
+    private TableRow createRecordRow(OfflineFormRecord record, List<String> displayColumns, Map<String, BaseFormItem> formItems, String currentSchemaVersion) {
         TableRow row = new TableRow(this);
         row.setClickable(true);
         row.setBackgroundResource(android.R.drawable.list_selector_background);
         for (String fieldId : displayColumns) {
-            row.addView(createCell(getRecordValue(record, fieldId), false));
+            row.addView(createRecordValueCell(record, fieldId, formItems.get(fieldId)));
         }
         row.addView(createCell(record.getSchemaVersion(), false));
         row.addView(createCell(formatRecordTime(record.getUpdatedAt()), false));
@@ -234,6 +236,14 @@ public class OfflineProjectRecordActivity extends BaseActivity {
             textView.setTypeface(null, Typeface.BOLD);
         }
         return textView;
+    }
+
+    private View createRecordValueCell(OfflineFormRecord record, String fieldId, BaseFormItem formItem) {
+        String rawValue = getRecordValue(record, fieldId);
+        if (formItem == null) {
+            return createCell(rawValue, false);
+        }
+        return OfflineFormItemRegistry.createReadOnlyView(this, formItem, rawValue, true);
     }
 
     private View createActionCell(OfflineFormRecord record, String currentSchemaVersion) {
@@ -329,6 +339,17 @@ public class OfflineProjectRecordActivity extends BaseActivity {
             titles.put(formItem.getId(), formItem.getTitle());
         }
         return titles;
+    }
+
+    private Map<String, BaseFormItem> buildFormItems(OfflineFormDefinitionFile definitionFile) {
+        Map<String, BaseFormItem> formItems = new HashMap<>();
+        if (definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getFormItems() == null) {
+            return formItems;
+        }
+        for (BaseFormItem formItem : definitionFile.getJsonSchema().getFormItems()) {
+            formItems.put(formItem.getId(), formItem);
+        }
+        return formItems;
     }
 
     private String resolveColumnTitle(Map<String, String> columnTitles, String fieldId) {
