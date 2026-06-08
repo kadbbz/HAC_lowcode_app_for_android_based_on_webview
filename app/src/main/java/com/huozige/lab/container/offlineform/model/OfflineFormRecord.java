@@ -35,6 +35,11 @@ public class OfflineFormRecord {
         return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values);
     }
 
+    public static OfflineFormRecord createDraft(String patternId, String schemaVersion, Map<String, String> values) {
+        long now = System.currentTimeMillis();
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.DRAFT, now, now, values);
+    }
+
     private static String createRecordId() {
         String time = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(new Date());
         return time + "_" + UUID.randomUUID().toString();

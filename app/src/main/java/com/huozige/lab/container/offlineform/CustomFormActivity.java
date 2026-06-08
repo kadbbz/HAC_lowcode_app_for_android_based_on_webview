@@ -14,7 +14,9 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
@@ -123,6 +125,7 @@ public class CustomFormActivity extends AppCompatActivity {
         }
 
         if (!isLastStep()) {
+            saveDraftIfNeeded();
             _currentStepIndex++;
             renderCurrentStep();
             _recyclerView.scrollToPosition(0);
@@ -141,6 +144,7 @@ public class CustomFormActivity extends AppCompatActivity {
             record = OfflineFormRecord.createSubmitted(patternId, schemaVersion, formData);
         } else {
             _editingRecord.setValues(formData);
+            _editingRecord.setStatus(OfflineFormRecordStatus.SUBMITTED);
             _editingRecord.setUpdatedAt(System.currentTimeMillis());
             record = _editingRecord;
         }
@@ -179,6 +183,43 @@ public class CustomFormActivity extends AppCompatActivity {
             formData.put(item.getId(), item.getValue());
         }
         return formData;
+    }
+
+    private void saveDraftIfNeeded() {
+        if (_editingRecord != null && _editingRecord.getStatus() != OfflineFormRecordStatus.DRAFT) {
+            return;
+        }
+        if (!hasFieldBeforeNextStep()) {
+            return;
+        }
+
+        Map<String, String> formData = collectAllFormData();
+        String patternId = _intent.getStringExtra("patternId");
+        String schemaVersion = _intent.getStringExtra("schemaVersion");
+        if (_editingRecord == null) {
+            _editingRecord = OfflineFormRecord.createDraft(patternId, schemaVersion, formData);
+        } else {
+            _editingRecord.setValues(formData);
+            _editingRecord.setStatus(OfflineFormRecordStatus.DRAFT);
+            _editingRecord.setUpdatedAt(System.currentTimeMillis());
+        }
+        OfflineFormFileHelper.writeRecord(this, _editingRecord);
+    }
+
+    private boolean hasFieldBeforeNextStep() {
+        if (_definition == null || _definition.getSteps() == null) {
+            return false;
+        }
+
+        int lastStepIndex = Math.min(_currentStepIndex, _definition.getSteps().size() - 1);
+        for (int i = 0; i <= lastStepIndex; i++) {
+            for (OfflineFormDisplayItem displayItem : OfflineFormDefinitionFlattener.flattenStep(_definition.getSteps().get(i))) {
+                if (displayItem.isField()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void loadEditingRecord(String patternId, String currentSchemaVersion, List<BaseFormItem> formItems) {

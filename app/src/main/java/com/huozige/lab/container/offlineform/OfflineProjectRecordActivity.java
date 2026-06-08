@@ -7,7 +7,9 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Gravity;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TableLayout;
@@ -25,6 +27,7 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
@@ -42,11 +45,14 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     private static final int MENU_ID_CONFIG_MANAGE = 1;
     private static final int MENU_ID_RECORD_EDIT = 1;
     private static final int MENU_ID_RECORD_DELETE = 2;
+    private static final int MENU_ID_DRAFT_CONTINUE = 1;
+    private static final int MENU_ID_DRAFT_DELETE = 2;
 
     private String _patternId;
     private String _title;
     private String _description;
     private String _schemaVersion;
+    private LinearLayout _draftListLayout;
     private LinearLayout _recordListLayout;
     private TextView _emptyRecordTextView;
 
@@ -64,6 +70,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
         TextView projectDescriptionTextView = findViewById(R.id.projectDescriptionTextView);
         projectDescriptionTextView.setText(_description == null ? "" : _description);
 
+        _draftListLayout = findViewById(R.id.draftListLayout);
         _recordListLayout = findViewById(R.id.recordListLayout);
         _emptyRecordTextView = findViewById(R.id.emptyRecordTextView);
 
@@ -127,11 +134,90 @@ public class OfflineProjectRecordActivity extends BaseActivity {
             return;
         }
 
-        List<OfflineFormRecord> records = OfflineFormFileHelper.readRecords(this, _patternId);
-        _emptyRecordTextView.setVisibility(records.isEmpty() ? View.VISIBLE : View.GONE);
-        if (!records.isEmpty()) {
-            _recordListLayout.addView(createRecordTable(records, definitionFile));
+        List<OfflineFormRecord> draftRecords = new ArrayList<>();
+        List<OfflineFormRecord> historyRecords = new ArrayList<>();
+        for (OfflineFormRecord record : OfflineFormFileHelper.readRecords(this, _patternId)) {
+            if (record.getStatus() == OfflineFormRecordStatus.DRAFT) {
+                draftRecords.add(record);
+            } else {
+                historyRecords.add(record);
+            }
         }
+
+        renderDraftRecords(draftRecords, definitionFile.getJsonSchema().getSchemaVersion());
+        _emptyRecordTextView.setVisibility(historyRecords.isEmpty() ? View.VISIBLE : View.GONE);
+        if (!historyRecords.isEmpty()) {
+            _recordListLayout.addView(createRecordTable(historyRecords, definitionFile));
+        }
+    }
+
+    private void renderDraftRecords(List<OfflineFormRecord> draftRecords, String currentSchemaVersion) {
+        _draftListLayout.removeAllViews();
+        for (OfflineFormRecord draftRecord : draftRecords) {
+            _draftListLayout.addView(createDraftRecordCard(draftRecord, currentSchemaVersion));
+        }
+    }
+
+    private View createDraftRecordCard(OfflineFormRecord record, String currentSchemaVersion) {
+        CardView cardView = new CardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(this, 96));
+        cardParams.setMargins(0, dp(this, 8), 0, 0);
+        cardView.setLayoutParams(cardParams);
+        cardView.setCardBackgroundColor(ContextCompat.getColor(this, android.R.color.white));
+        cardView.setRadius(dp(this, 8));
+        cardView.setCardElevation(dp(this, 3));
+        cardView.setUseCompatPadding(true);
+        cardView.setContentPadding(dp(this, 18), dp(this, 18), dp(this, 10), dp(this, 18));
+        cardView.setClickable(true);
+        cardView.setFocusable(true);
+        cardView.setForeground(ContextCompat.getDrawable(this, android.R.drawable.list_selector_background));
+        cardView.setOnClickListener(v -> openRecord(record, currentSchemaVersion));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView iconView = new ImageView(this);
+        iconView.setImageResource(R.drawable.ic_offline_draft_record);
+        iconView.setContentDescription(getString(R.string.offline_title_draft_record));
+        row.addView(iconView, new LinearLayout.LayoutParams(dp(this, 40), dp(this, 40)));
+
+        LinearLayout textLayout = new LinearLayout(this);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        textParams.setMargins(dp(this, 14), 0, 0, 0);
+        row.addView(textLayout, textParams);
+
+        TextView titleView = new TextView(this);
+        titleView.setText(R.string.offline_title_draft_record);
+        titleView.setTextColor(ContextCompat.getColor(this, android.R.color.black));
+        titleView.setTextSize(18);
+        titleView.setTypeface(null, Typeface.BOLD);
+        textLayout.addView(titleView);
+
+        TextView summaryView = new TextView(this);
+        summaryView.setText(getString(R.string.offline_summary_draft_record, formatRecordTime(record.getUpdatedAt())));
+        summaryView.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+        summaryView.setTextSize(14);
+        summaryView.setSingleLine(true);
+        summaryView.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams summaryParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        summaryParams.setMargins(0, dp(this, 6), 0, 0);
+        textLayout.addView(summaryView, summaryParams);
+
+        TextView moreButton = createActionButton(getString(R.string.offline_button_more), android.R.color.black);
+        moreButton.setOnClickListener(v -> {
+            v.setPressed(false);
+            showDraftActionMenu(moreButton, record, currentSchemaVersion);
+        });
+        row.addView(moreButton, new LinearLayout.LayoutParams(dp(this, 40), LinearLayout.LayoutParams.MATCH_PARENT));
+
+        cardView.addView(row);
+        return cardView;
     }
 
     private View createRecordTable(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
@@ -286,6 +372,24 @@ public class OfflineProjectRecordActivity extends BaseActivity {
                 return true;
             }
             if (item.getItemId() == MENU_ID_RECORD_DELETE) {
+                confirmDeleteRecord(record);
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    private void showDraftActionMenu(View anchor, OfflineFormRecord record, String currentSchemaVersion) {
+        PopupMenu popupMenu = new PopupMenu(this, anchor);
+        popupMenu.getMenu().add(0, MENU_ID_DRAFT_CONTINUE, MENU_ID_DRAFT_CONTINUE, R.string.offline_button_continue_draft);
+        popupMenu.getMenu().add(0, MENU_ID_DRAFT_DELETE, MENU_ID_DRAFT_DELETE, R.string.offline_button_delete);
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == MENU_ID_DRAFT_CONTINUE) {
+                openRecord(record, currentSchemaVersion);
+                return true;
+            }
+            if (item.getItemId() == MENU_ID_DRAFT_DELETE) {
                 confirmDeleteRecord(record);
                 return true;
             }

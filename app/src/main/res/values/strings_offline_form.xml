@@ -3,7 +3,9 @@
     <string name="offline_title_project_record">填报记录</string>
     <string name="offline_title_record_history">历史填报记录</string>
     <string name="offline_title_new">填报新单</string>
+    <string name="offline_title_draft_record">草稿</string>
     <string name="offline_summary_new_record">基于当前表单创建一条新的离线填报记录。</string>
+    <string name="offline_summary_draft_record">上次保存：%1$s</string>
     <string name="offline_hint_search">搜索名称或备注</string>
     <string name="offline_button_sort">排序</string>
     <string name="offline_button_finish_sort">结束排序</string>
@@ -14,6 +16,7 @@
     <string name="offline_button_previous_step">上一步</string>
     <string name="offline_button_next_step">下一步</string>
     <string name="offline_button_submit">提交</string>
+    <string name="offline_button_continue_draft">继续填报</string>
     <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
     <string name="offline_toast_drag_to_sort">拖拽以调整顺序</string>
     <string name="offline_toast_sort_saved">排序已保存</string>
