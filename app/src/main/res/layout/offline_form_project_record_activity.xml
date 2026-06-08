@@ -105,6 +105,23 @@
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/exportedRecordTitleTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/offline_title_exported_records"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/exportedRecordListLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
     </LinearLayout>
 
 </ScrollView>

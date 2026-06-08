@@ -2,6 +2,8 @@
     <string name="offline_title_project_list">表单列表</string>
     <string name="offline_title_project_record">填报记录</string>
     <string name="offline_title_record_history">历史填报记录</string>
+    <string name="offline_title_exported_records">已导出记录</string>
+    <string name="offline_title_exported_record_detail">已导出记录详情</string>
     <string name="offline_title_new">填报新单</string>
     <string name="offline_title_draft_record">草稿</string>
     <string name="offline_summary_new_record">基于当前表单创建一条新的离线填报记录。</string>
@@ -31,6 +33,7 @@
     <string name="offline_toast_delete_records_success">已删除 %1$d 条记录</string>
     <string name="offline_toast_delete_failed">删除失败，请稍后重试</string>
     <string name="offline_toast_config_missing">未找到本地表单配置</string>
+    <string name="offline_toast_record_missing">未找到本地填报记录</string>
     <string name="offline_toast_record_saved">保存成功</string>
     <string name="offline_toast_check_form_input">请检查表单输入</string>
     <string name="offline_toast_parse_form_failed">解析表单失败：%1$s</string>
