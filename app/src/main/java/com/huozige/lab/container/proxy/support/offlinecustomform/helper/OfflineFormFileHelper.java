@@ -7,6 +7,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 
 import org.json.JSONObject;
 
@@ -79,6 +80,16 @@ public class OfflineFormFileHelper {
             return false;
         }
         return JsonFileHelper.deleteFileOrDirectory(new File(getRecordsDir(context, patternId), recordId + ".json"));
+    }
+
+    public static int deleteRecordsByStatus(Context context, String patternId, OfflineFormRecordStatus status) {
+        int deletedCount = 0;
+        for (OfflineFormRecord record : readRecords(context, patternId)) {
+            if (record.getStatus() == status && deleteRecord(context, patternId, record.getRecordId())) {
+                deletedCount++;
+            }
+        }
+        return deletedCount;
     }
 
     public static List<OfflineFormRecord> readRecords(Context context, String patternId) {

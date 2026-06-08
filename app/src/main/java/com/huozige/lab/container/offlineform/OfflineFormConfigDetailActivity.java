@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
@@ -35,6 +36,12 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
         setContentView(R.layout.offline_form_config_detail_activity);
 
         _patternId = getIntent().getStringExtra(EXTRA_PATTERN_ID);
+        findViewById(R.id.cmdDeleteDraftRecords).setOnClickListener(v -> confirmDeleteRecordsByStatus(
+                OfflineFormRecordStatus.DRAFT,
+                R.string.offline_dialog_delete_draft_records_message));
+        findViewById(R.id.cmdDeleteExportedRecords).setOnClickListener(v -> confirmDeleteRecordsByStatus(
+                OfflineFormRecordStatus.EXPORTED,
+                R.string.offline_dialog_delete_exported_records_message));
         findViewById(R.id.cmdDeleteConfig).setOnClickListener(v -> confirmDeleteConfig());
         renderConfig();
     }
@@ -144,6 +151,25 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
                 .setPositiveButton(R.string.offline_button_delete, (dialog, which) -> deleteConfig())
                 .setNegativeButton(R.string.ui_button_cancel, null)
                 .show();
+    }
+
+    private void confirmDeleteRecordsByStatus(OfflineFormRecordStatus status, int messageResId) {
+        if (_patternId == null || _patternId.isEmpty()) {
+            Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.offline_dialog_delete_title)
+                .setMessage(messageResId)
+                .setPositiveButton(R.string.offline_button_delete, (dialog, which) -> deleteRecordsByStatus(status))
+                .setNegativeButton(R.string.ui_button_cancel, null)
+                .show();
+    }
+
+    private void deleteRecordsByStatus(OfflineFormRecordStatus status) {
+        int deletedCount = OfflineFormFileHelper.deleteRecordsByStatus(this, _patternId, status);
+        Toast.makeText(this, getString(R.string.offline_toast_delete_records_success, deletedCount), Toast.LENGTH_SHORT).show();
     }
 
     private void deleteConfig() {
