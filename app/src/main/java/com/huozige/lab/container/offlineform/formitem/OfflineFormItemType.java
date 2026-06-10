@@ -3,7 +3,10 @@ package com.huozige.lab.container.offlineform.formitem;
 public enum OfflineFormItemType {
     TEXT("textItem"),
     PASSWORD("passwordItem"),
-    SELECT("selectItem");
+    SELECT("selectItem"),
+    DATE_PICKER("datePicker"),
+    TIME_PICKER("timePicker"),
+    IMAGE("imageItem");
 
     private final String value;
 

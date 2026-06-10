@@ -4,7 +4,10 @@ import android.content.Context;
 import android.view.View;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huozige.lab.container.offlineform.formitem.image.ImageFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
@@ -20,6 +23,9 @@ public final class OfflineFormItemRegistry {
     static {
         register(new SelectFormItemHandler());
         register(new PasswordFormItemHandler());
+        register(new DatePickerFormItemHandler());
+        register(new TimePickerFormItemHandler());
+        register(new ImageFormItemHandler());
         register(new TextFormItemHandler());
     }
 
