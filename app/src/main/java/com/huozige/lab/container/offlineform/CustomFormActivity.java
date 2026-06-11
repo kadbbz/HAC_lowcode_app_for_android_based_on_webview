@@ -1,6 +1,11 @@
 package com.huozige.lab.container.offlineform;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -16,6 +21,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -52,7 +58,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int MENU_ID_SAVE_RECORD = 1;
 
     private RecyclerView _recyclerView;
+    private NestedScrollView _formScrollView;
     private TabLayout _stepTabLayout;
+    private LinearLayout _itemNavigationLayout;
+    private TextView _previousItemButton;
+    private TextView _nextItemButton;
+    private TextView _bottomHintTextView;
     private FormAdapter _adapter;
     private Intent _intent;
     private boolean _formLoaded;
@@ -82,13 +93,26 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void initViews() {
         _recyclerView = findViewById(R.id.recycler_view);
+        _formScrollView = findViewById(R.id.scroll_form);
         _stepTabLayout = findViewById(R.id.tab_steps);
+        _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
+        _previousItemButton = findViewById(R.id.button_previous_item);
+        _nextItemButton = findViewById(R.id.button_next_item);
+        _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
+        setupBottomHintHeight();
     }
 
     private void setupRecyclerView() {
         _adapter = new FormAdapter();
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
+    }
+
+    private void setupBottomHintHeight() {
+        int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.35f);
+        ViewGroup.LayoutParams params = _bottomHintTextView.getLayoutParams();
+        params.height = height;
+        _bottomHintTextView.setLayoutParams(params);
     }
 
     private void registerImageCaptureLauncher() {
@@ -141,6 +165,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void setupListeners() {
+        _previousItemButton.setOnClickListener(v -> navigateRootItem(-1));
+        _nextItemButton.setOnClickListener(v -> navigateRootItem(1));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -151,6 +177,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 _currentStepIndex = tab.getPosition();
                 renderCurrentStep();
                 _recyclerView.scrollToPosition(0);
+                _formScrollView.scrollTo(0, 0);
             }
 
             @Override
@@ -249,15 +276,83 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (!_formLoaded) {
             _adapter.setDisplayItems(new ArrayList<>());
             _stepTabLayout.setVisibility(View.GONE);
+            _itemNavigationLayout.setVisibility(View.GONE);
             return;
         }
 
         renderStepTabs();
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
         _adapter.setDisplayItems(OfflineFormDefinitionFlattener.flattenStep(step));
+        updateItemNavigationVisibility();
         if (step.getTitle() != null && !step.getTitle().isEmpty()) {
             setTitle(step.getTitle());
         }
+    }
+
+    private void navigateRootItem(int direction) {
+        int targetPosition = findRootItemPosition(direction);
+        if (targetPosition < 0) {
+            return;
+        }
+        scrollToRootItem(targetPosition);
+    }
+
+    private int findRootItemPosition(int direction) {
+        int itemCount = _adapter.getItemCount();
+        int anchorY = getCurrentContentScrollY() + dp(this, direction > 0 ? 16 : -16);
+        int start = direction > 0 ? 0 : itemCount - 1;
+        int end = direction > 0 ? itemCount : -1;
+        for (int i = start; i != end; i += direction > 0 ? 1 : -1) {
+            View itemView = getRootItemView(i);
+            if (itemView != null && (direction > 0 ? itemView.getTop() > anchorY : itemView.getTop() < anchorY)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int getCurrentContentScrollY() {
+        return _formScrollView.getScrollY() - _recyclerView.getTop();
+    }
+
+    private void scrollToRootItem(int position) {
+        _recyclerView.scrollToPosition(position);
+        _recyclerView.postDelayed(() -> {
+            View itemView = getRootItemView(position);
+            if (itemView == null) {
+                return;
+            }
+            int scrollY = Math.max(0, _recyclerView.getTop() + itemView.getTop() - dp(this, 8));
+            _formScrollView.smoothScrollTo(0, scrollY);
+            playHighlight(itemView);
+        }, 80);
+    }
+
+    private View getRootItemView(int position) {
+        RecyclerView.ViewHolder viewHolder = _recyclerView.findViewHolderForAdapterPosition(position);
+        return viewHolder == null ? null : viewHolder.itemView;
+    }
+
+    private void updateItemNavigationVisibility() {
+        int itemCount = _adapter == null ? 0 : _adapter.getItemCount();
+        _itemNavigationLayout.setVisibility(_formLoaded && itemCount > 1 ? View.VISIBLE : View.GONE);
+    }
+
+    private void playHighlight(View itemView) {
+        Drawable originalForeground = itemView.getForeground();
+        ColorDrawable highlight = new ColorDrawable(getColor(R.color.huozige_blue));
+        itemView.setForeground(highlight);
+
+        ValueAnimator animator = ValueAnimator.ofInt(72, 0);
+        animator.setDuration(650);
+        animator.addUpdateListener(animation -> highlight.setAlpha((int) animation.getAnimatedValue()));
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                itemView.setForeground(originalForeground);
+            }
+        });
+        animator.start();
     }
 
     private void renderStepTabs() {
