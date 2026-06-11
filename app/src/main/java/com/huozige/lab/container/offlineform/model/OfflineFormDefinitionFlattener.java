@@ -30,6 +30,21 @@ public final class OfflineFormDefinitionFlattener {
         return result;
     }
 
+    public static List<OfflineFormDisplayItem> flattenFieldDisplayItems(OfflineFormDefinition definition) {
+        List<OfflineFormDisplayItem> result = new ArrayList<>();
+        if (definition == null || definition.getSteps() == null) {
+            return result;
+        }
+        for (OfflineFormStep step : definition.getSteps()) {
+            for (OfflineFormDisplayItem displayItem : flattenStep(step)) {
+                if (displayItem.isField()) {
+                    result.add(displayItem);
+                }
+            }
+        }
+        return result;
+    }
+
     private static void flattenNodes(List<OfflineFormNode> nodes, int depth, List<OfflineFormDisplayItem> result, int[] nextDisplayId) {
         if (nodes == null) {
             return;
@@ -40,7 +55,7 @@ public final class OfflineFormDefinitionFlattener {
             }
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
                 if (node.getField() != null) {
-                    result.add(OfflineFormDisplayItem.field(node.getField(), depth, nextDisplayId[0]++));
+                    result.add(OfflineFormDisplayItem.field(node, depth, nextDisplayId[0]++));
                 }
                 continue;
             }

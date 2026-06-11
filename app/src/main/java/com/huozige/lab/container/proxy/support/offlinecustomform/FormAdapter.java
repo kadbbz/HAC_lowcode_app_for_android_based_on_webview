@@ -88,7 +88,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         }
         if (holder instanceof BaseViewHolder) {
-            ((BaseViewHolder) holder).bind(item.getFormItem(), position);
+            bindFieldViewHolder((BaseViewHolder) holder, item, position);
         }
     }
 
@@ -304,7 +304,14 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private void bindFieldViewHolder(BaseViewHolder holder, OfflineFormDisplayItem item, int position) {
         int startPadding = dp(holder.itemView.getContext(), 16 + Math.max(0, item.getDepth() - 1) * 16);
         holder.itemView.setPadding(startPadding, dp(holder.itemView.getContext(), 8), dp(holder.itemView.getContext(), 16), dp(holder.itemView.getContext(), 8));
-        holder.bind(item.getFormItem(), position);
+        BaseFormItem formItem = item.getFormItem();
+        String originalTitle = formItem.getTitle();
+        String displayTitle = item.getFieldDisplayTitle();
+        if ((originalTitle == null || originalTitle.isEmpty()) && displayTitle != null && !displayTitle.isEmpty()) {
+            formItem.setTitle(displayTitle);
+        }
+        holder.bind(formItem, position);
+        formItem.setTitle(originalTitle);
     }
 
     private static GradientDrawable createRoundedBackground(View view, int colorResId, int radius) {

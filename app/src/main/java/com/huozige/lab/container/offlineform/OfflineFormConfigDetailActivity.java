@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
+import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
@@ -123,9 +124,11 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
         displayColumnListLayout.removeAllViews();
 
         List<String> displayColumns = getDisplayColumns();
-        for (BaseFormItem formItem : OfflineFormDefinitionFlattener.flattenFields(definition)) {
+        for (OfflineFormDisplayItem displayItem : OfflineFormDefinitionFlattener.flattenFieldDisplayItems(definition)) {
+            BaseFormItem formItem = displayItem.getFormItem();
             CheckBox checkBox = new CheckBox(this);
-            checkBox.setText(formItem.getTitle() == null || formItem.getTitle().isEmpty() ? formItem.getId() : formItem.getTitle());
+            String title = displayItem.getFieldDisplayTitle();
+            checkBox.setText(title == null || title.isEmpty() ? formItem.getId() : title);
             checkBox.setTextSize(14);
             checkBox.setTag(formItem.getId());
             checkBox.setChecked(displayColumns.contains(formItem.getId()));

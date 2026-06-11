@@ -45,8 +45,8 @@ public class OfflineFormDisplayItem {
     /**
      * 创建可填报字段展示节点。
      */
-    public static OfflineFormDisplayItem field(BaseFormItem formItem, int depth, int displayId) {
-        return new OfflineFormDisplayItem(null, formItem, depth, displayId);
+    public static OfflineFormDisplayItem field(OfflineFormNode node, int depth, int displayId) {
+        return new OfflineFormDisplayItem(node, node.getField(), depth, displayId);
     }
 
     /**
@@ -68,6 +68,17 @@ public class OfflineFormDisplayItem {
      */
     public boolean isField() {
         return formItem != null;
+    }
+
+    public String getFieldDisplayTitle() {
+        if (!isField()) {
+            return "";
+        }
+        String title = formItem.getTitle();
+        if (title != null && !title.isEmpty()) {
+            return title;
+        }
+        return node == null ? "" : node.getTitle();
     }
 
     /**

@@ -96,6 +96,7 @@ class OfflineFormJsonSerializer {
             JSONObject nodeJson = new JSONObject();
             nodeJson.put(FIELD_NODE_TYPE, node.getNodeType());
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
+                nodeJson.put(FIELD_TITLE, node.getTitle());
                 nodeJson.put(FIELD_FIELD, OfflineFormItemRegistry.toJson(node.getField()));
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
                 nodeJson.put(FIELD_TITLE, node.getTitle());
@@ -138,6 +139,7 @@ class OfflineFormJsonSerializer {
             OfflineFormNode node = new OfflineFormNode();
             node.setNodeType(nodeJson.getString(FIELD_NODE_TYPE));
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
+                node.setTitle(nodeJson.getString(FIELD_TITLE));
                 node.setField(OfflineFormItemRegistry.fromInput(buildInputFromJson(nodeJson.getJSONObject(FIELD_FIELD))));
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
                 node.setTitle(nodeJson.getString(FIELD_TITLE));

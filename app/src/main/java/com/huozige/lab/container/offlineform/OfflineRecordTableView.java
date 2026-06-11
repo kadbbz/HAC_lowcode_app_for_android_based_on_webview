@@ -20,6 +20,7 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 
@@ -376,8 +377,8 @@ public class OfflineRecordTableView {
         if (definitionFile.getJsonSchema() == null) {
             return titles;
         }
-        for (BaseFormItem formItem : OfflineFormDefinitionFlattener.flattenFields(definitionFile.getJsonSchema())) {
-            titles.put(formItem.getId(), formItem.getTitle());
+        for (OfflineFormDisplayItem displayItem : OfflineFormDefinitionFlattener.flattenFieldDisplayItems(definitionFile.getJsonSchema())) {
+            titles.put(displayItem.getFormItem().getId(), displayItem.getFieldDisplayTitle());
         }
         return titles;
     }
