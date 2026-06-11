@@ -12,9 +12,6 @@ import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.UUID;
 
 public final class OfflineImageFileHelper {
@@ -24,44 +21,26 @@ public final class OfflineImageFileHelper {
     private OfflineImageFileHelper() {
     }
 
-    public static ImageFormItemValue saveCapturedImage(Context context, String patternId, String recordId, ImageFormItem item, Uri sourceUri) throws Exception {
+    public static ImageFormItemValue saveCapturedImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
         ImageCompressionOptions options = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
         Bitmap source = decodeBitmap(context, sourceUri, options.getMaxLongEdge());
-        File outputFile = createOutputFile(context, patternId, recordId, item.getId());
+        File outputFile = createOutputFile(context, patternId, item.getId());
         try {
             compressToFile(source, outputFile, options);
         } finally {
             source.recycle();
         }
 
-        BitmapFactory.Options bounds = new BitmapFactory.Options();
-        bounds.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(outputFile.getAbsolutePath(), bounds);
-
         ImageFormItemValue value = new ImageFormItemValue();
-        value.setFileId(outputFile.getName().replace(".jpg", ""));
-        value.setLocalPath(toRelativePath(patternId, recordId, item.getId(), outputFile.getName()));
         value.setFileName(outputFile.getName());
-        value.setMimeType("image/jpeg");
-        value.setSize(outputFile.length());
-        value.setWidth(bounds.outWidth);
-        value.setHeight(bounds.outHeight);
-        value.setCreatedAt(System.currentTimeMillis());
         return value;
     }
 
-    public static File resolveLocalFile(Context context, ImageFormItemValue value) {
-        if (value == null || value.getLocalPath() == null || value.getLocalPath().isEmpty()) {
+    public static File resolveLocalFile(Context context, String patternId, ImageFormItemValue value) {
+        if (value == null || value.getFileName() == null || value.getFileName().isEmpty()) {
             return null;
         }
-        return new File(context.getExternalFilesDir(null), value.getLocalPath());
-    }
-
-    public static void deleteLocalFile(Context context, ImageFormItemValue value) {
-        File file = resolveLocalFile(context, value);
-        if (file != null && file.exists()) {
-            file.delete();
-        }
+        return new File(getFilesDir(context, patternId), value.getFileName());
     }
 
     private static Bitmap decodeBitmap(Context context, Uri sourceUri, int maxLongEdge) throws Exception {
@@ -98,15 +77,12 @@ public final class OfflineImageFileHelper {
         return sampleSize;
     }
 
-    private static File createOutputFile(Context context, String patternId, String recordId, String fieldId) {
-        File dir = new File(context.getExternalFilesDir(null), ROOT_DIR + File.separator
-                + sanitizePathSegment(patternId) + File.separator
-                + FILES_DIR + File.separator
-                + sanitizePathSegment(recordId) + File.separator
-                + sanitizePathSegment(fieldId));
+    private static File createOutputFile(Context context, String patternId, String fieldId) {
+        File dir = getFilesDir(context, patternId);
         dir.mkdirs();
-        String time = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(new Date());
-        return new File(dir, "photo_" + time + "_" + UUID.randomUUID().toString() + ".jpg");
+        return new File(dir, sanitizePathSegment(patternId) + "_"
+                + sanitizePathSegment(fieldId) + "_"
+                + UUID.randomUUID().toString() + ".jpg");
     }
 
     private static void compressToFile(Bitmap bitmap, File outputFile, ImageCompressionOptions options) throws Exception {
@@ -131,9 +107,10 @@ public final class OfflineImageFileHelper {
         return Math.min(100, Math.max(1, quality));
     }
 
-    private static String toRelativePath(String patternId, String recordId, String fieldId, String fileName) {
-        return ROOT_DIR + "/" + sanitizePathSegment(patternId) + "/" + FILES_DIR + "/"
-                + sanitizePathSegment(recordId) + "/" + sanitizePathSegment(fieldId) + "/" + fileName;
+    private static File getFilesDir(Context context, String patternId) {
+        return new File(context.getExternalFilesDir(null), ROOT_DIR + File.separator
+                + sanitizePathSegment(patternId) + File.separator
+                + FILES_DIR);
     }
 
     private static String sanitizePathSegment(String value) {

@@ -95,7 +95,7 @@ public class ImageViewHolder extends BaseViewHolder {
 
         ImageView preview = new ImageView(context);
         preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        File imageFile = OfflineImageFileHelper.resolveLocalFile(context, image);
+        File imageFile = OfflineImageFileHelper.resolveLocalFile(context, imageItem.getPatternId(), image);
         if (imageFile != null && imageFile.exists()) {
             preview.setImageURI(Uri.fromFile(imageFile));
         }

@@ -135,7 +135,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), draft.getRecordId(), _pendingImageItem, Uri.parse(uriText)));
+                _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -159,7 +159,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(this, patternId);
             if (definitionFile != null && patternId.equals(definitionFile.getJsonSchema().getPatternId())) {
                 _definition = definitionFile.getJsonSchema();
-                loadEditingRecord(patternId, _definition.getSchemaVersion(), OfflineFormDefinitionFlattener.flattenFields(_definition));
+                List<BaseFormItem> formItems = OfflineFormDefinitionFlattener.flattenFields(_definition);
+                applyPatternIdToImageItems(formItems, patternId);
+                loadEditingRecord(patternId, _definition.getSchemaVersion(), formItems);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -524,6 +526,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         _editingRecord = record;
         applyRecordValues(formItems, record.getValues());
+    }
+
+    private void applyPatternIdToImageItems(List<BaseFormItem> formItems, String patternId) {
+        for (BaseFormItem formItem : formItems) {
+            if (formItem instanceof ImageFormItem) {
+                ((ImageFormItem) formItem).setPatternId(patternId);
+            }
+        }
     }
 
     private void applyRecordValues(List<BaseFormItem> formItems, Map<String, String> values) {

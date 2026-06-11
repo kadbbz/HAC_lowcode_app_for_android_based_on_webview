@@ -17,6 +17,7 @@ public class ImageFormItem extends BaseFormItem {
     private int maxCount = DEFAULT_MAX_COUNT;
     private ImageCompressionOptions compression = new ImageCompressionOptions();
     private List<ImageFormItemValue> images = new ArrayList<>();
+    private String patternId = "";
 
     public ImageFormItem(String itemType, String id, String title, String hint, boolean required) {
         super(itemType, id, title, hint, required);
@@ -24,7 +25,15 @@ public class ImageFormItem extends BaseFormItem {
 
     @Override
     public String getValue() {
-        return JSON.toJSONString(images == null ? new ArrayList<>() : images);
+        List<String> fileNames = new ArrayList<>();
+        if (images != null) {
+            for (ImageFormItemValue image : images) {
+                if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
+                    fileNames.add(image.getFileName());
+                }
+            }
+        }
+        return JSON.toJSONString(fileNames);
     }
 
     @Override
@@ -76,8 +85,10 @@ public class ImageFormItem extends BaseFormItem {
         try {
             JSONArray array = JSON.parseArray(value);
             for (int i = 0; i < array.size(); i++) {
-                ImageFormItemValue image = array.getObject(i, ImageFormItemValue.class);
-                if (image != null) {
+                String fileName = array.getString(i);
+                if (fileName != null && !fileName.isEmpty()) {
+                    ImageFormItemValue image = new ImageFormItemValue();
+                    image.setFileName(fileName);
                     result.add(image);
                 }
             }
