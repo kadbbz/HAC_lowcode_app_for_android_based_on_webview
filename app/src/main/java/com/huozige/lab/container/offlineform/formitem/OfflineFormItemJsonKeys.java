@@ -8,6 +8,7 @@ public final class OfflineFormItemJsonKeys {
     public static final String FIELD_ITEM_TYPE = "itemType";
     public static final String FIELD_VALUE = "value";
     public static final String FIELD_OPTIONS = "options";
+    public static final String FIELD_INCLUDE_SECONDS = "includeSeconds";
     public static final String FIELD_MIN_LENGTH = "minLength";
     public static final String FIELD_MAX_LENGTH = "maxLength";
     public static final String FIELD_REGEX_PATTERN = "regexPattern";

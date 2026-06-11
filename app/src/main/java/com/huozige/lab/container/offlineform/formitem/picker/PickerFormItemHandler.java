@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonHelper;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
@@ -22,16 +23,25 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
         if (input.value != null) {
             item.setValue(input.value);
         }
+        item.setIncludeSeconds(input.includeSeconds);
         return item;
     }
 
     @Override
     public void readInputOptions(JSONObject options, FormItemInput input) {
+        input.includeSeconds = options.getBooleanValue(OfflineFormItemJsonKeys.FIELD_INCLUDE_SECONDS);
     }
 
     @Override
     public JSONObject toJson(BaseFormItem item) {
-        return OfflineFormItemJsonHelper.buildBaseOutput(item);
+        PickerFormItem pickerItem = (PickerFormItem) item;
+        JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(pickerItem);
+        if (pickerItem.isIncludeSeconds()) {
+            JSONObject options = new JSONObject();
+            options.put(OfflineFormItemJsonKeys.FIELD_INCLUDE_SECONDS, true);
+            jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
+        }
+        return jsonObject;
     }
 
     @Override

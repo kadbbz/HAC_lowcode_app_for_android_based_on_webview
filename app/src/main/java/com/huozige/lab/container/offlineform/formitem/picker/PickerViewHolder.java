@@ -2,8 +2,13 @@ package com.huozige.lab.container.offlineform.formitem.picker;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
@@ -51,16 +56,9 @@ public class PickerViewHolder extends BaseViewHolder {
 
     private void showDatePicker() {
         Calendar calendar = Calendar.getInstance();
-        String value = pickerItem.getValue();
-        if (value != null && value.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            String[] parts = value.split("-");
-            calendar.set(Calendar.YEAR, Integer.parseInt(parts[0]));
-            calendar.set(Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
-            calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(parts[2]));
-        }
 
         new DatePickerDialog(itemView.getContext(), (view, year, month, dayOfMonth) -> {
-            pickerItem.setValue(String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, dayOfMonth));
+            pickerItem.setValue(String.format(Locale.US, "%04d/%d/%d", year, month + 1, dayOfMonth));
             pickerItem.clearError();
             bindValue();
             updateErrorState();
@@ -69,19 +67,62 @@ public class PickerViewHolder extends BaseViewHolder {
 
     private void showTimePicker() {
         Calendar calendar = Calendar.getInstance();
-        String value = pickerItem.getValue();
-        if (value != null && value.matches("\\d{2}:\\d{2}")) {
-            String[] parts = value.split(":");
-            calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0]));
-            calendar.set(Calendar.MINUTE, Integer.parseInt(parts[1]));
+        int second = calendar.get(Calendar.SECOND);
+
+        if (!pickerItem.isIncludeSeconds()) {
+            new TimePickerDialog(itemView.getContext(), (view, hourOfDay, minute) -> {
+                pickerItem.setValue(String.format(Locale.US, "%02d:%02d", hourOfDay, minute));
+                pickerItem.clearError();
+                bindValue();
+                updateErrorState();
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
+            return;
         }
 
-        new TimePickerDialog(itemView.getContext(), (view, hourOfDay, minute) -> {
-            pickerItem.setValue(String.format(Locale.US, "%02d:%02d", hourOfDay, minute));
-            pickerItem.clearError();
-            bindValue();
-            updateErrorState();
-        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
+        NumberPicker hourPicker = createTimeNumberPicker(0, 23, calendar.get(Calendar.HOUR_OF_DAY));
+        NumberPicker minutePicker = createTimeNumberPicker(0, 59, calendar.get(Calendar.MINUTE));
+        NumberPicker secondPicker = createTimeNumberPicker(0, 59, second);
+
+        LinearLayout contentLayout = new LinearLayout(itemView.getContext());
+        contentLayout.setOrientation(LinearLayout.HORIZONTAL);
+        contentLayout.setGravity(Gravity.CENTER);
+        contentLayout.setPadding(0, 24, 0, 8);
+        contentLayout.addView(createTimePickerColumn(hourPicker, "时"));
+        contentLayout.addView(createTimePickerColumn(minutePicker, "分"));
+        contentLayout.addView(createTimePickerColumn(secondPicker, "秒"));
+
+        new AlertDialog.Builder(itemView.getContext())
+                .setView(contentLayout)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    pickerItem.setValue(String.format(Locale.US, "%02d:%02d:%02d", hourPicker.getValue(), minutePicker.getValue(), secondPicker.getValue()));
+                    pickerItem.clearError();
+                    bindValue();
+                    updateErrorState();
+                })
+                .show();
+    }
+
+    private NumberPicker createTimeNumberPicker(int minValue, int maxValue, int value) {
+        NumberPicker numberPicker = new NumberPicker(itemView.getContext());
+        numberPicker.setMinValue(minValue);
+        numberPicker.setMaxValue(maxValue);
+        numberPicker.setValue(value);
+        numberPicker.setFormatter(value1 -> String.format(Locale.US, "%02d", value1));
+        return numberPicker;
+    }
+
+    private LinearLayout createTimePickerColumn(NumberPicker numberPicker, String label) {
+        LinearLayout columnLayout = new LinearLayout(itemView.getContext());
+        columnLayout.setOrientation(LinearLayout.VERTICAL);
+        columnLayout.setGravity(Gravity.CENTER);
+
+        TextView labelView = new TextView(itemView.getContext());
+        labelView.setText(label);
+        labelView.setGravity(Gravity.CENTER);
+        columnLayout.addView(numberPicker, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        columnLayout.addView(labelView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        return columnLayout;
     }
 
     @Override

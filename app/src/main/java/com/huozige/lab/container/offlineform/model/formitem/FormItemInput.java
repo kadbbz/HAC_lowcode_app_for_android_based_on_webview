@@ -19,6 +19,7 @@ public class FormItemInput {
     public FormItemValidationInput checkOptions;
     @JSONField(name = "options")
     public List<SelectOptionsInput> selectOptionsList = new ArrayList<>();
+    public boolean includeSeconds;
     public int maxCount;
     public ImageCompressionOptions compression;
 }
