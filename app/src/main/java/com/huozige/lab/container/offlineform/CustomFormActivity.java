@@ -13,8 +13,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +36,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
@@ -64,6 +67,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
+    private Switch _unfilledOnlySwitch;
     private FormAdapter _adapter;
     private Intent _intent;
     private boolean _formLoaded;
@@ -99,6 +103,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
+        _unfilledOnlySwitch = findViewById(R.id.switch_unfilled_only);
         setupBottomHintHeight();
     }
 
@@ -167,6 +172,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void setupListeners() {
         _previousItemButton.setOnClickListener(v -> navigateRootItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateRootItem(1));
+        _unfilledOnlySwitch.setOnCheckedChangeListener(this::onUnfilledOnlySwitchChanged);
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -175,6 +181,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 saveDraftIfNeeded();
                 _currentStepIndex = tab.getPosition();
+                resetUnfilledOnlySwitch();
                 renderCurrentStep();
                 _recyclerView.scrollToPosition(0);
                 _formScrollView.scrollTo(0, 0);
@@ -188,6 +195,16 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
+    }
+
+    private void onUnfilledOnlySwitchChanged(CompoundButton buttonView, boolean isChecked) {
+        renderCurrentStep();
+    }
+
+    private void resetUnfilledOnlySwitch() {
+        _unfilledOnlySwitch.setOnCheckedChangeListener(null);
+        _unfilledOnlySwitch.setChecked(false);
+        _unfilledOnlySwitch.setOnCheckedChangeListener(this::onUnfilledOnlySwitchChanged);
     }
 
     @Override
@@ -282,11 +299,62 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         renderStepTabs();
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
-        _adapter.setDisplayItems(OfflineFormDefinitionFlattener.flattenStep(step));
+        _adapter.setDisplayItems(buildCurrentStepDisplayItems(step));
         updateItemNavigationVisibility();
         if (step.getTitle() != null && !step.getTitle().isEmpty()) {
             setTitle(step.getTitle());
         }
+    }
+
+    private List<OfflineFormDisplayItem> buildCurrentStepDisplayItems(OfflineFormStep step) {
+        List<OfflineFormDisplayItem> displayItems = OfflineFormDefinitionFlattener.flattenStep(step);
+        if (!_unfilledOnlySwitch.isChecked()) {
+            return displayItems;
+        }
+
+        List<OfflineFormDisplayItem> result = new ArrayList<>();
+        int skipDepth = -1;
+        for (OfflineFormDisplayItem item : displayItems) {
+            if (skipDepth >= 0) {
+                if (item.getDepth() > skipDepth) {
+                    continue;
+                }
+                skipDepth = -1;
+            }
+
+            if (item.getDepth() != 0) {
+                result.add(item);
+                continue;
+            }
+            if (shouldShowUnfilledRootItem(item)) {
+                result.add(item);
+            } else if (item.isGroup()) {
+                skipDepth = item.getDepth();
+            }
+        }
+        return result;
+    }
+
+    private boolean shouldShowUnfilledRootItem(OfflineFormDisplayItem item) {
+        if (item.isField()) {
+            return item.getFormItem().isEmpty();
+        }
+        return item.isGroup() && hasEmptyField(item.getNode());
+    }
+
+    private boolean hasEmptyField(OfflineFormNode node) {
+        if (node == null || node.getChildren() == null) {
+            return false;
+        }
+        for (OfflineFormNode child : node.getChildren()) {
+            if (OfflineFormNode.TYPE_FIELD.equals(child.getNodeType()) && child.getField() != null && child.getField().isEmpty()) {
+                return true;
+            }
+            if (OfflineFormNode.TYPE_GROUP.equals(child.getNodeType()) && hasEmptyField(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void navigateRootItem(int direction) {

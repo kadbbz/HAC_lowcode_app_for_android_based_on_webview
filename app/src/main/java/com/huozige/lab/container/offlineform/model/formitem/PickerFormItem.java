@@ -18,9 +18,14 @@ public class PickerFormItem extends BaseFormItem {
     }
 
     @Override
+    public boolean isEmpty() {
+        return value == null || value.trim().isEmpty();
+    }
+
+    @Override
     public boolean validate() {
         clearError();
-        if (isRequired() && (value == null || value.trim().isEmpty())) {
+        if (isRequired() && isEmpty()) {
             setErrorMessage("请选择" + getTitle());
             return false;
         }

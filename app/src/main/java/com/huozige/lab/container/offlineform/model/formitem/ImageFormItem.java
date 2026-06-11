@@ -27,6 +27,11 @@ public class ImageFormItem extends BaseFormItem {
         return JSON.toJSONString(images == null ? new ArrayList<>() : images);
     }
 
+    @Override
+    public boolean isEmpty() {
+        return images == null || images.isEmpty();
+    }
+
     public void setValue(String value) {
         images = parseImages(value);
     }
@@ -47,7 +52,7 @@ public class ImageFormItem extends BaseFormItem {
     @Override
     public boolean validate() {
         clearError();
-        if (isRequired() && (images == null || images.isEmpty())) {
+        if (isRequired() && isEmpty()) {
             setErrorMessage("请添加" + getTitle());
             return false;
         }

@@ -22,6 +22,7 @@ public abstract class BaseFormItem {
     }
 
     public abstract String getValue();
+    public abstract boolean isEmpty();
     public abstract boolean validate();
     public abstract void clearError();
 }

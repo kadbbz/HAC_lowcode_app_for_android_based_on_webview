@@ -27,6 +27,11 @@ public class SelectFormItem extends BaseFormItem {
         return selectedValue;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return selectedValue == null || selectedValue.isEmpty();
+    }
+
     public void setSelectedValue(String value) {
         this.selectedValue = value;
         for (Option option : options) {
@@ -53,7 +58,7 @@ public class SelectFormItem extends BaseFormItem {
     public boolean validate() {
         clearError();
 
-        if (isRequired() && (selectedValue == null || selectedValue.isEmpty())) {
+        if (isRequired() && isEmpty()) {
             setErrorMessage("请选择" + getTitle());
             return false;
         }

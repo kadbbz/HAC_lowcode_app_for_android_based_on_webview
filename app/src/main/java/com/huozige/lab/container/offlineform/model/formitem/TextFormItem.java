@@ -22,10 +22,15 @@ public class TextFormItem extends BaseFormItem {
     }
 
     @Override
+    public boolean isEmpty() {
+        return value == null || value.trim().isEmpty();
+    }
+
+    @Override
     public boolean validate() {
         clearError();
 
-        if (isRequired() && (value == null || value.trim().isEmpty())) {
+        if (isRequired() && isEmpty()) {
             setErrorMessage("此项为必填项");
             return false;
         }
