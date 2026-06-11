@@ -11,6 +11,7 @@ public class ImageCompressionOptions {
     public static final int DEFAULT_MAX_FILE_SIZE_KB = 0;
     public static final int DEFAULT_MIN_QUALITY = 60;
 
+    private boolean enableCompression;
     private int maxLongEdge = DEFAULT_MAX_LONG_EDGE;
     private int jpegQuality = DEFAULT_JPEG_QUALITY;
     private int maxFileSizeKb = DEFAULT_MAX_FILE_SIZE_KB;

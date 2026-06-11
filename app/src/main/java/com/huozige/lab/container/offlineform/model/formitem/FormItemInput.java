@@ -21,5 +21,6 @@ public class FormItemInput {
     public List<SelectOptionsInput> selectOptionsList = new ArrayList<>();
     public boolean includeSeconds;
     public int maxCount;
+    public boolean allowImageUpload;
     public ImageCompressionOptions compression;
 }

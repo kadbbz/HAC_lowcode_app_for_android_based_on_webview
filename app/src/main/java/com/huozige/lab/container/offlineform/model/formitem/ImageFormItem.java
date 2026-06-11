@@ -15,6 +15,7 @@ public class ImageFormItem extends BaseFormItem {
     public static final int DEFAULT_MAX_COUNT = 9;
 
     private int maxCount = DEFAULT_MAX_COUNT;
+    private boolean allowImageUpload;
     private ImageCompressionOptions compression = new ImageCompressionOptions();
     private List<ImageFormItemValue> images = new ArrayList<>();
     private String patternId = "";

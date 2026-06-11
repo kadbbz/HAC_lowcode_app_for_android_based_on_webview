@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.webkit.MimeTypeMap;
 
 import com.huozige.lab.container.offlineform.model.formitem.ImageCompressionOptions;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
@@ -23,12 +24,16 @@ public final class OfflineImageFileHelper {
 
     public static ImageFormItemValue saveCapturedImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
         ImageCompressionOptions options = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
-        Bitmap source = decodeBitmap(context, sourceUri, options.getMaxLongEdge());
-        File outputFile = createOutputFile(context, patternId, item.getId());
-        try {
-            compressToFile(source, outputFile, options);
-        } finally {
-            source.recycle();
+        File outputFile = createOutputFile(context, patternId, item.getId(), options.isEnableCompression() ? "jpg" : getSourceExtension(context, sourceUri));
+        if (options.isEnableCompression()) {
+            Bitmap source = decodeBitmap(context, sourceUri, options.getMaxLongEdge());
+            try {
+                compressToFile(source, outputFile, options);
+            } finally {
+                source.recycle();
+            }
+        } else {
+            copySourceToFile(context, sourceUri, outputFile);
         }
 
         ImageFormItemValue value = new ImageFormItemValue();
@@ -41,6 +46,13 @@ public final class OfflineImageFileHelper {
             return null;
         }
         return new File(getFilesDir(context, patternId), value.getFileName());
+    }
+
+    public static void deleteLocalFile(Context context, String patternId, ImageFormItemValue value) {
+        File file = resolveLocalFile(context, patternId, value);
+        if (file != null && file.exists()) {
+            file.delete();
+        }
     }
 
     private static Bitmap decodeBitmap(Context context, Uri sourceUri, int maxLongEdge) throws Exception {
@@ -77,12 +89,26 @@ public final class OfflineImageFileHelper {
         return sampleSize;
     }
 
-    private static File createOutputFile(Context context, String patternId, String fieldId) {
+    private static File createOutputFile(Context context, String patternId, String fieldId, String extension) {
         File dir = getFilesDir(context, patternId);
         dir.mkdirs();
         return new File(dir, sanitizePathSegment(patternId) + "_"
                 + sanitizePathSegment(fieldId) + "_"
-                + UUID.randomUUID().toString() + ".jpg");
+                + UUID.randomUUID().toString() + "." + sanitizeExtension(extension));
+    }
+
+    private static void copySourceToFile(Context context, Uri sourceUri, File outputFile) throws Exception {
+        try (InputStream input = context.getContentResolver().openInputStream(sourceUri);
+             FileOutputStream output = new FileOutputStream(outputFile)) {
+            if (input == null) {
+                throw new IllegalArgumentException("无法读取图片");
+            }
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, length);
+            }
+        }
     }
 
     private static void compressToFile(Bitmap bitmap, File outputFile, ImageCompressionOptions options) throws Exception {
@@ -111,6 +137,19 @@ public final class OfflineImageFileHelper {
         return new File(context.getExternalFilesDir(null), ROOT_DIR + File.separator
                 + sanitizePathSegment(patternId) + File.separator
                 + FILES_DIR);
+    }
+
+    private static String getSourceExtension(Context context, Uri sourceUri) {
+        String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(sourceUri));
+        return extension == null || extension.isEmpty() ? "jpg" : extension;
+    }
+
+    private static String sanitizeExtension(String value) {
+        if (value == null || value.isEmpty()) {
+            return "jpg";
+        }
+        String extension = value.replaceAll("[^a-zA-Z0-9]", "");
+        return extension.isEmpty() ? "jpg" : extension;
     }
 
     private static String sanitizePathSegment(String value) {

@@ -6,8 +6,15 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionOrder;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
+import com.huozige.lab.container.offlineform.model.OfflineFormStep;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
+import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
+import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 
 import org.json.JSONObject;
 
@@ -79,7 +86,13 @@ public class OfflineFormFileHelper {
         if (patternId == null || patternId.isEmpty() || recordId == null || recordId.isEmpty()) {
             return false;
         }
-        return JsonFileHelper.deleteFileOrDirectory(new File(getRecordsDir(context, patternId), recordId + ".json"));
+        File recordFile = new File(getRecordsDir(context, patternId), recordId + ".json");
+        OfflineFormRecord record = JsonFileHelper.readObjectFromFile(recordFile, OfflineFormRecord.class);
+        boolean deleted = JsonFileHelper.deleteFileOrDirectory(recordFile);
+        if (deleted) {
+            deleteRecordImageFiles(context, patternId, record);
+        }
+        return deleted;
     }
 
     public static int deleteRecordsByStatus(Context context, String patternId, OfflineFormRecordStatus status) {
@@ -147,6 +160,51 @@ public class OfflineFormFileHelper {
             }
         }
         return definitions;
+    }
+
+    private static void deleteRecordImageFiles(Context context, String patternId, OfflineFormRecord record) {
+        if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+            return;
+        }
+        Set<String> imageFieldIds = readImageFieldIds(context, patternId);
+        for (String fieldId : imageFieldIds) {
+            for (ImageFormItemValue image : ImageFormItem.parseImages(record.getValues().get(fieldId))) {
+                OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
+            }
+        }
+    }
+
+    private static Set<String> readImageFieldIds(Context context, String patternId) {
+        Set<String> fieldIds = new HashSet<>();
+        OfflineFormDefinitionFile definitionFile = readDefinition(context, patternId);
+        if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
+            return fieldIds;
+        }
+        for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+            if (step != null) {
+                collectImageFieldIds(step.getItems(), fieldIds);
+            }
+        }
+        return fieldIds;
+    }
+
+    private static void collectImageFieldIds(List<OfflineFormNode> nodes, Set<String> fieldIds) {
+        if (nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null
+                    && OfflineFormItemType.IMAGE.getValue().equals(field.getItemType())
+                    && field.getId() != null
+                    && !field.getId().isEmpty()) {
+                fieldIds.add(field.getId());
+            }
+            collectImageFieldIds(node.getChildren(), fieldIds);
+        }
     }
 
     private static void applyDefinitionOrder(Context context, List<OfflineFormDefinitionIndexItem> definitions) {

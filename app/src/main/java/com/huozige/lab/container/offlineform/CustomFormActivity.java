@@ -77,6 +77,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private OfflineFormDefinition _definition;
     private int _currentStepIndex;
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
+    private ActivityResultLauncher<String> _imageUploadLauncher;
     private ImageFormItem _pendingImageItem;
     private ImageCaptureCallback _pendingImageCallback;
 
@@ -91,6 +92,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         initViews();
         setupRecyclerView();
         registerImageCaptureLauncher();
+        registerImageUploadLauncher();
         loadFormDataFromJson();
         setupListeners();
     }
@@ -136,6 +138,26 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
                 _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
+                saveDraftIfNeeded();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "图片保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            } finally {
+                clearPendingImageCapture();
+            }
+        });
+    }
+
+    private void registerImageUploadLauncher() {
+        _imageUploadLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri == null || _pendingImageItem == null || _pendingImageCallback == null) {
+                clearPendingImageCapture();
+                return;
+            }
+
+            try {
+                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, uri));
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -565,6 +587,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         Intent cameraIntent = new Intent(this, CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
         _imageCaptureLauncher.launch(cameraIntent);
+    }
+
+    @Override
+    public void uploadImage(ImageFormItem item, ImageCaptureCallback callback) {
+        _pendingImageItem = item;
+        _pendingImageCallback = callback;
+        _imageUploadLauncher.launch("image/*");
     }
 
     private void clearPendingImageCapture() {

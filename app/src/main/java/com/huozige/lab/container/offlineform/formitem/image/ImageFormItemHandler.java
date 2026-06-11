@@ -39,6 +39,7 @@ public class ImageFormItemHandler implements OfflineFormItemHandler {
         if (input.maxCount > 0) {
             item.setMaxCount(input.maxCount);
         }
+        item.setAllowImageUpload(input.allowImageUpload);
         if (input.compression != null) {
             item.setCompression(input.compression);
         }
@@ -49,6 +50,7 @@ public class ImageFormItemHandler implements OfflineFormItemHandler {
     @Override
     public void readInputOptions(JSONObject options, FormItemInput input) {
         input.maxCount = options.getIntValue(OfflineFormItemJsonKeys.FIELD_MAX_COUNT);
+        input.allowImageUpload = options.getBooleanValue(OfflineFormItemJsonKeys.FIELD_ALLOW_IMAGE_UPLOAD);
         JSONObject compressionJson = options.getJSONObject(OfflineFormItemJsonKeys.FIELD_COMPRESSION);
         if (compressionJson != null) {
             input.compression = compressionJson.toJavaObject(ImageCompressionOptions.class);
@@ -78,9 +80,13 @@ public class ImageFormItemHandler implements OfflineFormItemHandler {
     private JSONObject buildOptions(ImageFormItem item) {
         JSONObject options = new JSONObject();
         options.put(OfflineFormItemJsonKeys.FIELD_MAX_COUNT, item.getMaxCount());
+        if (item.isAllowImageUpload()) {
+            options.put(OfflineFormItemJsonKeys.FIELD_ALLOW_IMAGE_UPLOAD, true);
+        }
 
         ImageCompressionOptions compression = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
         JSONObject compressionJson = new JSONObject();
+        compressionJson.put(OfflineFormItemJsonKeys.FIELD_ENABLE_COMPRESSION, compression.isEnableCompression());
         compressionJson.put(OfflineFormItemJsonKeys.FIELD_MAX_LONG_EDGE, compression.getMaxLongEdge());
         compressionJson.put(OfflineFormItemJsonKeys.FIELD_JPEG_QUALITY, compression.getJpegQuality());
         compressionJson.put(OfflineFormItemJsonKeys.FIELD_MAX_FILE_SIZE_KB, compression.getMaxFileSizeKb());
