@@ -150,6 +150,8 @@
             android:exported="false" />
         <activity android:name=".offlineform.OfflineFormConfigDetailActivity"
             android:exported="false" />
+        <activity android:name=".offlineform.OfflineFormRawConfigActivity"
+            android:exported="false" />
         <activity android:name=".offlineform.OfflineExportedRecordDetailActivity"
             android:exported="false" />
 

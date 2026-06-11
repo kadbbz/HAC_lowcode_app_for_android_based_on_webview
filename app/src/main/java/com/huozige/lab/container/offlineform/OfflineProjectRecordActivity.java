@@ -35,6 +35,7 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 
 public class OfflineProjectRecordActivity extends BaseActivity {
     private static final int MENU_ID_CONFIG_MANAGE = 1;
+    private static final int MENU_ID_RAW_CONFIG = 2;
     private static final int MENU_ID_DRAFT_CONTINUE = 1;
     private static final int MENU_ID_DRAFT_DELETE = 2;
 
@@ -91,6 +92,7 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, MENU_ID_CONFIG_MANAGE, MENU_ID_CONFIG_MANAGE, R.string.offline_menu_config_manage);
+        menu.add(0, MENU_ID_RAW_CONFIG, MENU_ID_RAW_CONFIG, R.string.offline_title_raw_config);
         return true;
     }
 
@@ -98,6 +100,10 @@ public class OfflineProjectRecordActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == MENU_ID_CONFIG_MANAGE) {
             showConfigDetail();
+            return true;
+        }
+        if (item.getItemId() == MENU_ID_RAW_CONFIG) {
+            showRawConfig();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -312,6 +318,17 @@ public class OfflineProjectRecordActivity extends BaseActivity {
 
         Intent intent = new Intent(this, OfflineFormConfigDetailActivity.class);
         intent.putExtra(OfflineFormConfigDetailActivity.EXTRA_PATTERN_ID, _patternId);
+        startActivity(intent);
+    }
+
+    private void showRawConfig() {
+        if (!hasPatternId()) {
+            Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(this, OfflineFormRawConfigActivity.class);
+        intent.putExtra(OfflineFormRawConfigActivity.EXTRA_PATTERN_ID, _patternId);
         startActivity(intent);
     }
 

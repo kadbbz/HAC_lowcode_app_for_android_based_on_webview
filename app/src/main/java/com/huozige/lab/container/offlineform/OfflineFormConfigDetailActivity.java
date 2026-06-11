@@ -23,9 +23,6 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,7 +80,6 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
 
         renderDisplayColumns(definition);
         renderRecordPageSize();
-        refreshRawConfig();
     }
 
     private void renderRecordPageSize() {
@@ -154,7 +150,6 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
 
         _definitionFile.getComputed().setDisplayColumns(selectedColumns);
         OfflineFormFileHelper.writeDefinition(this, _patternId, _definitionFile);
-        refreshRawConfig();
     }
 
     private List<String> getDisplayColumns() {
@@ -189,24 +184,6 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
 
         _definitionFile.getComputed().setRecordPageSize(recordPageSize);
         OfflineFormFileHelper.writeDefinition(this, _patternId, _definitionFile);
-        refreshRawConfig();
-    }
-
-    private void refreshRawConfig() {
-        JSONObject rawDefinitionJson = OfflineFormFileHelper.readRawDefinitionJson(this, _patternId);
-        TextView rawConfigTextView = findViewById(R.id.rawConfigTextView);
-        rawConfigTextView.setText(formatJson(rawDefinitionJson));
-    }
-
-    private String formatJson(JSONObject jsonObject) {
-        if (jsonObject == null) {
-            return "";
-        }
-        try {
-            return jsonObject.toString(2);
-        } catch (JSONException e) {
-            return jsonObject.toString();
-        }
     }
 
     private void confirmDeleteConfig() {
