@@ -45,7 +45,14 @@ public final class OfflineImageFileHelper {
         if (value == null || value.getFileName() == null || value.getFileName().isEmpty()) {
             return null;
         }
-        return new File(getFilesDir(context, patternId), value.getFileName());
+        return resolveLocalFile(context, patternId, value.getFileName());
+    }
+
+    public static File resolveLocalFile(Context context, String patternId, String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return null;
+        }
+        return new File(getFilesDir(context, patternId), fileName);
     }
 
     public static void deleteLocalFile(Context context, String patternId, ImageFormItemValue value) {

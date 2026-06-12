@@ -154,6 +154,8 @@
             android:exported="false" />
         <activity android:name=".offlineform.OfflineExportedRecordDetailActivity"
             android:exported="false" />
+        <activity android:name=".offlineform.formitem.image.OfflineImagePreviewActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

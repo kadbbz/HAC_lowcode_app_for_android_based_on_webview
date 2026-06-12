@@ -20,6 +20,7 @@ import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
@@ -100,7 +101,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 row = createImageRow();
                 imageList.addView(row);
             }
-            row.addView(createImageCard(imageItem.getImages().get(i)));
+            row.addView(createImageCard(imageItem.getImages().get(i), i));
         }
         if (row != null && imageItem.getImages().size() % 2 == 1) {
             row.addView(createEmptyImageSlot());
@@ -147,7 +148,7 @@ public class ImageViewHolder extends BaseViewHolder {
         return emptySlot;
     }
 
-    private View createImageCard(ImageFormItemValue image) {
+    private View createImageCard(ImageFormItemValue image, int index) {
         Context context = itemView.getContext();
         CardView itemCard = new CardView(context);
         itemCard.setRadius(dp(context, 6));
@@ -181,6 +182,7 @@ public class ImageViewHolder extends BaseViewHolder {
         cardContent.addView(preview, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(context, 140)));
+        preview.setOnClickListener(v -> openPreview(index));
 
         Button deleteButton = new Button(context);
         deleteButton.setBackgroundResource(R.drawable.offline_image_delete_button_bg);
@@ -204,6 +206,24 @@ public class ImageViewHolder extends BaseViewHolder {
         cardContent.addView(deleteButton, deleteParams);
 
         return itemCard;
+    }
+
+    private void openPreview(int index) {
+        if (imageItem == null || imageItem.getImages() == null || imageItem.getImages().isEmpty()) {
+            return;
+        }
+        ArrayList<String> fileNames = new ArrayList<>();
+        int previewIndex = 0;
+        for (int i = 0; i < imageItem.getImages().size(); i++) {
+            ImageFormItemValue image = imageItem.getImages().get(i);
+            if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
+                if (i < index) {
+                    previewIndex++;
+                }
+                fileNames.add(image.getFileName());
+            }
+        }
+        OfflineImagePreviewActivity.open(itemView.getContext(), imageItem.getPatternId(), fileNames, previewIndex);
     }
 
     @Override

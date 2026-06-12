@@ -110,6 +110,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
         ibPhoto = findViewById(R.id.capturePicture);
         ibVideo = findViewById(R.id.captureVideo);
         ibToggleCamera = findViewById(R.id.toggleCamera);
+        findViewById(R.id.closeCamera).setOnClickListener(v -> finish());
 
         // 拍照
         ibPhoto.setOnClickListener((d) -> {
@@ -170,9 +171,9 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                 // 调整按钮状态
                 boolean isTakingPhoto = op.equalsIgnoreCase(OPERATION_TAKE_PHOTO) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT);
-                ibPhoto.setVisibility(isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
-                ibToggleCamera.setVisibility(isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
-                ibVideo.setVisibility(!isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
+                ibPhoto.setVisibility(isTakingPhoto ? View.VISIBLE : View.GONE);
+                ibToggleCamera.setVisibility(isTakingPhoto ? View.VISIBLE : View.GONE);
+                ibVideo.setVisibility(!isTakingPhoto ? View.VISIBLE : View.GONE);
 
                 // 设置拍摄类型
                 if (op.equals(OPERATION_TAKE_PHOTO) || op.equals(OPERATION_TAKE_PHOTO_SNAPSHOT)) {
