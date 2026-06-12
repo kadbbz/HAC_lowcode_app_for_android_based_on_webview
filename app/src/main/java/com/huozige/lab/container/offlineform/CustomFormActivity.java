@@ -29,6 +29,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.file.FileUploadCallback;
+import com.huozige.lab.container.offlineform.formitem.file.FileUploadHost;
+import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureCallback;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureHost;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImagePreviewActivity;
@@ -42,6 +45,8 @@ import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.PickerFormItem;
@@ -58,7 +63,7 @@ import java.util.Map;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
-public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost {
+public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost {
     public static final String EXTRA_RECORD_ID = "recordId";
     private static final int MENU_ID_SAVE_RECORD = 1;
 
@@ -81,8 +86,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
     private ActivityResultLauncher<String> _imageUploadLauncher;
     private ActivityResultLauncher<Intent> _imagePreviewLauncher;
+    private ActivityResultLauncher<String[]> _fileUploadLauncher;
     private ImageFormItem _pendingImageItem;
     private ImageCaptureCallback _pendingImageCallback;
+    private FileFormItem _pendingFileItem;
+    private FileUploadCallback _pendingFileCallback;
 
 
     @Override
@@ -97,6 +105,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         registerImageCaptureLauncher();
         registerImageUploadLauncher();
         registerImagePreviewLauncher();
+        registerFileUploadLauncher();
         loadFormDataFromJson();
         setupListeners();
     }
@@ -203,6 +212,42 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         });
     }
 
+    private void registerFileUploadLauncher() {
+        _fileUploadLauncher = registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments(), uris -> {
+            if (uris == null || uris.isEmpty() || _pendingFileItem == null || _pendingFileCallback == null) {
+                clearPendingFileUpload();
+                return;
+            }
+
+            try {
+                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                List<FileFormItemValue> files = new ArrayList<>();
+                int remainingCount = getRemainingFileCount(_pendingFileItem);
+                for (Uri uri : uris) {
+                    if (files.size() >= remainingCount) {
+                        break;
+                    }
+                    String originalName = OfflineFileHelper.getDisplayName(this, uri);
+                    if (_pendingFileItem.containsOriginalName(originalName) || containsOriginalName(files, originalName)) {
+                        Toast.makeText(this, "已存在同名文件：" + originalName, Toast.LENGTH_SHORT).show();
+                        continue;
+                    }
+                    files.add(OfflineFileHelper.saveFile(this, draft.getPatternId(), _pendingFileItem, uri));
+                }
+                _pendingFileCallback.onFilesUploaded(files);
+                if (uris.size() > files.size()) {
+                    Toast.makeText(this, "部分文件未添加，请检查数量、类型、大小或同名文件", Toast.LENGTH_SHORT).show();
+                }
+                saveDraftIfNeeded();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "文件保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            } finally {
+                clearPendingFileUpload();
+            }
+        });
+    }
+
     private void loadFormDataFromJson() {
 
         String patternId = _intent.getStringExtra("patternId");
@@ -217,7 +262,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             if (definitionFile != null && patternId.equals(definitionFile.getJsonSchema().getPatternId())) {
                 _definition = definitionFile.getJsonSchema();
                 List<BaseFormItem> formItems = OfflineFormDefinitionFlattener.flattenFields(_definition);
-                applyPatternIdToImageItems(formItems, patternId);
+                applyPatternIdToAttachmentItems(formItems, patternId);
                 loadEditingRecord(patternId, _definition.getSchemaVersion(), formItems);
             }
         } catch (Exception e) {
@@ -585,10 +630,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         applyRecordValues(formItems, record.getValues());
     }
 
-    private void applyPatternIdToImageItems(List<BaseFormItem> formItems, String patternId) {
+    private void applyPatternIdToAttachmentItems(List<BaseFormItem> formItems, String patternId) {
         for (BaseFormItem formItem : formItems) {
             if (formItem instanceof ImageFormItem) {
                 ((ImageFormItem) formItem).setPatternId(patternId);
+            } else if (formItem instanceof FileFormItem) {
+                ((FileFormItem) formItem).setPatternId(patternId);
             }
         }
     }
@@ -611,6 +658,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 ((PickerFormItem) formItem).setValue(value);
             } else if (formItem instanceof ImageFormItem) {
                 ((ImageFormItem) formItem).setValue(value);
+            } else if (formItem instanceof FileFormItem) {
+                ((FileFormItem) formItem).setValue(value);
             }
         }
     }
@@ -644,6 +693,18 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         saveDraftIfNeeded();
     }
 
+    @Override
+    public void uploadFile(FileFormItem item, FileUploadCallback callback) {
+        _pendingFileItem = item;
+        _pendingFileCallback = callback;
+        _fileUploadLauncher.launch(OfflineFileHelper.buildMimeTypes(item.getFileItemConfig()));
+    }
+
+    @Override
+    public void onFilesChanged(FileFormItem item) {
+        saveDraftIfNeeded();
+    }
+
     private int getRemainingImageCount(ImageFormItem item) {
         if (item.getMaxCount() <= 0) {
             return Integer.MAX_VALUE;
@@ -651,9 +712,34 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return Math.max(0, item.getMaxCount() - item.getImages().size());
     }
 
+    private int getRemainingFileCount(FileFormItem item) {
+        int maxCount = item.getFileItemConfig() == null ? 0 : item.getFileItemConfig().getMaxCount();
+        if (maxCount <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, maxCount - item.getFiles().size());
+    }
+
+    private boolean containsOriginalName(List<FileFormItemValue> files, String originalName) {
+        if (files == null) {
+            return false;
+        }
+        for (FileFormItemValue file : files) {
+            if (file != null && originalName.equals(file.getOriginalName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void clearPendingImageCapture() {
         _pendingImageItem = null;
         _pendingImageCallback = null;
+    }
+
+    private void clearPendingFileUpload() {
+        _pendingFileItem = null;
+        _pendingFileCallback = null;
     }
 
     private void scrollToFirstError() {

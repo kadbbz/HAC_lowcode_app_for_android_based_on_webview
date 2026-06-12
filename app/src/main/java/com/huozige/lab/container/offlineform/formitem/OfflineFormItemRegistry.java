@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huozige.lab.container.offlineform.formitem.file.FileFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.image.ImageFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
@@ -26,6 +27,7 @@ public final class OfflineFormItemRegistry {
         register(new DatePickerFormItemHandler());
         register(new TimePickerFormItemHandler());
         register(new ImageFormItemHandler());
+        register(new FileFormItemHandler());
         register(new TextFormItemHandler());
     }
 

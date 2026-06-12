@@ -18,6 +18,7 @@ public final class OfflineFormItemJsonKeys {
     public static final String FIELD_ALLOW_IMAGE_UPLOAD = "allowImageUpload";
     public static final String FIELD_COMPRESSION = "compression";
     public static final String FIELD_WATERMARK = "watermark";
+    public static final String FIELD_FILE_ITEM_CONFIG = "fileItemConfig";
     public static final String FIELD_ENABLE_COMPRESSION = "enableCompression";
     public static final String FIELD_ENABLE_TIMESTAMP = "enableTimestamp";
     public static final String FIELD_ITEMS = "items";

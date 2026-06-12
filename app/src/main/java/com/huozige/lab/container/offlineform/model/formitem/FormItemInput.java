@@ -24,4 +24,5 @@ public class FormItemInput {
     public boolean allowImageUpload;
     public ImageCompressionOptions compression;
     public ImageWatermarkOptions watermark;
+    public FileItemConfig fileItemConfig;
 }

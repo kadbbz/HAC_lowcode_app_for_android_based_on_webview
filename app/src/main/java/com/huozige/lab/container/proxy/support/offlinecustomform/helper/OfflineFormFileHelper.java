@@ -11,8 +11,10 @@ import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
+import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 
@@ -21,8 +23,10 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class OfflineFormFileHelper {
@@ -90,7 +94,7 @@ public class OfflineFormFileHelper {
         OfflineFormRecord record = JsonFileHelper.readObjectFromFile(recordFile, OfflineFormRecord.class);
         boolean deleted = JsonFileHelper.deleteFileOrDirectory(recordFile);
         if (deleted) {
-            deleteRecordImageFiles(context, patternId, record);
+            deleteRecordAttachmentFiles(context, patternId, record);
         }
         return deleted;
     }
@@ -162,33 +166,40 @@ public class OfflineFormFileHelper {
         return definitions;
     }
 
-    private static void deleteRecordImageFiles(Context context, String patternId, OfflineFormRecord record) {
+    private static void deleteRecordAttachmentFiles(Context context, String patternId, OfflineFormRecord record) {
         if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
             return;
         }
-        Set<String> imageFieldIds = readImageFieldIds(context, patternId);
-        for (String fieldId : imageFieldIds) {
-            for (ImageFormItemValue image : ImageFormItem.parseImages(record.getValues().get(fieldId))) {
-                OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
+        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(context, patternId);
+        for (Map.Entry<String, String> entry : attachmentFieldTypes.entrySet()) {
+            String rawValue = record.getValues().get(entry.getKey());
+            if (OfflineFormItemType.IMAGE.getValue().equals(entry.getValue())) {
+                for (ImageFormItemValue image : ImageFormItem.parseImages(rawValue)) {
+                    OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
+                }
+            } else if (OfflineFormItemType.FILE.getValue().equals(entry.getValue())) {
+                for (String fileName : FileFormItem.parseFiles(rawValue).values()) {
+                    OfflineFileHelper.deleteLocalFile(context, patternId, fileName);
+                }
             }
         }
     }
 
-    private static Set<String> readImageFieldIds(Context context, String patternId) {
-        Set<String> fieldIds = new HashSet<>();
+    private static Map<String, String> readAttachmentFieldTypes(Context context, String patternId) {
+        Map<String, String> fieldTypes = new HashMap<>();
         OfflineFormDefinitionFile definitionFile = readDefinition(context, patternId);
         if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
-            return fieldIds;
+            return fieldTypes;
         }
         for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
             if (step != null) {
-                collectImageFieldIds(step.getItems(), fieldIds);
+                collectAttachmentFieldTypes(step.getItems(), fieldTypes);
             }
         }
-        return fieldIds;
+        return fieldTypes;
     }
 
-    private static void collectImageFieldIds(List<OfflineFormNode> nodes, Set<String> fieldIds) {
+    private static void collectAttachmentFieldTypes(List<OfflineFormNode> nodes, Map<String, String> fieldTypes) {
         if (nodes == null) {
             return;
         }
@@ -198,13 +209,18 @@ public class OfflineFormFileHelper {
             }
             BaseFormItem field = node.getField();
             if (field != null
-                    && OfflineFormItemType.IMAGE.getValue().equals(field.getItemType())
+                    && isAttachmentFieldType(field.getItemType())
                     && field.getId() != null
                     && !field.getId().isEmpty()) {
-                fieldIds.add(field.getId());
+                fieldTypes.put(field.getId(), field.getItemType());
             }
-            collectImageFieldIds(node.getChildren(), fieldIds);
+            collectAttachmentFieldTypes(node.getChildren(), fieldTypes);
         }
+    }
+
+    private static boolean isAttachmentFieldType(String itemType) {
+        return OfflineFormItemType.IMAGE.getValue().equals(itemType)
+                || OfflineFormItemType.FILE.getValue().equals(itemType);
     }
 
     private static void applyDefinitionOrder(Context context, List<OfflineFormDefinitionIndexItem> definitions) {
