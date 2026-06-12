@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
+import com.bumptech.glide.Glide;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
@@ -44,6 +46,9 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     CameraView camera;
 
     ImageButton ibPhoto, ibVideo, ibToggleCamera;
+    View cameraControls, photoConfirmOverlay;
+    ImageView photoConfirmPreview;
+    File pendingPhotoFile;
 
     boolean isSnapshot;
 
@@ -93,7 +98,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                     XLog.v("照片已保存为：" + imageFile.getPath());
 
-                    returnTo(imageFile);
+                    showPhotoConfirm(imageFile);
                 });
 
             }
@@ -110,7 +115,12 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
         ibPhoto = findViewById(R.id.capturePicture);
         ibVideo = findViewById(R.id.captureVideo);
         ibToggleCamera = findViewById(R.id.toggleCamera);
+        cameraControls = findViewById(R.id.cameraControls);
+        photoConfirmOverlay = findViewById(R.id.photoConfirmOverlay);
+        photoConfirmPreview = findViewById(R.id.photoConfirmPreview);
         findViewById(R.id.closeCamera).setOnClickListener(v -> finish());
+        findViewById(R.id.retakePhotoButton).setOnClickListener(v -> retakePhoto());
+        findViewById(R.id.usePhotoButton).setOnClickListener(v -> usePendingPhoto());
 
         // 拍照
         ibPhoto.setOnClickListener((d) -> {
@@ -151,6 +161,35 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                 XLog.v("已切换至主摄像头");
             }
         });
+    }
+
+    private void showPhotoConfirm(File imageFile) {
+        pendingPhotoFile = imageFile;
+        cameraControls.setVisibility(View.GONE);
+        photoConfirmOverlay.setVisibility(View.VISIBLE);
+        Glide.with(photoConfirmPreview)
+                .load(imageFile)
+                .fitCenter()
+                .into(photoConfirmPreview);
+    }
+
+    private void retakePhoto() {
+        if (pendingPhotoFile != null && pendingPhotoFile.exists()) {
+            pendingPhotoFile.delete();
+        }
+        pendingPhotoFile = null;
+        photoConfirmPreview.setImageDrawable(null);
+        photoConfirmOverlay.setVisibility(View.GONE);
+        cameraControls.setVisibility(View.VISIBLE);
+    }
+
+    private void usePendingPhoto() {
+        if (pendingPhotoFile == null || !pendingPhotoFile.exists()) {
+            Toast.makeText(this, "照片文件不存在，请重拍", Toast.LENGTH_SHORT).show();
+            retakePhoto();
+            return;
+        }
+        returnTo(pendingPhotoFile);
     }
 
     @Override

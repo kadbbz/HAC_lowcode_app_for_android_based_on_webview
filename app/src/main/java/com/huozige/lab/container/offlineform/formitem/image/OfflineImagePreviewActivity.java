@@ -24,7 +24,7 @@ import io.getstream.photoview.PhotoView;
 
 public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
     private static final String EXTRA_PATTERN_ID = "patternId";
-    private static final String EXTRA_FILE_NAMES = "fileNames";
+    public static final String EXTRA_FILE_NAMES = "fileNames";
     private static final String EXTRA_INDEX = "index";
 
     private ViewPager2 viewPager;
@@ -33,15 +33,12 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
     private String patternId;
     private ArrayList<String> fileNames = new ArrayList<>();
 
-    public static void open(Context context, String patternId, ArrayList<String> fileNames, int index) {
-        if (fileNames == null || fileNames.isEmpty()) {
-            return;
-        }
+    public static Intent createIntent(Context context, String patternId, ArrayList<String> fileNames, int index) {
         Intent intent = new Intent(context, OfflineImagePreviewActivity.class);
         intent.putExtra(EXTRA_PATTERN_ID, patternId);
         intent.putStringArrayListExtra(EXTRA_FILE_NAMES, fileNames);
         intent.putExtra(EXTRA_INDEX, index);
-        context.startActivity(intent);
+        return intent;
     }
 
     @Override
@@ -76,6 +73,7 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
         findViewById(R.id.previewRotateLeftButton).setOnClickListener(v -> adapter.rotateCurrent(-90));
         findViewById(R.id.previewResetButton).setOnClickListener(v -> adapter.resetCurrent());
         findViewById(R.id.previewRotateRightButton).setOnClickListener(v -> adapter.rotateCurrent(90));
+        findViewById(R.id.previewDeleteButton).setOnClickListener(v -> deleteCurrentImage());
 
         updateIndex(initialIndex);
     }
@@ -84,9 +82,39 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
         indexTextView.setText((index + 1) + " / " + fileNames.size());
     }
 
+    private void deleteCurrentImage() {
+        int position = viewPager.getCurrentItem();
+        if (position < 0 || position >= fileNames.size()) {
+            return;
+        }
+        String fileName = fileNames.remove(position);
+        OfflineImageFileHelper.deleteLocalFile(this, patternId, fileName);
+        setResultChanged();
+        if (fileNames.isEmpty()) {
+            finish();
+            return;
+        }
+        adapter.remove(position);
+        int nextPosition = Math.min(position, fileNames.size() - 1);
+        viewPager.setCurrentItem(nextPosition, false);
+        updateIndex(nextPosition);
+    }
+
+    private void setResultChanged() {
+        Intent data = new Intent();
+        data.putStringArrayListExtra(EXTRA_FILE_NAMES, new ArrayList<>(fileNames));
+        setResult(RESULT_OK, data);
+    }
+
     private class PreviewAdapter extends RecyclerView.Adapter<PreviewViewHolder> {
-        private final float[] rotations = new float[fileNames.size()];
+        private final ArrayList<Float> rotations = new ArrayList<>();
         private PreviewViewHolder currentHolder;
+
+        PreviewAdapter() {
+            for (int i = 0; i < fileNames.size(); i++) {
+                rotations.add(0.0f);
+            }
+        }
 
         @NonNull
         @Override
@@ -110,7 +138,7 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
             if (position == viewPager.getCurrentItem()) {
                 currentHolder = holder;
             }
-            holder.photoView.setRotationTo(rotations[position]);
+            holder.photoView.setRotationTo(rotations.get(position));
             holder.photoView.setScale(1.0f, false);
 
             File imageFile = OfflineImageFileHelper.resolveLocalFile(
@@ -141,18 +169,24 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
             return fileNames.size();
         }
 
+        void remove(int position) {
+            rotations.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, getItemCount() - position);
+        }
+
         void rotateCurrent(float degrees) {
             int position = viewPager.getCurrentItem();
-            rotations[position] += degrees;
+            rotations.set(position, rotations.get(position) + degrees);
             PreviewViewHolder holder = findCurrentHolder();
             if (holder != null) {
-                holder.photoView.setRotationTo(rotations[position]);
+                holder.photoView.setRotationTo(rotations.get(position));
             }
         }
 
         void resetCurrent() {
             int position = viewPager.getCurrentItem();
-            rotations[position] = 0;
+            rotations.set(position, 0.0f);
             PreviewViewHolder holder = findCurrentHolder();
             if (holder != null) {
                 holder.photoView.setRotationTo(0);

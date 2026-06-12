@@ -59,6 +59,20 @@ public class ImageFormItem extends BaseFormItem {
         }
     }
 
+    public void setImagesFromFileNames(List<String> fileNames) {
+        images = new ArrayList<>();
+        if (fileNames == null) {
+            return;
+        }
+        for (String fileName : fileNames) {
+            if (fileName != null && !fileName.isEmpty()) {
+                ImageFormItemValue image = new ImageFormItemValue();
+                image.setFileName(fileName);
+                images.add(image);
+            }
+        }
+    }
+
     @Override
     public boolean validate() {
         clearError();

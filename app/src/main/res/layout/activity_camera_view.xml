@@ -43,6 +43,7 @@
         android:textSize="15sp" />
 
     <FrameLayout
+        android:id="@+id/cameraControls"
         android:layout_width="match_parent"
         android:layout_height="112dp"
         android:layout_gravity="bottom"
@@ -81,6 +82,56 @@
             android:contentDescription="@string/ui_label_camera_switch"
             android:padding="14dp"
             app:srcCompat="@drawable/ic_switch" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/photoConfirmOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FF000000"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/photoConfirmPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:layout_gravity="bottom"
+            android:background="#B3000000"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
+
+            <TextView
+                android:id="@+id/retakePhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/camera_overlay_button_bg"
+                android:gravity="center"
+                android:text="重拍"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/usePhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:background="@drawable/camera_overlay_button_bg"
+                android:gravity="center"
+                android:text="使用照片"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+        </LinearLayout>
 
     </FrameLayout>
 

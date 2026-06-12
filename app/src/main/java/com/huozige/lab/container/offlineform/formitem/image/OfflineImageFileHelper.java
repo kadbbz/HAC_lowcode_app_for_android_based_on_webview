@@ -57,6 +57,15 @@ public final class OfflineImageFileHelper {
 
     public static void deleteLocalFile(Context context, String patternId, ImageFormItemValue value) {
         File file = resolveLocalFile(context, patternId, value);
+        deleteFile(file);
+    }
+
+    public static void deleteLocalFile(Context context, String patternId, String fileName) {
+        File file = resolveLocalFile(context, patternId, fileName);
+        deleteFile(file);
+    }
+
+    private static void deleteFile(File file) {
         if (file != null && file.exists()) {
             file.delete();
         }

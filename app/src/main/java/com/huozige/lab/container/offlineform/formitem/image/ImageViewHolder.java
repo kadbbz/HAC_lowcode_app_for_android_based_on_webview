@@ -1,18 +1,21 @@
 package com.huozige.lab.container.offlineform.formitem.image;
 
-import android.content.Context;
 import android.net.Uri;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.cardview.widget.CardView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
@@ -21,16 +24,18 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.Base
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
 public class ImageViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
-    private final LinearLayout imageList;
+    private final RecyclerView imageList;
     private final Button btnCaptureImage;
     private final Button btnUploadImage;
     private final TextView tvError;
     private final TextView tvRequired;
+    private final ImageListAdapter imageListAdapter = new ImageListAdapter();
 
     private ImageFormItem imageItem;
 
@@ -42,7 +47,45 @@ public class ImageViewHolder extends BaseViewHolder {
         btnUploadImage = itemView.findViewById(R.id.btn_upload_image);
         tvError = itemView.findViewById(R.id.tv_error);
         tvRequired = itemView.findViewById(R.id.tv_required);
+        setupImageList();
         setupListeners();
+    }
+
+    private void setupImageList() {
+        imageList.setLayoutManager(new GridLayoutManager(itemView.getContext(), 2));
+        imageList.setAdapter(imageListAdapter);
+        imageList.setNestedScrollingEnabled(false);
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT,
+                0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder source, @NonNull RecyclerView.ViewHolder target) {
+                int from = source.getBindingAdapterPosition();
+                int to = target.getBindingAdapterPosition();
+                if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION || imageItem == null) {
+                    return false;
+                }
+                ImageFormItemValue movedImage = imageItem.getImages().remove(from);
+                imageItem.getImages().add(to, movedImage);
+                imageListAdapter.notifyItemMoved(from, to);
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                notifyImagesChanged();
+            }
+        }).attachToRecyclerView(imageList);
     }
 
     private void setupListeners() {
@@ -54,12 +97,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 Toast.makeText(itemView.getContext(), "当前页面不支持拍照", Toast.LENGTH_SHORT).show();
                 return;
             }
-            ((ImageCaptureHost) itemView.getContext()).captureImage(imageItem, image -> {
-                imageItem.addImage(image);
-                imageItem.clearError();
-                renderImages();
-                updateErrorState();
-            });
+            ((ImageCaptureHost) itemView.getContext()).captureImage(imageItem, this::addImages);
         });
         btnUploadImage.setOnClickListener(v -> {
             if (!canAddImage()) {
@@ -69,12 +107,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 Toast.makeText(itemView.getContext(), "当前页面不支持图片上传", Toast.LENGTH_SHORT).show();
                 return;
             }
-            ((ImageCaptureHost) itemView.getContext()).uploadImage(imageItem, image -> {
-                imageItem.addImage(image);
-                imageItem.clearError();
-                renderImages();
-                updateErrorState();
-            });
+            ((ImageCaptureHost) itemView.getContext()).uploadImage(imageItem, this::addImages);
         });
     }
 
@@ -93,19 +126,20 @@ public class ImageViewHolder extends BaseViewHolder {
         updateErrorState();
     }
 
+    private void addImages(List<ImageFormItemValue> images) {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        for (ImageFormItemValue image : images) {
+            imageItem.addImage(image);
+        }
+        imageItem.clearError();
+        renderImages();
+        updateErrorState();
+    }
+
     private void renderImages() {
-        imageList.removeAllViews();
-        LinearLayout row = null;
-        for (int i = 0; i < imageItem.getImages().size(); i++) {
-            if (i % 2 == 0) {
-                row = createImageRow();
-                imageList.addView(row);
-            }
-            row.addView(createImageCard(imageItem.getImages().get(i), i));
-        }
-        if (row != null && imageItem.getImages().size() % 2 == 1) {
-            row.addView(createEmptyImageSlot());
-        }
+        imageListAdapter.notifyDataSetChanged();
         boolean canAdd = imageItem.getMaxCount() <= 0 || imageItem.getImages().size() < imageItem.getMaxCount();
         setActionButtonEnabled(btnCaptureImage, canAdd);
         setActionButtonEnabled(btnUploadImage, canAdd);
@@ -127,89 +161,14 @@ public class ImageViewHolder extends BaseViewHolder {
         return true;
     }
 
-    private LinearLayout createImageRow() {
-        Context context = itemView.getContext();
-        LinearLayout row = new LinearLayout(context);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        rowParams.setMargins(0, dp(context, 6), 0, dp(context, 6));
-        row.setLayoutParams(rowParams);
-        return row;
-    }
-
-    private View createEmptyImageSlot() {
-        Context context = itemView.getContext();
-        View emptySlot = new View(context);
-        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, 1, 1);
-        itemParams.setMargins(dp(context, 4), 0, dp(context, 4), 0);
-        emptySlot.setLayoutParams(itemParams);
-        return emptySlot;
-    }
-
-    private View createImageCard(ImageFormItemValue image, int index) {
-        Context context = itemView.getContext();
-        CardView itemCard = new CardView(context);
-        itemCard.setRadius(dp(context, 6));
-        itemCard.setCardElevation(dp(context, 1));
-        itemCard.setUseCompatPadding(false);
-        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
-        itemParams.setMargins(dp(context, 4), 0, dp(context, 4), 0);
-        itemCard.setLayoutParams(itemParams);
-
-        LinearLayout cardContent = new LinearLayout(context);
-        cardContent.setOrientation(LinearLayout.VERTICAL);
-        itemCard.addView(cardContent, new CardView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        ImageView preview = new ImageView(context);
-        preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        File imageFile = OfflineImageFileHelper.resolveLocalFile(context, imageItem.getPatternId(), image);
-        if (imageFile != null && imageFile.exists()) {
-            int previewSize = dp(context, 140);
-            Glide.with(itemView)
-                    .load(Uri.fromFile(imageFile))
-                    .override(previewSize, previewSize)
-                    .centerCrop()
-                    .dontAnimate()
-                    .into(preview);
-        } else {
-            preview.setImageDrawable(null);
-        }
-
-        cardContent.addView(preview, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(context, 140)));
-        preview.setOnClickListener(v -> openPreview(index));
-
-        Button deleteButton = new Button(context);
-        deleteButton.setBackgroundResource(R.drawable.offline_image_delete_button_bg);
-        deleteButton.setContentDescription("删除图片");
-        deleteButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_delete_image, 0, 0, 0);
-        deleteButton.setCompoundDrawablePadding(dp(context, 6));
-        deleteButton.setMinWidth(0);
-        deleteButton.setPadding(dp(context, 8), 0, dp(context, 8), 0);
-        deleteButton.setText("删除");
-        deleteButton.setTextColor(context.getColor(R.color.white));
-        deleteButton.setTextSize(14);
-        deleteButton.setOnClickListener(v -> {
-            OfflineImageFileHelper.deleteLocalFile(context, imageItem.getPatternId(), image);
-            imageItem.removeImage(image);
-            renderImages();
-            updateErrorState();
-        });
-        LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(context, 36));
-        cardContent.addView(deleteButton, deleteParams);
-
-        return itemCard;
-    }
-
     private void openPreview(int index) {
         if (imageItem == null || imageItem.getImages() == null || imageItem.getImages().isEmpty()) {
+            return;
+        }
+        if (index == RecyclerView.NO_POSITION) {
+            return;
+        }
+        if (!(itemView.getContext() instanceof ImageCaptureHost)) {
             return;
         }
         ArrayList<String> fileNames = new ArrayList<>();
@@ -223,7 +182,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 fileNames.add(image.getFileName());
             }
         }
-        OfflineImagePreviewActivity.open(itemView.getContext(), imageItem.getPatternId(), fileNames, previewIndex);
+        ((ImageCaptureHost) itemView.getContext()).previewImages(imageItem, fileNames, previewIndex);
     }
 
     @Override
@@ -233,6 +192,79 @@ public class ImageViewHolder extends BaseViewHolder {
             tvError.setText(imageItem.getErrorMessage());
         } else {
             tvError.setVisibility(View.GONE);
+        }
+    }
+
+    private class ImageListAdapter extends RecyclerView.Adapter<ImageCardViewHolder> {
+        @NonNull
+        @Override
+        public ImageCardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_form_item_image_card, parent, false);
+            return new ImageCardViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ImageCardViewHolder holder, int position) {
+            holder.bind(imageItem.getImages().get(position), position);
+        }
+
+        @Override
+        public int getItemCount() {
+            return imageItem == null || imageItem.getImages() == null ? 0 : imageItem.getImages().size();
+        }
+    }
+
+    private class ImageCardViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView preview;
+        private final TextView errorView;
+        private final Button deleteButton;
+
+        ImageCardViewHolder(@NonNull View itemView) {
+            super(itemView);
+            preview = itemView.findViewById(R.id.imagePreview);
+            errorView = itemView.findViewById(R.id.imageErrorView);
+            deleteButton = itemView.findViewById(R.id.deleteImageButton);
+        }
+
+        void bind(ImageFormItemValue image, int position) {
+            errorView.setVisibility(View.GONE);
+            preview.setVisibility(View.VISIBLE);
+            File imageFile = OfflineImageFileHelper.resolveLocalFile(itemView.getContext(), imageItem.getPatternId(), image);
+            if (imageFile != null && imageFile.exists()) {
+                int previewSize = dp(itemView.getContext(), 140);
+                Glide.with(itemView)
+                        .load(Uri.fromFile(imageFile))
+                        .override(previewSize, previewSize)
+                        .centerCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .dontAnimate()
+                        .error(R.drawable.offline_image_error_bg)
+                        .into(preview);
+            } else {
+                preview.setVisibility(View.GONE);
+                errorView.setVisibility(View.VISIBLE);
+            }
+
+            preview.setOnClickListener(v -> openPreview(getBindingAdapterPosition()));
+            errorView.setOnClickListener(v -> openPreview(getBindingAdapterPosition()));
+            deleteButton.setOnClickListener(v -> {
+                int currentPosition = getBindingAdapterPosition();
+                if (currentPosition == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                ImageFormItemValue currentImage = imageItem.getImages().get(currentPosition);
+                OfflineImageFileHelper.deleteLocalFile(itemView.getContext(), imageItem.getPatternId(), currentImage);
+                imageItem.removeImage(currentImage);
+                renderImages();
+                updateErrorState();
+                notifyImagesChanged();
+            });
+        }
+    }
+
+    private void notifyImagesChanged() {
+        if (itemView.getContext() instanceof ImageCaptureHost) {
+            ((ImageCaptureHost) itemView.getContext()).onImagesChanged(imageItem);
         }
     }
 }

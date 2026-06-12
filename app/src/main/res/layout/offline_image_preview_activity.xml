@@ -46,6 +46,15 @@
             android:textColor="@color/white"
             android:textSize="15sp" />
 
+        <TextView
+            android:id="@+id/previewDeleteButton"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="删除"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
     </LinearLayout>
 
     <LinearLayout

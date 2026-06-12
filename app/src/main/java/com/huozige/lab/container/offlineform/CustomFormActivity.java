@@ -31,6 +31,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureCallback;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureHost;
+import com.huozige.lab.container.offlineform.formitem.image.OfflineImagePreviewActivity;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
@@ -42,6 +43,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
@@ -78,6 +80,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private int _currentStepIndex;
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
     private ActivityResultLauncher<String> _imageUploadLauncher;
+    private ActivityResultLauncher<Intent> _imagePreviewLauncher;
     private ImageFormItem _pendingImageItem;
     private ImageCaptureCallback _pendingImageCallback;
 
@@ -93,6 +96,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         setupRecyclerView();
         registerImageCaptureLauncher();
         registerImageUploadLauncher();
+        registerImagePreviewLauncher();
         loadFormDataFromJson();
         setupListeners();
     }
@@ -137,7 +141,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
+                List<ImageFormItemValue> images = new ArrayList<>();
+                images.add(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
+                _pendingImageCallback.onImagesCaptured(images);
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -149,15 +155,26 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void registerImageUploadLauncher() {
-        _imageUploadLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri == null || _pendingImageItem == null || _pendingImageCallback == null) {
+        _imageUploadLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+            if (uris == null || uris.isEmpty() || _pendingImageItem == null || _pendingImageCallback == null) {
                 clearPendingImageCapture();
                 return;
             }
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                _pendingImageCallback.onImageCaptured(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, uri));
+                List<ImageFormItemValue> images = new ArrayList<>();
+                int remainingCount = getRemainingImageCount(_pendingImageItem);
+                for (Uri uri : uris) {
+                    if (images.size() >= remainingCount) {
+                        break;
+                    }
+                    images.add(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, uri));
+                }
+                _pendingImageCallback.onImagesCaptured(images);
+                if (uris.size() > images.size()) {
+                    Toast.makeText(this, "已达到最多" + _pendingImageItem.getMaxCount() + "张图片", Toast.LENGTH_SHORT).show();
+                }
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -165,6 +182,24 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             } finally {
                 clearPendingImageCapture();
             }
+        });
+    }
+
+    private void registerImagePreviewLauncher() {
+        _imagePreviewLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (_pendingImageItem == null || result.getResultCode() != RESULT_OK || result.getData() == null) {
+                _pendingImageItem = null;
+                return;
+            }
+            ArrayList<String> fileNames = result.getData().getStringArrayListExtra(OfflineImagePreviewActivity.EXTRA_FILE_NAMES);
+            if (fileNames == null) {
+                _pendingImageItem = null;
+                return;
+            }
+            _pendingImageItem.setImagesFromFileNames(fileNames);
+            saveDraftIfNeeded();
+            _adapter.notifyDataSetChanged();
+            _pendingImageItem = null;
         });
     }
 
@@ -594,6 +629,24 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _pendingImageItem = item;
         _pendingImageCallback = callback;
         _imageUploadLauncher.launch("image/*");
+    }
+
+    @Override
+    public void previewImages(ImageFormItem item, ArrayList<String> fileNames, int index) {
+        _pendingImageItem = item;
+        _imagePreviewLauncher.launch(OfflineImagePreviewActivity.createIntent(this, item.getPatternId(), fileNames, index));
+    }
+
+    @Override
+    public void onImagesChanged(ImageFormItem item) {
+        saveDraftIfNeeded();
+    }
+
+    private int getRemainingImageCount(ImageFormItem item) {
+        if (item.getMaxCount() <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, item.getMaxCount() - item.getImages().size());
     }
 
     private void clearPendingImageCapture() {
