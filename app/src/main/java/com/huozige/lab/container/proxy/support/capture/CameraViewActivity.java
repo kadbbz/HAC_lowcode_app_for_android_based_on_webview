@@ -16,6 +16,7 @@ import com.elvishew.xlog.XLog;
 import com.bumptech.glide.Glide;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
@@ -27,6 +28,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Mode;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -42,6 +44,9 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     public static final String OPERATION_TAKE_VIDEO_SNAPSHOT = "v_snapshot";
 
     public static final String EXTRA_OUT_URI = "data-uri";
+    public static final String EXTRA_WATERMARK_CUSTOM_LINES = "watermark-custom-lines";
+    public static final String EXTRA_WATERMARK_TIMESTAMP = "watermark-timestamp";
+    private static final DateTimeFormatter WATERMARK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     CameraView camera;
 
@@ -49,6 +54,9 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     View cameraControls, photoConfirmOverlay;
     ImageView photoConfirmPreview;
     File pendingPhotoFile;
+    ArrayList<String> watermarkCustomLines = new ArrayList<>();
+    ArrayList<String> pendingWatermarkLines = new ArrayList<>();
+    boolean watermarkTimestamp;
 
     boolean isSnapshot;
 
@@ -165,6 +173,8 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
     private void showPhotoConfirm(File imageFile) {
         pendingPhotoFile = imageFile;
+        pendingWatermarkLines = buildWatermarkLines();
+        applyWatermarkToPendingPhoto();
         cameraControls.setVisibility(View.GONE);
         photoConfirmOverlay.setVisibility(View.VISIBLE);
         Glide.with(photoConfirmPreview)
@@ -178,6 +188,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
             pendingPhotoFile.delete();
         }
         pendingPhotoFile = null;
+        pendingWatermarkLines = new ArrayList<>();
         photoConfirmPreview.setImageDrawable(null);
         photoConfirmOverlay.setVisibility(View.GONE);
         cameraControls.setVisibility(View.VISIBLE);
@@ -207,6 +218,11 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                 String op = intentR.getStringExtra(EXTRA_OPERATION);
                 if (op == null) op = OPERATION_TAKE_PHOTO_SNAPSHOT;
+                watermarkCustomLines = intentR.getStringArrayListExtra(EXTRA_WATERMARK_CUSTOM_LINES);
+                if (watermarkCustomLines == null) {
+                    watermarkCustomLines = new ArrayList<>();
+                }
+                watermarkTimestamp = intentR.getBooleanExtra(EXTRA_WATERMARK_TIMESTAMP, false);
 
                 // 调整按钮状态
                 boolean isTakingPhoto = op.equalsIgnoreCase(OPERATION_TAKE_PHOTO) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT);
@@ -225,5 +241,24 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                 isSnapshot = (op.equalsIgnoreCase(OPERATION_TAKE_VIDEO_SNAPSHOT) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT));
             }
         });
+    }
+
+    private ArrayList<String> buildWatermarkLines() {
+        ArrayList<String> lines = new ArrayList<>(watermarkCustomLines);
+        if (watermarkTimestamp) {
+            lines.add(LocalDateTime.now().format(WATERMARK_TIME_FORMATTER));
+        }
+        return lines;
+    }
+
+    private void applyWatermarkToPendingPhoto() {
+        if (pendingWatermarkLines == null || pendingWatermarkLines.isEmpty()) {
+            return;
+        }
+        try {
+            OfflineImageFileHelper.writeWatermarkToFile(this, Uri.fromFile(pendingPhotoFile), pendingPhotoFile, pendingWatermarkLines);
+        } catch (Exception e) {
+            XLog.e("照片水印处理失败：%s", e);
+        }
     }
 }

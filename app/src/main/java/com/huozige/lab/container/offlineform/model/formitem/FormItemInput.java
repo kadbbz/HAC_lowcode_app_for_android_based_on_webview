@@ -23,4 +23,5 @@ public class FormItemInput {
     public int maxCount;
     public boolean allowImageUpload;
     public ImageCompressionOptions compression;
+    public ImageWatermarkOptions watermark;
 }

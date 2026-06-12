@@ -142,7 +142,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
                 List<ImageFormItemValue> images = new ArrayList<>();
-                images.add(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
+                images.add(OfflineImageFileHelper.saveImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
                 _pendingImageCallback.onImagesCaptured(images);
                 saveDraftIfNeeded();
             } catch (Exception e) {
@@ -169,7 +169,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                     if (images.size() >= remainingCount) {
                         break;
                     }
-                    images.add(OfflineImageFileHelper.saveCapturedImage(this, draft.getPatternId(), _pendingImageItem, uri));
+                    images.add(OfflineImageFileHelper.saveImage(this, draft.getPatternId(), _pendingImageItem, uri));
                 }
                 _pendingImageCallback.onImagesCaptured(images);
                 if (uris.size() > images.size()) {
@@ -621,6 +621,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _pendingImageCallback = callback;
         Intent cameraIntent = new Intent(this, CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
+        cameraIntent.putStringArrayListExtra(CameraViewActivity.EXTRA_WATERMARK_CUSTOM_LINES, OfflineImageFileHelper.buildWatermarkCustomLines(item));
+        cameraIntent.putExtra(CameraViewActivity.EXTRA_WATERMARK_TIMESTAMP, OfflineImageFileHelper.isTimestampWatermarkEnabled(item));
         _imageCaptureLauncher.launch(cameraIntent);
     }
 
