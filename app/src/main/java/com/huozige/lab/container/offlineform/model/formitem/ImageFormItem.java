@@ -2,6 +2,7 @@ package com.huozige.lab.container.offlineform.model.formitem;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.huozige.lab.container.utilities.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,7 @@ public class ImageFormItem extends BaseFormItem {
 
     public static List<ImageFormItemValue> parseImages(String value) {
         List<ImageFormItemValue> result = new ArrayList<>();
-        if (value == null || value.trim().isEmpty()) {
+        if (StringUtils.isNullOrBlank(value)) {
             return result;
         }
         try {

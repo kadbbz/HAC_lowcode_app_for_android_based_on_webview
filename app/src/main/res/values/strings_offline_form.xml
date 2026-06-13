@@ -54,6 +54,7 @@
     <string name="offline_dialog_delete_draft_records_message">将删除当前表单下所有草稿记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_delete_exported_records_message">将删除当前表单下所有已导出记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_select_title">选择%1$s</string>
+    <string name="offline_dialog_manual_download_title">正在下载手册</string>
     <string name="offline_chooser_open_file">打开文件</string>
     <string name="offline_toast_delete_success">删除成功</string>
     <string name="offline_toast_delete_records_success">已删除 %1$d 条记录</string>
@@ -88,9 +89,17 @@
     <string name="offline_title_record_page_size">历史记录每页条数</string>
     <string name="offline_title_raw_config">原始配置</string>
     <string name="offline_title_record_cleanup">记录清理</string>
+    <string name="offline_title_form_resources">表单资源</string>
+    <string name="offline_title_signature">签名</string>
+    <string name="offline_button_open_manual">查看手册</string>
     <string name="offline_menu_delete_draft_records">清理所有草稿</string>
     <string name="offline_menu_delete_exported_records">清理所有已导出数据</string>
     <string name="offline_text_config_basic_info">项目编号：%1$s\n版本号：%2$s\n名称：%3$s\n备注：%4$s\n字段数：%5$d\n文件路径：%6$s</string>
+    <string name="offline_toast_manual_missing">手册文件不存在</string>
+    <string name="offline_error_add_pattern_failed">添加离线表单项目失败：%1$s</string>
+    <string name="offline_error_manual_download_failed">下载手册 PDF 失败：%1$s</string>
+    <string name="offline_error_manual_download_failed_with_code">下载手册 PDF 失败：%1$d</string>
+    <string name="offline_error_manual_save_failed">保存手册 PDF 失败</string>
     <string name="offline_error_select_no_options">没有可选项</string>
     <string name="offline_error_file_size_with_name">文件超过大小限制：%1$s</string>
     <string name="offline_error_file_type_not_supported">不支持的文件类型：%1$s</string>

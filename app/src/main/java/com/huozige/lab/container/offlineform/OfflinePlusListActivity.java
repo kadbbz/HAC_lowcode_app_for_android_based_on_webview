@@ -16,6 +16,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.utilities.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +118,7 @@ public class OfflinePlusListActivity extends BaseActivity {
     }
 
     private void setSortMode(boolean sortMode) {
-        if (sortMode && !_searchEditText.getText().toString().trim().isEmpty()) {
+        if (sortMode && StringUtils.isNotBlank(_searchEditText.getText().toString())) {
             Toast.makeText(this, R.string.offline_toast_clear_search_before_sort, Toast.LENGTH_SHORT).show();
             return;
         }

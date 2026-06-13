@@ -21,7 +21,10 @@ import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +37,9 @@ public class OfflineFormFileHelper {
     private static final String DEFINITION_FILE = "definition.json";
     private static final String ORDER_FILE = "order.json";
     private static final String RECORDS_DIR = "records";
+    private static final String MANUAL_FILE = "manual.pdf";
+    private static final String MANUAL_TEMP_FILE = "manual.pdf.tmp";
+    private static final String SIGNATURE_FILE = "signature.png";
 
     public static List<OfflineFormDefinitionIndexItem> readDefinitions(Context context) {
         List<OfflineFormDefinitionIndexItem> definitions = readDefinitionsFromFolders(context);
@@ -73,6 +79,31 @@ public class OfflineFormFileHelper {
 
     public static String getDefinitionFilePath(Context context, String patternId) {
         return getDefinitionFile(context, patternId).getAbsolutePath();
+    }
+
+    public static File getManualPdfFile(Context context, String patternId) {
+        return new File(getPatternDir(context, patternId), MANUAL_FILE);
+    }
+
+    public static File getManualPdfTempFile(Context context, String patternId) {
+        return new File(getPatternDir(context, patternId), MANUAL_TEMP_FILE);
+    }
+
+    public static File getSignatureFile(Context context, String patternId) {
+        return new File(getPatternDir(context, patternId), SIGNATURE_FILE);
+    }
+
+    public static void writeSignatureBase64(Context context, String patternId, String signatureBase64) throws IOException {
+        writeBytesToFile(getSignatureFile(context, patternId), Base64.getDecoder().decode(stripBase64Prefix(signatureBase64)));
+    }
+
+    public static void deleteManualPdfFile(Context context, String patternId) {
+        JsonFileHelper.deleteFileOrDirectory(getManualPdfFile(context, patternId));
+        JsonFileHelper.deleteFileOrDirectory(getManualPdfTempFile(context, patternId));
+    }
+
+    public static void deleteSignatureFile(Context context, String patternId) {
+        JsonFileHelper.deleteFileOrDirectory(getSignatureFile(context, patternId));
     }
 
     public static void writeRecord(Context context, OfflineFormRecord record) {
@@ -274,6 +305,24 @@ public class OfflineFormFileHelper {
 
     private static File getRootDir(Context context) {
         return new File(context.getExternalFilesDir(null), ROOT_DIR);
+    }
+
+    private static void writeBytesToFile(File file, byte[] bytes) throws IOException {
+        File parentFile = file.getParentFile();
+        if (parentFile != null && !parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            output.write(bytes);
+        }
+    }
+
+    private static String stripBase64Prefix(String value) {
+        if (value == null) {
+            return "";
+        }
+        int commaIndex = value.indexOf(",");
+        return value.startsWith("data:") && commaIndex >= 0 ? value.substring(commaIndex + 1) : value;
     }
 
     private static String sanitizePathSegment(String value) {

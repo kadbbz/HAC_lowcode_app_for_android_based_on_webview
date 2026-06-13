@@ -10,6 +10,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
+import com.huozige.lab.container.utilities.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,7 +72,7 @@ public final class OfflineFileHelper {
 
     private static Set<String> parseAllowedExtensions(String value) {
         Set<String> result = new HashSet<>();
-        if (value == null || value.trim().isEmpty()) {
+        if (StringUtils.isNullOrBlank(value)) {
             return result;
         }
         String[] parts = value.split(",");

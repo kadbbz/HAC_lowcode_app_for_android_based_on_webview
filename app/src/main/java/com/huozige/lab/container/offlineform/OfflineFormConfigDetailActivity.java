@@ -1,10 +1,13 @@
 package com.huozige.lab.container.offlineform;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -22,7 +25,10 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineF
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +53,7 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
         findViewById(R.id.cmdDeleteExportedRecords).setOnClickListener(v -> confirmDeleteRecordsByStatus(
                 OfflineFormRecordStatus.EXPORTED,
                 R.string.offline_dialog_delete_exported_records_message));
+        findViewById(R.id.cmdOpenManual).setOnClickListener(v -> openManualPdf());
         findViewById(R.id.cmdDeleteConfig).setOnClickListener(v -> confirmDeleteConfig());
         renderConfig();
     }
@@ -79,7 +86,57 @@ public class OfflineFormConfigDetailActivity extends BaseActivity {
                 definitionFilePath));
 
         renderDisplayColumns(definition);
+        renderResources();
         renderRecordPageSize();
+    }
+
+    private void renderResources() {
+        View resourceCard = findViewById(R.id.resourceCard);
+        View manualButton = findViewById(R.id.cmdOpenManual);
+        TextView signatureTitleTextView = findViewById(R.id.signatureTitleTextView);
+        ImageView signatureImageView = findViewById(R.id.signatureImageView);
+
+        File manualFile = OfflineFormFileHelper.getManualPdfFile(this, _patternId);
+        boolean hasManual = manualFile.exists();
+        manualButton.setVisibility(hasManual ? View.VISIBLE : View.GONE);
+
+        File signatureFile = OfflineFormFileHelper.getSignatureFile(this, _patternId);
+        boolean hasSignature = signatureFile.exists();
+        signatureTitleTextView.setVisibility(hasSignature ? View.VISIBLE : View.GONE);
+        signatureImageView.setVisibility(hasSignature ? View.VISIBLE : View.GONE);
+        if (hasSignature) {
+            signatureImageView.setImageURI(Uri.fromFile(signatureFile));
+        }
+
+        resourceCard.setVisibility(hasManual || hasSignature ? View.VISIBLE : View.GONE);
+    }
+
+    private void openManualPdf() {
+        File manualFile = OfflineFormFileHelper.getManualPdfFile(this, _patternId);
+        if (!manualFile.exists()) {
+            Toast.makeText(this, R.string.offline_toast_manual_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(this, PDFPreviewActivity.class);
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_LOCAL_FILE_PATH, manualFile.getAbsolutePath());
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, manualFile.getName());
+        try {
+            startActivity(intent);
+        } catch (RuntimeException e) {
+            openManualPdfWithExternalApp(manualFile);
+        }
+    }
+
+    private void openManualPdfWithExternalApp(File manualFile) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(DeviceUtility.pathToUri(manualFile.getAbsolutePath()), "application/pdf");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(intent);
+        } catch (RuntimeException e) {
+            Toast.makeText(this, R.string.offline_toast_no_app_open_file, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void renderRecordPageSize() {

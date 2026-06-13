@@ -1,5 +1,7 @@
 package com.huozige.lab.container.offlineform.model.formitem;
 
+import com.huozige.lab.container.utilities.StringUtils;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,7 +22,7 @@ public class PickerFormItem extends BaseFormItem {
 
     @Override
     public boolean isEmpty() {
-        return value == null || value.trim().isEmpty();
+        return StringUtils.isNullOrBlank(value);
     }
 
     @Override

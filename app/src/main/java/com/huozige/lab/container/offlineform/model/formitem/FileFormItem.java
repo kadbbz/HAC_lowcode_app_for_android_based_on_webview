@@ -2,6 +2,7 @@ package com.huozige.lab.container.offlineform.model.formitem;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.huozige.lab.container.utilities.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -77,7 +78,7 @@ public class FileFormItem extends BaseFormItem {
 
     public static LinkedHashMap<String, String> parseFiles(String value) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
-        if (value == null || value.trim().isEmpty()) {
+        if (StringUtils.isNullOrBlank(value)) {
             return result;
         }
         try {

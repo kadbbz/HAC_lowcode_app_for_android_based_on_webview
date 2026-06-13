@@ -8,6 +8,7 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -34,6 +35,7 @@ public class PDFPreviewActivity extends BaseActivity {
     public static String EXTRA_KEY_URL = "url";
     public static String EXTRA_KEY_PASSWORD = "password";
     public static String EXTRA_KEY_FILENAME = "fileName";
+    public static String EXTRA_KEY_LOCAL_FILE_PATH = "localFilePath";
 
     PDFView _pdfView;
     ProgressBar _pbDownload;
@@ -112,9 +114,16 @@ public class PDFPreviewActivity extends BaseActivity {
         _url = this.getIntent().getStringExtra(EXTRA_KEY_URL);
         _password = this.getIntent().getStringExtra(EXTRA_KEY_PASSWORD);
         _fileName = this.getIntent().getStringExtra(EXTRA_KEY_FILENAME);
+        _localFilePath = this.getIntent().getStringExtra(EXTRA_KEY_LOCAL_FILE_PATH);
 
         if (_fileName == null || _fileName.isEmpty()) {
             _fileName = getString(R.string.title_pdf_preview) + ".pdf";
+        }
+
+        if (_localFilePath != null && !_localFilePath.isEmpty()) {
+            _pbDownload.setVisibility(View.GONE);
+            renderPDF(DeviceUtility.pathToUri(_localFilePath));
+            return;
         }
 
         startDownload();
