@@ -260,6 +260,28 @@ public class OfflinePlusProxy extends AbstractProxy{
         return joinLines(errors);
     }
 
+    @JavascriptInterface
+    public void offlinePlusDeleteProjectAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusDeleteProjectAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteProject(projectId)));
+    }
+
+    private String deleteProject(String projectId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (!OfflineFormFileHelper.deletePatternDirectory(context, projectId)) {
+            return "delete failed.";
+        }
+
+        OfflineFormFileHelper.removeDefinitionOrder(context, projectId);
+        return "success";
+    }
+
     private String joinLines(List<String> values) {
         StringBuilder result = new StringBuilder();
         for (String value : values) {
