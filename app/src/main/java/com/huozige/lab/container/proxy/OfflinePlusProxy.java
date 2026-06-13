@@ -48,12 +48,17 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
-    public void getAllPatternsAsync(String ticket) {
+    public void offlinePlusGetPatternsAsync(String ticket) {
+        writeInfoLog("OfflinePlusGetPatterns");
+        registryCallbackTicket(ticket);
 
-        writeInfoLog("OfflinePlusGetAllPatterns");
-
-
-
+        Context context = this.getWebView().getContext();
+        List<OfflineFormDefinitionIndexItem> definitions = OfflineFormFileHelper.readDefinitions(context);
+        List<String> patternIds = new ArrayList<>();
+        for (OfflineFormDefinitionIndexItem definition : definitions) {
+            patternIds.add(definition.getPatternId());
+        }
+        callback(CallbackParams.success(JSON.toJSONString(patternIds)));
     }
 
     @JavascriptInterface
