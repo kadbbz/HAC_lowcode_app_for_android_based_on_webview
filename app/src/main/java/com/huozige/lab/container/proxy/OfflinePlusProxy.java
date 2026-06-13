@@ -23,13 +23,16 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -126,6 +129,28 @@ public class OfflinePlusProxy extends AbstractProxy{
         Context context = this.getWebView().getContext();
         List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
         return JSON.toJSONString(records);
+    }
+
+    @JavascriptInterface
+    public void offlinePlusExportRecordsAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusExportRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(buildExportRecordsResult(projectId)));
+    }
+
+    private String buildExportRecordsResult(String projectId) {
+        if (projectId == null || projectId.isEmpty()) {
+            return "";
+        }
+
+        Context context = this.getWebView().getContext();
+        com.alibaba.fastjson.JSONObject result = new com.alibaba.fastjson.JSONObject();
+        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        result.put("projectId", projectId);
+        result.put("records", records);
+        result.put("signature", readSignatureDataUrl(context, projectId));
+        return result.toJSONString();
     }
 
     @JavascriptInterface
@@ -288,6 +313,26 @@ public class OfflinePlusProxy extends AbstractProxy{
             return;
         }
         OfflineFormFileHelper.writeSignatureBase64(context, patternId, signatureBase64);
+    }
+
+    private String readSignatureDataUrl(Context context, String patternId) {
+        File signatureFile = OfflineFormFileHelper.getSignatureFile(context, patternId);
+        if (!signatureFile.exists()) {
+            return "";
+        }
+
+        try (InputStream input = new FileInputStream(signatureFile);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, read);
+            }
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
+        } catch (IOException e) {
+            writeErrorLog("读取离线表单签名失败：" + e);
+            return "";
+        }
     }
 
     private ProgressDialog showManualDownloadDialog(Context context) {
