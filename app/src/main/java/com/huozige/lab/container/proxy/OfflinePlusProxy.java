@@ -154,13 +154,55 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
-    public String offlinePlusMarkRecordExported(String projectId, String recordId) {
-        writeInfoLog("OfflinePlusMarkRecordExported");
+    public void offlinePlusMarkRecordExportedAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusMarkRecordExportedAsync");
+        registryCallbackTicket(ticket);
 
-        if (projectId == null || projectId.isEmpty()) {
+        callback(CallbackParams.success(markRecordsExported(projectId, recordIds)));
+    }
+
+    private String markRecordsExported(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            return "recordIds is empty.";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            String result = markRecordExported(projectId, trimmedRecordId);
+            if (!"success".equals(result)) {
+                errors.add(trimmedRecordId + ": " + result);
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (String error : errors) {
+            if (result.length() > 0) {
+                result.append("\n");
+            }
+            result.append(error);
+        }
+        return result.toString();
+    }
+
+    private String markRecordExported(String projectId, String recordId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
             return "projectId is empty.";
         }
-        if (recordId == null || recordId.isEmpty()) {
+        if (StringUtils.isNullOrBlank(recordId)) {
             return "recordId is empty.";
         }
 
