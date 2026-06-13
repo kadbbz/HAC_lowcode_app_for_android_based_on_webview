@@ -82,7 +82,7 @@ public class ImageFormItemHandler implements OfflineFormItemHandler {
     @Override
     public View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
         List<ImageFormItemValue> images = ImageFormItem.parseImages(rawValue);
-        return ReadOnlyFormItemViews.createCompactValueView(context, images.isEmpty() ? "" : images.size() + " 张图片");
+        return ReadOnlyFormItemViews.createCompactValueView(context, images.isEmpty() ? "" : context.getString(R.string.offline_text_image_count, images.size()));
     }
 
     private JSONObject buildOptions(ImageFormItem item) {

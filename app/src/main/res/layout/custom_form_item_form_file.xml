@@ -15,7 +15,7 @@
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="标题"
+            android:text="@string/offline_form_field_title_placeholder"
             android:textColor="@color/black"
             android:textSize="16sp" />
 
@@ -42,13 +42,13 @@
         android:layout_height="44dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/offline_image_action_button_bg"
-        android:contentDescription="上传文件"
+        android:contentDescription="@string/offline_button_upload_file"
         android:drawableStart="@drawable/ic_upload_file"
         android:drawablePadding="6dp"
         android:minWidth="0dp"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:text="上传文件"
+        android:text="@string/offline_button_upload_file"
         android:textColor="@color/white"
         android:textSize="14sp" />
 

@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.webkit.MimeTypeMap;
 
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.ImageCompressionOptions;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
@@ -94,7 +95,7 @@ public final class OfflineImageFileHelper {
         try (InputStream input = context.getContentResolver().openInputStream(sourceUri)) {
             Bitmap bitmap = BitmapFactory.decodeStream(input, null, options);
             if (bitmap == null) {
-                throw new IllegalArgumentException("无法读取图片");
+                throw new IllegalArgumentException(context.getString(R.string.offline_error_image_read_failed));
             }
             return bitmap;
         }
@@ -128,7 +129,7 @@ public final class OfflineImageFileHelper {
         try (InputStream input = context.getContentResolver().openInputStream(sourceUri);
              FileOutputStream output = new FileOutputStream(outputFile)) {
             if (input == null) {
-                throw new IllegalArgumentException("无法读取图片");
+                throw new IllegalArgumentException(context.getString(R.string.offline_error_image_read_failed));
             }
             byte[] buffer = new byte[8192];
             int length;

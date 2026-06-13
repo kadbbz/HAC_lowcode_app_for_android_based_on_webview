@@ -24,7 +24,7 @@
             android:layout_width="48dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="返回"
+            android:text="@string/offline_button_back"
             android:textColor="@color/white"
             android:textSize="15sp" />
 
@@ -42,7 +42,7 @@
             android:layout_width="48dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="重置"
+            android:text="@string/offline_button_reset"
             android:textColor="@color/white"
             android:textSize="15sp" />
 
@@ -51,7 +51,7 @@
             android:layout_width="48dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="删除"
+            android:text="@string/offline_button_delete"
             android:textColor="@color/white"
             android:textSize="15sp" />
 
@@ -73,7 +73,7 @@
             android:layout_height="44dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="左转"
+            android:text="@string/offline_button_rotate_left"
             android:textColor="@color/white"
             android:textSize="15sp" />
 
@@ -84,7 +84,7 @@
             android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="右转"
+            android:text="@string/offline_button_rotate_right"
             android:textColor="@color/white"
             android:textSize="15sp" />
 

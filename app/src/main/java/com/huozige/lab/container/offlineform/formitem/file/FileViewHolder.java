@@ -61,7 +61,7 @@ public class FileViewHolder extends BaseViewHolder {
                 return;
             }
             if (!(itemView.getContext() instanceof FileUploadHost)) {
-                Toast.makeText(itemView.getContext(), "当前页面不支持文件上传", Toast.LENGTH_SHORT).show();
+                Toast.makeText(itemView.getContext(), R.string.offline_toast_file_upload_not_supported, Toast.LENGTH_SHORT).show();
                 return;
             }
             ((FileUploadHost) itemView.getContext()).uploadFile(fileItem, this::addFiles);
@@ -106,7 +106,7 @@ public class FileViewHolder extends BaseViewHolder {
         int maxCount = fileItem.getFileItemConfig() == null ? 0 : fileItem.getFileItemConfig().getMaxCount();
         if (maxCount > 0 && fileItem.getFiles().size() >= maxCount) {
             if (showMessage) {
-                Toast.makeText(itemView.getContext(), "最多只能上传" + maxCount + "个文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(itemView.getContext(), itemView.getContext().getString(R.string.offline_toast_max_file_count, maxCount), Toast.LENGTH_SHORT).show();
             }
             return false;
         }
@@ -185,7 +185,7 @@ public class FileViewHolder extends BaseViewHolder {
 
     private void openFile(String originalName, File file) {
         if (file == null || !file.exists()) {
-            Toast.makeText(itemView.getContext(), "文件不存在", Toast.LENGTH_SHORT).show();
+            Toast.makeText(itemView.getContext(), R.string.offline_toast_file_missing, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -194,17 +194,17 @@ public class FileViewHolder extends BaseViewHolder {
         openIntent.setDataAndType(fileUri, getMimeType(originalName));
         openIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
-            Intent chooser = Intent.createChooser(openIntent, "打开文件");
+            Intent chooser = Intent.createChooser(openIntent, itemView.getContext().getString(R.string.offline_chooser_open_file));
             chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             itemView.getContext().startActivity(chooser);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(itemView.getContext(), "没有可打开该文件的应用", Toast.LENGTH_SHORT).show();
+            Toast.makeText(itemView.getContext(), R.string.offline_toast_no_app_open_file, Toast.LENGTH_SHORT).show();
         }
     }
 
     private String buildFileMeta(String originalName, File file) {
         String extension = OfflineFileHelper.getExtension(originalName);
-        String size = file != null && file.exists() ? formatSize(file.length()) : "文件不存在";
+        String size = file != null && file.exists() ? formatSize(file.length()) : itemView.getContext().getString(R.string.offline_text_file_missing);
         return extension.isEmpty() ? size : extension.toUpperCase() + " · " + size;
     }
 

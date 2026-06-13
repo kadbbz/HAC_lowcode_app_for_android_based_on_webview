@@ -66,6 +66,6 @@ public class FileFormItemHandler implements OfflineFormItemHandler {
 
     @Override
     public View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
-        return ReadOnlyFormItemViews.createCompactValueView(context, FileFormItem.parseFiles(rawValue).size() + " 个文件");
+        return ReadOnlyFormItemViews.createCompactValueView(context, context.getString(R.string.offline_text_file_count, FileFormItem.parseFiles(rawValue).size()));
     }
 }

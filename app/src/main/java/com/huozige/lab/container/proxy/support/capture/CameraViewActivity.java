@@ -155,7 +155,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                     XLog.v("开始拍摄视频（小尺寸）");
                     camera.takeVideoSnapshot(tempFile);
                 }
-                Toast.makeText(this, "视频录制中，再次点击停止录像", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.offline_toast_video_recording, Toast.LENGTH_LONG).show();
             }
         });
 
@@ -196,7 +196,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
     private void usePendingPhoto() {
         if (pendingPhotoFile == null || !pendingPhotoFile.exists()) {
-            Toast.makeText(this, "照片文件不存在，请重拍", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.offline_toast_photo_missing_retake, Toast.LENGTH_SHORT).show();
             retakePhoto();
             return;
         }

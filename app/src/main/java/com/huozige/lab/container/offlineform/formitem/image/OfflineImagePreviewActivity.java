@@ -147,7 +147,7 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
                     fileNames.get(position));
             if (imageFile == null || !imageFile.exists()) {
                 holder.photoView.setImageDrawable(null);
-                Toast.makeText(OfflineImagePreviewActivity.this, "图片文件不存在", Toast.LENGTH_SHORT).show();
+                Toast.makeText(OfflineImagePreviewActivity.this, R.string.offline_toast_image_file_missing, Toast.LENGTH_SHORT).show();
                 return;
             }
             Glide.with(holder.photoView)

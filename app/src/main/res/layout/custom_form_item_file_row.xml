@@ -20,7 +20,7 @@
             android:id="@+id/fileIconView"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:contentDescription="文件" />
+            android:contentDescription="@string/offline_cd_file" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -54,13 +54,13 @@
             android:layout_height="36dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/offline_file_delete_button_bg"
-            android:contentDescription="删除文件"
+            android:contentDescription="@string/offline_cd_delete_file"
             android:drawableStart="@drawable/ic_delete_image"
             android:drawablePadding="4dp"
             android:minWidth="0dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:text="删除"
+            android:text="@string/offline_button_delete"
             android:textColor="@color/white"
             android:textSize="13sp" />
 

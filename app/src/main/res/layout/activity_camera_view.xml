@@ -38,7 +38,7 @@
         android:minWidth="72dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="返回"
+        android:text="@string/offline_button_back"
         android:textColor="@color/white"
         android:textSize="15sp" />
 
@@ -115,7 +115,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/camera_overlay_button_bg"
                 android:gravity="center"
-                android:text="重拍"
+                android:text="@string/offline_button_retake"
                 android:textColor="@color/white"
                 android:textSize="15sp" />
 
@@ -127,7 +127,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/camera_overlay_button_bg"
                 android:gravity="center"
-                android:text="使用照片"
+                android:text="@string/offline_button_use_photo"
                 android:textColor="@color/white"
                 android:textSize="15sp" />
 

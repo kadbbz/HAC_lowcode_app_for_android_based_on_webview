@@ -53,7 +53,7 @@ public class SelectViewHolder extends BaseViewHolder {
 
         List<SelectFormItem.Option> options = selectItem.getOptions();
         if (options.isEmpty()) {
-            tvError.setText("没有可选项");
+            tvError.setText(R.string.offline_error_select_no_options);
             tvError.setVisibility(View.VISIBLE);
             return;
         }
@@ -73,7 +73,7 @@ public class SelectViewHolder extends BaseViewHolder {
         }
 
         new AlertDialog.Builder(itemView.getContext())
-                .setTitle("选择" + selectItem.getTitle())
+                .setTitle(itemView.getContext().getString(R.string.offline_dialog_select_title, selectItem.getTitle()))
                 .setSingleChoiceItems(items, selectedIndex, (dialog, which) -> {
                     SelectFormItem.Option selected = options.get(which);
                     selectItem.setSelectedValue(selected.getValue());

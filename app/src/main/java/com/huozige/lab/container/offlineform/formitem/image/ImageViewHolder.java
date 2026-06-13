@@ -94,7 +94,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 return;
             }
             if (!(itemView.getContext() instanceof ImageCaptureHost)) {
-                Toast.makeText(itemView.getContext(), "当前页面不支持拍照", Toast.LENGTH_SHORT).show();
+                Toast.makeText(itemView.getContext(), R.string.offline_toast_image_capture_not_supported, Toast.LENGTH_SHORT).show();
                 return;
             }
             ((ImageCaptureHost) itemView.getContext()).captureImage(imageItem, this::addImages);
@@ -104,7 +104,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 return;
             }
             if (!(itemView.getContext() instanceof ImageCaptureHost)) {
-                Toast.makeText(itemView.getContext(), "当前页面不支持图片上传", Toast.LENGTH_SHORT).show();
+                Toast.makeText(itemView.getContext(), R.string.offline_toast_image_upload_not_supported, Toast.LENGTH_SHORT).show();
                 return;
             }
             ((ImageCaptureHost) itemView.getContext()).uploadImage(imageItem, this::addImages);
@@ -155,7 +155,7 @@ public class ImageViewHolder extends BaseViewHolder {
             return false;
         }
         if (imageItem.getMaxCount() > 0 && imageItem.getImages().size() >= imageItem.getMaxCount()) {
-            Toast.makeText(itemView.getContext(), "最多只能添加" + imageItem.getMaxCount() + "张图片", Toast.LENGTH_SHORT).show();
+            Toast.makeText(itemView.getContext(), itemView.getContext().getString(R.string.offline_toast_max_image_count, imageItem.getMaxCount()), Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;

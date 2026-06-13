@@ -156,7 +156,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(this, "图片保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
             } finally {
                 clearPendingImageCapture();
             }
@@ -182,12 +182,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 _pendingImageCallback.onImagesCaptured(images);
                 if (uris.size() > images.size()) {
-                    Toast.makeText(this, "已达到最多" + _pendingImageItem.getMaxCount() + "张图片", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.offline_toast_image_max_count_reached, _pendingImageItem.getMaxCount()), Toast.LENGTH_SHORT).show();
                 }
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(this, "图片保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
             } finally {
                 clearPendingImageCapture();
             }
@@ -229,19 +229,19 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                     }
                     String originalName = OfflineFileHelper.getDisplayName(this, uri);
                     if (_pendingFileItem.containsOriginalName(originalName) || containsOriginalName(files, originalName)) {
-                        Toast.makeText(this, "已存在同名文件：" + originalName, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.offline_toast_duplicate_file, originalName), Toast.LENGTH_SHORT).show();
                         continue;
                     }
                     files.add(OfflineFileHelper.saveFile(this, draft.getPatternId(), _pendingFileItem, uri));
                 }
                 _pendingFileCallback.onFilesUploaded(files);
                 if (uris.size() > files.size()) {
-                    Toast.makeText(this, "部分文件未添加，请检查数量、类型、大小或同名文件", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.offline_toast_file_upload_partial, Toast.LENGTH_SHORT).show();
                 }
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(this, "文件保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.offline_toast_file_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
             } finally {
                 clearPendingFileUpload();
             }
@@ -533,7 +533,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _stepTabLayout.removeAllTabs();
         for (int i = 0; i < _definition.getSteps().size(); i++) {
             OfflineFormStep step = _definition.getSteps().get(i);
-            String title = step.getTitle() == null || step.getTitle().isEmpty() ? "步骤" + (i + 1) : step.getTitle();
+            String title = step.getTitle() == null || step.getTitle().isEmpty() ? getString(R.string.offline_text_default_step, i + 1) : step.getTitle();
             _stepTabLayout.addTab(_stepTabLayout.newTab().setText(title), i == _currentStepIndex);
         }
         _updatingTabs = false;

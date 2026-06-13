@@ -87,9 +87,9 @@ public class PickerViewHolder extends BaseViewHolder {
         contentLayout.setOrientation(LinearLayout.HORIZONTAL);
         contentLayout.setGravity(Gravity.CENTER);
         contentLayout.setPadding(0, 24, 0, 8);
-        contentLayout.addView(createTimePickerColumn(hourPicker, "时"));
-        contentLayout.addView(createTimePickerColumn(minutePicker, "分"));
-        contentLayout.addView(createTimePickerColumn(secondPicker, "秒"));
+        contentLayout.addView(createTimePickerColumn(hourPicker, itemView.getContext().getString(R.string.offline_text_time_hour)));
+        contentLayout.addView(createTimePickerColumn(minutePicker, itemView.getContext().getString(R.string.offline_text_time_minute)));
+        contentLayout.addView(createTimePickerColumn(secondPicker, itemView.getContext().getString(R.string.offline_text_time_second)));
 
         new AlertDialog.Builder(itemView.getContext())
                 .setView(contentLayout)

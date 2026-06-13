@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.provider.OpenableColumns;
 import android.webkit.MimeTypeMap;
 
+import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
@@ -58,13 +59,13 @@ public final class OfflineFileHelper {
         if (config.getMaxFileSizeKb() > 0) {
             long fileSize = getFileSize(context, sourceUri);
             if (fileSize > config.getMaxFileSizeKb() * 1024L) {
-                throw new IllegalArgumentException("文件超过大小限制：" + originalName);
+                throw new IllegalArgumentException(context.getString(R.string.offline_error_file_size_with_name, originalName));
             }
         }
 
         Set<String> allowedExtensions = parseAllowedExtensions(config.getAllowedExtensions());
         if (!allowedExtensions.isEmpty() && !allowedExtensions.contains(getExtension(originalName).toLowerCase(Locale.ROOT))) {
-            throw new IllegalArgumentException("不支持的文件类型：" + originalName);
+            throw new IllegalArgumentException(context.getString(R.string.offline_error_file_type_not_supported, originalName));
         }
     }
 
@@ -99,7 +100,7 @@ public final class OfflineFileHelper {
         if (displayName == null || displayName.isEmpty()) {
             displayName = sourceUri.getLastPathSegment();
         }
-        return displayName == null || displayName.isEmpty() ? "未命名文件" : displayName;
+        return displayName == null || displayName.isEmpty() ? context.getString(R.string.offline_text_unnamed_file) : displayName;
     }
 
     private static long getFileSize(Context context, Uri sourceUri) {
@@ -126,7 +127,7 @@ public final class OfflineFileHelper {
         try (InputStream input = context.getContentResolver().openInputStream(sourceUri);
              FileOutputStream output = new FileOutputStream(outputFile)) {
             if (input == null) {
-                throw new IllegalArgumentException("无法读取文件");
+                throw new IllegalArgumentException(context.getString(R.string.offline_error_file_read_failed));
             }
             byte[] buffer = new byte[8192];
             int length;
@@ -135,7 +136,7 @@ public final class OfflineFileHelper {
             while ((length = input.read(buffer)) >= 0) {
                 copiedBytes += length;
                 if (maxBytes > 0 && copiedBytes > maxBytes) {
-                    throw new IllegalArgumentException("文件超过大小限制");
+                    throw new IllegalArgumentException(context.getString(R.string.offline_error_file_size));
                 }
                 output.write(buffer, 0, length);
             }

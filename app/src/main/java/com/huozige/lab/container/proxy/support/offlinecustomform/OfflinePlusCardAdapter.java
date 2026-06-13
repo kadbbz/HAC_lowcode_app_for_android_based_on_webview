@@ -52,7 +52,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
-        holder.metaTextView.setText("项目编号：" + item.getPatternId() + "    版本号：" + item.getSchemaVersion());
+        holder.metaTextView.setText(_context.getString(R.string.offline_text_project_meta, item.getPatternId(), item.getSchemaVersion()));
         String theme = OfflineComputedHelper.resolveThemeColor(item.getComputed().getTheme());
         holder.themeView.setBackgroundColor(OfflineComputedHelper.parseColor(theme));
         holder.imageView.setImageBitmap(createIconBitmap(item.getPatternId(), item.getSchemaVersion(), theme));
