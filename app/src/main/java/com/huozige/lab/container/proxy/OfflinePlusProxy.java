@@ -187,15 +187,7 @@ public class OfflinePlusProxy extends AbstractProxy{
         if (errors.isEmpty()) {
             return "success";
         }
-
-        StringBuilder result = new StringBuilder();
-        for (String error : errors) {
-            if (result.length() > 0) {
-                result.append("\n");
-            }
-            result.append(error);
-        }
-        return result.toString();
+        return joinLines(errors);
     }
 
     private String markRecordExported(String projectId, String recordId) {
@@ -221,6 +213,62 @@ public class OfflinePlusProxy extends AbstractProxy{
         record.setStatus(OfflineFormRecordStatus.EXPORTED);
         OfflineFormFileHelper.writeRecord(context, record);
         return "success";
+    }
+
+    @JavascriptInterface
+    public void offlinePlusDeleteReadRecordsAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusDeleteReadRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteReadRecords(projectId, recordIds)));
+    }
+
+    private String deleteReadRecords(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            OfflineFormFileHelper.deleteRecordsByStatus(context, projectId, OfflineFormRecordStatus.EXPORTED);
+            return "success";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, trimmedRecordId);
+            if (record != null && record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+                OfflineFormFileHelper.deleteRecord(context, projectId, trimmedRecordId);
+            } else {
+                errors.add(trimmedRecordId + ": record is not read.");
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+        return joinLines(errors);
+    }
+
+    private String joinLines(List<String> values) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) {
+            if (result.length() > 0) {
+                result.append("\n");
+            }
+            result.append(value);
+        }
+        return result.toString();
     }
 
     private List<OfflineFormRecord> filterSubmittedRecords(List<OfflineFormRecord> records) {
