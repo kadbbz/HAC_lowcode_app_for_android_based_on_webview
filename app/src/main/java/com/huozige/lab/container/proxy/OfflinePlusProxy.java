@@ -136,14 +136,15 @@ public class OfflinePlusProxy extends AbstractProxy{
         writeInfoLog("OfflinePlusExportRecordsAsync");
         registryCallbackTicket(ticket);
 
+        if (StringUtils.isNullOrBlank(projectId)) {
+            callback(CallbackParams.error("projectId is empty."));
+            return;
+        }
+
         callback(CallbackParams.success(buildExportRecordsResult(projectId)));
     }
 
     private String buildExportRecordsResult(String projectId) {
-        if (projectId == null || projectId.isEmpty()) {
-            return "";
-        }
-
         Context context = this.getWebView().getContext();
         com.alibaba.fastjson.JSONObject result = new com.alibaba.fastjson.JSONObject();
         List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
