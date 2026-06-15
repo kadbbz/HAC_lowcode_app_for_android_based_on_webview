@@ -5,7 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.webkit.MimeTypeMap;
 
@@ -34,12 +36,19 @@ public final class OfflineImageFileHelper {
 
     public static ImageFormItemValue saveImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
         ImageCompressionOptions options = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
-        File outputFile = createOutputFile(context, patternId, options.isEnableCompression() ? "jpg" : getSourceExtension(context, sourceUri));
-        if (options.isEnableCompression()) {
+        int rotationDegrees = readExifRotationDegrees(context, sourceUri);
+        boolean shouldRewriteImage = options.isEnableCompression() || rotationDegrees != 0;
+        File outputFile = createOutputFile(context, patternId, shouldRewriteImage ? "jpg" : getSourceExtension(context, sourceUri));
+        if (shouldRewriteImage) {
             Bitmap source = decodeBitmap(context, sourceUri, options.getMaxLongEdge());
+            Bitmap rotated = null;
             try {
-                compressToFile(source, outputFile, options);
+                rotated = rotateBitmap(source, rotationDegrees);
+                compressToFile(rotated, outputFile, options);
             } finally {
+                if (rotated != null && rotated != source) {
+                    rotated.recycle();
+                }
                 source.recycle();
             }
         } else {
@@ -101,6 +110,37 @@ public final class OfflineImageFileHelper {
             }
             return bitmap;
         }
+    }
+
+    private static int readExifRotationDegrees(Context context, Uri sourceUri) {
+        try (InputStream input = context.getContentResolver().openInputStream(sourceUri)) {
+            if (input == null) {
+                return 0;
+            }
+            ExifInterface exif = new ExifInterface(input);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+                default:
+                    return 0;
+            }
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private static Bitmap rotateBitmap(Bitmap source, int degrees) {
+        if (source == null || degrees == 0) {
+            return source;
+        }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     private static int calculateInSampleSize(BitmapFactory.Options options, int maxLongEdge) {
@@ -178,14 +218,20 @@ public final class OfflineImageFileHelper {
         if (watermarkLines == null || watermarkLines.isEmpty()) {
             return;
         }
+        int rotationDegrees = readExifRotationDegrees(context, sourceUri);
         Bitmap source = decodeBitmap(context, sourceUri, options.isEnableCompression() ? options.getMaxLongEdge() : 0);
+        Bitmap rotated = null;
         Bitmap watermarked = null;
         try {
-            watermarked = addWatermark(source, watermarkLines);
+            rotated = rotateBitmap(source, rotationDegrees);
+            watermarked = addWatermark(rotated, watermarkLines);
             saveWatermarkedToFile(watermarked, outputFile, options);
         } finally {
-            if (watermarked != null && watermarked != source) {
+            if (watermarked != null && watermarked != rotated) {
                 watermarked.recycle();
+            }
+            if (rotated != null && rotated != source) {
+                rotated.recycle();
             }
             source.recycle();
         }
