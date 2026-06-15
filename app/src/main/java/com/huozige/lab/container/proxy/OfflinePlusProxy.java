@@ -3,14 +3,20 @@ package com.huozige.lab.container.proxy;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Looper;
+import android.webkit.MimeTypeMap;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.model.PatternInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
@@ -22,6 +28,9 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,7 +42,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -144,14 +155,174 @@ public class OfflinePlusProxy extends AbstractProxy{
         callback(CallbackParams.success(buildExportRecordsResult(projectId)));
     }
 
+    @JavascriptInterface
+    public String offlinePlusLoadAttachment(String projectId, String localName) {
+        writeInfoLog("OfflinePlusLoadAttachment");
+
+        if (StringUtils.isNullOrBlank(projectId) || StringUtils.isNullOrBlank(localName)) {
+            return "";
+        }
+
+        try {
+            File file = OfflineFileHelper.resolveLocalFile(this.getWebView().getContext(), projectId, localName);
+            if (file == null || !file.exists() || !file.isFile()) {
+                return "";
+            }
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(OfflineFileHelper.getExtension(localName));
+            if (StringUtils.isNullOrBlank(mimeType)) {
+                mimeType = "application/octet-stream";
+            }
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(readAllBytes(file));
+        } catch (Exception e) {
+            writeErrorLog("读取离线附件失败：" + localName + "，详情：" + e);
+            return "";
+        }
+    }
+
     private String buildExportRecordsResult(String projectId) {
         Context context = this.getWebView().getContext();
         com.alibaba.fastjson.JSONObject result = new com.alibaba.fastjson.JSONObject();
         List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(context, projectId);
+        normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
         result.put("projectId", projectId);
         result.put("records", records);
+        result.put("attachments", buildExportAttachments(records, attachmentFieldTypes));
         result.put("signature", readSignatureDataUrl(context, projectId));
         return result.toJSONString();
+    }
+
+    private void normalizeEmptyAttachmentValues(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+            return;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            for (String fieldId : attachmentFieldTypes.keySet()) {
+                String value = record.getValues().get(fieldId);
+                if ("[]".equals(value) || "{}".equals(value)) {
+                    record.getValues().put(fieldId, "");
+                }
+            }
+        }
+    }
+
+    private JSONArray buildExportAttachments(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+        JSONArray attachments = new JSONArray();
+        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+            return attachments;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            for (Map.Entry<String, String> entry : attachmentFieldTypes.entrySet()) {
+                String fieldId = entry.getKey();
+                String fieldType = entry.getValue();
+                String rawValue = record.getValues().get(fieldId);
+                if (OfflineFormItemType.IMAGE.getValue().equals(fieldType)) {
+                    addImageAttachments(attachments, record.getRecordId(), fieldId, rawValue);
+                } else if (OfflineFormItemType.FILE.getValue().equals(fieldType)) {
+                    addFileAttachments(attachments, record.getRecordId(), fieldId, rawValue);
+                }
+            }
+        }
+        return attachments;
+    }
+
+    private void addImageAttachments(JSONArray attachments, String recordId, String fieldId, String rawValue) {
+        List<ImageFormItemValue> images = ImageFormItem.parseImages(rawValue);
+        for (int i = 0; i < images.size(); i++) {
+            ImageFormItemValue image = images.get(i);
+            if (image == null || StringUtils.isNullOrBlank(image.getFileName())) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            attachment.put("path", buildAttachmentPath(recordId, fieldId, String.valueOf(i)));
+            attachment.put("type", "image");
+            attachment.put("localName", image.getFileName());
+            attachments.add(attachment);
+        }
+    }
+
+    private void addFileAttachments(JSONArray attachments, String recordId, String fieldId, String rawValue) {
+        for (Map.Entry<String, String> entry : FileFormItem.parseFiles(rawValue).entrySet()) {
+            String originalName = entry.getKey();
+            String localName = entry.getValue();
+            if (StringUtils.isNullOrBlank(originalName) || StringUtils.isNullOrBlank(localName)) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            attachment.put("path", buildAttachmentPath(recordId, fieldId, originalName));
+            attachment.put("type", "file");
+            attachment.put("localName", localName);
+            attachments.add(attachment);
+        }
+    }
+
+    private JSONArray buildAttachmentPath(String recordId, String fieldId, String key) {
+        JSONArray path = new JSONArray();
+        path.add(recordId);
+        path.add(fieldId);
+        path.add(key);
+        return path;
+    }
+
+    private Map<String, String> readAttachmentFieldTypes(Context context, String projectId) {
+        Map<String, String> fieldTypes = new HashMap<>();
+        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
+        if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
+            return fieldTypes;
+        }
+
+        for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+            if (step != null) {
+                collectAttachmentFieldTypes(step.getItems(), fieldTypes);
+            }
+        }
+        return fieldTypes;
+    }
+
+    private void collectAttachmentFieldTypes(List<OfflineFormNode> nodes, Map<String, String> fieldTypes) {
+        if (nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+
+            BaseFormItem field = node.getField();
+            if (field != null
+                    && isAttachmentFieldType(field.getItemType())
+                    && !StringUtils.isNullOrBlank(field.getId())) {
+                fieldTypes.put(field.getId(), field.getItemType());
+            }
+            collectAttachmentFieldTypes(node.getChildren(), fieldTypes);
+        }
+    }
+
+    private boolean isAttachmentFieldType(String itemType) {
+        return OfflineFormItemType.IMAGE.getValue().equals(itemType)
+                || OfflineFormItemType.FILE.getValue().equals(itemType);
+    }
+
+    private byte[] readAllBytes(File file) throws IOException {
+        try (FileInputStream input = new FileInputStream(file);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, length);
+            }
+            return output.toByteArray();
+        }
     }
 
     @JavascriptInterface

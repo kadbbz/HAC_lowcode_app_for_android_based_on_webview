@@ -21,18 +21,20 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public final class OfflineImageFileHelper {
     private static final String ROOT_DIR = "offlinePlus";
     private static final String FILES_DIR = "files";
+    private static final Object FILE_NAME_LOCK = new Object();
+    private static long lastImageFileTimestamp;
+    private static int imageFileSequence;
 
     private OfflineImageFileHelper() {
     }
 
     public static ImageFormItemValue saveImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
         ImageCompressionOptions options = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
-        File outputFile = createOutputFile(context, patternId, item.getId(), options.isEnableCompression() ? "jpg" : getSourceExtension(context, sourceUri));
+        File outputFile = createOutputFile(context, patternId, options.isEnableCompression() ? "jpg" : getSourceExtension(context, sourceUri));
         if (options.isEnableCompression()) {
             Bitmap source = decodeBitmap(context, sourceUri, options.getMaxLongEdge());
             try {
@@ -117,12 +119,26 @@ public final class OfflineImageFileHelper {
         return sampleSize;
     }
 
-    private static File createOutputFile(Context context, String patternId, String fieldId, String extension) {
+    private static File createOutputFile(Context context, String patternId, String extension) {
         File dir = getFilesDir(context, patternId);
         dir.mkdirs();
-        return new File(dir, sanitizePathSegment(patternId) + "_"
-                + sanitizePathSegment(fieldId) + "_"
-                + UUID.randomUUID().toString() + "." + sanitizeExtension(extension));
+        String sanitizedExtension = sanitizeExtension(extension);
+        synchronized (FILE_NAME_LOCK) {
+            while (true) {
+                long timestamp = System.currentTimeMillis();
+                if (timestamp == lastImageFileTimestamp) {
+                    imageFileSequence++;
+                } else {
+                    lastImageFileTimestamp = timestamp;
+                    imageFileSequence = 0;
+                }
+                String suffix = imageFileSequence == 0 ? "" : "_" + imageFileSequence;
+                File file = new File(dir, timestamp + suffix + "." + sanitizedExtension);
+                if (!file.exists()) {
+                    return file;
+                }
+            }
+        }
     }
 
     private static void copySourceToFile(Context context, Uri sourceUri, File outputFile) throws Exception {
