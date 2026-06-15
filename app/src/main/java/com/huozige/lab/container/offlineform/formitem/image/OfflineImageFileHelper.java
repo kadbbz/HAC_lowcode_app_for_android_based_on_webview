@@ -21,12 +21,15 @@ import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkOption
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class OfflineImageFileHelper {
     private static final String ROOT_DIR = "offlinePlus";
     private static final String FILES_DIR = "files";
+    private static final DateTimeFormatter WATERMARK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     private static final Object FILE_NAME_LOCK = new Object();
     private static long lastImageFileTimestamp;
     private static int imageFileSequence;
@@ -284,7 +287,15 @@ public final class OfflineImageFileHelper {
         }
     }
 
-    public static ArrayList<String> buildWatermarkCustomLines(ImageFormItem item) {
+    public static ArrayList<String> buildWatermarkLines(ImageFormItem item) {
+        ArrayList<String> lines = buildWatermarkCustomLines(item);
+        if (isTimestampWatermarkEnabled(item)) {
+            lines.add(LocalDateTime.now().format(WATERMARK_TIME_FORMATTER));
+        }
+        return lines;
+    }
+
+    private static ArrayList<String> buildWatermarkCustomLines(ImageFormItem item) {
         ImageWatermarkOptions watermark = item == null ? null : item.getWatermark();
         ArrayList<String> lines = new ArrayList<>();
         if (watermark == null) {
@@ -301,7 +312,7 @@ public final class OfflineImageFileHelper {
         return lines;
     }
 
-    public static boolean isTimestampWatermarkEnabled(ImageFormItem item) {
+    private static boolean isTimestampWatermarkEnabled(ImageFormItem item) {
         ImageWatermarkOptions watermark = item == null ? null : item.getWatermark();
         return watermark != null && watermark.isEnableTimestamp();
     }

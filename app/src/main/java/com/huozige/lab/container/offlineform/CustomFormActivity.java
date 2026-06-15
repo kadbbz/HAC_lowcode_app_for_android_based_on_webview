@@ -670,8 +670,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _pendingImageCallback = callback;
         Intent cameraIntent = new Intent(this, CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
-        cameraIntent.putStringArrayListExtra(CameraViewActivity.EXTRA_WATERMARK_CUSTOM_LINES, OfflineImageFileHelper.buildWatermarkCustomLines(item));
-        cameraIntent.putExtra(CameraViewActivity.EXTRA_WATERMARK_TIMESTAMP, OfflineImageFileHelper.isTimestampWatermarkEnabled(item));
+        cameraIntent.putStringArrayListExtra(CameraViewActivity.EXTRA_WATERMARK_LINES, OfflineImageFileHelper.buildWatermarkLines(item));
+        cameraIntent.putExtra(CameraViewActivity.EXTRA_CONFIRM_PHOTO, true);
         _imageCaptureLauncher.launch(cameraIntent);
     }
 

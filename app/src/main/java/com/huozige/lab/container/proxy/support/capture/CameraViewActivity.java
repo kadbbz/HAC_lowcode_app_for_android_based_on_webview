@@ -44,9 +44,8 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     public static final String OPERATION_TAKE_VIDEO_SNAPSHOT = "v_snapshot";
 
     public static final String EXTRA_OUT_URI = "data-uri";
-    public static final String EXTRA_WATERMARK_CUSTOM_LINES = "watermark-custom-lines";
-    public static final String EXTRA_WATERMARK_TIMESTAMP = "watermark-timestamp";
-    private static final DateTimeFormatter WATERMARK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    public static final String EXTRA_WATERMARK_LINES = "watermark-lines";
+    public static final String EXTRA_CONFIRM_PHOTO = "confirm-photo";
 
     CameraView camera;
 
@@ -54,9 +53,8 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     View cameraControls, photoConfirmOverlay;
     ImageView photoConfirmPreview;
     File pendingPhotoFile;
-    ArrayList<String> watermarkCustomLines = new ArrayList<>();
-    ArrayList<String> pendingWatermarkLines = new ArrayList<>();
-    boolean watermarkTimestamp;
+    ArrayList<String> watermarkLines = new ArrayList<>();
+    boolean confirmPhoto;
 
     boolean isSnapshot;
 
@@ -106,7 +104,12 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                     XLog.v("照片已保存为：" + imageFile.getPath());
 
-                    showPhotoConfirm(imageFile);
+                    if (confirmPhoto) {
+                        showPhotoConfirm(imageFile);
+                    } else {
+                        applyWatermarkToPhoto(imageFile);
+                        returnTo(imageFile);
+                    }
                 });
 
             }
@@ -173,8 +176,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
     private void showPhotoConfirm(File imageFile) {
         pendingPhotoFile = imageFile;
-        pendingWatermarkLines = buildWatermarkLines();
-        applyWatermarkToPendingPhoto();
+        applyWatermarkToPhoto(pendingPhotoFile);
         cameraControls.setVisibility(View.GONE);
         photoConfirmOverlay.setVisibility(View.VISIBLE);
         Glide.with(photoConfirmPreview)
@@ -188,7 +190,6 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
             pendingPhotoFile.delete();
         }
         pendingPhotoFile = null;
-        pendingWatermarkLines = new ArrayList<>();
         photoConfirmPreview.setImageDrawable(null);
         photoConfirmOverlay.setVisibility(View.GONE);
         cameraControls.setVisibility(View.VISIBLE);
@@ -218,11 +219,11 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                 String op = intentR.getStringExtra(EXTRA_OPERATION);
                 if (op == null) op = OPERATION_TAKE_PHOTO_SNAPSHOT;
-                watermarkCustomLines = intentR.getStringArrayListExtra(EXTRA_WATERMARK_CUSTOM_LINES);
-                if (watermarkCustomLines == null) {
-                    watermarkCustomLines = new ArrayList<>();
+                watermarkLines = intentR.getStringArrayListExtra(EXTRA_WATERMARK_LINES);
+                if (watermarkLines == null) {
+                    watermarkLines = new ArrayList<>();
                 }
-                watermarkTimestamp = intentR.getBooleanExtra(EXTRA_WATERMARK_TIMESTAMP, false);
+                confirmPhoto = intentR.getBooleanExtra(EXTRA_CONFIRM_PHOTO, false);
 
                 // 调整按钮状态
                 boolean isTakingPhoto = op.equalsIgnoreCase(OPERATION_TAKE_PHOTO) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT);
@@ -243,20 +244,12 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
         });
     }
 
-    private ArrayList<String> buildWatermarkLines() {
-        ArrayList<String> lines = new ArrayList<>(watermarkCustomLines);
-        if (watermarkTimestamp) {
-            lines.add(LocalDateTime.now().format(WATERMARK_TIME_FORMATTER));
-        }
-        return lines;
-    }
-
-    private void applyWatermarkToPendingPhoto() {
-        if (pendingWatermarkLines == null || pendingWatermarkLines.isEmpty()) {
+    private void applyWatermarkToPhoto(File photoFile) {
+        if (watermarkLines == null || watermarkLines.isEmpty() || photoFile == null) {
             return;
         }
         try {
-            OfflineImageFileHelper.writeWatermarkToFile(this, Uri.fromFile(pendingPhotoFile), pendingPhotoFile, pendingWatermarkLines);
+            OfflineImageFileHelper.writeWatermarkToFile(this, Uri.fromFile(photoFile), photoFile, watermarkLines);
         } catch (Exception e) {
             XLog.e("照片水印处理失败：%s", e);
         }
