@@ -19,6 +19,9 @@ import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
 import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
+/**
+ * 处理文件上传的表单项。
+ */
 public class FileFormItemHandler implements OfflineFormItemHandler {
     @Override
     public String getType() {

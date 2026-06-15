@@ -12,6 +12,10 @@ import androidx.annotation.Nullable;
 
 import com.huozige.lab.container.R;
 
+/**
+ * 附件上传后显示在附件列表里的icon。
+ * 绘制一个带有文件后缀名的文件图标。
+ */
 public class FileExtensionIconView extends View {
     private final Paint filePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint foldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

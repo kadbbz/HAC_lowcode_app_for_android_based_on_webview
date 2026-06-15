@@ -20,6 +20,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
+import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.io.File;
@@ -229,7 +230,7 @@ public class ImageViewHolder extends BaseViewHolder {
         void bind(ImageFormItemValue image, int position) {
             errorView.setVisibility(View.GONE);
             preview.setVisibility(View.VISIBLE);
-            File imageFile = OfflineImageFileHelper.resolveLocalFile(itemView.getContext(), imageItem.getPatternId(), image);
+            File imageFile = Utils.resolveLocalFile(itemView.getContext(), imageItem.getPatternId(), image == null ? null : image.getFileName());
             if (imageFile != null && imageFile.exists()) {
                 int previewSize = dp(itemView.getContext(), 140);
                 Glide.with(itemView)

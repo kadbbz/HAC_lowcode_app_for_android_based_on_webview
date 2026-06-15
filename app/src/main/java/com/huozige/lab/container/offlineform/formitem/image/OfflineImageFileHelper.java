@@ -17,6 +17,7 @@ import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkField;
 import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkOptions;
+import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,8 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class OfflineImageFileHelper {
-    private static final String ROOT_DIR = "offlinePlus";
-    private static final String FILES_DIR = "files";
+
     private static final DateTimeFormatter WATERMARK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     private static final Object FILE_NAME_LOCK = new Object();
     private static long lastImageFileTimestamp;
@@ -55,7 +55,13 @@ public final class OfflineImageFileHelper {
                 source.recycle();
             }
         } else {
-            copySourceToFile(context, sourceUri, outputFile);
+            Utils.copyUriToFile(
+                    context,
+                    sourceUri,
+                    outputFile,
+                    context.getString(R.string.offline_error_image_read_failed),
+                    0,
+                    null);
         }
 
         return buildValue(outputFile);
@@ -67,27 +73,13 @@ public final class OfflineImageFileHelper {
         return value;
     }
 
-    public static File resolveLocalFile(Context context, String patternId, ImageFormItemValue value) {
-        if (value == null || value.getFileName() == null || value.getFileName().isEmpty()) {
-            return null;
-        }
-        return resolveLocalFile(context, patternId, value.getFileName());
-    }
-
-    public static File resolveLocalFile(Context context, String patternId, String fileName) {
-        if (fileName == null || fileName.isEmpty()) {
-            return null;
-        }
-        return new File(getFilesDir(context, patternId), fileName);
-    }
-
     public static void deleteLocalFile(Context context, String patternId, ImageFormItemValue value) {
-        File file = resolveLocalFile(context, patternId, value);
+        File file = value == null ? null : Utils.resolveLocalFile(context, patternId, value.getFileName());
         deleteFile(file);
     }
 
     public static void deleteLocalFile(Context context, String patternId, String fileName) {
-        File file = resolveLocalFile(context, patternId, fileName);
+        File file = Utils.resolveLocalFile(context, patternId, fileName);
         deleteFile(file);
     }
 
@@ -163,9 +155,9 @@ public final class OfflineImageFileHelper {
     }
 
     private static File createOutputFile(Context context, String patternId, String extension) {
-        File dir = getFilesDir(context, patternId);
+        File dir = Utils.getFilesDir(context, patternId);
         dir.mkdirs();
-        String sanitizedExtension = sanitizeExtension(extension);
+        String sanitizedExtension = Utils.sanitizeExtension(extension, "jpg");
         synchronized (FILE_NAME_LOCK) {
             while (true) {
                 long timestamp = System.currentTimeMillis();
@@ -180,20 +172,6 @@ public final class OfflineImageFileHelper {
                 if (!file.exists()) {
                     return file;
                 }
-            }
-        }
-    }
-
-    private static void copySourceToFile(Context context, Uri sourceUri, File outputFile) throws Exception {
-        try (InputStream input = context.getContentResolver().openInputStream(sourceUri);
-             FileOutputStream output = new FileOutputStream(outputFile)) {
-            if (input == null) {
-                throw new IllegalArgumentException(context.getString(R.string.offline_error_image_read_failed));
-            }
-            byte[] buffer = new byte[8192];
-            int length;
-            while ((length = input.read(buffer)) >= 0) {
-                output.write(buffer, 0, length);
             }
         }
     }
@@ -340,29 +318,9 @@ public final class OfflineImageFileHelper {
         return Math.min(100, Math.max(1, quality));
     }
 
-    private static File getFilesDir(Context context, String patternId) {
-        return new File(context.getExternalFilesDir(null), ROOT_DIR + File.separator
-                + sanitizePathSegment(patternId) + File.separator
-                + FILES_DIR);
-    }
-
     private static String getSourceExtension(Context context, Uri sourceUri) {
         String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(sourceUri));
         return extension == null || extension.isEmpty() ? "jpg" : extension;
     }
 
-    private static String sanitizeExtension(String value) {
-        if (value == null || value.isEmpty()) {
-            return "jpg";
-        }
-        String extension = value.replaceAll("[^a-zA-Z0-9]", "");
-        return extension.isEmpty() ? "jpg" : extension;
-    }
-
-    private static String sanitizePathSegment(String value) {
-        if (value == null || value.isEmpty()) {
-            return "_";
-        }
-        return value.replaceAll("[^a-zA-Z0-9._-]", "_");
-    }
 }

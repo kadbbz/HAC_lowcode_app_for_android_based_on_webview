@@ -1,5 +1,6 @@
 package com.huozige.lab.container.offlineform.formitem.file;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -19,6 +20,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
+import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 import com.huozige.lab.container.utilities.DeviceUtility;
 
@@ -28,6 +30,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * 文件上传控件
+ */
 public class FileViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvRequired;
@@ -94,6 +99,8 @@ public class FileViewHolder extends BaseViewHolder {
         updateErrorState();
     }
 
+    //todo 性能优化
+    @SuppressLint("NotifyDataSetChanged")
     private void renderFiles() {
         fileListAdapter.notifyDataSetChanged();
         setActionButtonEnabled(btnUploadFile, canAddFile(false));
@@ -168,9 +175,9 @@ public class FileViewHolder extends BaseViewHolder {
         }
 
         void bind(Map.Entry<String, String> entry) {
-            fileIconView.setExtension(OfflineFileHelper.getExtension(entry.getKey()));
+            fileIconView.setExtension(Utils.getExtension(entry.getKey()));
             fileNameView.setText(entry.getKey());
-            File file = OfflineFileHelper.resolveLocalFile(itemView.getContext(), fileItem.getPatternId(), entry.getValue());
+            File file = Utils.resolveLocalFile(itemView.getContext(), fileItem.getPatternId(), entry.getValue());
             fileMetaView.setText(buildFileMeta(entry.getKey(), file));
             itemView.setOnClickListener(v -> openFile(entry.getKey(), file));
             deleteButton.setOnClickListener(v -> {
@@ -203,13 +210,13 @@ public class FileViewHolder extends BaseViewHolder {
     }
 
     private String buildFileMeta(String originalName, File file) {
-        String extension = OfflineFileHelper.getExtension(originalName);
+        String extension = Utils.getExtension(originalName);
         String size = file != null && file.exists() ? formatSize(file.length()) : itemView.getContext().getString(R.string.offline_text_file_missing);
         return extension.isEmpty() ? size : extension.toUpperCase() + " · " + size;
     }
 
     private String getMimeType(String fileName) {
-        String extension = OfflineFileHelper.getExtension(fileName);
+        String extension = Utils.getExtension(fileName);
         if (extension.isEmpty()) {
             return "*/*";
         }
@@ -217,6 +224,7 @@ public class FileViewHolder extends BaseViewHolder {
         return mimeType == null || mimeType.isEmpty() ? "*/*" : mimeType;
     }
 
+    @SuppressLint("DefaultLocale")
     private String formatSize(long bytes) {
         if (bytes < 1024) {
             return bytes + " B";

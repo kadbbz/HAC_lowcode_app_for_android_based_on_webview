@@ -15,6 +15,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 
 import java.io.File;
@@ -141,7 +142,7 @@ public class OfflineImagePreviewActivity extends BaseActivityNoActionBar {
             holder.photoView.setRotationTo(rotations.get(position));
             holder.photoView.setScale(1.0f, false);
 
-            File imageFile = OfflineImageFileHelper.resolveLocalFile(
+            File imageFile = Utils.resolveLocalFile(
                     OfflineImagePreviewActivity.this,
                     patternId,
                     fileNames.get(position));

@@ -1,5 +1,7 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
+import static com.huozige.lab.container.offlineform.util.Utils.ROOT_DIR;
+
 import android.content.Context;
 
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionOrder;
@@ -33,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class OfflineFormFileHelper {
-    private static final String ROOT_DIR = "offlinePlus";
+
     private static final String DEFINITION_FILE = "definition.json";
     private static final String ORDER_FILE = "order.json";
     private static final String RECORDS_DIR = "records";

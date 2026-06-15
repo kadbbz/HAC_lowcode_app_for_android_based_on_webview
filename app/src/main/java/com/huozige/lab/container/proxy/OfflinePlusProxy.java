@@ -31,6 +31,7 @@ import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
+import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -166,11 +167,11 @@ public class OfflinePlusProxy extends AbstractProxy{
         }
 
         try {
-            File file = OfflineFileHelper.resolveLocalFile(this.getWebView().getContext(), projectId, localName);
+            File file = Utils.resolveLocalFile(this.getWebView().getContext(), projectId, localName);
             if (file == null || !file.exists() || !file.isFile()) {
                 return "";
             }
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(OfflineFileHelper.getExtension(localName));
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Utils.getExtension(localName));
             if (StringUtils.isNullOrBlank(mimeType)) {
                 mimeType = "application/octet-stream";
             }
