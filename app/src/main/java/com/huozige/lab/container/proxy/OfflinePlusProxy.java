@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -530,7 +532,6 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     private void saveManualPdf(Context context, String patternId, String manualPdfUrl, String currentUrl, ProgressDialog progressDialog) throws IOException {
-        OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
         if (StringUtils.isNullOrBlank(manualPdfUrl)) {
             return;
         }
@@ -572,11 +573,11 @@ public class OfflinePlusProxy extends AbstractProxy{
                 }
             }
 
-            if (!tempFile.renameTo(targetFile)) {
-                throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
-            }
+            Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+            if (tempFile.exists() && !tempFile.delete()) {
+                writeErrorLog("删除离线手册临时文件失败：" + tempFile.getAbsolutePath());
+            }
             throw e;
         } finally {
             if (connection != null) {
