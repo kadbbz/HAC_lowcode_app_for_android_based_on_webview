@@ -12,9 +12,9 @@ import android.net.Uri;
 import android.webkit.MimeTypeMap;
 
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageCompressionOptions;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkField;
 import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkOptions;
 import com.huozige.lab.container.offlineform.util.Utils;
@@ -37,7 +37,7 @@ public final class OfflineImageFileHelper {
     private OfflineImageFileHelper() {
     }
 
-    public static ImageFormItemValue saveImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
+    public static AttachmentFormItemValue saveImage(Context context, String patternId, ImageFormItem item, Uri sourceUri) throws Exception {
         ImageCompressionOptions options = item.getCompression() == null ? new ImageCompressionOptions() : item.getCompression();
         int rotationDegrees = readExifRotationDegrees(context, sourceUri);
         boolean shouldRewriteImage = options.isEnableCompression() || rotationDegrees != 0;
@@ -67,13 +67,13 @@ public final class OfflineImageFileHelper {
         return buildValue(outputFile);
     }
 
-    private static ImageFormItemValue buildValue(File outputFile) {
-        ImageFormItemValue value = new ImageFormItemValue();
+    private static AttachmentFormItemValue buildValue(File outputFile) {
+        AttachmentFormItemValue value = new AttachmentFormItemValue();
         value.setFileName(outputFile.getName());
         return value;
     }
 
-    public static void deleteLocalFile(Context context, String patternId, ImageFormItemValue value) {
+    public static void deleteLocalFile(Context context, String patternId, AttachmentFormItemValue value) {
         File file = value == null ? null : Utils.resolveLocalFile(context, patternId, value.getFileName());
         deleteFile(file);
     }

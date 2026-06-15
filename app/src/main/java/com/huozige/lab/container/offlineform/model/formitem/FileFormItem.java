@@ -35,7 +35,7 @@ public class FileFormItem extends BaseFormItem {
         files = parseFiles(value);
     }
 
-    public void addFile(FileFormItemValue file) {
+    public void addFile(AttachmentFormItemValue file) {
         if (file == null || file.getOriginalName() == null || file.getOriginalName().isEmpty()
                 || file.getFileName() == null || file.getFileName().isEmpty()) {
             return;

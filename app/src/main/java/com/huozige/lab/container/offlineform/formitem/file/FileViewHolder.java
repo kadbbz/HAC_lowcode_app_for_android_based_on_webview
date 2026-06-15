@@ -17,9 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 import com.huozige.lab.container.utilities.DeviceUtility;
@@ -87,11 +87,11 @@ public class FileViewHolder extends BaseViewHolder {
         updateErrorState();
     }
 
-    private void addFiles(List<FileFormItemValue> files) {
+    private void addFiles(List<AttachmentFormItemValue> files) {
         if (files == null || files.isEmpty()) {
             return;
         }
-        for (FileFormItemValue file : files) {
+        for (AttachmentFormItemValue file : files) {
             fileItem.addFile(file);
         }
         fileItem.clearError();

@@ -7,8 +7,8 @@ import android.provider.OpenableColumns;
 import android.webkit.MimeTypeMap;
 
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.utilities.StringUtils;
@@ -25,7 +25,7 @@ public final class OfflineFileHelper {
     private OfflineFileHelper() {
     }
 
-    public static FileFormItemValue saveFile(Context context, String patternId, FileFormItem item, Uri sourceUri) throws Exception {
+    public static AttachmentFormItemValue saveFile(Context context, String patternId, FileFormItem item, Uri sourceUri) throws Exception {
         String originalName = getDisplayName(context, sourceUri);
         FileItemConfig config = item.getFileItemConfig() == null ? new FileItemConfig() : item.getFileItemConfig();
         validateFile(context, sourceUri, originalName, config);
@@ -39,7 +39,7 @@ public final class OfflineFileHelper {
                 config.getMaxFileSizeKb(),
                 context.getString(R.string.offline_error_file_size));
 
-        FileFormItemValue value = new FileFormItemValue();
+        AttachmentFormItemValue value = new AttachmentFormItemValue();
         value.setOriginalName(originalName);
         value.setFileName(outputFile.getName());
         return value;

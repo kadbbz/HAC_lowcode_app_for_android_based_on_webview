@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ImageFormItemValue {
+public class AttachmentFormItemValue {
+    private String originalName;
     private String fileName;
 }

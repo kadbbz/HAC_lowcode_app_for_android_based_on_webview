@@ -15,10 +15,10 @@ import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 
 import org.json.JSONObject;
 
@@ -207,7 +207,7 @@ public class OfflineFormFileHelper {
         for (Map.Entry<String, String> entry : attachmentFieldTypes.entrySet()) {
             String rawValue = record.getValues().get(entry.getKey());
             if (OfflineFormItemType.IMAGE.getValue().equals(entry.getValue())) {
-                for (ImageFormItemValue image : ImageFormItem.parseImages(rawValue)) {
+                for (AttachmentFormItemValue image : ImageFormItem.parseImages(rawValue)) {
                     OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
                 }
             } else if (OfflineFormItemType.FILE.getValue().equals(entry.getValue())) {

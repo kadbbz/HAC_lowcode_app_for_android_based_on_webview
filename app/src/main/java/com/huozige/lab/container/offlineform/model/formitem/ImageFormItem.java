@@ -19,7 +19,7 @@ public class ImageFormItem extends BaseFormItem {
     private boolean allowImageUpload;
     private ImageCompressionOptions compression = new ImageCompressionOptions();
     private ImageWatermarkOptions watermark = new ImageWatermarkOptions();
-    private List<ImageFormItemValue> images = new ArrayList<>();
+    private List<AttachmentFormItemValue> images = new ArrayList<>();
     private String patternId = "";
 
     public ImageFormItem(String itemType, String id, String title, String hint, boolean required) {
@@ -30,7 +30,7 @@ public class ImageFormItem extends BaseFormItem {
     public String getValue() {
         List<String> fileNames = new ArrayList<>();
         if (images != null) {
-            for (ImageFormItemValue image : images) {
+            for (AttachmentFormItemValue image : images) {
                 if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
                     fileNames.add(image.getFileName());
                 }
@@ -48,14 +48,14 @@ public class ImageFormItem extends BaseFormItem {
         images = parseImages(value);
     }
 
-    public void addImage(ImageFormItemValue image) {
+    public void addImage(AttachmentFormItemValue image) {
         if (images == null) {
             images = new ArrayList<>();
         }
         images.add(image);
     }
 
-    public void removeImage(ImageFormItemValue image) {
+    public void removeImage(AttachmentFormItemValue image) {
         if (images != null) {
             images.remove(image);
         }
@@ -68,7 +68,7 @@ public class ImageFormItem extends BaseFormItem {
         }
         for (String fileName : fileNames) {
             if (fileName != null && !fileName.isEmpty()) {
-                ImageFormItemValue image = new ImageFormItemValue();
+                AttachmentFormItemValue image = new AttachmentFormItemValue();
                 image.setFileName(fileName);
                 images.add(image);
             }
@@ -94,8 +94,8 @@ public class ImageFormItem extends BaseFormItem {
         setErrorMessage(null);
     }
 
-    public static List<ImageFormItemValue> parseImages(String value) {
-        List<ImageFormItemValue> result = new ArrayList<>();
+    public static List<AttachmentFormItemValue> parseImages(String value) {
+        List<AttachmentFormItemValue> result = new ArrayList<>();
         if (StringUtils.isNullOrBlank(value)) {
             return result;
         }
@@ -104,7 +104,7 @@ public class ImageFormItem extends BaseFormItem {
             for (int i = 0; i < array.size(); i++) {
                 String fileName = array.getString(i);
                 if (fileName != null && !fileName.isEmpty()) {
-                    ImageFormItemValue image = new ImageFormItemValue();
+                    AttachmentFormItemValue image = new AttachmentFormItemValue();
                     image.setFileName(fileName);
                     result.add(image);
                 }

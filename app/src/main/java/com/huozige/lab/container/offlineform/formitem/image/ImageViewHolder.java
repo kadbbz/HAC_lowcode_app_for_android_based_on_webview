@@ -17,9 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
@@ -66,7 +66,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION || imageItem == null) {
                     return false;
                 }
-                ImageFormItemValue movedImage = imageItem.getImages().remove(from);
+                AttachmentFormItemValue movedImage = imageItem.getImages().remove(from);
                 imageItem.getImages().add(to, movedImage);
                 imageListAdapter.notifyItemMoved(from, to);
                 return true;
@@ -127,11 +127,11 @@ public class ImageViewHolder extends BaseViewHolder {
         updateErrorState();
     }
 
-    private void addImages(List<ImageFormItemValue> images) {
+    private void addImages(List<AttachmentFormItemValue> images) {
         if (images == null || images.isEmpty()) {
             return;
         }
-        for (ImageFormItemValue image : images) {
+        for (AttachmentFormItemValue image : images) {
             imageItem.addImage(image);
         }
         imageItem.clearError();
@@ -175,7 +175,7 @@ public class ImageViewHolder extends BaseViewHolder {
         ArrayList<String> fileNames = new ArrayList<>();
         int previewIndex = 0;
         for (int i = 0; i < imageItem.getImages().size(); i++) {
-            ImageFormItemValue image = imageItem.getImages().get(i);
+            AttachmentFormItemValue image = imageItem.getImages().get(i);
             if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
                 if (i < index) {
                     previewIndex++;
@@ -227,7 +227,7 @@ public class ImageViewHolder extends BaseViewHolder {
             deleteButton = itemView.findViewById(R.id.deleteImageButton);
         }
 
-        void bind(ImageFormItemValue image, int position) {
+        void bind(AttachmentFormItemValue image, int position) {
             errorView.setVisibility(View.GONE);
             preview.setVisibility(View.VISIBLE);
             File imageFile = Utils.resolveLocalFile(itemView.getContext(), imageItem.getPatternId(), image == null ? null : image.getFileName());
@@ -253,7 +253,7 @@ public class ImageViewHolder extends BaseViewHolder {
                 if (currentPosition == RecyclerView.NO_POSITION) {
                     return;
                 }
-                ImageFormItemValue currentImage = imageItem.getImages().get(currentPosition);
+                AttachmentFormItemValue currentImage = imageItem.getImages().get(currentPosition);
                 OfflineImageFileHelper.deleteLocalFile(itemView.getContext(), imageItem.getPatternId(), currentImage);
                 imageItem.removeImage(currentImage);
                 renderImages();

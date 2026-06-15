@@ -30,7 +30,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexIte
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -238,9 +238,9 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     private void addImageAttachments(JSONArray attachments, String recordId, String fieldId, String rawValue) {
-        List<ImageFormItemValue> images = ImageFormItem.parseImages(rawValue);
+        List<AttachmentFormItemValue> images = ImageFormItem.parseImages(rawValue);
         for (int i = 0; i < images.size(); i++) {
-            ImageFormItemValue image = images.get(i);
+            AttachmentFormItemValue image = images.get(i);
             if (image == null || StringUtils.isNullOrBlank(image.getFileName())) {
                 continue;
             }

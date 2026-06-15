@@ -29,10 +29,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.formitem.file.FileUploadCallback;
+import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
 import com.huozige.lab.container.offlineform.formitem.file.FileUploadHost;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
-import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureCallback;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureHost;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImagePreviewActivity;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
@@ -44,11 +43,10 @@ import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
@@ -88,9 +86,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ActivityResultLauncher<Intent> _imagePreviewLauncher;
     private ActivityResultLauncher<String[]> _fileUploadLauncher;
     private ImageFormItem _pendingImageItem;
-    private ImageCaptureCallback _pendingImageCallback;
+    private AttachmentCallback _pendingImageCallback;
     private FileFormItem _pendingFileItem;
-    private FileUploadCallback _pendingFileCallback;
+    private AttachmentCallback _pendingFileCallback;
 
 
     @Override
@@ -150,9 +148,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                List<ImageFormItemValue> images = new ArrayList<>();
+                List<AttachmentFormItemValue> images = new ArrayList<>();
                 images.add(OfflineImageFileHelper.saveImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
-                _pendingImageCallback.onImagesCaptured(images);
+                _pendingImageCallback.onAttachmentsSelected(images);
                 saveDraftIfNeeded();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -172,7 +170,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                List<ImageFormItemValue> images = new ArrayList<>();
+                List<AttachmentFormItemValue> images = new ArrayList<>();
                 int remainingCount = getRemainingImageCount(_pendingImageItem);
                 for (Uri uri : uris) {
                     if (images.size() >= remainingCount) {
@@ -180,7 +178,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                     }
                     images.add(OfflineImageFileHelper.saveImage(this, draft.getPatternId(), _pendingImageItem, uri));
                 }
-                _pendingImageCallback.onImagesCaptured(images);
+                _pendingImageCallback.onAttachmentsSelected(images);
                 if (uris.size() > images.size()) {
                     Toast.makeText(this, getString(R.string.offline_toast_image_max_count_reached, _pendingImageItem.getMaxCount()), Toast.LENGTH_SHORT).show();
                 }
@@ -221,7 +219,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
             try {
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                List<FileFormItemValue> files = new ArrayList<>();
+                List<AttachmentFormItemValue> files = new ArrayList<>();
                 int remainingCount = getRemainingFileCount(_pendingFileItem);
                 for (Uri uri : uris) {
                     if (files.size() >= remainingCount) {
@@ -234,7 +232,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                     }
                     files.add(OfflineFileHelper.saveFile(this, draft.getPatternId(), _pendingFileItem, uri));
                 }
-                _pendingFileCallback.onFilesUploaded(files);
+                _pendingFileCallback.onAttachmentsSelected(files);
                 if (uris.size() > files.size()) {
                     Toast.makeText(this, R.string.offline_toast_file_upload_partial, Toast.LENGTH_SHORT).show();
                 }
@@ -665,7 +663,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     @Override
-    public void captureImage(ImageFormItem item, ImageCaptureCallback callback) {
+    public void captureImage(ImageFormItem item, AttachmentCallback callback) {
         _pendingImageItem = item;
         _pendingImageCallback = callback;
         Intent cameraIntent = new Intent(this, CameraViewActivity.class);
@@ -676,7 +674,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     @Override
-    public void uploadImage(ImageFormItem item, ImageCaptureCallback callback) {
+    public void uploadImage(ImageFormItem item, AttachmentCallback callback) {
         _pendingImageItem = item;
         _pendingImageCallback = callback;
         _imageUploadLauncher.launch("image/*");
@@ -694,7 +692,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     @Override
-    public void uploadFile(FileFormItem item, FileUploadCallback callback) {
+    public void uploadFile(FileFormItem item, AttachmentCallback callback) {
         _pendingFileItem = item;
         _pendingFileCallback = callback;
         _fileUploadLauncher.launch(OfflineFileHelper.buildMimeTypes(item.getFileItemConfig()));
@@ -720,11 +718,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return Math.max(0, maxCount - item.getFiles().size());
     }
 
-    private boolean containsOriginalName(List<FileFormItemValue> files, String originalName) {
+    private boolean containsOriginalName(List<AttachmentFormItemValue> files, String originalName) {
         if (files == null) {
             return false;
         }
-        for (FileFormItemValue file : files) {
+        for (AttachmentFormItemValue file : files) {
             if (file != null && originalName.equals(file.getOriginalName())) {
                 return true;
             }

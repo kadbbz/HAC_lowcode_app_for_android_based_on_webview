@@ -13,11 +13,11 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
+import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
 import com.huozige.lab.container.offlineform.model.formitem.ImageCompressionOptions;
 import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkOptions;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
@@ -81,7 +81,7 @@ public class ImageFormItemHandler implements OfflineFormItemHandler {
 
     @Override
     public View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
-        List<ImageFormItemValue> images = ImageFormItem.parseImages(rawValue);
+        List<AttachmentFormItemValue> images = ImageFormItem.parseImages(rawValue);
         return ReadOnlyFormItemViews.createCompactValueView(context, images.isEmpty() ? "" : context.getString(R.string.offline_text_image_count, images.size()));
     }
 
