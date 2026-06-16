@@ -24,7 +24,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 import com.huozige.lab.container.utilities.DeviceUtility;
 

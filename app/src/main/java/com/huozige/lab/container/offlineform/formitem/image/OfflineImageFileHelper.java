@@ -12,11 +12,11 @@ import android.net.Uri;
 import android.webkit.MimeTypeMap;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
-import com.huozige.lab.container.offlineform.model.formitem.ImageCompressionOptions;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkField;
-import com.huozige.lab.container.offlineform.model.formitem.ImageWatermarkOptions;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageCompressionOptions;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageWatermarkField;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageWatermarkOptions;
 import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.File;

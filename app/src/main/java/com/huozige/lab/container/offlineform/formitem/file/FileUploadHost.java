@@ -1,7 +1,7 @@
 package com.huozige.lab.container.offlineform.formitem.file;
 
 import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 
 /**
  * 文件上传回调。

@@ -1,6 +1,6 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonHelper;
@@ -10,144 +10,116 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class OfflineFormJsonSerializer {
-    private static final String FIELD_JSON_SCHEMA = "jsonSchema";
-    private static final String FIELD_COMPUTED = "computed";
-    private static final String FIELD_THEME = "theme";
-    private static final String FIELD_DISPLAY_COLUMNS = "displayColumns";
-    private static final String FIELD_RECORD_PAGE_SIZE = "recordPageSize";
-    private static final String FIELD_PATTERN_ID = "patternId";
-    private static final String FIELD_SCHEMA_VERSION = "schemaVersion";
-    private static final String FIELD_TITLE = "title";
-    private static final String FIELD_DESCRIPTION = "description";
-    private static final String FIELD_STEPS = "steps";
-    private static final String FIELD_STEP_ID = "stepId";
-    private static final String FIELD_ITEMS = "items";
-    private static final String FIELD_NODE_TYPE = "nodeType";
-    private static final String FIELD_CONTENT = "content";
-    private static final String FIELD_DEFAULT_COLLAPSED = "defaultCollapsed";
-    private static final String FIELD_CHILDREN = "children";
-    private static final String FIELD_FIELD = "field";
-
     static JSONObject prepareDefinitionFileForJson(OfflineFormDefinitionFile definitionFile) {
         OfflineFormDefinition definition = definitionFile.getJsonSchema();
 
-        JSONObject jsonSchema = new JSONObject();
-        jsonSchema.put(FIELD_PATTERN_ID, definition.getPatternId());
-        jsonSchema.put(FIELD_SCHEMA_VERSION, definition.getSchemaVersion());
-        jsonSchema.put(FIELD_TITLE, definition.getTitle());
-        jsonSchema.put(FIELD_DESCRIPTION, definition.getDescription());
-
-        jsonSchema.put(FIELD_STEPS, buildStepsJson(definition.getSteps()));
-
-        OfflineComputedInfo computed = definitionFile.getComputed();
-        JSONObject computedJson = new JSONObject();
-        computedJson.put(FIELD_THEME, computed.getTheme());
-        computedJson.put(FIELD_DISPLAY_COLUMNS, computed.getDisplayColumns());
-        computedJson.put(FIELD_RECORD_PAGE_SIZE, computed.getRecordPageSize());
-
-        JSONObject definitionJson = new JSONObject();
-        definitionJson.put(FIELD_JSON_SCHEMA, jsonSchema);
-        definitionJson.put(FIELD_COMPUTED, computedJson);
-        return definitionJson;
+        DefinitionFileJson definitionJson = new DefinitionFileJson();
+        definitionJson.jsonSchema.patternId = definition.getPatternId();
+        definitionJson.jsonSchema.schemaVersion = definition.getSchemaVersion();
+        definitionJson.jsonSchema.title = definition.getTitle();
+        definitionJson.jsonSchema.description = definition.getDescription();
+        definitionJson.jsonSchema.steps = buildStepJsonList(definition.getSteps());
+        definitionJson.computed = definitionFile.getComputed();
+        return (JSONObject) JSON.toJSON(definitionJson);
     }
 
     static OfflineFormDefinitionFile restoreDefinitionFileFromJson(JSONObject definitionFileJson) {
-        JSONObject jsonSchema = definitionFileJson.getJSONObject(FIELD_JSON_SCHEMA);
-        JSONArray stepsJson = jsonSchema.getJSONArray(FIELD_STEPS);
-        jsonSchema.remove(FIELD_STEPS);
+        DefinitionFileJson definitionJson = definitionFileJson.toJavaObject(DefinitionFileJson.class);
 
-        OfflineFormDefinitionFile definitionFile = definitionFileJson.toJavaObject(OfflineFormDefinitionFile.class);
-        OfflineFormDefinition definition = jsonSchema.toJavaObject(OfflineFormDefinition.class);
-        definition.setSteps(parseJsonToSteps(stepsJson));
+        OfflineFormDefinitionFile definitionFile = new OfflineFormDefinitionFile();
+        definitionFile.setComputed(definitionJson.computed == null ? new OfflineComputedInfo() : definitionJson.computed);
+
+        OfflineFormDefinition definition = new OfflineFormDefinition();
+        if (definitionJson.jsonSchema != null) {
+            definition.setPatternId(definitionJson.jsonSchema.patternId);
+            definition.setSchemaVersion(definitionJson.jsonSchema.schemaVersion);
+            definition.setTitle(definitionJson.jsonSchema.title);
+            definition.setDescription(definitionJson.jsonSchema.description);
+            definition.setSteps(parseStepJsonList(definitionJson.jsonSchema.steps));
+        }
         definitionFile.setJsonSchema(definition);
         return definitionFile;
     }
 
-    private static JSONArray buildStepsJson(List<OfflineFormStep> steps) {
-        JSONArray stepsJson = new JSONArray();
+    private static List<StepJson> buildStepJsonList(List<OfflineFormStep> steps) {
+        List<StepJson> stepsJson = new ArrayList<>();
         if (steps == null) {
             return stepsJson;
         }
 
         for (OfflineFormStep step : steps) {
-            JSONObject stepJson = new JSONObject();
-            stepJson.put(FIELD_STEP_ID, step.getStepId());
-            stepJson.put(FIELD_TITLE, step.getTitle());
-            stepJson.put(FIELD_ITEMS, buildNodesJson(step.getItems()));
+            StepJson stepJson = new StepJson();
+            stepJson.stepId = step.getStepId();
+            stepJson.title = step.getTitle();
+            stepJson.items = buildNodeJsonList(step.getItems());
             stepsJson.add(stepJson);
         }
         return stepsJson;
     }
 
-    private static JSONArray buildNodesJson(List<OfflineFormNode> nodes) {
-        JSONArray nodesJson = new JSONArray();
+    private static List<NodeJson> buildNodeJsonList(List<OfflineFormNode> nodes) {
+        List<NodeJson> nodesJson = new ArrayList<>();
         if (nodes == null) {
             return nodesJson;
         }
 
         for (OfflineFormNode node : nodes) {
-            JSONObject nodeJson = new JSONObject();
-            nodeJson.put(FIELD_NODE_TYPE, node.getNodeType());
+            NodeJson nodeJson = new NodeJson();
+            nodeJson.nodeType = node.getNodeType();
+            nodeJson.title = node.getTitle();
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
-                nodeJson.put(FIELD_TITLE, node.getTitle());
-                nodeJson.put(FIELD_FIELD, OfflineFormItemRegistry.toJson(node.getField()));
+                nodeJson.field = OfflineFormItemRegistry.toJson(node.getField());
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
-                nodeJson.put(FIELD_TITLE, node.getTitle());
-                nodeJson.put(FIELD_CONTENT, node.getContent());
+                nodeJson.content = node.getContent();
             } else {
-                nodeJson.put(FIELD_TITLE, node.getTitle());
-                nodeJson.put(FIELD_DEFAULT_COLLAPSED, node.isDefaultCollapsed());
-                nodeJson.put(FIELD_CHILDREN, buildNodesJson(node.getChildren()));
+                nodeJson.defaultCollapsed = node.isDefaultCollapsed();
+                nodeJson.children = buildNodeJsonList(node.getChildren());
             }
             nodesJson.add(nodeJson);
         }
         return nodesJson;
     }
 
-    private static List<OfflineFormStep> parseJsonToSteps(JSONArray jsonArray) {
+    private static List<OfflineFormStep> parseStepJsonList(List<StepJson> jsonArray) {
         List<OfflineFormStep> steps = new ArrayList<>();
         if (jsonArray == null) {
             return steps;
         }
 
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject stepJson = jsonArray.getJSONObject(i);
+        for (StepJson stepJson : jsonArray) {
             OfflineFormStep step = new OfflineFormStep();
-            step.setStepId(stepJson.getString(FIELD_STEP_ID));
-            step.setTitle(stepJson.getString(FIELD_TITLE));
-            step.setItems(parseJsonToNodes(stepJson.getJSONArray(FIELD_ITEMS)));
+            step.setStepId(stepJson.stepId);
+            step.setTitle(stepJson.title);
+            step.setItems(parseNodeJsonList(stepJson.items));
             steps.add(step);
         }
         return steps;
     }
 
-    private static List<OfflineFormNode> parseJsonToNodes(JSONArray jsonArray) {
+    private static List<OfflineFormNode> parseNodeJsonList(List<NodeJson> jsonArray) {
         List<OfflineFormNode> nodes = new ArrayList<>();
         if (jsonArray == null) {
             return nodes;
         }
 
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject nodeJson = jsonArray.getJSONObject(i);
+        for (NodeJson nodeJson : jsonArray) {
             OfflineFormNode node = new OfflineFormNode();
-            node.setNodeType(nodeJson.getString(FIELD_NODE_TYPE));
+            node.setNodeType(nodeJson.nodeType);
+            node.setTitle(nodeJson.title);
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
-                node.setTitle(nodeJson.getString(FIELD_TITLE));
-                node.setField(OfflineFormItemRegistry.fromInput(buildInputFromJson(nodeJson.getJSONObject(FIELD_FIELD))));
+                node.setField(OfflineFormItemRegistry.fromInput(buildInputFromJson(nodeJson.field)));
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
-                node.setTitle(nodeJson.getString(FIELD_TITLE));
-                node.setContent(nodeJson.getString(FIELD_CONTENT));
+                node.setContent(nodeJson.content);
             } else {
-                node.setTitle(nodeJson.getString(FIELD_TITLE));
-                node.setDefaultCollapsed(nodeJson.getBooleanValue(FIELD_DEFAULT_COLLAPSED));
-                node.setChildren(parseJsonToNodes(nodeJson.getJSONArray(FIELD_CHILDREN)));
+                node.setDefaultCollapsed(nodeJson.defaultCollapsed);
+                node.setChildren(parseNodeJsonList(nodeJson.children));
             }
             nodes.add(node);
         }
@@ -158,8 +130,39 @@ class OfflineFormJsonSerializer {
         FormItemInput input = OfflineFormItemJsonHelper.buildBaseInput(jsonObject);
         JSONObject options = jsonObject.getJSONObject(OfflineFormItemJsonKeys.FIELD_OPTIONS);
         if (options != null) {
-            OfflineFormItemRegistry.getHandler(input.itemType).readInputOptions(options, input);
+            Class<?> optionsClass = OfflineFormItemRegistry.getOptionsClass(input.itemType);
+            if (optionsClass != null) {
+                input.options = options.toJavaObject(optionsClass);
+            }
         }
         return input;
+    }
+
+    private static class DefinitionFileJson {
+        public DefinitionJson jsonSchema = new DefinitionJson();
+        public OfflineComputedInfo computed = new OfflineComputedInfo();
+    }
+
+    private static class DefinitionJson {
+        public String patternId = "";
+        public String schemaVersion = "";
+        public String title = "";
+        public String description = "";
+        public List<StepJson> steps = new ArrayList<>();
+    }
+
+    private static class StepJson {
+        public String stepId = "";
+        public String title = "";
+        public List<NodeJson> items = new ArrayList<>();
+    }
+
+    private static class NodeJson {
+        public String nodeType = OfflineFormNode.TYPE_GROUP;
+        public String title = "";
+        public String content = "";
+        public boolean defaultCollapsed;
+        public JSONObject field;
+        public List<NodeJson> children = new ArrayList<>();
     }
 }

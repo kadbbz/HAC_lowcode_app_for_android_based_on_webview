@@ -1,8 +1,8 @@
 <resources>
     <string name="offline_title_project_list">表单列表</string>
     <string name="offline_title_project_record">填报记录</string>
-    <string name="offline_title_record_history">历史填报记录</string>
-    <string name="offline_title_exported_records">已导出记录</string>
+    <string name="offline_title_record_history">离线待上传记录</string>
+    <string name="offline_title_exported_records">已导出记录（只读）</string>
     <string name="offline_title_exported_record_detail">已导出记录详情</string>
     <string name="offline_title_new">填报新单</string>
     <string name="offline_title_draft_record">草稿</string>
@@ -14,6 +14,7 @@
     <string name="offline_button_edit">编辑</string>
     <string name="offline_button_more">⋮</string>
     <string name="offline_button_delete">删除</string>
+    <string name="offline_button_view_detail">查看详情</string>
     <string name="offline_button_save">保存</string>
     <string name="offline_button_previous_item">上一项</string>
     <string name="offline_button_next_item">下一项</string>
@@ -67,7 +68,7 @@
     <string name="offline_menu_config_manage">配置管理</string>
     <string name="offline_menu_config_detail">表单配置详情</string>
     <string name="offline_menu_delete_config">删除表单配置</string>
-    <string name="offline_text_no_records">暂无历史填报记录</string>
+    <string name="offline_text_no_records">暂无离线填报记录</string>
     <string name="offline_text_reach_bottom">到底了</string>
     <string name="offline_text_unknown_record_time">未知填报时间</string>
     <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>

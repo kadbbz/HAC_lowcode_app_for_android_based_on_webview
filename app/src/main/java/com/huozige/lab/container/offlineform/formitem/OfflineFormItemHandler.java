@@ -5,8 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 public interface OfflineFormItemHandler {
@@ -26,9 +26,9 @@ public interface OfflineFormItemHandler {
     BaseFormItem fromInput(FormItemInput input);
 
     /**
-     * 将本地 definition.json 中该类型专属的 options 写回统一输入模型。
+     * 返回本地 definition.json 中该类型专属 options 对应的数据模型。
      */
-    void readInputOptions(JSONObject options, FormItemInput input);
+    Class<?> getOptionsClass();
 
     /**
      * 将 APP 内部表单项模型转换成本地 definition.json 中保存的 JSON。

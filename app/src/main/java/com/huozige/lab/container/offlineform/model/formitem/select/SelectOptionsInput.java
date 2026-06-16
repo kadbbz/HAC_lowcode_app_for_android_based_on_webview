@@ -1,4 +1,4 @@
-package com.huozige.lab.container.offlineform.model.formitem;
+package com.huozige.lab.container.offlineform.model.formitem.select;
 
 import lombok.Data;
 

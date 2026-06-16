@@ -4,7 +4,7 @@ import android.view.View;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 
 public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 

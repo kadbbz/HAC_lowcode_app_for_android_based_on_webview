@@ -1,6 +1,7 @@
 package com.huozige.lab.container.offlineform;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -22,7 +23,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattene
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 public class OfflineRecordTableView {
     private static final int MENU_ID_RECORD_EDIT = 1;
     private static final int MENU_ID_RECORD_DELETE = 2;
+    private static final int MENU_ID_RECORD_VIEW = 3;
     private static final int[] RECORD_PAGE_SIZE_OPTIONS = new int[]{1, 10, 20, 50, 100};
 
     private final Context _context;
@@ -106,7 +108,7 @@ public class OfflineRecordTableView {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         cardParams.setMargins(0, dp(_context, 4), 0, dp(_context, 8));
         cardView.setLayoutParams(cardParams);
-        cardView.setCardBackgroundColor(ContextCompat.getColor(_context, android.R.color.white));
+        cardView.setCardBackgroundColor(_editable ? ContextCompat.getColor(_context, android.R.color.white) : Color.rgb(245, 246, 248));
         cardView.setRadius(dp(_context, 8));
         cardView.setCardElevation(dp(_context, 2));
         cardView.setUseCompatPadding(true);
@@ -336,11 +338,17 @@ public class OfflineRecordTableView {
         PopupMenu popupMenu = new PopupMenu(_context, anchor);
         if (_editable) {
             popupMenu.getMenu().add(0, MENU_ID_RECORD_EDIT, MENU_ID_RECORD_EDIT, R.string.offline_button_edit);
+        } else {
+            popupMenu.getMenu().add(0, MENU_ID_RECORD_VIEW, MENU_ID_RECORD_VIEW, R.string.offline_button_view_detail);
         }
         popupMenu.getMenu().add(0, MENU_ID_RECORD_DELETE, MENU_ID_RECORD_DELETE, R.string.offline_button_delete);
         popupMenu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == MENU_ID_RECORD_EDIT) {
                 _callback.onEditRecord(record, currentSchemaVersion);
+                return true;
+            }
+            if (item.getItemId() == MENU_ID_RECORD_VIEW) {
+                _callback.onViewRecord(record);
                 return true;
             }
             if (item.getItemId() == MENU_ID_RECORD_DELETE) {

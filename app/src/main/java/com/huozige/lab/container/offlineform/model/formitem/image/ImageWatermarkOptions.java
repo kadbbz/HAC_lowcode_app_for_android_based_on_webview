@@ -1,4 +1,4 @@
-package com.huozige.lab.container.offlineform.model.formitem;
+package com.huozige.lab.container.offlineform.model.formitem.image;
 
 import java.util.ArrayList;
 import java.util.List;

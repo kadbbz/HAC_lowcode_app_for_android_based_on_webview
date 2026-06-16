@@ -1,8 +1,8 @@
 package com.huozige.lab.container.offlineform.formitem;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 
 public final class OfflineFormItemJsonHelper {
     private OfflineFormItemJsonHelper() {

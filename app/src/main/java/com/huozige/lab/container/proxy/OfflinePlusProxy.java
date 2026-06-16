@@ -27,10 +27,10 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattene
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -228,43 +228,39 @@ public class OfflinePlusProxy extends AbstractProxy{
                 String fieldType = entry.getValue();
                 String rawValue = record.getValues().get(fieldId);
                 if (OfflineFormItemType.IMAGE.getValue().equals(fieldType)) {
-                    addImageAttachments(attachments, record.getRecordId(), fieldId, rawValue);
+                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
                 } else if (OfflineFormItemType.FILE.getValue().equals(fieldType)) {
-                    addFileAttachments(attachments, record.getRecordId(), fieldId, rawValue);
+                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
                 }
             }
         }
         return attachments;
     }
 
-    private void addImageAttachments(JSONArray attachments, String recordId, String fieldId, String rawValue) {
-        List<AttachmentFormItemValue> images = ImageFormItem.parseImages(rawValue);
-        for (int i = 0; i < images.size(); i++) {
-            AttachmentFormItemValue image = images.get(i);
-            if (image == null || StringUtils.isNullOrBlank(image.getFileName())) {
+    private void addAttachments(JSONArray attachments, String recordId, String fieldId, String fieldType, String rawValue) {
+        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
+        List<AttachmentFormItemValue> attachmentValues = imageField ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
+        for (int i = 0; i < attachmentValues.size(); i++) {
+            AttachmentFormItemValue attachmentValue = attachmentValues.get(i);
+            if (attachmentValue == null) {
+                continue;
+            }
+            String originalName = attachmentValue.getOriginalName();
+            String localName = attachmentValue.getFileName();
+            if (StringUtils.isNullOrBlank(localName) || !imageField && StringUtils.isNullOrBlank(originalName)) {
                 continue;
             }
 
             com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
-            attachment.put("path", buildAttachmentPath(recordId, fieldId, String.valueOf(i)));
-            attachment.put("type", "image");
-            attachment.put("localName", image.getFileName());
-            attachments.add(attachment);
-        }
-    }
-
-    private void addFileAttachments(JSONArray attachments, String recordId, String fieldId, String rawValue) {
-        for (Map.Entry<String, String> entry : FileFormItem.parseFiles(rawValue).entrySet()) {
-            String originalName = entry.getKey();
-            String localName = entry.getValue();
-            if (StringUtils.isNullOrBlank(originalName) || StringUtils.isNullOrBlank(localName)) {
-                continue;
-            }
-
-            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
-            attachment.put("path", buildAttachmentPath(recordId, fieldId, originalName));
-            attachment.put("type", "file");
+            attachment.put("path", buildAttachmentPath(recordId, fieldId, imageField ? String.valueOf(i) : originalName));
+            attachment.put("type", imageField ? "image" : "file");
             attachment.put("localName", localName);
+            attachment.put("recordId", recordId);
+            attachment.put("fieldId", fieldId);
+            if (!StringUtils.isNullOrBlank(originalName)) {
+                attachment.put("originalName", originalName);
+            }
+            attachment.put("fileName", localName);
             attachments.add(attachment);
         }
     }

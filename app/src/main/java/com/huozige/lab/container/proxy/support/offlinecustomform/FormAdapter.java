@@ -21,7 +21,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;

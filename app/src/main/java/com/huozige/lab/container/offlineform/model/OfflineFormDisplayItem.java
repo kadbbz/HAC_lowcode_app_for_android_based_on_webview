@@ -1,6 +1,6 @@
 package com.huozige.lab.container.offlineform.model;
 
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 
 /**
  * 表单渲染用的扁平节点。

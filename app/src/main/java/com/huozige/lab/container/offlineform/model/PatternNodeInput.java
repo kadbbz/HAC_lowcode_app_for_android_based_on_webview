@@ -1,6 +1,6 @@
 package com.huozige.lab.container.offlineform.model;
 
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
@@ -14,10 +13,11 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
-import com.huozige.lab.container.offlineform.model.formitem.SelectFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.SelectOptionsInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItemOptions;
+import com.huozige.lab.container.offlineform.model.formitem.select.SelectOptionsInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 public class SelectFormItemHandler implements OfflineFormItemHandler {
@@ -34,8 +34,9 @@ public class SelectFormItemHandler implements OfflineFormItemHandler {
     @Override
     public BaseFormItem fromInput(FormItemInput input) {
         SelectFormItem item = new SelectFormItem(getType(), input.itemId, input.title, input.hint, input.required);
-        if (input.selectOptionsList != null) {
-            for (SelectOptionsInput option : input.selectOptionsList) {
+        SelectFormItemOptions options = (SelectFormItemOptions) input.options;
+        if (options != null && options.getSelectOptions() != null) {
+            for (SelectOptionsInput option : options.getSelectOptions()) {
                 item.addOption(option.value, option.label);
             }
         }
@@ -46,19 +47,8 @@ public class SelectFormItemHandler implements OfflineFormItemHandler {
     }
 
     @Override
-    public void readInputOptions(JSONObject options, FormItemInput input) {
-        JSONArray selectOptions = options.getJSONArray(OfflineFormItemJsonKeys.FIELD_SELECT_OPTIONS);
-        if (selectOptions == null) {
-            return;
-        }
-
-        for (int i = 0; i < selectOptions.size(); i++) {
-            JSONObject optionJson = selectOptions.getJSONObject(i);
-            SelectOptionsInput option = new SelectOptionsInput();
-            option.value = optionJson.getString(OfflineFormItemJsonKeys.FIELD_VALUE);
-            option.label = optionJson.getString(OfflineFormItemJsonKeys.FIELD_LABEL);
-            input.selectOptionsList.add(option);
-        }
+    public Class<?> getOptionsClass() {
+        return SelectFormItemOptions.class;
     }
 
     @Override
@@ -93,15 +83,13 @@ public class SelectFormItemHandler implements OfflineFormItemHandler {
     }
 
     private JSONObject buildOptions(SelectFormItem item) {
-        JSONObject options = new JSONObject();
-        JSONArray selectOptionsArray = new JSONArray();
+        SelectFormItemOptions options = new SelectFormItemOptions();
         for (SelectFormItem.Option option : item.getOptions()) {
-            JSONObject optionJson = new JSONObject();
-            optionJson.put(OfflineFormItemJsonKeys.FIELD_VALUE, option.getValue());
-            optionJson.put(OfflineFormItemJsonKeys.FIELD_LABEL, option.getDisplayText());
-            selectOptionsArray.add(optionJson);
+            SelectOptionsInput optionInput = new SelectOptionsInput();
+            optionInput.value = option.getValue();
+            optionInput.label = option.getDisplayText();
+            options.getSelectOptions().add(optionInput);
         }
-        options.put(OfflineFormItemJsonKeys.FIELD_SELECT_OPTIONS, selectOptionsArray);
-        return options;
+        return (JSONObject) JSONObject.toJSON(options);
     }
 }

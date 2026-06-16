@@ -11,8 +11,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.PickerFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.util.Calendar;

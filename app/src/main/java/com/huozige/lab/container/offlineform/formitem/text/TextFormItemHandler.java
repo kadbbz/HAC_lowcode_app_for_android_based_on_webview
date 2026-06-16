@@ -13,10 +13,10 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemValidationInput;
-import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItemOptions;
+import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 public class TextFormItemHandler implements OfflineFormItemHandler {
@@ -38,12 +38,8 @@ public class TextFormItemHandler implements OfflineFormItemHandler {
     }
 
     @Override
-    public void readInputOptions(JSONObject options, FormItemInput input) {
-        FormItemValidationInput validationInput = new FormItemValidationInput();
-        validationInput.minLength = options.getIntValue(OfflineFormItemJsonKeys.FIELD_MIN_LENGTH);
-        validationInput.maxLength = options.getIntValue(OfflineFormItemJsonKeys.FIELD_MAX_LENGTH);
-        validationInput.regexPattern = options.getString(OfflineFormItemJsonKeys.FIELD_REGEX_PATTERN);
-        input.checkOptions = validationInput;
+    public Class<?> getOptionsClass() {
+        return TextFormItemOptions.class;
     }
 
     @Override
@@ -69,30 +65,25 @@ public class TextFormItemHandler implements OfflineFormItemHandler {
         if (input.value != null) {
             item.setValue(input.value);
         }
-        if (input.checkOptions == null) {
+        TextFormItemOptions options = (TextFormItemOptions) input.options;
+        if (options == null) {
             return;
         }
-        if (input.checkOptions.minLength > 0) {
-            item.setMinLength(input.checkOptions.minLength);
+        if (options.getMinLength() > 0) {
+            item.setMinLength(options.getMinLength());
         }
-        if (input.checkOptions.maxLength > 0) {
-            item.setMaxLength(input.checkOptions.maxLength);
+        if (options.getMaxLength() > 0) {
+            item.setMaxLength(options.getMaxLength());
         }
-        if (input.checkOptions.regexPattern != null) {
-            item.setRegexPattern(input.checkOptions.regexPattern);
+        if (options.getRegexPattern() != null) {
+            item.setRegexPattern(options.getRegexPattern());
         }
     }
     protected JSONObject buildTextOptions(TextFormItem item) {
-        JSONObject options = new JSONObject();
-        if (item.getMinLength() > 0) {
-            options.put(OfflineFormItemJsonKeys.FIELD_MIN_LENGTH, item.getMinLength());
-        }
-        if (item.getMaxLength() > 0) {
-            options.put(OfflineFormItemJsonKeys.FIELD_MAX_LENGTH, item.getMaxLength());
-        }
-        if (item.getRegexPattern() != null) {
-            options.put(OfflineFormItemJsonKeys.FIELD_REGEX_PATTERN, item.getRegexPattern());
-        }
-        return options;
+        TextFormItemOptions options = new TextFormItemOptions();
+        options.setMinLength(item.getMinLength());
+        options.setMaxLength(item.getMaxLength());
+        options.setRegexPattern(item.getRegexPattern());
+        return (JSONObject) JSONObject.toJSON(options);
     }
 }

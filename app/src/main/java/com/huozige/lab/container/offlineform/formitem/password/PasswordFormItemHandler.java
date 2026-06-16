@@ -7,9 +7,9 @@ import android.view.View;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
-import com.huozige.lab.container.offlineform.model.formitem.TextFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 
 public class PasswordFormItemHandler extends TextFormItemHandler {
     private static final String PASSWORD_MASK_CHAR = "\u2022";

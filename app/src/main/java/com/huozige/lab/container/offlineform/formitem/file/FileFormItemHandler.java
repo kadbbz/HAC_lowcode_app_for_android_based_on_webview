@@ -13,10 +13,10 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItemOptions;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 /**
@@ -36,27 +36,25 @@ public class FileFormItemHandler implements OfflineFormItemHandler {
     @Override
     public BaseFormItem fromInput(FormItemInput input) {
         FileFormItem item = new FileFormItem(getType(), input.itemId, input.title, input.hint, input.required);
-        if (input.fileItemConfig != null) {
-            item.setFileItemConfig(input.fileItemConfig);
+        FileFormItemOptions options = (FileFormItemOptions) input.options;
+        if (options != null && options.getFileItemConfig() != null) {
+            item.setFileItemConfig(options.getFileItemConfig());
         }
         item.setValue(input.value);
         return item;
     }
 
     @Override
-    public void readInputOptions(JSONObject options, FormItemInput input) {
-        JSONObject configJson = options.getJSONObject(OfflineFormItemJsonKeys.FIELD_FILE_ITEM_CONFIG);
-        if (configJson != null) {
-            input.fileItemConfig = configJson.toJavaObject(FileItemConfig.class);
-        }
+    public Class<?> getOptionsClass() {
+        return FileFormItemOptions.class;
     }
 
     @Override
     public JSONObject toJson(BaseFormItem item) {
         FileFormItem fileItem = (FileFormItem) item;
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(fileItem);
-        JSONObject options = new JSONObject();
-        options.put(OfflineFormItemJsonKeys.FIELD_FILE_ITEM_CONFIG, fileItem.getFileItemConfig());
+        FileFormItemOptions options = new FileFormItemOptions();
+        options.setFileItemConfig(fileItem.getFileItemConfig());
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
         return jsonObject;
     }
@@ -69,6 +67,6 @@ public class FileFormItemHandler implements OfflineFormItemHandler {
 
     @Override
     public View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
-        return ReadOnlyFormItemViews.createCompactValueView(context, context.getString(R.string.offline_text_file_count, FileFormItem.parseFiles(rawValue).size()));
+        return ReadOnlyFormItemViews.createCompactValueView(context, context.getString(R.string.offline_text_file_count, FileFormItem.parseAttachments(rawValue).size()));
     }
 }

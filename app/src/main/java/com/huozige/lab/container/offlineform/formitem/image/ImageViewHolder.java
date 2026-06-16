@@ -17,9 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 

@@ -7,9 +7,9 @@ import android.provider.OpenableColumns;
 import android.webkit.MimeTypeMap;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileItemConfig;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileItemConfig;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.utilities.StringUtils;
 

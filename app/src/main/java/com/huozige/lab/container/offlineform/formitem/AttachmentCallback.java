@@ -1,6 +1,6 @@
 package com.huozige.lab.container.offlineform.formitem;
 
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 
 import java.util.List;
 

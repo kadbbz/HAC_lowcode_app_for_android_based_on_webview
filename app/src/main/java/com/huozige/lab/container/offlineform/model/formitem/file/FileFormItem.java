@@ -1,11 +1,12 @@
-package com.huozige.lab.container.offlineform.model.formitem;
+package com.huozige.lab.container.offlineform.model.formitem.file;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.utilities.StringUtils;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +15,7 @@ import lombok.Setter;
 @Setter
 public class FileFormItem extends BaseFormItem {
     private FileItemConfig fileItemConfig = new FileItemConfig();
-    private LinkedHashMap<String, String> files = new LinkedHashMap<>();
+    private List<AttachmentFormItemValue> files = new ArrayList<>();
     private String patternId = "";
 
     public FileFormItem(String itemType, String id, String title, String hint, boolean required) {
@@ -23,7 +24,7 @@ public class FileFormItem extends BaseFormItem {
 
     @Override
     public String getValue() {
-        return JSON.toJSONString(files == null ? new LinkedHashMap<>() : files);
+        return JSON.toJSONString(files == null ? new ArrayList<>() : files);
     }
 
     @Override
@@ -32,7 +33,7 @@ public class FileFormItem extends BaseFormItem {
     }
 
     public void setValue(String value) {
-        files = parseFiles(value);
+        files = parseAttachments(value);
     }
 
     public void addFile(AttachmentFormItemValue file) {
@@ -41,19 +42,27 @@ public class FileFormItem extends BaseFormItem {
             return;
         }
         if (files == null) {
-            files = new LinkedHashMap<>();
+            files = new ArrayList<>();
         }
-        files.put(file.getOriginalName(), file.getFileName());
+        files.add(file);
     }
 
     public void removeFile(String originalName) {
         if (files != null) {
-            files.remove(originalName);
+            files.removeIf(file -> file != null && originalName.equals(file.getOriginalName()));
         }
     }
 
     public boolean containsOriginalName(String originalName) {
-        return files != null && files.containsKey(originalName);
+        if (files == null) {
+            return false;
+        }
+        for (AttachmentFormItemValue file : files) {
+            if (file != null && originalName.equals(file.getOriginalName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -76,19 +85,21 @@ public class FileFormItem extends BaseFormItem {
         setErrorMessage(null);
     }
 
-    public static LinkedHashMap<String, String> parseFiles(String value) {
-        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+    public static List<AttachmentFormItemValue> parseAttachments(String value) {
+        List<AttachmentFormItemValue> result = new ArrayList<>();
         if (StringUtils.isNullOrBlank(value)) {
             return result;
         }
         try {
-            JSONObject object = JSON.parseObject(value);
-            for (Map.Entry<String, Object> entry : object.entrySet()) {
-                if (entry.getKey() != null && entry.getValue() != null) {
-                    String fileName = String.valueOf(entry.getValue());
-                    if (!entry.getKey().isEmpty() && !fileName.isEmpty()) {
-                        result.put(entry.getKey(), fileName);
-                    }
+            List<AttachmentFormItemValue> attachments = JSON.parseArray(value, AttachmentFormItemValue.class);
+            if (attachments == null) {
+                return result;
+            }
+            for (AttachmentFormItemValue attachment : attachments) {
+                if (attachment != null
+                        && attachment.getOriginalName() != null && !attachment.getOriginalName().isEmpty()
+                        && attachment.getFileName() != null && !attachment.getFileName().isEmpty()) {
+                    result.add(attachment);
                 }
             }
         } catch (RuntimeException ignored) {

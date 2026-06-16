@@ -17,9 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 import com.huozige.lab.container.utilities.DeviceUtility;
@@ -28,7 +28,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * 文件上传控件
@@ -135,10 +134,10 @@ public class FileViewHolder extends BaseViewHolder {
         }
     }
 
-    private List<Map.Entry<String, String>> getFileEntries() {
+    private List<AttachmentFormItemValue> getFiles() {
         return fileItem == null || fileItem.getFiles() == null
                 ? new ArrayList<>()
-                : new ArrayList<>(fileItem.getFiles().entrySet());
+                : new ArrayList<>(fileItem.getFiles());
     }
 
     private class FileListAdapter extends RecyclerView.Adapter<FileCardViewHolder> {
@@ -151,7 +150,7 @@ public class FileViewHolder extends BaseViewHolder {
 
         @Override
         public void onBindViewHolder(@NonNull FileCardViewHolder holder, int position) {
-            holder.bind(getFileEntries().get(position));
+            holder.bind(getFiles().get(position));
         }
 
         @Override
@@ -174,15 +173,17 @@ public class FileViewHolder extends BaseViewHolder {
             deleteButton = itemView.findViewById(R.id.deleteFileButton);
         }
 
-        void bind(Map.Entry<String, String> entry) {
-            fileIconView.setExtension(Utils.getExtension(entry.getKey()));
-            fileNameView.setText(entry.getKey());
-            File file = Utils.resolveLocalFile(itemView.getContext(), fileItem.getPatternId(), entry.getValue());
-            fileMetaView.setText(buildFileMeta(entry.getKey(), file));
-            itemView.setOnClickListener(v -> openFile(entry.getKey(), file));
+        void bind(AttachmentFormItemValue attachment) {
+            String originalName = attachment.getOriginalName();
+            String fileName = attachment.getFileName();
+            fileIconView.setExtension(Utils.getExtension(originalName));
+            fileNameView.setText(originalName);
+            File file = Utils.resolveLocalFile(itemView.getContext(), fileItem.getPatternId(), fileName);
+            fileMetaView.setText(buildFileMeta(originalName, file));
+            itemView.setOnClickListener(v -> openFile(originalName, file));
             deleteButton.setOnClickListener(v -> {
-                OfflineFileHelper.deleteLocalFile(itemView.getContext(), fileItem.getPatternId(), entry.getValue());
-                fileItem.removeFile(entry.getKey());
+                OfflineFileHelper.deleteLocalFile(itemView.getContext(), fileItem.getPatternId(), fileName);
+                fileItem.removeFile(originalName);
                 renderFiles();
                 updateErrorState();
                 notifyFilesChanged();

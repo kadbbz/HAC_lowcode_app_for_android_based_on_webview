@@ -11,9 +11,10 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonHelper;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonKeys;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
-import com.huozige.lab.container.offlineform.model.formitem.PickerFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItemOptions;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
@@ -23,13 +24,14 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
         if (input.value != null) {
             item.setValue(input.value);
         }
-        item.setIncludeSeconds(input.includeSeconds);
+        PickerFormItemOptions options = (PickerFormItemOptions) input.options;
+        item.setIncludeSeconds(options != null && options.isIncludeSeconds());
         return item;
     }
 
     @Override
-    public void readInputOptions(JSONObject options, FormItemInput input) {
-        input.includeSeconds = options.getBooleanValue(OfflineFormItemJsonKeys.FIELD_INCLUDE_SECONDS);
+    public Class<?> getOptionsClass() {
+        return PickerFormItemOptions.class;
     }
 
     @Override
@@ -37,8 +39,8 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
         PickerFormItem pickerItem = (PickerFormItem) item;
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(pickerItem);
         if (pickerItem.isIncludeSeconds()) {
-            JSONObject options = new JSONObject();
-            options.put(OfflineFormItemJsonKeys.FIELD_INCLUDE_SECONDS, true);
+            PickerFormItemOptions options = new PickerFormItemOptions();
+            options.setIncludeSeconds(true);
             jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
         }
         return jsonObject;

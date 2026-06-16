@@ -1,5 +1,6 @@
-package com.huozige.lab.container.offlineform.model.formitem;
+package com.huozige.lab.container.offlineform.model.formitem.picker;
 
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.utilities.StringUtils;
 
 import lombok.Getter;

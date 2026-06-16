@@ -1,7 +1,8 @@
-package com.huozige.lab.container.offlineform.model.formitem;
+package com.huozige.lab.container.offlineform.model.formitem.image;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.utilities.StringUtils;
 
 import java.util.ArrayList;
@@ -28,15 +29,7 @@ public class ImageFormItem extends BaseFormItem {
 
     @Override
     public String getValue() {
-        List<String> fileNames = new ArrayList<>();
-        if (images != null) {
-            for (AttachmentFormItemValue image : images) {
-                if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
-                    fileNames.add(image.getFileName());
-                }
-            }
-        }
-        return JSON.toJSONString(fileNames);
+        return JSON.toJSONString(images == null ? new ArrayList<>() : images);
     }
 
     @Override
@@ -100,12 +93,12 @@ public class ImageFormItem extends BaseFormItem {
             return result;
         }
         try {
-            JSONArray array = JSON.parseArray(value);
-            for (int i = 0; i < array.size(); i++) {
-                String fileName = array.getString(i);
-                if (fileName != null && !fileName.isEmpty()) {
-                    AttachmentFormItemValue image = new AttachmentFormItemValue();
-                    image.setFileName(fileName);
+            List<AttachmentFormItemValue> attachments = JSON.parseArray(value, AttachmentFormItemValue.class);
+            if (attachments == null) {
+                return result;
+            }
+            for (AttachmentFormItemValue image : attachments) {
+                if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
                     result.add(image);
                 }
             }

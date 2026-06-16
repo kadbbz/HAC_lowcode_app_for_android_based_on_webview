@@ -15,10 +15,10 @@ import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
-import com.huozige.lab.container.offlineform.model.formitem.AttachmentFormItemValue;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FileFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 
 import org.json.JSONObject;
 
@@ -211,8 +211,8 @@ public class OfflineFormFileHelper {
                     OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
                 }
             } else if (OfflineFormItemType.FILE.getValue().equals(entry.getValue())) {
-                for (String fileName : FileFormItem.parseFiles(rawValue).values()) {
-                    OfflineFileHelper.deleteLocalFile(context, patternId, fileName);
+                for (AttachmentFormItemValue file : FileFormItem.parseAttachments(rawValue)) {
+                    OfflineFileHelper.deleteLocalFile(context, patternId, file.getFileName());
                 }
             }
         }

@@ -3,6 +3,7 @@ package com.huozige.lab.container.offlineform.formitem;
 import android.content.Context;
 import android.view.View;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.offlineform.formitem.file.FileFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.image.ImageFormItemHandler;
@@ -11,8 +12,8 @@ import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemH
 import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
-import com.huozige.lab.container.offlineform.model.formitem.BaseFormItem;
-import com.huozige.lab.container.offlineform.model.formitem.FormItemInput;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,7 +60,23 @@ public final class OfflineFormItemRegistry {
         if (handler == null) {
             handler = getHandler(OfflineFormItemType.TEXT.getValue());
         }
+        normalizeOptions(input, handler);
         return handler.fromInput(input);
+    }
+
+    private static void normalizeOptions(FormItemInput input, OfflineFormItemHandler handler) {
+        if (input.options == null) {
+            return;
+        }
+        Class<?> optionsClass = handler.getOptionsClass();
+        if (optionsClass == null || optionsClass.isInstance(input.options)) {
+            return;
+        }
+        input.options = JSON.parseObject(JSON.toJSONString(input.options), optionsClass);
+    }
+
+    public static Class<?> getOptionsClass(String type) {
+        return getHandler(type).getOptionsClass();
     }
 
     public static JSONObject toJson(BaseFormItem item) {
