@@ -252,7 +252,7 @@ public class OfflinePlusProxy extends AbstractProxy{
             }
 
             com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
-            attachment.put("path", buildAttachmentPath(recordId, fieldId, imageField ? String.valueOf(i) : originalName));
+            attachment.put("path", buildAttachmentPath(recordId, fieldId));
             attachment.put("type", imageField ? "image" : "file");
             attachment.put("localName", localName);
             attachment.put("recordId", recordId);
@@ -265,11 +265,10 @@ public class OfflinePlusProxy extends AbstractProxy{
         }
     }
 
-    private JSONArray buildAttachmentPath(String recordId, String fieldId, String key) {
+    private JSONArray buildAttachmentPath(String recordId, String fieldId) {
         JSONArray path = new JSONArray();
         path.add(recordId);
         path.add(fieldId);
-        path.add(key);
         return path;
     }
 
