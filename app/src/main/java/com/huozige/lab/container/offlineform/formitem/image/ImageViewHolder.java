@@ -254,7 +254,7 @@ public class ImageViewHolder extends BaseViewHolder {
                     return;
                 }
                 AttachmentFormItemValue currentImage = imageItem.getImages().get(currentPosition);
-                OfflineImageFileHelper.deleteLocalFile(itemView.getContext(), imageItem.getPatternId(), currentImage);
+                OfflineImageFileHelper.deleteLocalFile(itemView.getContext(), imageItem.getPatternId(), currentImage.getFileName());
                 imageItem.removeImage(currentImage);
                 renderImages();
                 updateErrorState();

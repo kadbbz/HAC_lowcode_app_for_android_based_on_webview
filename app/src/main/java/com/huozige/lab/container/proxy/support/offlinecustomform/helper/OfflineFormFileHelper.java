@@ -20,7 +20,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,7 +71,7 @@ public class OfflineFormFileHelper {
     }
 
     public static OfflineFormDefinitionFile readDefinition(Context context, String patternId) {
-        com.alibaba.fastjson.JSONObject jsonObject = JsonFileHelper.readFastJsonFromFile(getDefinitionFile(context, patternId));
+        JSONObject jsonObject = JsonFileHelper.readJsonFromFile(getDefinitionFile(context, patternId));
         return jsonObject == null ? null : OfflineFormJsonSerializer.restoreDefinitionFileFromJson(jsonObject);
     }
 
@@ -180,7 +180,7 @@ public class OfflineFormFileHelper {
 
         for (File patternDir : patternDirs) {
             try {
-                com.alibaba.fastjson.JSONObject jsonObject = JsonFileHelper.readFastJsonFromFile(new File(patternDir, DEFINITION_FILE));
+                JSONObject jsonObject = JsonFileHelper.readJsonFromFile(new File(patternDir, DEFINITION_FILE));
                 if (jsonObject != null) {
                     OfflineFormDefinitionFile definitionFile = OfflineFormJsonSerializer.restoreDefinitionFileFromJson(jsonObject);
                     OfflineFormDefinition definition = definitionFile.getJsonSchema();
@@ -208,7 +208,7 @@ public class OfflineFormFileHelper {
             String rawValue = record.getValues().get(entry.getKey());
             if (OfflineFormItemType.IMAGE.getValue().equals(entry.getValue())) {
                 for (AttachmentFormItemValue image : ImageFormItem.parseImages(rawValue)) {
-                    OfflineImageFileHelper.deleteLocalFile(context, patternId, image);
+                    OfflineImageFileHelper.deleteLocalFile(context, patternId, image.getFileName());
                 }
             } else if (OfflineFormItemType.FILE.getValue().equals(entry.getValue())) {
                 for (AttachmentFormItemValue file : FileFormItem.parseAttachments(rawValue)) {

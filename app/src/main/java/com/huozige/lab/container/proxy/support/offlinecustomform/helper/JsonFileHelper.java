@@ -1,7 +1,7 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
 import com.alibaba.fastjson.JSON;
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,19 +29,6 @@ class JsonFileHelper {
     }
 
     static JSONObject readJsonFromFile(File file) {
-        String jsonString = readStringFromFile(file);
-        if (jsonString == null || jsonString.isEmpty()) {
-            return null;
-        }
-        try {
-            return new JSONObject(jsonString);
-        } catch (org.json.JSONException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    static com.alibaba.fastjson.JSONObject readFastJsonFromFile(File file) {
         String jsonString = readStringFromFile(file);
         if (jsonString == null || jsonString.isEmpty()) {
             return null;

@@ -3,9 +3,16 @@ package com.huozige.lab.container.offlineform.util;
 import android.content.Context;
 import android.net.Uri;
 
+import com.alibaba.fastjson.JSON;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.utilities.StringUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class Utils {
     public static final String ROOT_DIR = "offlinePlus";
@@ -41,6 +48,30 @@ public class Utils {
             }
             throw e;
         }
+    }
+
+    public static String serializeAttachmentValues(List<AttachmentFormItemValue> values) {
+        return JSON.toJSONString(values == null ? new ArrayList<>() : values);
+    }
+
+    public static List<AttachmentFormItemValue> parseAttachmentValues(String value, Predicate<AttachmentFormItemValue> validator) {
+        List<AttachmentFormItemValue> result = new ArrayList<>();
+        if (StringUtils.isNullOrBlank(value)) {
+            return result;
+        }
+        try {
+            List<AttachmentFormItemValue> attachments = JSON.parseArray(value, AttachmentFormItemValue.class);
+            if (attachments == null) {
+                return result;
+            }
+            for (AttachmentFormItemValue attachment : attachments) {
+                if (attachment != null && validator.test(attachment)) {
+                    result.add(attachment);
+                }
+            }
+        } catch (RuntimeException ignored) {
+        }
+        return result;
     }
 
     public static File getFilesDir(Context context, String patternId) {

@@ -665,7 +665,7 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     private String formatBytesAsMb(double bytes) {
-        return String.format(java.util.Locale.US, "%.2f MB", bytes / 1024.0 / 1024.0);
+        return String.format(java.util.Locale.CHINA, "%.2f MB", bytes / 1024.0 / 1024.0);
     }
 
     private void finishAddPattern(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {

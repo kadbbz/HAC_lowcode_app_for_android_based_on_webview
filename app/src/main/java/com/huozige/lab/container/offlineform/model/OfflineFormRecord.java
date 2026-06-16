@@ -41,7 +41,7 @@ public class OfflineFormRecord {
     }
 
     private static String createRecordId() {
-        String time = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(new Date());
+        String time = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.CHINA).format(new Date());
         return time + "_" + UUID.randomUUID().toString();
     }
 }

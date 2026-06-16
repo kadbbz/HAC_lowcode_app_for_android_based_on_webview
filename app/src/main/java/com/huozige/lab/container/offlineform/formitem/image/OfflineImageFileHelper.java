@@ -64,26 +64,13 @@ public final class OfflineImageFileHelper {
                     null);
         }
 
-        return buildValue(outputFile);
-    }
-
-    private static AttachmentFormItemValue buildValue(File outputFile) {
         AttachmentFormItemValue value = new AttachmentFormItemValue();
         value.setFileName(outputFile.getName());
         return value;
     }
 
-    public static void deleteLocalFile(Context context, String patternId, AttachmentFormItemValue value) {
-        File file = value == null ? null : Utils.resolveLocalFile(context, patternId, value.getFileName());
-        deleteFile(file);
-    }
-
     public static void deleteLocalFile(Context context, String patternId, String fileName) {
         File file = Utils.resolveLocalFile(context, patternId, fileName);
-        deleteFile(file);
-    }
-
-    private static void deleteFile(File file) {
         if (file != null && file.exists()) {
             file.delete();
         }

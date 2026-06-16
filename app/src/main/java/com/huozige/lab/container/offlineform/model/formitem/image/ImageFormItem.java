@@ -1,9 +1,8 @@
 package com.huozige.lab.container.offlineform.model.formitem.image;
 
-import com.alibaba.fastjson.JSON;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
-import com.huozige.lab.container.utilities.StringUtils;
+import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ImageFormItem extends BaseFormItem {
-    public static final int DEFAULT_MAX_COUNT = 9;
+    public static final int DEFAULT_MAX_COUNT = 0;
 
     private int maxCount = DEFAULT_MAX_COUNT;
     private boolean allowImageUpload;
@@ -29,7 +28,7 @@ public class ImageFormItem extends BaseFormItem {
 
     @Override
     public String getValue() {
-        return JSON.toJSONString(images == null ? new ArrayList<>() : images);
+        return Utils.serializeAttachmentValues(images);
     }
 
     @Override
@@ -88,22 +87,6 @@ public class ImageFormItem extends BaseFormItem {
     }
 
     public static List<AttachmentFormItemValue> parseImages(String value) {
-        List<AttachmentFormItemValue> result = new ArrayList<>();
-        if (StringUtils.isNullOrBlank(value)) {
-            return result;
-        }
-        try {
-            List<AttachmentFormItemValue> attachments = JSON.parseArray(value, AttachmentFormItemValue.class);
-            if (attachments == null) {
-                return result;
-            }
-            for (AttachmentFormItemValue image : attachments) {
-                if (image != null && image.getFileName() != null && !image.getFileName().isEmpty()) {
-                    result.add(image);
-                }
-            }
-        } catch (RuntimeException ignored) {
-        }
-        return result;
+        return Utils.parseAttachmentValues(value, image -> image.getFileName() != null && !image.getFileName().isEmpty());
     }
 }

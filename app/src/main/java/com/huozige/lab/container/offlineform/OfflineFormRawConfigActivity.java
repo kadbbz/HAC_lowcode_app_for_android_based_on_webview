@@ -8,8 +8,9 @@ import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 
 public class OfflineFormRawConfigActivity extends BaseActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
@@ -39,10 +40,6 @@ public class OfflineFormRawConfigActivity extends BaseActivity {
     }
 
     private String formatJson(JSONObject jsonObject) {
-        try {
-            return jsonObject.toString(2);
-        } catch (JSONException e) {
-            return jsonObject.toString();
-        }
+        return JSON.toJSONString(jsonObject, SerializerFeature.PrettyFormat);
     }
 }

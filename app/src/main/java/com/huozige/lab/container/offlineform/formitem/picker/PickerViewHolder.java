@@ -58,7 +58,7 @@ public class PickerViewHolder extends BaseViewHolder {
         Calendar calendar = Calendar.getInstance();
 
         new DatePickerDialog(itemView.getContext(), (view, year, month, dayOfMonth) -> {
-            pickerItem.setValue(String.format(Locale.US, "%04d/%d/%d", year, month + 1, dayOfMonth));
+            pickerItem.setValue(String.format(Locale.CHINA, "%04d/%d/%d", year, month + 1, dayOfMonth));
             pickerItem.clearError();
             bindValue();
             updateErrorState();
@@ -71,7 +71,7 @@ public class PickerViewHolder extends BaseViewHolder {
 
         if (!pickerItem.isIncludeSeconds()) {
             new TimePickerDialog(itemView.getContext(), (view, hourOfDay, minute) -> {
-                pickerItem.setValue(String.format(Locale.US, "%02d:%02d", hourOfDay, minute));
+                pickerItem.setValue(String.format(Locale.CHINA, "%02d:%02d", hourOfDay, minute));
                 pickerItem.clearError();
                 bindValue();
                 updateErrorState();
@@ -95,7 +95,7 @@ public class PickerViewHolder extends BaseViewHolder {
                 .setView(contentLayout)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    pickerItem.setValue(String.format(Locale.US, "%02d:%02d:%02d", hourPicker.getValue(), minutePicker.getValue(), secondPicker.getValue()));
+                    pickerItem.setValue(String.format(Locale.CHINA, "%02d:%02d:%02d", hourPicker.getValue(), minutePicker.getValue(), secondPicker.getValue()));
                     pickerItem.clearError();
                     bindValue();
                     updateErrorState();
@@ -108,7 +108,7 @@ public class PickerViewHolder extends BaseViewHolder {
         numberPicker.setMinValue(minValue);
         numberPicker.setMaxValue(maxValue);
         numberPicker.setValue(value);
-        numberPicker.setFormatter(value1 -> String.format(Locale.US, "%02d", value1));
+        numberPicker.setFormatter(value1 -> String.format(Locale.CHINA, "%02d", value1));
         return numberPicker;
     }
 
