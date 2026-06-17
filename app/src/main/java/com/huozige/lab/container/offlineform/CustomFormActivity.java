@@ -6,8 +6,10 @@ import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -23,6 +26,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -58,6 +62,7 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineF
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
@@ -68,14 +73,18 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int FILTER_ALL = 0;
     private static final int FILTER_UNFILLED = 1;
     private static final int FILTER_FILLED = 2;
+    private static final int FILTER_SEARCH = 3;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
     private TabLayout _stepTabLayout;
     private LinearLayout _itemNavigationLayout;
+    private LinearLayout _searchKeywordLayout;
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
+    private TextView _searchKeywordTextView;
+    private ImageView _clearSearchButton;
     private Spinner _filterModeSpinner;
     private FormAdapter _adapter;
     private Intent _intent;
@@ -84,6 +93,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private boolean _updatingTabs;
     private AdapterView.OnItemSelectedListener _filterModeSelectedListener;
     private int _filterMode = FILTER_ALL;
+    private int _filterModeBeforeSearch = FILTER_ALL;
+    private String _searchKeyword = "";
     private OfflineFormRecord _editingRecord;
     private OfflineFormDefinition _definition;
     private int _currentStepIndex;
@@ -119,11 +130,22 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _formScrollView = findViewById(R.id.scroll_form);
         _stepTabLayout = findViewById(R.id.tab_steps);
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
+        _searchKeywordLayout = findViewById(R.id.layout_search_keyword);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
+        _searchKeywordTextView = findViewById(R.id.text_search_keyword);
+        _clearSearchButton = findViewById(R.id.button_clear_search);
         _filterModeSpinner = findViewById(R.id.spinner_filter_mode);
+        setupClearSearchButtonBackground();
         setupBottomHintHeight();
+    }
+
+    private void setupClearSearchButtonBackground() {
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(getColor(R.color.gray));
+        _clearSearchButton.setBackground(background);
     }
 
     private void setupRecyclerView() {
@@ -280,6 +302,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void setupListeners() {
         _previousItemButton.setOnClickListener(v -> navigateRootItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateRootItem(1));
+        _searchKeywordLayout.setOnClickListener(v -> clearSearchFilter());
         setupFilterModeSpinner();
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -309,7 +332,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{
                 getString(R.string.offline_filter_all),
                 getString(R.string.offline_filter_unfilled),
-                getString(R.string.offline_filter_filled)
+                getString(R.string.offline_filter_filled),
+                getString(R.string.offline_filter_search)
         });
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         _filterModeSpinner.setAdapter(adapter);
@@ -317,6 +341,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _filterModeSelectedListener = new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == FILTER_SEARCH) {
+                    if (_filterMode != FILTER_SEARCH) {
+                        _filterModeBeforeSearch = _filterMode;
+                    }
+                    showSearchDialog();
+                    return;
+                }
+                _searchKeyword = "";
                 _filterMode = position;
                 renderCurrentStep();
             }
@@ -331,7 +363,63 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void resetFilterMode() {
         _filterModeSpinner.setOnItemSelectedListener(null);
         _filterMode = FILTER_ALL;
+        _filterModeBeforeSearch = FILTER_ALL;
+        _searchKeyword = "";
         _filterModeSpinner.setSelection(FILTER_ALL);
+        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
+    }
+
+    private void showSearchDialog() {
+        LinearLayout container = new LinearLayout(this);
+        container.setPadding(dp(this, 24), 0, dp(this, 24), 0);
+
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint(R.string.offline_hint_field_search);
+        input.setText(_searchKeyword);
+        input.setSelectAllOnFocus(true);
+        container.addView(input, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.offline_dialog_search_title)
+                .setView(container)
+                .setPositiveButton(R.string.offline_button_confirm, (dialog, which) -> applySearchFilter(input.getText().toString()))
+                .setNegativeButton(R.string.offline_button_cancel, (dialog, which) -> restoreFilterModeBeforeSearch())
+                .setOnCancelListener(dialog -> restoreFilterModeBeforeSearch())
+                .show();
+    }
+
+    private void applySearchFilter(String keyword) {
+        _searchKeyword = keyword == null ? "" : keyword.trim();
+        if (_searchKeyword.isEmpty()) {
+            clearSearchFilter();
+            return;
+        }
+        _filterModeBeforeSearch = _filterMode == FILTER_SEARCH ? _filterModeBeforeSearch : _filterMode;
+        _filterMode = FILTER_SEARCH;
+        setFilterModeSelection(FILTER_SEARCH);
+        renderCurrentStep();
+    }
+
+    private void clearSearchFilter() {
+        _searchKeyword = "";
+        _filterMode = FILTER_ALL;
+        _filterModeBeforeSearch = FILTER_ALL;
+        setFilterModeSelection(FILTER_ALL);
+        renderCurrentStep();
+    }
+
+    private void restoreFilterModeBeforeSearch() {
+        _filterMode = _filterModeBeforeSearch;
+        setFilterModeSelection(_filterMode);
+    }
+
+    private void setFilterModeSelection(int filterMode) {
+        _filterModeSpinner.setOnItemSelectedListener(null);
+        _filterModeSpinner.setSelection(filterMode);
         _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
     }
 
@@ -426,6 +514,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
 
         renderStepTabs();
+        renderSearchKeyword();
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
         _adapter.setDisplayItems(buildCurrentStepDisplayItems(step));
         updateItemNavigationVisibility();
@@ -473,10 +562,60 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 return item.isField()
                         ? !item.getFormItem().isEmpty()
                         : item.isGroup() && hasField(item.getNode()) && !hasEmptyField(item.getNode());
+            case FILTER_SEARCH:
+                return matchesSearch(item);
             case FILTER_ALL:
             default:
                 return true;
         }
+    }
+
+    private void renderSearchKeyword() {
+        boolean searching = _filterMode == FILTER_SEARCH && !_searchKeyword.isEmpty();
+        _searchKeywordLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
+        _filterModeSpinner.setVisibility(searching ? View.GONE : View.VISIBLE);
+        if (searching) {
+            _searchKeywordTextView.setText(getString(R.string.offline_text_search_keyword, _searchKeyword));
+        }
+    }
+
+    private boolean matchesSearch(OfflineFormDisplayItem item) {
+        if (_searchKeyword.isEmpty()) {
+            return true;
+        }
+        if (item.isField()) {
+            return containsSearchText(item.getNode()) || containsSearchText(item.getFormItem().getTitle());
+        }
+        return containsSearchText(item.getNode()) || hasSearchText(item.getNode());
+    }
+
+    private boolean hasSearchText(OfflineFormNode node) {
+        if (node == null || node.getChildren() == null) {
+            return false;
+        }
+        for (OfflineFormNode child : node.getChildren()) {
+            if (containsSearchText(child)) {
+                return true;
+            }
+            if (child.getField() != null && containsSearchText(child.getField().getTitle())) {
+                return true;
+            }
+            if (hasSearchText(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsSearchText(OfflineFormNode node) {
+        if (node == null) {
+            return false;
+        }
+        return containsSearchText(node.getTitle()) || containsSearchText(node.getContent());
+    }
+
+    private boolean containsSearchText(String text) {
+        return text != null && text.toLowerCase(Locale.CHINA).contains(_searchKeyword.toLowerCase(Locale.CHINA));
     }
 
     private boolean hasEmptyField(OfflineFormNode node) {
@@ -618,15 +757,24 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private boolean validateAllSteps() {
         int originalStepIndex = _currentStepIndex;
+        int originalFilterMode = _filterMode;
+        String originalSearchKeyword = _searchKeyword;
+        _filterMode = FILTER_ALL;
+        _searchKeyword = "";
         for (int i = 0; i < _definition.getSteps().size(); i++) {
             _currentStepIndex = i;
             renderCurrentStep();
             if (!_adapter.validateAll()) {
+                _searchKeyword = "";
+                setFilterModeSelection(FILTER_ALL);
                 return false;
             }
         }
 
         _currentStepIndex = originalStepIndex;
+        _filterMode = originalFilterMode;
+        _searchKeyword = originalSearchKeyword;
+        setFilterModeSelection(_filterMode);
         renderCurrentStep();
         return true;
     }

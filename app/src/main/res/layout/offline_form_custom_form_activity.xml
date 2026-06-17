@@ -31,6 +31,36 @@
             android:paddingStart="4dp"
             android:paddingEnd="8dp" />
 
+        <LinearLayout
+            android:id="@+id/layout_search_keyword"
+            android:layout_width="116dp"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/text_search_keyword"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="@color/offline_form_text_content"
+                android:textSize="13sp" />
+
+            <ImageView
+                android:id="@+id/button_clear_search"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:gravity="center"
+                android:padding="5dp"
+                android:src="@drawable/ic_offline_close" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView

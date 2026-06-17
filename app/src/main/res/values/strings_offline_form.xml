@@ -9,6 +9,7 @@
     <string name="offline_summary_new_record">基于当前表单创建一条新的离线填报记录。</string>
     <string name="offline_summary_draft_record">上次保存：%1$s</string>
     <string name="offline_hint_search">搜索名称或备注</string>
+    <string name="offline_hint_field_search">请输入字段名称</string>
     <string name="offline_button_sort">排序</string>
     <string name="offline_button_finish_sort">结束排序</string>
     <string name="offline_button_edit">编辑</string>
@@ -27,12 +28,15 @@
     <string name="offline_button_upload">上传</string>
     <string name="offline_button_upload_file">上传文件</string>
     <string name="offline_button_capture_image">拍照</string>
+    <string name="offline_button_confirm">确定</string>
+    <string name="offline_button_cancel">取消</string>
     <string name="offline_button_reset">重置</string>
     <string name="offline_button_rotate_left">左转</string>
     <string name="offline_button_rotate_right">右转</string>
     <string name="offline_filter_all">全部</string>
     <string name="offline_filter_unfilled">仅未填</string>
     <string name="offline_filter_filled">仅已填</string>
+    <string name="offline_filter_search">搜索</string>
     <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
     <string name="offline_toast_drag_to_sort">拖拽以调整顺序</string>
     <string name="offline_toast_sort_saved">排序已保存</string>
@@ -57,6 +61,7 @@
     <string name="offline_dialog_delete_draft_records_message">将删除当前表单下所有草稿记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_delete_exported_records_message">将删除当前表单下所有已导出记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_select_title">选择%1$s</string>
+    <string name="offline_dialog_search_title">搜索字段</string>
     <string name="offline_dialog_manual_download_title">正在下载手册</string>
     <string name="offline_chooser_open_file">打开文件</string>
     <string name="offline_toast_delete_success">删除成功</string>
@@ -75,6 +80,7 @@
     <string name="offline_text_unknown_record_time">未知填报时间</string>
     <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>
     <string name="offline_text_default_step">步骤%1$d</string>
+    <string name="offline_text_search_keyword">搜索：%1$s</string>
     <string name="offline_text_project_meta">项目编号：%1$s    版本号：%2$s</string>
     <string name="offline_text_image_count">%1$d 张图片</string>
     <string name="offline_text_file_count">%1$d 个文件</string>
