@@ -1,10 +1,7 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.helper;
 
-import android.content.Context;
-import android.os.Environment;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,33 +10,50 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class JsonFileHelper {
-    public static final String FILE_NAME_OFFLINE_LIST = "HAC_OfflinePlusList.json";
-    public static final String FILE_FLAG_OFFLINE_LIST  = "project";
-
-    public static final String FILE_NAME_OFFLINE_FORM = "HAC_OfflinePlusForm_%s.json";
-    public static final String FILE_FLAG_OFFLINE_FORM = "customForm";
-
-
-    public static void writeJsonToExternalStorage(Context context, String fileName, String patternId, JSONObject jsonObject) {
-        writeJsonToExternalStorage(context, String.format(fileName, patternId), jsonObject);
+class JsonFileHelper {
+    static void writeObjectToFile(File file, Object value) {
+        writeStringToFile(file, JSON.toJSONString(value));
     }
 
-    public static void writeJsonToExternalStorage(Context context, String fileName, JSONObject jsonObject) {
-        if (!isExternalStorageWritable()) {
-            return;
+    static <T> T readObjectFromFile(File file, Class<T> clazz) {
+        String jsonString = readStringFromFile(file);
+        if (jsonString == null || jsonString.isEmpty()) {
+            return null;
         }
+        try {
+            return JSON.parseObject(jsonString, clazz);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
+    static JSONObject readJsonFromFile(File file) {
+        String jsonString = readStringFromFile(file);
+        if (jsonString == null || jsonString.isEmpty()) {
+            return null;
+        }
+        try {
+            return JSON.parseObject(jsonString);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static void writeStringToFile(File file, String value) {
         FileOutputStream fos = null;
         try {
-            File file = new File(context.getExternalFilesDir(null), fileName);
+            File parentFile = file.getParentFile();
+            if (parentFile != null && !parentFile.exists()) {
+                parentFile.mkdirs();
+            }
             if (!file.exists()) {
                 file.createNewFile();
             }
 
             fos = new FileOutputStream(file);
-            String jsonString = jsonObject.toString();
-            fos.write(jsonString.getBytes());
+            fos.write(value.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -53,16 +67,24 @@ public class JsonFileHelper {
         }
     }
 
-    public static JSONObject readJsonFromExternalStorage(Context context, String fileName, String patternId) {
-        return readJsonFromExternalStorage(context, String.format(fileName, patternId));
+    static boolean deleteFileOrDirectory(File file) {
+        if (file == null || !file.exists()) {
+            return true;
+        }
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (!deleteFileOrDirectory(child)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return file.delete();
     }
 
-    public static JSONObject readJsonFromExternalStorage(Context context, String fileName) {
-        if (!isExternalStorageReadable()) {
-            return null;
-        }
-
-        File file = new File(context.getExternalFilesDir(null), fileName);
+    private static String readStringFromFile(File file) {
         if (!file.exists()) {
             return null;
         }
@@ -79,10 +101,9 @@ public class JsonFileHelper {
                 stringBuilder.append(line);
             }
 
-            String jsonString = stringBuilder.toString();
-            return new JSONObject(jsonString);
+            return stringBuilder.toString();
 
-        } catch (IOException | JSONException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         } finally {
@@ -96,14 +117,4 @@ public class JsonFileHelper {
         }
     }
 
-    private static boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
-    }
-
-    private static boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
-    }
 }

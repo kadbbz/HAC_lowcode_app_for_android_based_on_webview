@@ -9,5 +9,10 @@
     <color name="gray">#808080</color>
     <color name="red">#CE2013</color>
     <color name="black">#000000</color>
+    <color name="offline_form_page_bg">#F4F7FA</color>
+    <color name="offline_form_group_bg">#EAF6FD</color>
+    <color name="offline_form_text_bg">#FFFFFFFF</color>
+    <color name="offline_form_text_title">#2F3A45</color>
+    <color name="offline_form_text_content">#5F6368</color>
 
 </resources>

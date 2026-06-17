@@ -1,20 +1,55 @@
 package com.huozige.lab.container.proxy;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.os.Looper;
+import android.webkit.MimeTypeMap;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.platform.CallbackParams;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.FormItemInput;
-import com.huozige.lab.container.proxy.support.offlinecustomform.dto.PatternInput;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.JsonFileHelper;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflinePlusParseJsonData;
-import com.huozige.lab.container.proxy.support.offlinecustomform.model.OfflinePlusListCardItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormStep;
+import com.huozige.lab.container.offlineform.model.PatternInput;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
+import com.huozige.lab.container.utilities.StringUtils;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.util.Utils;
 
-import org.json.JSONObject;
-
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OfflinePlusProxy extends AbstractProxy{
 
@@ -30,60 +65,626 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
-    public void getAllPatternsAsync(String ticket) {
+    public void offlinePlusGetPatternsAsync(String ticket) {
+        writeInfoLog("OfflinePlusGetPatterns");
+        registryCallbackTicket(ticket);
 
-        writeInfoLog("OfflinePlusGetAllPatterns");
-
-
-
+        Context context = this.getWebView().getContext();
+        List<OfflineFormDefinitionIndexItem> definitions = OfflineFormFileHelper.readDefinitions(context);
+        List<String> patternIds = new ArrayList<>();
+        for (OfflineFormDefinitionIndexItem definition : definitions) {
+            patternIds.add(definition.getPatternId());
+        }
+        callback(CallbackParams.success(JSON.toJSONString(patternIds)));
     }
 
     @JavascriptInterface
-    public void offlinePlusAddPatternAsync(String input) {
+    public void offlinePlusAddPatternAsync(String input, String manualPdfUrl, String signatureBase64) {
         writeInfoLog("OfflinePlusAddPattern");
 
         PatternInput inputObj = JSON.parseObject(input, PatternInput.class);
 
         registryCallbackTicket(inputObj.ticket);
 
-        parseJsonToFile(inputObj);
+        Context context = this.getWebView().getContext();
+        try {
+            parseJsonToFile(context, inputObj);
+            saveSignature(context, inputObj.patternId, signatureBase64);
+        } catch (Exception e) {
+            finishAddPattern(null, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_add_pattern_failed, e));
+            return;
+        }
 
-        callback(CallbackParams.success("success"));
+        if (StringUtils.isNullOrBlank(manualPdfUrl)) {
+            OfflineFormFileHelper.deleteManualPdfFile(context, inputObj.patternId);
+            finishAddPattern(null, CallbackParams.success("success"), null);
+            return;
+        }
 
+        String currentUrl = getCurrentUrlOnUiThread();
+        ProgressDialog progressDialog = showManualDownloadDialog(context);
+        new Thread(() -> {
+            try {
+                saveManualPdf(context, inputObj.patternId, manualPdfUrl, currentUrl, progressDialog);
+                finishAddPattern(progressDialog, CallbackParams.success("success"), null);
+            } catch (Exception e) {
+                finishAddPattern(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
+            }
+        }).start();
     }
 
-    private void parseJsonToFile(PatternInput input) {
+    private String getCurrentUrlOnUiThread() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return this.getWebView().getUrl();
+        }
+
+        AtomicReference<String> urlRef = new AtomicReference<>("");
+        CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            urlRef.set(this.getWebView().getUrl());
+            latch.countDown();
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return urlRef.get();
+    }
+
+    @JavascriptInterface
+    public String offlinePlusGetRecords(String projectId) {
+        writeInfoLog("OfflinePlusGetRecords");
+
+        if (projectId == null || projectId.isEmpty()) {
+            return "";
+        }
 
         Context context = this.getWebView().getContext();
-
-        parseJsonToPatternListFile(context, input);
-
-        parseJsonToCustomFormFile(context, input.formItems, input.patternId);
+        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        return JSON.toJSONString(records);
     }
 
-    private void parseJsonToPatternListFile(Context context, PatternInput input) {
+    @JavascriptInterface
+    public void offlinePlusExportRecordsAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusExportRecordsAsync");
+        registryCallbackTicket(ticket);
 
-        OfflinePlusListCardItem newPattern = new OfflinePlusListCardItem(input.title, input.description, "未完成", input.patternId);
+        if (StringUtils.isNullOrBlank(projectId)) {
+            callback(CallbackParams.error("projectId is empty."));
+            return;
+        }
 
-        JSONObject oldJson = JsonFileHelper.readJsonFromExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_FORM);
+        callback(CallbackParams.success(buildExportRecordsResult(projectId)));
+    }
 
-        List<OfflinePlusListCardItem> list;
-        if (oldJson == null) list = new ArrayList<>();
-        else list = OfflinePlusParseJsonData.parseJsonToCardList(oldJson);
+    @JavascriptInterface
+    public String offlinePlusLoadAttachment(String projectId, String localName) {
+        writeInfoLog("OfflinePlusLoadAttachment");
 
-        list.removeIf(i -> i.getPatternId().equals(input.patternId));
-        list.add(newPattern);
+        if (StringUtils.isNullOrBlank(projectId) || StringUtils.isNullOrBlank(localName)) {
+            return "";
+        }
 
-        JSONObject newJson = OfflinePlusParseJsonData.parseCardListToJson(list);
+        try {
+            File file = Utils.resolveLocalFile(this.getWebView().getContext(), projectId, localName);
+            if (file == null || !file.exists() || !file.isFile()) {
+                return "";
+            }
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Utils.getExtension(localName));
+            if (StringUtils.isNullOrBlank(mimeType)) {
+                mimeType = "application/octet-stream";
+            }
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(readAllBytes(file));
+        } catch (Exception e) {
+            writeErrorLog("读取离线附件失败：" + localName + "，详情：" + e);
+            return "";
+        }
+    }
 
-        JsonFileHelper.writeJsonToExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_LIST, newJson);
+    private String buildExportRecordsResult(String projectId) {
+        Context context = this.getWebView().getContext();
+        com.alibaba.fastjson.JSONObject result = new com.alibaba.fastjson.JSONObject();
+        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(context, projectId);
+        normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
+        result.put("projectId", projectId);
+        result.put("records", records);
+        result.put("attachments", buildExportAttachments(records, attachmentFieldTypes));
+        result.put("signature", readSignatureDataUrl(context, projectId));
+        return result.toJSONString();
+    }
+
+    private void normalizeEmptyAttachmentValues(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+            return;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            for (String fieldId : attachmentFieldTypes.keySet()) {
+                String value = record.getValues().get(fieldId);
+                if ("[]".equals(value) || "{}".equals(value)) {
+                    record.getValues().put(fieldId, "");
+                }
+            }
+        }
+    }
+
+    private JSONArray buildExportAttachments(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+        JSONArray attachments = new JSONArray();
+        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+            return attachments;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            for (Map.Entry<String, String> entry : attachmentFieldTypes.entrySet()) {
+                String fieldId = entry.getKey();
+                String fieldType = entry.getValue();
+                String rawValue = record.getValues().get(fieldId);
+                if (OfflineFormItemType.IMAGE.getValue().equals(fieldType)) {
+                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
+                } else if (OfflineFormItemType.FILE.getValue().equals(fieldType)) {
+                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
+                }
+            }
+        }
+        return attachments;
+    }
+
+    private void addAttachments(JSONArray attachments, String recordId, String fieldId, String fieldType, String rawValue) {
+        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
+        List<AttachmentFormItemValue> attachmentValues = imageField ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
+        for (int i = 0; i < attachmentValues.size(); i++) {
+            AttachmentFormItemValue attachmentValue = attachmentValues.get(i);
+            if (attachmentValue == null) {
+                continue;
+            }
+            String originalName = attachmentValue.getOriginalName();
+            String localName = attachmentValue.getFileName();
+            if (StringUtils.isNullOrBlank(localName) || !imageField && StringUtils.isNullOrBlank(originalName)) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            attachment.put("path", buildAttachmentPath(recordId, fieldId));
+            attachment.put("type", imageField ? "image" : "file");
+            attachment.put("localName", localName);
+            attachment.put("recordId", recordId);
+            attachment.put("fieldId", fieldId);
+            if (!StringUtils.isNullOrBlank(originalName)) {
+                attachment.put("originalName", originalName);
+            }
+            attachment.put("fileName", localName);
+            attachments.add(attachment);
+        }
+    }
+
+    private JSONArray buildAttachmentPath(String recordId, String fieldId) {
+        JSONArray path = new JSONArray();
+        path.add(recordId);
+        path.add(fieldId);
+        return path;
+    }
+
+    private Map<String, String> readAttachmentFieldTypes(Context context, String projectId) {
+        Map<String, String> fieldTypes = new HashMap<>();
+        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
+        if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
+            return fieldTypes;
+        }
+
+        for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+            if (step != null) {
+                collectAttachmentFieldTypes(step.getItems(), fieldTypes);
+            }
+        }
+        return fieldTypes;
+    }
+
+    private void collectAttachmentFieldTypes(List<OfflineFormNode> nodes, Map<String, String> fieldTypes) {
+        if (nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+
+            BaseFormItem field = node.getField();
+            if (field != null
+                    && isAttachmentFieldType(field.getItemType())
+                    && !StringUtils.isNullOrBlank(field.getId())) {
+                fieldTypes.put(field.getId(), field.getItemType());
+            }
+            collectAttachmentFieldTypes(node.getChildren(), fieldTypes);
+        }
+    }
+
+    private boolean isAttachmentFieldType(String itemType) {
+        return OfflineFormItemType.IMAGE.getValue().equals(itemType)
+                || OfflineFormItemType.FILE.getValue().equals(itemType);
+    }
+
+    private byte[] readAllBytes(File file) throws IOException {
+        try (FileInputStream input = new FileInputStream(file);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, length);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    @JavascriptInterface
+    public void offlinePlusMarkRecordExportedAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusMarkRecordExportedAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(markRecordsExported(projectId, recordIds)));
+    }
+
+    private String markRecordsExported(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            return "recordIds is empty.";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            String result = markRecordExported(projectId, trimmedRecordId);
+            if (!"success".equals(result)) {
+                errors.add(trimmedRecordId + ": " + result);
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+        return joinLines(errors);
+    }
+
+    private String markRecordExported(String projectId, String recordId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+        if (StringUtils.isNullOrBlank(recordId)) {
+            return "recordId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, recordId);
+        if (record == null) {
+            return "record not found.";
+        }
+        if (record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+            return "record already exported.";
+        }
+        if (record.getStatus() != OfflineFormRecordStatus.SUBMITTED) {
+            return "record is not submitted.";
+        }
+
+        record.setStatus(OfflineFormRecordStatus.EXPORTED);
+        OfflineFormFileHelper.writeRecord(context, record);
+        return "success";
+    }
+
+    @JavascriptInterface
+    public void offlinePlusDeleteReadRecordsAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusDeleteReadRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteReadRecords(projectId, recordIds)));
+    }
+
+    private String deleteReadRecords(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            OfflineFormFileHelper.deleteRecordsByStatus(context, projectId, OfflineFormRecordStatus.EXPORTED);
+            return "success";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, trimmedRecordId);
+            if (record != null && record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+                OfflineFormFileHelper.deleteRecord(context, projectId, trimmedRecordId);
+            } else {
+                errors.add(trimmedRecordId + ": record is not read.");
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+        return joinLines(errors);
+    }
+
+    @JavascriptInterface
+    public void offlinePlusDeleteProjectAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusDeleteProjectAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteProject(projectId)));
+    }
+
+    private String deleteProject(String projectId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (!OfflineFormFileHelper.deletePatternDirectory(context, projectId)) {
+            return "delete failed.";
+        }
+
+        OfflineFormFileHelper.removeDefinitionOrder(context, projectId);
+        return "success";
+    }
+
+    private String joinLines(List<String> values) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) {
+            if (result.length() > 0) {
+                result.append("\n");
+            }
+            result.append(value);
+        }
+        return result.toString();
+    }
+
+    private List<OfflineFormRecord> filterSubmittedRecords(List<OfflineFormRecord> records) {
+        List<OfflineFormRecord> submittedRecords = new ArrayList<>();
+        for (OfflineFormRecord record : records) {
+            if (record.getStatus() == OfflineFormRecordStatus.SUBMITTED) {
+                submittedRecords.add(record);
+            }
+        }
+        return submittedRecords;
+    }
+
+    private void parseJsonToFile(Context context, PatternInput input) {
+        OfflineFormDefinition definition = OfflineFormDefinitionFactory.fromPatternInput(input);
+
+        OfflineFormDefinitionIndexItem listItem = updateDefinitionOrder(context, input, definition);
+
+        parseJsonToCustomFormFile(context, input, definition, listItem);
+    }
+
+    private OfflineFormDefinitionIndexItem updateDefinitionOrder(Context context, PatternInput input, OfflineFormDefinition definition) {
+
+        List<OfflineFormDefinitionIndexItem> list = OfflineFormFileHelper.readDefinitions(context);
+        OfflineFormDefinitionFile oldDefinition = OfflineFormFileHelper.readDefinition(context, input.patternId);
+        String theme = oldDefinition == null ? "" : oldDefinition.getComputed().getTheme();
+        List<String> displayColumns = oldDefinition == null ? buildDefaultDisplayColumns(definition) : oldDefinition.getComputed().getDisplayColumns();
+        int recordPageSize = oldDefinition == null ? OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE : oldDefinition.getComputed().getRecordPageSize();
+
+        int oldIndex = -1;
+        for (int i = 0; i < list.size(); i++) {
+            OfflineFormDefinitionIndexItem item = list.get(i);
+            if (item.getPatternId().equals(input.patternId)) {
+                oldIndex = i;
+                if (theme.isEmpty()) {
+                    theme = item.getComputed().getTheme();
+                }
+                break;
+            }
+        }
+
+        // 同一个项目编号重复导入时沿用旧主题色；只有新增项目才按导入顺序分配主题色。
+        if (theme.isEmpty()) {
+            theme = OfflineComputedHelper.getThemeColor(list.size());
+        }
+        OfflineComputedInfo computedInfo = new OfflineComputedInfo();
+        computedInfo.setTheme(theme);
+        computedInfo.setDisplayColumns(displayColumns);
+        computedInfo.setRecordPageSize(recordPageSize);
+        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, computedInfo);
+        if (oldIndex >= 0) {
+            list.set(oldIndex, newPattern);
+        } else {
+            list.add(newPattern);
+        }
+
+        OfflineFormFileHelper.writeDefinitionOrder(context, list);
+        return newPattern;
 
     }
 
-    private void parseJsonToCustomFormFile(Context context, List<FormItemInput> formItems, String patternId) {
+    private void parseJsonToCustomFormFile(Context context, PatternInput input, OfflineFormDefinition definition, OfflineFormDefinitionIndexItem listItem) {
 
-        JSONObject jsonObject = OfflinePlusParseJsonData.parseFormItemToJson(formItems, patternId);
+        OfflineFormDefinitionFile definitionFile = new OfflineFormDefinitionFile(definition, listItem.getComputed());
+        OfflineFormFileHelper.writeDefinition(context, input.patternId, definitionFile);
+    }
 
-        JsonFileHelper.writeJsonToExternalStorage(context, JsonFileHelper.FILE_NAME_OFFLINE_FORM, patternId, jsonObject);
+    private void saveManualPdf(Context context, String patternId, String manualPdfUrl, String currentUrl, ProgressDialog progressDialog) throws IOException {
+        if (StringUtils.isNullOrBlank(manualPdfUrl)) {
+            return;
+        }
+
+        File targetFile = OfflineFormFileHelper.getManualPdfFile(context, patternId);
+        File tempFile = OfflineFormFileHelper.getManualPdfTempFile(context, patternId);
+
+        File parentFile = targetFile.getParentFile();
+        if (parentFile != null && !parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+
+        HttpURLConnection connection = null;
+        try {
+            String resolvedManualPdfUrl = resolveManualPdfUrl(manualPdfUrl, currentUrl);
+            connection = (HttpURLConnection) new URL(resolvedManualPdfUrl).openConnection();
+            String cookie = CookieManager.getInstance().getCookie(resolvedManualPdfUrl);
+            if (StringUtils.isNotBlank(cookie)) {
+                connection.setRequestProperty("Cookie", cookie);
+            }
+            connection.connect();
+            int responseCode = connection.getResponseCode();
+            if (responseCode < 200 || responseCode >= 300) {
+                throw new IOException(context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode));
+            }
+
+            int contentLength = connection.getContentLength();
+            try (InputStream input = connection.getInputStream();
+                 FileOutputStream output = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[8192];
+                long totalRead = 0;
+                long startTime = System.currentTimeMillis();
+                updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+                int read;
+                while ((read = input.read(buffer)) >= 0) {
+                    output.write(buffer, 0, read);
+                    totalRead += read;
+                    updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+                }
+            }
+
+            Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            if (tempFile.exists() && !tempFile.delete()) {
+                writeErrorLog("删除离线手册临时文件失败：" + tempFile.getAbsolutePath());
+            }
+            throw e;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private String resolveManualPdfUrl(String manualPdfUrl, String currentUrl) throws IOException {
+        return StringUtils.isNotBlank(currentUrl)
+                ? new URL(new URL(currentUrl), manualPdfUrl).toString()
+                : new URL(manualPdfUrl).toString();
+    }
+
+    private void saveSignature(Context context, String patternId, String signatureBase64) throws IOException {
+        if (StringUtils.isNullOrBlank(signatureBase64)) {
+            OfflineFormFileHelper.deleteSignatureFile(context, patternId);
+            return;
+        }
+        OfflineFormFileHelper.writeSignatureBase64(context, patternId, signatureBase64);
+    }
+
+    private String readSignatureDataUrl(Context context, String patternId) {
+        File signatureFile = OfflineFormFileHelper.getSignatureFile(context, patternId);
+        if (!signatureFile.exists()) {
+            return "";
+        }
+
+        try (InputStream input = new FileInputStream(signatureFile);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, read);
+            }
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
+        } catch (IOException e) {
+            writeErrorLog("读取离线表单签名失败：" + e);
+            return "";
+        }
+    }
+
+    private ProgressDialog showManualDownloadDialog(Context context) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return createManualDownloadDialog(context);
+        }
+
+        AtomicReference<ProgressDialog> dialogRef = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            dialogRef.set(createManualDownloadDialog(context));
+            latch.countDown();
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return dialogRef.get();
+    }
+
+    private ProgressDialog createManualDownloadDialog(Context context) {
+        ProgressDialog progressDialog = new ProgressDialog(context);
+        progressDialog.setTitle(context.getString(R.string.offline_dialog_manual_download_title));
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        return progressDialog;
+    }
+
+    private void updateManualDownloadProgress(ProgressDialog progressDialog, int contentLength, long totalRead, long startTime) {
+        if (progressDialog == null) {
+            return;
+        }
+        runOnUiThread(() -> {
+            long elapsedMillis = Math.max(1, System.currentTimeMillis() - startTime);
+            double speedBytesPerSecond = totalRead * 1000.0 / elapsedMillis;
+            if (contentLength > 0) {
+                progressDialog.setIndeterminate(false);
+                progressDialog.setMax(contentLength);
+                progressDialog.setProgress((int) Math.min(totalRead, contentLength));
+                progressDialog.setProgressNumberFormat(formatBytesAsMb(totalRead) + "/" + formatBytesAsMb(contentLength));
+            } else {
+                progressDialog.setIndeterminate(true);
+            }
+            progressDialog.setMessage(formatBytesAsMb(totalRead) + "，" + formatBytesAsMb(speedBytesPerSecond) + "/s");
+        });
+    }
+
+    private String formatBytesAsMb(double bytes) {
+        return String.format(java.util.Locale.CHINA, "%.2f MB", bytes / 1024.0 / 1024.0);
+    }
+
+    private void finishAddPattern(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        runOnUiThread(() -> {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+            if (errorLog != null) {
+                writeErrorLog(errorLog);
+            }
+            callback(callbackParams);
+        });
+    }
+
+    private List<String> buildDefaultDisplayColumns(OfflineFormDefinition definition) {
+        List<String> displayColumns = new ArrayList<>();
+        for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(definition)) {
+            displayColumns.add(item.getId());
+        }
+        return displayColumns;
     }
 }

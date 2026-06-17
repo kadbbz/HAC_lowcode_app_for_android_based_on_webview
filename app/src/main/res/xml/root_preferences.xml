@@ -2,10 +2,12 @@
 
     <PreferenceCategory app:title="@string/web_header">
 
-        <EditTextPreference
+        <!-- 首页地址设置项：使用自定义Preference，右侧追加扫码按钮。 -->
+        <com.huozige.lab.container.preferences.ScanEditTextPreference
             app:key="E"
             app:title="@string/url_title"
-            app:useSimpleSummaryProvider="true" />
+            app:useSimpleSummaryProvider="true"
+            app:widgetLayout="@layout/preference_widget_scan" />
 
     </PreferenceCategory>
 

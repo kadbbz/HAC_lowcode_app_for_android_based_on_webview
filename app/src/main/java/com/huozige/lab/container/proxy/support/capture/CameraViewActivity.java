@@ -7,13 +7,16 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
+import com.bumptech.glide.Glide;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
 import com.huozige.lab.container.proxy.support.BaseActivityNoActionBar;
 import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
@@ -25,6 +28,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Mode;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -40,10 +44,17 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
     public static final String OPERATION_TAKE_VIDEO_SNAPSHOT = "v_snapshot";
 
     public static final String EXTRA_OUT_URI = "data-uri";
+    public static final String EXTRA_WATERMARK_LINES = "watermark-lines";
+    public static final String EXTRA_CONFIRM_PHOTO = "confirm-photo";
 
     CameraView camera;
 
     ImageButton ibPhoto, ibVideo, ibToggleCamera;
+    View cameraControls, photoConfirmOverlay;
+    ImageView photoConfirmPreview;
+    File pendingPhotoFile;
+    ArrayList<String> watermarkLines = new ArrayList<>();
+    boolean confirmPhoto;
 
     boolean isSnapshot;
 
@@ -93,7 +104,12 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                     XLog.v("照片已保存为：" + imageFile.getPath());
 
-                    returnTo(imageFile);
+                    if (confirmPhoto) {
+                        showPhotoConfirm(imageFile);
+                    } else {
+                        applyWatermarkToPhoto(imageFile);
+                        returnTo(imageFile);
+                    }
                 });
 
             }
@@ -110,6 +126,12 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
         ibPhoto = findViewById(R.id.capturePicture);
         ibVideo = findViewById(R.id.captureVideo);
         ibToggleCamera = findViewById(R.id.toggleCamera);
+        cameraControls = findViewById(R.id.cameraControls);
+        photoConfirmOverlay = findViewById(R.id.photoConfirmOverlay);
+        photoConfirmPreview = findViewById(R.id.photoConfirmPreview);
+        findViewById(R.id.closeCamera).setOnClickListener(v -> finish());
+        findViewById(R.id.retakePhotoButton).setOnClickListener(v -> retakePhoto());
+        findViewById(R.id.usePhotoButton).setOnClickListener(v -> usePendingPhoto());
 
         // 拍照
         ibPhoto.setOnClickListener((d) -> {
@@ -136,7 +158,7 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                     XLog.v("开始拍摄视频（小尺寸）");
                     camera.takeVideoSnapshot(tempFile);
                 }
-                Toast.makeText(this, "视频录制中，再次点击停止录像", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.offline_toast_video_recording, Toast.LENGTH_LONG).show();
             }
         });
 
@@ -150,6 +172,36 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                 XLog.v("已切换至主摄像头");
             }
         });
+    }
+
+    private void showPhotoConfirm(File imageFile) {
+        pendingPhotoFile = imageFile;
+        applyWatermarkToPhoto(pendingPhotoFile);
+        cameraControls.setVisibility(View.GONE);
+        photoConfirmOverlay.setVisibility(View.VISIBLE);
+        Glide.with(photoConfirmPreview)
+                .load(imageFile)
+                .fitCenter()
+                .into(photoConfirmPreview);
+    }
+
+    private void retakePhoto() {
+        if (pendingPhotoFile != null && pendingPhotoFile.exists()) {
+            pendingPhotoFile.delete();
+        }
+        pendingPhotoFile = null;
+        photoConfirmPreview.setImageDrawable(null);
+        photoConfirmOverlay.setVisibility(View.GONE);
+        cameraControls.setVisibility(View.VISIBLE);
+    }
+
+    private void usePendingPhoto() {
+        if (pendingPhotoFile == null || !pendingPhotoFile.exists()) {
+            Toast.makeText(this, R.string.offline_toast_photo_missing_retake, Toast.LENGTH_SHORT).show();
+            retakePhoto();
+            return;
+        }
+        returnTo(pendingPhotoFile);
     }
 
     @Override
@@ -167,12 +219,17 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
 
                 String op = intentR.getStringExtra(EXTRA_OPERATION);
                 if (op == null) op = OPERATION_TAKE_PHOTO_SNAPSHOT;
+                watermarkLines = intentR.getStringArrayListExtra(EXTRA_WATERMARK_LINES);
+                if (watermarkLines == null) {
+                    watermarkLines = new ArrayList<>();
+                }
+                confirmPhoto = intentR.getBooleanExtra(EXTRA_CONFIRM_PHOTO, false);
 
                 // 调整按钮状态
                 boolean isTakingPhoto = op.equalsIgnoreCase(OPERATION_TAKE_PHOTO) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT);
-                ibPhoto.setVisibility(isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
-                ibToggleCamera.setVisibility(isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
-                ibVideo.setVisibility(!isTakingPhoto ? View.VISIBLE : View.INVISIBLE);
+                ibPhoto.setVisibility(isTakingPhoto ? View.VISIBLE : View.GONE);
+                ibToggleCamera.setVisibility(isTakingPhoto ? View.VISIBLE : View.GONE);
+                ibVideo.setVisibility(!isTakingPhoto ? View.VISIBLE : View.GONE);
 
                 // 设置拍摄类型
                 if (op.equals(OPERATION_TAKE_PHOTO) || op.equals(OPERATION_TAKE_PHOTO_SNAPSHOT)) {
@@ -185,5 +242,16 @@ public class CameraViewActivity extends BaseActivityNoActionBar {
                 isSnapshot = (op.equalsIgnoreCase(OPERATION_TAKE_VIDEO_SNAPSHOT) || op.equalsIgnoreCase(OPERATION_TAKE_PHOTO_SNAPSHOT));
             }
         });
+    }
+
+    private void applyWatermarkToPhoto(File photoFile) {
+        if (watermarkLines == null || watermarkLines.isEmpty() || photoFile == null) {
+            return;
+        }
+        try {
+            OfflineImageFileHelper.writeWatermarkToFile(this, Uri.fromFile(photoFile), photoFile, watermarkLines);
+        } catch (Exception e) {
+            XLog.e("照片水印处理失败：%s", e);
+        }
     }
 }

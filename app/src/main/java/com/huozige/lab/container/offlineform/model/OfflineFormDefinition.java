@@ -1,0 +1,25 @@
+package com.huozige.lab.container.offlineform.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OfflineFormDefinition {
+    // 表单定义的业务唯一标识，也是本地文件夹名称。
+    private String patternId = "";
+    // 表单定义版本号，由插件传入，填报记录保存时会写入记录文件。
+    private String schemaVersion = "";
+    // 表单定义名称，用于历史填报列表主标题展示。
+    private String title = "";
+    // 表单定义备注，用于历史填报列表描述展示。
+    private String description = "";
+    // 表单步骤定义，原生填报页根据步骤中的节点树渲染控件。
+    private List<OfflineFormStep> steps = new ArrayList<>();
+
+}

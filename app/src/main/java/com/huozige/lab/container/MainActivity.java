@@ -18,6 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
+import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.platform.AbstractWebInterop;
 import com.huozige.lab.container.platform.hzg.HZGCacheFilter;
@@ -341,7 +342,7 @@ public class MainActivity extends BaseActivity {
             case MENU_ID_OFFLINE_PLUS:
                 if (DeviceUtility.isOfflineMode()) {
                     // 普通离线模式不允许执行后退操作
-                    Toast.makeText(this, "应用处于普通离线模式，无法打开【超级离线填报】页面。", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "应用处于普通离线模式，无法打开【离线填报入口】页面。", Toast.LENGTH_LONG).show();
                 } else {
                     startActivity(new Intent(this, OfflinePlusListActivity.class));
                 }
