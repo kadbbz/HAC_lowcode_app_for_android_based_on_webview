@@ -24,15 +24,12 @@
             app:tabSelectedTextColor="@color/huozige_blue"
             app:tabTextColor="@color/gray" />
 
-        <Switch
-            android:id="@+id/switch_unfilled_only"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingStart="8dp"
-            android:paddingEnd="12dp"
-            android:text="@string/offline_switch_unfilled_only"
-            android:textColor="@color/offline_form_text_content"
-            android:textSize="13sp" />
+        <com.huozige.lab.container.offlineform.ReselectSpinner
+            android:id="@+id/spinner_filter_mode"
+            android:layout_width="96dp"
+            android:layout_height="48dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp" />
 
     </LinearLayout>
 

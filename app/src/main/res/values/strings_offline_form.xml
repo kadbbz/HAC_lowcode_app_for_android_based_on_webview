@@ -30,7 +30,9 @@
     <string name="offline_button_reset">重置</string>
     <string name="offline_button_rotate_left">左转</string>
     <string name="offline_button_rotate_right">右转</string>
-    <string name="offline_switch_unfilled_only">仅未填</string>
+    <string name="offline_filter_all">全部</string>
+    <string name="offline_filter_unfilled">仅未填</string>
+    <string name="offline_filter_filled">仅已填</string>
     <string name="offline_toast_clear_search_before_sort">请先清空搜索内容再排序</string>
     <string name="offline_toast_drag_to_sort">拖拽以调整顺序</string>
     <string name="offline_toast_sort_saved">排序已保存</string>

@@ -13,10 +13,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Switch;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,6 +65,9 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost {
     public static final String EXTRA_RECORD_ID = "recordId";
     private static final int MENU_ID_SAVE_RECORD = 1;
+    private static final int FILTER_ALL = 0;
+    private static final int FILTER_UNFILLED = 1;
+    private static final int FILTER_FILLED = 2;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -72,12 +76,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
-    private Switch _unfilledOnlySwitch;
+    private Spinner _filterModeSpinner;
     private FormAdapter _adapter;
     private Intent _intent;
     private boolean _formLoaded;
     private boolean _editRecordMissingOrOutdated;
     private boolean _updatingTabs;
+    private AdapterView.OnItemSelectedListener _filterModeSelectedListener;
+    private int _filterMode = FILTER_ALL;
     private OfflineFormRecord _editingRecord;
     private OfflineFormDefinition _definition;
     private int _currentStepIndex;
@@ -116,7 +122,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
-        _unfilledOnlySwitch = findViewById(R.id.switch_unfilled_only);
+        _filterModeSpinner = findViewById(R.id.spinner_filter_mode);
         setupBottomHintHeight();
     }
 
@@ -274,7 +280,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void setupListeners() {
         _previousItemButton.setOnClickListener(v -> navigateRootItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateRootItem(1));
-        _unfilledOnlySwitch.setOnCheckedChangeListener(this::onUnfilledOnlySwitchChanged);
+        setupFilterModeSpinner();
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -283,7 +289,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 saveDraftIfNeeded();
                 _currentStepIndex = tab.getPosition();
-                resetUnfilledOnlySwitch();
+                resetFilterMode();
                 renderCurrentStep();
                 _recyclerView.scrollToPosition(0);
                 _formScrollView.scrollTo(0, 0);
@@ -299,14 +305,34 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         });
     }
 
-    private void onUnfilledOnlySwitchChanged(CompoundButton buttonView, boolean isChecked) {
-        renderCurrentStep();
+    private void setupFilterModeSpinner() {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{
+                getString(R.string.offline_filter_all),
+                getString(R.string.offline_filter_unfilled),
+                getString(R.string.offline_filter_filled)
+        });
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        _filterModeSpinner.setAdapter(adapter);
+        _filterModeSpinner.setSelection(FILTER_ALL);
+        _filterModeSelectedListener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                _filterMode = position;
+                renderCurrentStep();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        };
+        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
     }
 
-    private void resetUnfilledOnlySwitch() {
-        _unfilledOnlySwitch.setOnCheckedChangeListener(null);
-        _unfilledOnlySwitch.setChecked(false);
-        _unfilledOnlySwitch.setOnCheckedChangeListener(this::onUnfilledOnlySwitchChanged);
+    private void resetFilterMode() {
+        _filterModeSpinner.setOnItemSelectedListener(null);
+        _filterMode = FILTER_ALL;
+        _filterModeSpinner.setSelection(FILTER_ALL);
+        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
     }
 
     @Override
@@ -410,7 +436,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private List<OfflineFormDisplayItem> buildCurrentStepDisplayItems(OfflineFormStep step) {
         List<OfflineFormDisplayItem> displayItems = OfflineFormDefinitionFlattener.flattenStep(step);
-        if (!_unfilledOnlySwitch.isChecked()) {
+        if (_filterMode == FILTER_ALL) {
             return displayItems;
         }
 
@@ -428,7 +454,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 result.add(item);
                 continue;
             }
-            if (shouldShowUnfilledRootItem(item)) {
+            if (shouldShowRootItemByFilter(item)) {
                 result.add(item);
             } else if (item.isGroup()) {
                 skipDepth = item.getDepth();
@@ -437,11 +463,20 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return result;
     }
 
-    private boolean shouldShowUnfilledRootItem(OfflineFormDisplayItem item) {
-        if (item.isField()) {
-            return item.getFormItem().isEmpty();
+    private boolean shouldShowRootItemByFilter(OfflineFormDisplayItem item) {
+        switch (_filterMode) {
+            case FILTER_UNFILLED:
+                return item.isField()
+                        ? item.getFormItem().isEmpty()
+                        : item.isGroup() && hasEmptyField(item.getNode());
+            case FILTER_FILLED:
+                return item.isField()
+                        ? !item.getFormItem().isEmpty()
+                        : item.isGroup() && hasField(item.getNode()) && !hasEmptyField(item.getNode());
+            case FILTER_ALL:
+            default:
+                return true;
         }
-        return item.isGroup() && hasEmptyField(item.getNode());
     }
 
     private boolean hasEmptyField(OfflineFormNode node) {
@@ -453,6 +488,21 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 return true;
             }
             if (OfflineFormNode.TYPE_GROUP.equals(child.getNodeType()) && hasEmptyField(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasField(OfflineFormNode node) {
+        if (node == null || node.getChildren() == null) {
+            return false;
+        }
+        for (OfflineFormNode child : node.getChildren()) {
+            if (OfflineFormNode.TYPE_FIELD.equals(child.getNodeType())) {
+                return true;
+            }
+            if (OfflineFormNode.TYPE_GROUP.equals(child.getNodeType()) && hasField(child)) {
                 return true;
             }
         }
