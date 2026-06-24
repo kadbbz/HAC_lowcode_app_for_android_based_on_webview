@@ -142,6 +142,20 @@
         <activity
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
+        <activity android:name=".offlineform.CustomFormActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.OfflinePlusListActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.OfflineProjectRecordActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.OfflineFormConfigDetailActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.OfflineFormRawConfigActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.OfflineExportedRecordDetailActivity"
+            android:exported="false" />
+        <activity android:name=".offlineform.formitem.image.OfflineImagePreviewActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

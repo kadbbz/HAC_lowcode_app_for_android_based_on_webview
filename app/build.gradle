@@ -73,16 +73,22 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.biometric:biometric:1.2.0-alpha05' //生物识别
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
     // 其他类库
     implementation 'commons-io:commons-io:2.16.1' // 文件与路径处理
     implementation 'com.github.getActivity:XXPermissions:18.2' // 权限控制
     implementation files('libs/LPAPI-2024-10-21-R.jar') // 德佟打印机
     implementation 'com.github.REBOOTERS:Matisse:v0.6.0' // 图片选择
     implementation 'com.github.bumptech.glide:glide:4.16.0' // matisse依赖
+    implementation 'io.getstream:photoview:1.0.3' // 图片预览缩放
     implementation 'com.github.jenly1314:zxing-lite:3.1.1' // 二维码识别：扫描
     implementation 'com.github.jenly1314:camera-scan:1.1.1' // 二维码识别：识别
     implementation 'com.github.david-serrano:locationprovider:1.2' // 读取GPS
     implementation 'com.alibaba:fastjson:2.0.49' // JSON处理
+    compileOnly 'org.projectlombok:lombok:1.18.34' // 简化离线填报模型类模板代码
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
     implementation 'com.github.DImuthuUpe:AndroidPdfViewer:3.1.0-beta.1' // 预览PDF
     implementation 'cn.jiguang.sdk:jpush:5.3.1' // 极光推送
     implementation 'com.google.firebase:firebase-messaging:24.1.0' // 极光推送
@@ -93,5 +99,4 @@ dependencies {
     implementation 'com.vinaygaba:rubberstamp:1.0.0' // 图片水印
     implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0' // ECS蓝牙打印机
     implementation 'com.github.zhaolewei:ZlwAudioRecorder:v1.08' // 录音机
-    implementation 'androidx.biometric:biometric:1.2.0-alpha05' //
 }
