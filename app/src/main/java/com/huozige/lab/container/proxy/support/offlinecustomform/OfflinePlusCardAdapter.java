@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
@@ -17,8 +18,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.CustomFormActivity;
+import com.huozige.lab.container.offlineform.OfflineExportedRecordDetailActivity;
 import com.huozige.lab.container.offlineform.OfflineProjectRecordActivity;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
 import java.util.List;
@@ -71,7 +76,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
                 return;
             }
 
-            openNewRecord(item);
+            openLatestRecord(item);
         });
         holder.actionButton.setOnClickListener(v -> {
             if (_sortMode) {
@@ -142,6 +147,38 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
     private void openNewRecord(OfflineFormDefinitionIndexItem item) {
         Intent intent = new Intent(_context, CustomFormActivity.class);
         putProjectExtras(intent, item);
+        _context.startActivity(intent);
+    }
+
+    private void openLatestRecord(OfflineFormDefinitionIndexItem item) {
+        List<OfflineFormRecord> records = OfflineFormFileHelper.readRecords(_context, item.getPatternId());
+        if (records.isEmpty()) {
+            openNewRecord(item);
+            return;
+        }
+
+        OfflineFormRecord latestRecord = records.get(0);
+        if (latestRecord.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+            openExportedRecordDetail(item, latestRecord);
+            return;
+        }
+
+        if (!item.getSchemaVersion().equals(latestRecord.getSchemaVersion())) {
+            Toast.makeText(_context, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(_context, CustomFormActivity.class);
+        putProjectExtras(intent, item);
+        intent.putExtra("schemaVersion", latestRecord.getSchemaVersion());
+        intent.putExtra(CustomFormActivity.EXTRA_RECORD_ID, latestRecord.getRecordId());
+        _context.startActivity(intent);
+    }
+
+    private void openExportedRecordDetail(OfflineFormDefinitionIndexItem item, OfflineFormRecord record) {
+        Intent intent = new Intent(_context, OfflineExportedRecordDetailActivity.class);
+        intent.putExtra(OfflineExportedRecordDetailActivity.EXTRA_PATTERN_ID, item.getPatternId());
+        intent.putExtra(OfflineExportedRecordDetailActivity.EXTRA_RECORD_ID, record.getRecordId());
         _context.startActivity(intent);
     }
 
