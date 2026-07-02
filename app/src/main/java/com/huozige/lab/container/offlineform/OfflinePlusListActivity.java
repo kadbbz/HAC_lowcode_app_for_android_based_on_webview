@@ -44,7 +44,7 @@ public class OfflinePlusListActivity extends BaseActivity {
         _cardItemList = generateData();
         _displayedCardItemList = _cardItemList;
 
-        _adapter = new OfflinePlusCardAdapter(_displayedCardItemList, this);
+        _adapter = new OfflinePlusCardAdapter(_displayedCardItemList, this, item -> reloadList());
         recyclerView.setAdapter(_adapter);
         setupItemTouchHelper(recyclerView);
 

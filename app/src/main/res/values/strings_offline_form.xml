@@ -75,6 +75,7 @@
     <string name="offline_menu_config_manage">配置管理</string>
     <string name="offline_menu_config_detail">表单配置详情</string>
     <string name="offline_menu_delete_config">删除表单配置</string>
+    <string name="offline_menu_delete_form">删除表单</string>
     <string name="offline_menu_fill_record">填报</string>
     <string name="offline_menu_project_detail">详情</string>
     <string name="offline_text_no_records">暂无离线填报记录</string>

@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,18 +35,25 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCardAdapter.ViewHolder> {
     private static final int MENU_ID_FILL_RECORD = 1;
     private static final int MENU_ID_PROJECT_DETAIL = 2;
+    private static final int MENU_ID_DELETE_CONFIG = 3;
     // 普通模式下卡片内容左侧内边距。
     private static final int CONTENT_PADDING_DP = 16;
 
     // 当前列表展示的表单定义索引项，数据来源于本地索引文件。
     private List<OfflineFormDefinitionIndexItem> _cardItems;
     private Context _context;
+    private OnProjectDeletedListener _onProjectDeletedListener;
     // 排序模式：允许外部拖拽调整列表顺序，点击卡片不触发跳转。
     private boolean _sortMode;
 
     public OfflinePlusCardAdapter(List<OfflineFormDefinitionIndexItem> cardItems, Context context) {
+        this(cardItems, context, null);
+    }
+
+    public OfflinePlusCardAdapter(List<OfflineFormDefinitionIndexItem> cardItems, Context context, OnProjectDeletedListener onProjectDeletedListener) {
         this._cardItems = cardItems;
         _context = context;
+        _onProjectDeletedListener = onProjectDeletedListener;
     }
 
     @NonNull
@@ -127,6 +135,8 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
                 .setIcon(R.drawable.ic_offline_menu_fill);
         popupMenu.getMenu().add(0, MENU_ID_PROJECT_DETAIL, MENU_ID_PROJECT_DETAIL, R.string.offline_menu_project_detail)
                 .setIcon(R.drawable.ic_offline_menu_detail);
+        popupMenu.getMenu().add(0, MENU_ID_DELETE_CONFIG, MENU_ID_DELETE_CONFIG, R.string.offline_menu_delete_form)
+                .setIcon(R.drawable.ic_offline_menu_delete);
         popupMenu.setForceShowIcon(true);
         popupMenu.setOnMenuItemClickListener(menuItem -> handleProjectActionMenuItemClick(menuItem, item));
         popupMenu.show();
@@ -141,7 +151,56 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             openProjectRecords(item);
             return true;
         }
+        if (menuItem.getItemId() == MENU_ID_DELETE_CONFIG) {
+            confirmDeleteConfig(item);
+            return true;
+        }
         return false;
+    }
+
+    private void confirmDeleteConfig(OfflineFormDefinitionIndexItem item) {
+        if (item.getPatternId() == null || item.getPatternId().isEmpty()) {
+            Toast.makeText(_context, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(_context)
+                .setTitle(R.string.offline_dialog_delete_title)
+                .setMessage(R.string.offline_dialog_delete_config_message)
+                .setPositiveButton(R.string.offline_button_delete, (dialog, which) -> deleteConfig(item))
+                .setNegativeButton(R.string.ui_button_cancel, null)
+                .show();
+    }
+
+    private void deleteConfig(OfflineFormDefinitionIndexItem item) {
+        if (!OfflineFormFileHelper.deletePatternDirectory(_context, item.getPatternId())) {
+            Toast.makeText(_context, R.string.offline_toast_delete_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        OfflineFormFileHelper.removeDefinitionOrder(_context, item.getPatternId());
+        Toast.makeText(_context, R.string.offline_toast_delete_success, Toast.LENGTH_SHORT).show();
+        if (_onProjectDeletedListener != null) {
+            _onProjectDeletedListener.onProjectDeleted(item);
+            return;
+        }
+
+        int position = findItemPosition(item);
+        if (position >= 0) {
+            _cardItems.remove(position);
+            notifyItemRemoved(position);
+        } else {
+            notifyDataSetChanged();
+        }
+    }
+
+    private int findItemPosition(OfflineFormDefinitionIndexItem item) {
+        for (int i = 0; i < _cardItems.size(); i++) {
+            if (item.getPatternId().equals(_cardItems.get(i).getPatternId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void openNewRecord(OfflineFormDefinitionIndexItem item) {
@@ -215,5 +274,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             contentLayout = itemView.findViewById(R.id.contentLayout);
             themeView = itemView.findViewById(R.id.themeView);
         }
+    }
+
+    public interface OnProjectDeletedListener {
+        void onProjectDeleted(OfflineFormDefinitionIndexItem item);
     }
 }
