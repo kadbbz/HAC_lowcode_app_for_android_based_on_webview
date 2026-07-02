@@ -113,8 +113,12 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public boolean validateAll() {
+        return validateItems(displayItems);
+    }
+
+    public boolean validateItems(List<OfflineFormDisplayItem> items) {
         boolean isValid = true;
-        for (OfflineFormDisplayItem displayItem : displayItems) {
+        for (OfflineFormDisplayItem displayItem : items) {
             if (!displayItem.isField()) {
                 continue;
             }

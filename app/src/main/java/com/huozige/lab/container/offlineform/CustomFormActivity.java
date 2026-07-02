@@ -761,13 +761,24 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         String originalSearchKeyword = _searchKeyword;
         _filterMode = FILTER_ALL;
         _searchKeyword = "";
+        clearErrorsForEmptyValidationUnits();
         for (int i = 0; i < _definition.getSteps().size(); i++) {
-            _currentStepIndex = i;
-            renderCurrentStep();
-            if (!_adapter.validateAll()) {
-                _searchKeyword = "";
-                setFilterModeSelection(FILTER_ALL);
-                return false;
+            OfflineFormStep step = _definition.getSteps().get(i);
+            boolean rendered = false;
+            for (List<OfflineFormDisplayItem> validationUnit : collectValidationUnits(step)) {
+                if (!hasFilledField(validationUnit)) {
+                    continue;
+                }
+                if (!rendered) {
+                    _currentStepIndex = i;
+                    renderCurrentStep();
+                    rendered = true;
+                }
+                if (!_adapter.validateItems(validationUnit)) {
+                    _searchKeyword = "";
+                    setFilterModeSelection(FILTER_ALL);
+                    return false;
+                }
             }
         }
 
@@ -777,6 +788,60 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         setFilterModeSelection(_filterMode);
         renderCurrentStep();
         return true;
+    }
+
+    private List<List<OfflineFormDisplayItem>> collectValidationUnits(OfflineFormStep step) {
+        List<OfflineFormDisplayItem> displayItems = OfflineFormDefinitionFlattener.flattenStep(step);
+        List<List<OfflineFormDisplayItem>> validationUnits = new ArrayList<>();
+        for (int i = 0; i < displayItems.size(); i++) {
+            OfflineFormDisplayItem displayItem = displayItems.get(i);
+            if (displayItem.getDepth() != 0) {
+                continue;
+            }
+            if (displayItem.isGroup()) {
+                List<OfflineFormDisplayItem> groupItems = new ArrayList<>();
+                groupItems.add(displayItem);
+                int nextIndex = i + 1;
+                while (nextIndex < displayItems.size() && displayItems.get(nextIndex).getDepth() > 0) {
+                    groupItems.add(displayItems.get(nextIndex));
+                    nextIndex++;
+                }
+                validationUnits.add(groupItems);
+                i = nextIndex - 1;
+            } else if (displayItem.isField()) {
+                List<OfflineFormDisplayItem> fieldItem = new ArrayList<>();
+                fieldItem.add(displayItem);
+                validationUnits.add(fieldItem);
+            }
+        }
+        return validationUnits;
+    }
+
+    private void clearErrorsForEmptyValidationUnits() {
+        for (OfflineFormStep step : _definition.getSteps()) {
+            for (List<OfflineFormDisplayItem> validationUnit : collectValidationUnits(step)) {
+                if (!hasFilledField(validationUnit)) {
+                    clearValidationErrors(validationUnit);
+                }
+            }
+        }
+    }
+
+    private boolean hasFilledField(List<OfflineFormDisplayItem> displayItems) {
+        for (OfflineFormDisplayItem displayItem : displayItems) {
+            if (displayItem.isField() && !displayItem.getFormItem().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearValidationErrors(List<OfflineFormDisplayItem> displayItems) {
+        for (OfflineFormDisplayItem displayItem : displayItems) {
+            if (displayItem.isField()) {
+                displayItem.getFormItem().clearError();
+            }
+        }
     }
 
     private OfflineFormRecord ensureDraftRecordForAttachment() {
