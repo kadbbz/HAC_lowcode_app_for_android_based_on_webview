@@ -131,10 +131,10 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
     private void showProjectActionMenu(View anchor, OfflineFormDefinitionIndexItem item) {
         PopupMenu popupMenu = new PopupMenu(_context, anchor);
-        popupMenu.getMenu().add(0, MENU_ID_FILL_RECORD, MENU_ID_FILL_RECORD, R.string.offline_menu_fill_record)
-                .setIcon(R.drawable.ic_offline_menu_fill);
-        popupMenu.getMenu().add(0, MENU_ID_PROJECT_DETAIL, MENU_ID_PROJECT_DETAIL, R.string.offline_menu_project_detail)
-                .setIcon(R.drawable.ic_offline_menu_detail);
+//        popupMenu.getMenu().add(0, MENU_ID_FILL_RECORD, MENU_ID_FILL_RECORD, R.string.offline_menu_fill_record)
+//                .setIcon(R.drawable.ic_offline_menu_fill);
+//        popupMenu.getMenu().add(0, MENU_ID_PROJECT_DETAIL, MENU_ID_PROJECT_DETAIL, R.string.offline_menu_project_detail)
+//                .setIcon(R.drawable.ic_offline_menu_detail);
         popupMenu.getMenu().add(0, MENU_ID_DELETE_CONFIG, MENU_ID_DELETE_CONFIG, R.string.offline_menu_delete_form)
                 .setIcon(R.drawable.ic_offline_menu_delete);
         popupMenu.setForceShowIcon(true);
