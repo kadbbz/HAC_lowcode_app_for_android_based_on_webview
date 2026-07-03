@@ -84,7 +84,7 @@
     <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>
     <string name="offline_text_default_step">步骤%1$d</string>
     <string name="offline_text_search_keyword">搜索：%1$s</string>
-    <string name="offline_text_project_meta">项目编号：%1$s    版本号：%2$s</string>
+    <string name="offline_text_project_meta">项目编号：%1$s</string>
     <string name="offline_text_image_count">%1$d 张图片</string>
     <string name="offline_text_file_count">%1$d 个文件</string>
     <string name="offline_text_file_missing">文件不存在</string>
