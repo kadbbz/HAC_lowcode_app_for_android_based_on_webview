@@ -24,6 +24,7 @@ import com.huozige.lab.container.offlineform.OfflineProjectRecordActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 
@@ -70,7 +71,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
-        holder.metaTextView.setText(_context.getString(R.string.offline_text_project_meta, item.getPatternId()));
+        holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
         String theme = OfflineComputedHelper.resolveThemeColor(item.getComputed().getTheme());
         holder.themeView.setBackgroundColor(OfflineComputedHelper.parseColor(theme));
         holder.imageView.setImageBitmap(createIconBitmap(item.getPatternId(), item.getSchemaVersion(), theme));

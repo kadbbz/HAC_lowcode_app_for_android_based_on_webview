@@ -1,7 +1,10 @@
 package com.huozige.lab.container.proxy;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Looper;
 import android.webkit.MimeTypeMap;
 import android.webkit.CookieManager;
@@ -9,7 +12,9 @@ import android.webkit.JavascriptInterface;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.OfflinePlusExportListActivity;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.platform.CallbackParams;
@@ -33,6 +38,10 @@ import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,6 +62,25 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class OfflinePlusProxy extends AbstractProxy{
 
+    private ActivityResultLauncher<Intent> _exportMultipleRecordsLauncher;
+
+    @Override
+    public void onActivityCreated(AppCompatActivity activity) {
+        _exportMultipleRecordsLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                callback(CallbackParams.error("Export canceled."));
+                return;
+            }
+
+            ArrayList<String> projectIds = result.getData().getStringArrayListExtra(OfflinePlusExportListActivity.EXTRA_SELECTED_PATTERN_IDS);
+            if (projectIds == null || projectIds.isEmpty()) {
+                callback(CallbackParams.error("No form selected."));
+                return;
+            }
+
+            exportMultipleRecords(projectIds);
+        });
+    }
 
     @Override
     public void beforeActivityPause() {
@@ -159,6 +187,21 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
+    public void offlinePlusExportMultipleRecordsAsync(String ticket) {
+        writeInfoLog("OfflinePlusExportMultipleRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        runOnUiThread(() -> {
+            if (_exportMultipleRecordsLauncher == null) {
+                callback(CallbackParams.error("Export launcher is not initialized."));
+                return;
+            }
+
+            _exportMultipleRecordsLauncher.launch(createIntent(OfflinePlusExportListActivity.class));
+        });
+    }
+
+    @JavascriptInterface
     public String offlinePlusLoadAttachment(String projectId, String localName) {
         writeInfoLog("OfflinePlusLoadAttachment");
 
@@ -184,15 +227,50 @@ public class OfflinePlusProxy extends AbstractProxy{
 
     private String buildExportRecordsResult(String projectId) {
         Context context = this.getWebView().getContext();
-        com.alibaba.fastjson.JSONObject result = new com.alibaba.fastjson.JSONObject();
-        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
+        return buildExportRecordsResultObject(context, projectId, records).toJSONString();
+    }
+
+    private String buildExportRecordsResults(List<String> projectIds) {
+        Context context = this.getWebView().getContext();
+        JSONArray results = new JSONArray();
+        if (projectIds == null) {
+            return results.toJSONString();
+        }
+
+        for (String projectId : projectIds) {
+            if (StringUtils.isNullOrBlank(projectId)) {
+                continue;
+            }
+            List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
+            results.add(buildExportRecordsResultObject(context, projectId, records));
+        }
+        return results.toJSONString();
+    }
+
+    private JSONObject buildExportRecordsResultObject(Context context, String projectId, List<OfflineFormRecord> records) {
+        JSONObject result = new JSONObject();
         Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(context, projectId);
         normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
         result.put("projectId", projectId);
         result.put("records", records);
         result.put("attachments", buildExportAttachments(records, attachmentFieldTypes));
         result.put("signature", readSignatureDataUrl(context, projectId));
-        return result.toJSONString();
+        return result;
+    }
+
+    private List<OfflineFormRecord> readSubmittedRecords(Context context, String projectId) {
+        return filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+    }
+
+    private void exportMultipleRecords(List<String> projectIds) {
+        new Thread(() -> {
+            try {
+                callback(CallbackParams.success(buildExportRecordsResults(projectIds)));
+            } catch (Exception e) {
+                callback(CallbackParams.error(e.toString()));
+            }
+        }).start();
     }
 
     private void normalizeEmptyAttachmentValues(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {

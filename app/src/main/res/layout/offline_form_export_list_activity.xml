@@ -73,17 +73,28 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <Button
-            android:id="@+id/cmdSort"
+        <CheckBox
+            android:id="@+id/cmdSelectAll"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:background="@drawable/offline_button_secondary_bg"
-            android:minWidth="80dp"
+            android:buttonTint="@color/huozige_blue"
+            android:minWidth="76dp"
+            android:text="&#20840;&#36873;"
+            android:textColor="@color/offline_form_text_title"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/cmdExport"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/offline_button_primary_bg"
+            android:minWidth="82dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:text="@string/offline_button_sort"
+            android:text="&#23548;&#20986;"
             android:textAllCaps="false"
-            android:textColor="@color/offline_button_secondary_text"
+            android:textColor="@color/offline_button_primary_text"
             android:textSize="14sp" />
 
     </LinearLayout>

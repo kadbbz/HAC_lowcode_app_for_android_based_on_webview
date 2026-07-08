@@ -146,6 +146,8 @@
             android:exported="false" />
         <activity android:name=".offlineform.OfflinePlusListActivity"
             android:exported="false" />
+        <activity android:name=".offlineform.OfflinePlusExportListActivity"
+            android:exported="false" />
         <activity android:name=".offlineform.OfflineProjectRecordActivity"
             android:exported="false" />
         <activity android:name=".offlineform.OfflineFormConfigDetailActivity"
