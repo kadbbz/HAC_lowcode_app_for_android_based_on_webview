@@ -53,6 +53,7 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OfflineFormDefinitionIndexItem item = _cardItems.get(position);
+        boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
         boolean selected = isSelected(item);
 
         holder.titleTextView.setText(item.getTitle());
@@ -66,8 +67,14 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
 
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(selected);
+        holder.checkBox.setEnabled(!exported);
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> setSelected(item, isChecked));
-        holder.itemView.setOnClickListener(v -> setSelected(item, !isSelected(item)));
+        holder.itemView.setOnClickListener(v -> {
+            if (exported) {
+                return;
+            }
+            setSelected(item, !isSelected(item));
+        });
     }
 
     @Override
@@ -129,6 +136,9 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
 
     private boolean setSelectedInternal(OfflineFormDefinitionIndexItem item, boolean selected) {
         if (item == null || item.getPatternId() == null || item.getPatternId().isEmpty()) {
+            return false;
+        }
+        if (selected && OfflineFormExportStatusHelper.isExported(_context, item)) {
             return false;
         }
         if (selected) {

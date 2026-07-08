@@ -84,6 +84,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             if (_sortMode) {
                 return;
             }
+            if (OfflineFormExportStatusHelper.isExported(_context, item)) {
+                return;
+            }
 
             openLatestRecord(item);
         });

@@ -16,6 +16,11 @@ public class OfflineFormExportStatusHelper {
         return status.submittedCount > 0 || status.totalCount == 0;
     }
 
+    public static boolean isExported(Context context, OfflineFormDefinitionIndexItem item) {
+        Status status = readStatus(context, item);
+        return status.submittedCount == 0 && status.exportedCount > 0;
+    }
+
     public static String buildProjectMetaText(Context context, OfflineFormDefinitionIndexItem item) {
         String projectMeta = context.getString(R.string.offline_text_project_meta, item.getPatternId());
         return projectMeta + "\n" + readStatus(context, item).getDisplayText();
