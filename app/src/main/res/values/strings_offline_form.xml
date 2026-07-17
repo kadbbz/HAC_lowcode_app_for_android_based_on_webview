@@ -28,6 +28,8 @@
     <string name="offline_button_upload">上传</string>
     <string name="offline_button_upload_file">上传文件</string>
     <string name="offline_button_capture_image">拍照</string>
+    <string name="offline_button_add_list_item">&#x6dfb;&#x52a0;</string>
+    <string name="offline_button_delete_list_item">&#x5220;&#x9664;</string>
     <string name="offline_button_confirm">确定</string>
     <string name="offline_button_cancel">取消</string>
     <string name="offline_button_reset">重置</string>
@@ -87,6 +89,8 @@
     <string name="offline_text_project_meta">项目编号：%1$s</string>
     <string name="offline_text_image_count">%1$d 张图片</string>
     <string name="offline_text_file_count">%1$d 个文件</string>
+    <string name="offline_text_list_count">%1$d &#x9879;</string>
+    <string name="offline_text_list_item_title">&#x6a21;&#x5757; %1$d</string>
     <string name="offline_text_file_missing">文件不存在</string>
     <string name="offline_text_unnamed_file">未命名文件</string>
     <string name="offline_text_image_load_failed">图片加载失败</string>

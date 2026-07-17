@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemValueHelper;
 import com.huozige.lab.container.offlineform.formitem.file.FileUploadHost;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureHost;
@@ -892,37 +893,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void applyPatternIdToAttachmentItems(List<BaseFormItem> formItems, String patternId) {
-        for (BaseFormItem formItem : formItems) {
-            if (formItem instanceof ImageFormItem) {
-                ((ImageFormItem) formItem).setPatternId(patternId);
-            } else if (formItem instanceof FileFormItem) {
-                ((FileFormItem) formItem).setPatternId(patternId);
-            }
-        }
+        OfflineFormItemValueHelper.applyPatternId(formItems, patternId);
     }
 
     private void applyRecordValues(List<BaseFormItem> formItems, Map<String, String> values) {
-        if (values == null) {
-            return;
-        }
-
-        for (BaseFormItem formItem : formItems) {
-            String value = values.get(formItem.getId());
-            if (value == null) {
-                continue;
-            }
-            if (formItem instanceof TextFormItem) {
-                ((TextFormItem) formItem).setValue(value);
-            } else if (formItem instanceof SelectFormItem) {
-                ((SelectFormItem) formItem).setSelectedValue(value);
-            } else if (formItem instanceof PickerFormItem) {
-                ((PickerFormItem) formItem).setValue(value);
-            } else if (formItem instanceof ImageFormItem) {
-                ((ImageFormItem) formItem).setValue(value);
-            } else if (formItem instanceof FileFormItem) {
-                ((FileFormItem) formItem).setValue(value);
-            }
-        }
+        OfflineFormItemValueHelper.applyValues(formItems, values);
     }
 
     @Override

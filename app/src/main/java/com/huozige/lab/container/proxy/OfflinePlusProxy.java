@@ -35,6 +35,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexIte
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 
@@ -250,11 +251,12 @@ public class OfflinePlusProxy extends AbstractProxy{
 
     private JSONObject buildExportRecordsResultObject(Context context, String projectId, List<OfflineFormRecord> records) {
         JSONObject result = new JSONObject();
-        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(context, projectId);
+        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
+        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(definitionFile);
         normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
         result.put("projectId", projectId);
         result.put("records", records);
-        result.put("attachments", buildExportAttachments(records, attachmentFieldTypes));
+        result.put("attachments", buildExportAttachments(records, definitionFile));
         result.put("signature", readSignatureDataUrl(context, projectId));
         return result;
     }
@@ -291,9 +293,12 @@ public class OfflinePlusProxy extends AbstractProxy{
         }
     }
 
-    private JSONArray buildExportAttachments(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+    private JSONArray buildExportAttachments(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
         JSONArray attachments = new JSONArray();
-        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+        if (records == null || records.isEmpty()
+                || definitionFile == null
+                || definitionFile.getJsonSchema() == null
+                || definitionFile.getJsonSchema().getSteps() == null) {
             return attachments;
         }
 
@@ -301,21 +306,62 @@ public class OfflinePlusProxy extends AbstractProxy{
             if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
                 continue;
             }
-            for (Map.Entry<String, String> entry : attachmentFieldTypes.entrySet()) {
-                String fieldId = entry.getKey();
-                String fieldType = entry.getValue();
-                String rawValue = record.getValues().get(fieldId);
-                if (OfflineFormItemType.IMAGE.getValue().equals(fieldType)) {
-                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
-                } else if (OfflineFormItemType.FILE.getValue().equals(fieldType)) {
-                    addAttachments(attachments, record.getRecordId(), fieldId, fieldType, rawValue);
+            JSONObject values = new JSONObject();
+            values.putAll(record.getValues());
+            JSONArray rootPath = new JSONArray();
+            rootPath.add(record.getRecordId());
+            for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+                if (step != null) {
+                    collectExportAttachments(attachments, rootPath, step.getItems(), values);
                 }
             }
         }
         return attachments;
     }
 
-    private void addAttachments(JSONArray attachments, String recordId, String fieldId, String fieldType, String rawValue) {
+    private void collectExportAttachments(JSONArray attachments, JSONArray pathPrefix, List<OfflineFormNode> nodes, JSONObject values) {
+        if (nodes == null || values == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                String rawValue = values.getString(field.getId());
+                JSONArray fieldPath = appendPath(pathPrefix, field.getId());
+                if (isAttachmentFieldType(field.getItemType())) {
+                    addAttachments(attachments, fieldPath, field.getId(), field.getItemType(), rawValue);
+                } else if (field instanceof ListFormItem) {
+                    collectListExportAttachments(attachments, fieldPath, (ListFormItem) field, rawValue);
+                }
+            }
+            collectExportAttachments(attachments, pathPrefix, node.getChildren(), values);
+        }
+    }
+
+    private void collectListExportAttachments(JSONArray attachments, JSONArray listPath, ListFormItem listItem, String rawValue) {
+        JSONArray rows = ListFormItem.parseRows(rawValue);
+        for (int i = 0; i < rows.size(); i++) {
+            JSONObject rowValues = rows.getJSONObject(i);
+            if (rowValues == null) {
+                continue;
+            }
+            collectExportAttachments(attachments, appendPath(listPath, i), listItem.getTemplateNodes(), rowValues);
+        }
+    }
+
+    private JSONArray appendPath(JSONArray pathPrefix, Object value) {
+        JSONArray path = new JSONArray();
+        if (pathPrefix != null) {
+            path.addAll(pathPrefix);
+        }
+        path.add(value);
+        return path;
+    }
+
+    private void addAttachments(JSONArray attachments, JSONArray path, String fieldId, String fieldType, String rawValue) {
         boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
         List<AttachmentFormItemValue> attachmentValues = imageField ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
         for (int i = 0; i < attachmentValues.size(); i++) {
@@ -330,10 +376,10 @@ public class OfflinePlusProxy extends AbstractProxy{
             }
 
             com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
-            attachment.put("path", buildAttachmentPath(recordId, fieldId));
+            attachment.put("path", path);
             attachment.put("type", imageField ? "image" : "file");
             attachment.put("localName", localName);
-            attachment.put("recordId", recordId);
+            attachment.put("recordId", path == null || path.isEmpty() ? "" : path.getString(0));
             attachment.put("fieldId", fieldId);
             if (!StringUtils.isNullOrBlank(originalName)) {
                 attachment.put("originalName", originalName);
@@ -343,16 +389,8 @@ public class OfflinePlusProxy extends AbstractProxy{
         }
     }
 
-    private JSONArray buildAttachmentPath(String recordId, String fieldId) {
-        JSONArray path = new JSONArray();
-        path.add(recordId);
-        path.add(fieldId);
-        return path;
-    }
-
-    private Map<String, String> readAttachmentFieldTypes(Context context, String projectId) {
+    private Map<String, String> readAttachmentFieldTypes(OfflineFormDefinitionFile definitionFile) {
         Map<String, String> fieldTypes = new HashMap<>();
-        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
         if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
             return fieldTypes;
         }

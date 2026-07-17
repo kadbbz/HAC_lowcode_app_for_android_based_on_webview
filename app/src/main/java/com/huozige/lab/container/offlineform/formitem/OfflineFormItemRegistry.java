@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.offlineform.formitem.file.FileFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.image.ImageFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.list.ListFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
@@ -29,6 +30,7 @@ public final class OfflineFormItemRegistry {
         register(new TimePickerFormItemHandler());
         register(new ImageFormItemHandler());
         register(new FileFormItemHandler());
+        register(new ListFormItemHandler());
         register(new TextFormItemHandler());
     }
 

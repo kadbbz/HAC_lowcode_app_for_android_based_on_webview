@@ -7,7 +7,8 @@ public enum OfflineFormItemViewType {
     DATE_PICKER(4),
     TIME_PICKER(5),
     IMAGE(6),
-    FILE(7);
+    FILE(7),
+    LIST(8);
 
     private final int value;
 

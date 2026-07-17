@@ -30,6 +30,12 @@ public final class OfflineFormDefinitionFlattener {
         return result;
     }
 
+    public static List<BaseFormItem> flattenFields(List<OfflineFormNode> nodes) {
+        List<BaseFormItem> result = new ArrayList<>();
+        collectFields(nodes, result);
+        return result;
+    }
+
     public static List<OfflineFormDisplayItem> flattenFieldDisplayItems(OfflineFormDefinition definition) {
         List<OfflineFormDisplayItem> result = new ArrayList<>();
         if (definition == null || definition.getSteps() == null) {
