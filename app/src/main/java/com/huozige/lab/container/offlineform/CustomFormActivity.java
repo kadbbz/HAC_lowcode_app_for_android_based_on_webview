@@ -330,7 +330,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void setupFilterModeSpinner() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.offline_form_filter_spinner_item, new String[]{
                 getString(R.string.offline_filter_all),
                 getString(R.string.offline_filter_unfilled),
                 getString(R.string.offline_filter_filled),
