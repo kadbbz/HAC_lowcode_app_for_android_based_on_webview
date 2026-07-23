@@ -73,8 +73,11 @@ public class HACWebChromeClient extends WebChromeClient {
 
         // 在标题上显示页面的加载状态，0-99意味着正在加载，100加载完成。
         // 加载完成的处理，放在其他事件中，这里只关注加载中
+        //活字格中使用弹出页面——全屏覆盖模式时，指挥触发该函数，不会触发onReceivedTitle，因此这里添加else做额外处理
         if (newProgress < 100) {
-            _title = _context.getString(R.string.ui_title_loading);
+            // _title = _context.getString(R.string.ui_title_loading);
+            _context.setTitle(_context.getString(R.string.ui_title_loading));
+        } else {
             _context.setTitle(_title);
         }
 
