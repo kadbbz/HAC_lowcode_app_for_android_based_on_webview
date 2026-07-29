@@ -46,6 +46,7 @@ public class HACWebChromeClient extends WebChromeClient {
     ValueCallback<Uri[]> _filePathCallback; // ChromeClient的文件选择器回调
 
     ActivityResultLauncher<String> _contentChooser; // 选择文件的调用器
+    ActivityResultLauncher<String[]> _multiFileChooser; // 多选文件的调用器
     ActivityResultLauncher<Intent> _imageCaptureChooser; // 拍摄照片的调用器
 
     static final int REQUEST_CODE_PICK_PHOTO_VIDEO = 20001; // 选取照片和视频的标识
@@ -72,8 +73,9 @@ public class HACWebChromeClient extends WebChromeClient {
 
         // 在标题上显示页面的加载状态，0-99意味着正在加载，100加载完成。
         // 加载完成的处理，放在其他事件中，这里只关注加载中
+        //活字格中使用弹出页面——全屏覆盖模式时，指挥触发该函数，不会触发onReceivedTitle，因此这里添加else做额外处理
         if (newProgress < 100) {
-           // _title = _context.getString(R.string.ui_title_loading);
+            // _title = _context.getString(R.string.ui_title_loading);
             _context.setTitle(_context.getString(R.string.ui_title_loading));
         } else {
             _context.setTitle(_title);
@@ -166,6 +168,8 @@ public class HACWebChromeClient extends WebChromeClient {
 
         _filePathCallback = filePathCallback; // 将参数缓存起来，回调使用
 
+        boolean isMultiSelect = fileChooserParams.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE;
+
         if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("video/*") || Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
             // 需要调用摄像头，则先申请权限
@@ -176,7 +180,7 @@ public class HACWebChromeClient extends WebChromeClient {
 
                 if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
 
-                    // 兼容活字格官方Vant插件，支持“直接调出摄像头拍照上传”功能
+                    // 兼容活字格官方Vant插件，支持"直接调出摄像头拍照上传"功能
                     if (fileChooserParams.isCaptureEnabled()) {
 
                         Intent cameraIntent = new Intent(this._context, CameraViewActivity.class);
@@ -190,7 +194,7 @@ public class HACWebChromeClient extends WebChromeClient {
                                 .capture(true)
                                 .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
                                         new CaptureStrategy(true, "com.huozige.lab.container"))
-                                .maxSelectable(1)
+                                .maxSelectable(isMultiSelect ? 99 : 1)
                                 .thumbnailScale(0.85f)
                                 .imageEngine(new GlideEngine())
                                 .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
@@ -204,7 +208,7 @@ public class HACWebChromeClient extends WebChromeClient {
                             .capture(true)
                             .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
                                     new CaptureStrategy(true, "com.huozige.lab.container"))
-                            .maxSelectable(1)
+                            .maxSelectable(isMultiSelect ? 99 : 1)
                             .thumbnailScale(0.85f)
                             .imageEngine(new GlideEngine())
                             .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
@@ -212,8 +216,12 @@ public class HACWebChromeClient extends WebChromeClient {
             });
         } else {
 
-            // 直接使用系统文件选择机制
-            _contentChooser.launch("*/*");
+            // 根据多选模式选择不同的文件选择器
+            if (isMultiSelect) {
+                _multiFileChooser.launch(new String[]{"*/*"});
+            } else {
+                _contentChooser.launch("*/*");
+            }
         }
 
         // 标记为已经处理
@@ -243,7 +251,7 @@ public class HACWebChromeClient extends WebChromeClient {
                     _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                 });
 
-        // 创建文件选择页面启动器
+        // 创建文件选择页面启动器（单选）
         _contentChooser = _context.registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
 
@@ -256,6 +264,21 @@ public class HACWebChromeClient extends WebChromeClient {
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
+                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                });
+
+        // 创建多选文件选择页面启动器
+        _multiFileChooser = _context.registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments(),
+                uris -> {
+                    List<Uri> selectedFiles = new ArrayList<>();
+
+                    if (uris != null) {
+                        for (Uri uri : uris) {
+                            selectedFiles.add(uri);
+                            DeviceUtility.registryLatestFile(uri);
+                        }
+                    }
+
                     _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
                 });
     }
