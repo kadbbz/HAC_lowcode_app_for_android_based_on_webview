@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#20252B"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_cancel_signature"
+            android:layout_width="88dp"
+            android:layout_height="40dp"
+            android:background="@drawable/offline_button_secondary_bg"
+            android:text="@string/offline_button_cancel"
+            android:textColor="@color/offline_form_text_title" />
+
+        <TextView
+            android:id="@+id/signature_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/offline_title_signature"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/button_clear_signature"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:background="@drawable/offline_button_secondary_bg"
+            android:text="@string/offline_button_clear_signature"
+            android:textColor="@color/offline_form_text_title" />
+
+        <Button
+            android:id="@+id/button_confirm_signature"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/offline_button_primary_bg"
+            android:text="@string/offline_button_confirm"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
+    </LinearLayout>
+
+    <com.huozige.lab.container.offlineform.formitem.signature.SignaturePadView
+        android:id="@+id/signature_pad"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_weight="1"
+        android:background="@drawable/offline_signature_pad_bg" />
+
+</LinearLayout>

@@ -12,6 +12,7 @@ import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemH
 import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
@@ -29,6 +30,7 @@ public final class OfflineFormItemRegistry {
         register(new DatePickerFormItemHandler());
         register(new TimePickerFormItemHandler());
         register(new ImageFormItemHandler());
+        register(new SignatureFormItemHandler());
         register(new FileFormItemHandler());
         register(new ListFormItemHandler());
         register(new TextFormItemHandler());

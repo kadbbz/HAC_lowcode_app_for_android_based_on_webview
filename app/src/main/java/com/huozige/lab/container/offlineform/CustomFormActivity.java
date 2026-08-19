@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -41,6 +43,9 @@ import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.image.ImageCaptureHost;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImagePreviewActivity;
 import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
+import com.huozige.lab.container.offlineform.formitem.signature.SignatureCallback;
+import com.huozige.lab.container.offlineform.formitem.signature.SignatureCaptureActivity;
+import com.huozige.lab.container.offlineform.formitem.signature.SignatureCaptureHost;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
@@ -55,11 +60,14 @@ import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
+import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +76,7 @@ import java.util.Map;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
-public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost {
+public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost, SignatureCaptureHost {
     public static final String EXTRA_RECORD_ID = "recordId";
     private static final int MENU_ID_SAVE_RECORD = 1;
     private static final int FILTER_ALL = 0;
@@ -103,10 +111,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ActivityResultLauncher<String> _imageUploadLauncher;
     private ActivityResultLauncher<Intent> _imagePreviewLauncher;
     private ActivityResultLauncher<String[]> _fileUploadLauncher;
+    private ActivityResultLauncher<Intent> _signatureCaptureLauncher;
     private ImageFormItem _pendingImageItem;
     private AttachmentCallback _pendingImageCallback;
     private FileFormItem _pendingFileItem;
     private AttachmentCallback _pendingFileCallback;
+    private SignatureFormItem _pendingSignatureItem;
+    private SignatureCallback _pendingSignatureCallback;
 
 
     @Override
@@ -122,6 +133,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         registerImageUploadLauncher();
         registerImagePreviewLauncher();
         registerFileUploadLauncher();
+        registerSignatureCaptureLauncher();
         loadFormDataFromJson();
         setupListeners();
     }
@@ -929,6 +941,86 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         saveDraftIfNeeded();
     }
 
+    private void registerSignatureCaptureLauncher() {
+        _signatureCaptureLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            File temporaryFile = null;
+            Bitmap bitmap = null;
+            try {
+                if (result.getResultCode() != RESULT_OK || result.getData() == null
+                        || _pendingSignatureItem == null || _pendingSignatureCallback == null) {
+                    return;
+                }
+                if (result.getData().getBooleanExtra(SignatureCaptureActivity.EXTRA_UNCHANGED, false)) {
+                    return;
+                }
+                String outputPath = result.getData().getStringExtra(SignatureCaptureActivity.EXTRA_OUTPUT_PATH);
+                if (outputPath == null || outputPath.isEmpty()) {
+                    return;
+                }
+
+                temporaryFile = new File(outputPath);
+                bitmap = BitmapFactory.decodeFile(outputPath);
+                if (bitmap == null) {
+                    throw new IllegalArgumentException(getString(R.string.offline_error_image_read_failed));
+                }
+
+                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                AttachmentFormItemValue oldSignature = _pendingSignatureItem.getSignature();
+                AttachmentFormItemValue signature = OfflineImageFileHelper.saveSignature(
+                        this,
+                        draft.getPatternId(),
+                        _pendingSignatureItem,
+                        bitmap,
+                        !result.getData().getBooleanExtra(
+                                SignatureCaptureActivity.EXTRA_WATERMARK_ALREADY_PRESENT,
+                                false));
+                _pendingSignatureCallback.onSignatureCaptured(signature);
+                if (oldSignature != null && oldSignature.getFileName() != null
+                        && !oldSignature.getFileName().equals(signature.getFileName())) {
+                    OfflineImageFileHelper.deleteLocalFile(
+                            this,
+                            draft.getPatternId(),
+                            oldSignature.getFileName());
+                }
+                saveDraftIfNeeded();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+            } finally {
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
+                if (temporaryFile != null && temporaryFile.exists()) {
+                    temporaryFile.delete();
+                }
+                clearPendingSignatureCapture();
+            }
+        });
+    }
+
+    @Override
+    public void captureSignature(SignatureFormItem item, SignatureCallback callback) {
+        _pendingSignatureItem = item;
+        _pendingSignatureCallback = callback;
+        String existingPath = "";
+        AttachmentFormItemValue existingSignature = item == null ? null : item.getSignature();
+        if (existingSignature != null) {
+            File existingFile = Utils.resolveLocalFile(this, item.getPatternId(), existingSignature.getFileName());
+            if (existingFile != null && existingFile.exists()) {
+                existingPath = existingFile.getAbsolutePath();
+            }
+        }
+        _signatureCaptureLauncher.launch(SignatureCaptureActivity.createIntent(
+                this,
+                item == null ? getString(R.string.offline_title_signature) : item.getTitle(),
+                existingPath));
+    }
+
+    @Override
+    public void onSignatureChanged(SignatureFormItem item) {
+        saveDraftIfNeeded();
+    }
+
     @Override
     public void uploadFile(FileFormItem item, AttachmentCallback callback) {
         _pendingFileItem = item;
@@ -976,6 +1068,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void clearPendingFileUpload() {
         _pendingFileItem = null;
         _pendingFileCallback = null;
+    }
+
+    private void clearPendingSignatureCapture() {
+        _pendingSignatureItem = null;
+        _pendingSignatureCallback = null;
     }
 
     private void scrollToFirstError() {

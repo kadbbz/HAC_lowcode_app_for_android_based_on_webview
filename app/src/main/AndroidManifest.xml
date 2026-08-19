@@ -158,6 +158,12 @@
             android:exported="false" />
         <activity android:name=".offlineform.formitem.image.OfflineImagePreviewActivity"
             android:exported="false" />
+        <activity
+            android:name=".offlineform.formitem.signature.SignatureCaptureActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/SignatureCaptureTheme" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

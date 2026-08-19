@@ -7,6 +7,7 @@ public enum OfflineFormItemType {
     DATE_PICKER("datePicker"),
     TIME_PICKER("timePicker"),
     IMAGE("imageItem"),
+    SIGNATURE("signatureItem"),
     FILE("fileItem"),
     LIST("listItem");
 

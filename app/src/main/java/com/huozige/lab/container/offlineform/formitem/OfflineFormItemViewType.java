@@ -8,7 +8,8 @@ public enum OfflineFormItemViewType {
     TIME_PICKER(5),
     IMAGE(6),
     FILE(7),
-    LIST(8);
+    LIST(8),
+    SIGNATURE(9);
 
     private final int value;
 

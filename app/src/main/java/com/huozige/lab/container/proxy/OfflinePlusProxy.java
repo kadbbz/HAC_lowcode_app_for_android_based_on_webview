@@ -362,7 +362,8 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     private void addAttachments(JSONArray attachments, JSONArray path, String fieldId, String fieldType, String rawValue) {
-        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
+        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType)
+                || OfflineFormItemType.SIGNATURE.getValue().equals(fieldType);
         List<AttachmentFormItemValue> attachmentValues = imageField ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
         for (int i = 0; i < attachmentValues.size(); i++) {
             AttachmentFormItemValue attachmentValue = attachmentValues.get(i);
@@ -424,6 +425,7 @@ public class OfflinePlusProxy extends AbstractProxy{
 
     private boolean isAttachmentFieldType(String itemType) {
         return OfflineFormItemType.IMAGE.getValue().equals(itemType)
+                || OfflineFormItemType.SIGNATURE.getValue().equals(itemType)
                 || OfflineFormItemType.FILE.getValue().equals(itemType);
     }
 

@@ -226,7 +226,7 @@ public class OfflineFormFileHelper {
             BaseFormItem field = node.getField();
             if (field != null && field.getId() != null && !field.getId().isEmpty()) {
                 String rawValue = values.getString(field.getId());
-                if (OfflineFormItemType.IMAGE.getValue().equals(field.getItemType())) {
+                if (field instanceof ImageFormItem) {
                     ImageFormItem.parseImages(rawValue).forEach(image ->
                             OfflineImageFileHelper.deleteLocalFile(context, patternId, image.getFileName()));
                 } else if (OfflineFormItemType.FILE.getValue().equals(field.getItemType())) {

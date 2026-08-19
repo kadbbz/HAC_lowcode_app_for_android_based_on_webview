@@ -94,6 +94,8 @@
     <string name="offline_text_file_missing">文件不存在</string>
     <string name="offline_text_unnamed_file">未命名文件</string>
     <string name="offline_text_image_load_failed">图片加载失败</string>
+    <string name="offline_text_signature_set">已签名</string>
+    <string name="offline_hint_signature">请在此处签名</string>
     <string name="offline_text_time_hour">时</string>
     <string name="offline_text_time_minute">分</string>
     <string name="offline_text_time_second">秒</string>
@@ -129,4 +131,8 @@
     <string name="offline_cd_capture_image">拍照</string>
     <string name="offline_cd_upload_image">上传图片</string>
     <string name="offline_cd_delete_image">删除图片</string>
+    <string name="offline_cd_signature">签名</string>
+    <string name="offline_button_sign">签名</string>
+    <string name="offline_button_clear_signature">清除签名</string>
+    <string name="offline_toast_signature_not_supported">当前页面不支持签名</string>
 </resources>
