@@ -15,8 +15,6 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemViewType;
 import com.huozige.lab.container.offlineform.formitem.ReadOnlyFormItemViews;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
-import com.huozige.lab.container.offlineform.model.formitem.image.ImageCompressionOptions;
-import com.huozige.lab.container.offlineform.model.formitem.image.ImageWatermarkOptions;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemOptions;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
@@ -36,11 +34,8 @@ public class SignatureFormItemHandler implements OfflineFormItemHandler {
     public BaseFormItem fromInput(FormItemInput input) {
         SignatureFormItem item = new SignatureFormItem(getType(), input.itemId, input.title, input.hint, input.required);
         SignatureFormItemOptions options = (SignatureFormItemOptions) input.options;
-        if (options != null && options.getCompression() != null) {
-            item.setCompression(options.getCompression());
-        }
-        if (options != null && options.getWatermark() != null) {
-            item.setWatermark(options.getWatermark());
+        if (options != null) {
+            item.setUsers(options.resolveUsers());
         }
         item.setValue(input.value);
         return item;
@@ -56,20 +51,7 @@ public class SignatureFormItemHandler implements OfflineFormItemHandler {
         SignatureFormItem signatureItem = (SignatureFormItem) item;
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(signatureItem);
         JSONObject options = new JSONObject();
-
-        ImageCompressionOptions compression = signatureItem.getCompression();
-        if (compression != null) {
-            options.put("compression", compression);
-        }
-
-        ImageWatermarkOptions watermark = signatureItem.getWatermark();
-        if (watermark != null && (watermark.isEnableTimestamp()
-                || watermark.getItems() != null && !watermark.getItems().isEmpty())) {
-            JSONObject watermarkJson = new JSONObject();
-            watermarkJson.put(OfflineFormItemJsonKeys.FIELD_ENABLE_TIMESTAMP, watermark.isEnableTimestamp());
-            watermarkJson.put(OfflineFormItemJsonKeys.FIELD_ITEMS, watermark.getItems());
-            options.put(OfflineFormItemJsonKeys.FIELD_WATERMARK, watermarkJson);
-        }
+        options.put("users", signatureItem.getUsers());
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
         return jsonObject;
     }
@@ -82,10 +64,13 @@ public class SignatureFormItemHandler implements OfflineFormItemHandler {
 
     @Override
     public View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
+        SignatureFormItem signatureItem = (SignatureFormItem) item;
+        int signedCount = SignatureFormItem.parseSignatures(rawValue, signatureItem.getUsers()).size();
         return ReadOnlyFormItemViews.createCompactValueView(
                 context,
-                SignatureFormItem.parseImages(rawValue).isEmpty()
-                        ? ""
-                        : context.getString(R.string.offline_text_signature_set));
+                context.getString(
+                        R.string.offline_text_signature_progress,
+                        signedCount,
+                        signatureItem.getUsers().size()));
     }
 }

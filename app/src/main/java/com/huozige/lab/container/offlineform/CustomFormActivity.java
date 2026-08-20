@@ -61,6 +61,7 @@ import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
@@ -117,6 +118,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private FileFormItem _pendingFileItem;
     private AttachmentCallback _pendingFileCallback;
     private SignatureFormItem _pendingSignatureItem;
+    private String _pendingSignatureUserName;
     private SignatureCallback _pendingSignatureCallback;
 
 
@@ -965,15 +967,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
 
                 OfflineFormRecord draft = ensureDraftRecordForAttachment();
-                AttachmentFormItemValue oldSignature = _pendingSignatureItem.getSignature();
+                SignatureFormItemValue oldSignature = _pendingSignatureItem.getSignature(_pendingSignatureUserName);
                 AttachmentFormItemValue signature = OfflineImageFileHelper.saveSignature(
                         this,
                         draft.getPatternId(),
-                        _pendingSignatureItem,
-                        bitmap,
-                        !result.getData().getBooleanExtra(
-                                SignatureCaptureActivity.EXTRA_WATERMARK_ALREADY_PRESENT,
-                                false));
+                        bitmap);
                 _pendingSignatureCallback.onSignatureCaptured(signature);
                 if (oldSignature != null && oldSignature.getFileName() != null
                         && !oldSignature.getFileName().equals(signature.getFileName())) {
@@ -999,11 +997,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     @Override
-    public void captureSignature(SignatureFormItem item, SignatureCallback callback) {
+    public void captureSignature(SignatureFormItem item, String userName, SignatureCallback callback) {
         _pendingSignatureItem = item;
+        _pendingSignatureUserName = userName;
         _pendingSignatureCallback = callback;
         String existingPath = "";
-        AttachmentFormItemValue existingSignature = item == null ? null : item.getSignature();
+        SignatureFormItemValue existingSignature = item == null ? null : item.getSignature(userName);
         if (existingSignature != null) {
             File existingFile = Utils.resolveLocalFile(this, item.getPatternId(), existingSignature.getFileName());
             if (existingFile != null && existingFile.exists()) {
@@ -1013,6 +1012,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _signatureCaptureLauncher.launch(SignatureCaptureActivity.createIntent(
                 this,
                 item == null ? getString(R.string.offline_title_signature) : item.getTitle(),
+                userName,
                 existingPath));
     }
 
@@ -1072,6 +1072,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void clearPendingSignatureCapture() {
         _pendingSignatureItem = null;
+        _pendingSignatureUserName = null;
         _pendingSignatureCallback = null;
     }
 

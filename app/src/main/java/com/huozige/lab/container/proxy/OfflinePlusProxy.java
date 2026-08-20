@@ -36,6 +36,8 @@ import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.util.Utils;
 
@@ -480,9 +482,15 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     private void addAttachments(JSONArray attachments, JSONArray path, String fieldId, String fieldType, String rawValue) {
-        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType)
-                || OfflineFormItemType.SIGNATURE.getValue().equals(fieldType);
-        List<AttachmentFormItemValue> attachmentValues = imageField ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
+        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
+        boolean signatureField = OfflineFormItemType.SIGNATURE.getValue().equals(fieldType);
+        if (signatureField) {
+            addSignatureAttachments(attachments, path, fieldId, rawValue);
+            return;
+        }
+
+        List<AttachmentFormItemValue> attachmentValues = imageField
+                ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
         for (int i = 0; i < attachmentValues.size(); i++) {
             AttachmentFormItemValue attachmentValue = attachmentValues.get(i);
             if (attachmentValue == null) {
@@ -496,7 +504,7 @@ public class OfflinePlusProxy extends AbstractProxy{
 
             com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
             attachment.put("path", path);
-            attachment.put("type", imageField ? "image" : "file");
+            attachment.put("type", imageField || signatureField ? "image" : "file");
             attachment.put("localName", localName);
             attachment.put("recordId", path == null || path.isEmpty() ? "" : path.getString(0));
             attachment.put("fieldId", fieldId);
@@ -504,6 +512,31 @@ public class OfflinePlusProxy extends AbstractProxy{
                 attachment.put("originalName", originalName);
             }
             attachment.put("fileName", localName);
+            attachments.add(attachment);
+        }
+    }
+
+    private void addSignatureAttachments(JSONArray attachments, JSONArray path, String fieldId, String rawValue) {
+        List<SignatureFormItemValue> signatures = SignatureFormItem.parseSignatures(rawValue, null);
+        for (int i = 0; i < signatures.size(); i++) {
+            SignatureFormItemValue signature = signatures.get(i);
+            if (signature == null || StringUtils.isNullOrBlank(signature.getFileName())) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            // 每张签名使用独立路径，避免上传端按同一路径将多个文件名拼接为 a.png|b.png。
+            attachment.put("path", appendPath(path, i));
+            attachment.put("type", "image");
+            attachment.put("localName", signature.getFileName());
+            attachment.put("recordId", path == null || path.isEmpty() ? "" : path.getString(0));
+            attachment.put("fieldId", fieldId);
+            String userName = signature.getUserName();
+            attachment.put("originalName", StringUtils.isNullOrBlank(userName) ? "签名" : userName);
+            attachment.put("fileName", signature.getFileName());
+            if (signature.getUpdateTime() != null) {
+                attachment.put("updateTime", signature.getUpdateTime());
+            }
             attachments.add(attachment);
         }
     }

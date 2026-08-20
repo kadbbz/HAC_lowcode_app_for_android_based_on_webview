@@ -6,6 +6,7 @@ import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 
 import java.util.List;
@@ -27,6 +28,8 @@ public final class OfflineFormItemValueHelper {
             ((PickerFormItem) formItem).setValue(value);
         } else if (formItem instanceof ImageFormItem) {
             ((ImageFormItem) formItem).setValue(value);
+        } else if (formItem instanceof SignatureFormItem) {
+            ((SignatureFormItem) formItem).setValue(value);
         } else if (formItem instanceof FileFormItem) {
             ((FileFormItem) formItem).setValue(value);
         } else if (formItem instanceof ListFormItem) {
@@ -48,6 +51,8 @@ public final class OfflineFormItemValueHelper {
     public static void applyPatternId(BaseFormItem formItem, String patternId) {
         if (formItem instanceof ImageFormItem) {
             ((ImageFormItem) formItem).setPatternId(patternId);
+        } else if (formItem instanceof SignatureFormItem) {
+            ((SignatureFormItem) formItem).setPatternId(patternId);
         } else if (formItem instanceof FileFormItem) {
             ((FileFormItem) formItem).setPatternId(patternId);
         } else if (formItem instanceof ListFormItem) {

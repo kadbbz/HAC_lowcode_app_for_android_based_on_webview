@@ -17,7 +17,6 @@ import com.huozige.lab.container.offlineform.model.formitem.image.ImageCompressi
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageWatermarkField;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageWatermarkOptions;
-import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.File;
@@ -74,34 +73,19 @@ public final class OfflineImageFileHelper {
      * 保存签名板导出的位图。签名字段与图片字段共用附件目录和水印规则，但保留 PNG 格式，
      * 避免签名透明/细线在 JPEG 重编码中失真。
      */
-    public static AttachmentFormItemValue saveSignature(Context context, String patternId, SignatureFormItem item, Bitmap signatureBitmap) throws Exception {
-        return saveSignature(context, patternId, item, signatureBitmap, true);
-    }
-
-    public static AttachmentFormItemValue saveSignature(Context context, String patternId, SignatureFormItem item,
-                                                        Bitmap signatureBitmap, boolean applyWatermark) throws Exception {
+    public static AttachmentFormItemValue saveSignature(Context context, String patternId, Bitmap signatureBitmap) throws Exception {
         if (signatureBitmap == null || signatureBitmap.isRecycled()) {
             throw new IllegalArgumentException("签名内容为空");
         }
         File outputFile = createOutputFile(context, patternId, "png");
         Bitmap working = signatureBitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Bitmap watermarked = null;
         try {
-            ArrayList<String> watermarkLines = applyWatermark ? buildWatermarkLines(item) : new ArrayList<>();
-            Bitmap bitmapToSave = working;
-            if (!watermarkLines.isEmpty()) {
-                watermarked = addWatermark(working, watermarkLines);
-                bitmapToSave = watermarked;
-            }
             try (FileOutputStream output = new FileOutputStream(outputFile)) {
-                if (!bitmapToSave.compress(Bitmap.CompressFormat.PNG, 100, output)) {
+                if (!working.compress(Bitmap.CompressFormat.PNG, 100, output)) {
                     throw new IllegalStateException("签名图片保存失败");
                 }
             }
         } finally {
-            if (watermarked != null && watermarked != working) {
-                watermarked.recycle();
-            }
             working.recycle();
         }
 

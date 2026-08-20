@@ -1,35 +1,23 @@
 package com.huozige.lab.container.offlineform.formitem.signature;
 
-import android.net.Uri;
+import android.graphics.Color;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelper;
-import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
-import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
-
-import java.io.File;
 
 public class SignatureViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvRequired;
-    private final TextView tvEmpty;
-    private final FrameLayout signaturePreviewContainer;
-    private final ImageView signaturePreview;
-    private final Button btnCapture;
-    private final Button btnClear;
+    private final LinearLayout userList;
     private final TextView tvError;
 
     private SignatureFormItem signatureItem;
@@ -38,18 +26,8 @@ public class SignatureViewHolder extends BaseViewHolder {
         super(itemView);
         tvTitle = itemView.findViewById(R.id.tv_title);
         tvRequired = itemView.findViewById(R.id.tv_required);
-        tvEmpty = itemView.findViewById(R.id.tv_signature_empty);
-        signaturePreviewContainer = itemView.findViewById(R.id.signature_preview_container);
-        signaturePreview = itemView.findViewById(R.id.signature_preview);
-        btnCapture = itemView.findViewById(R.id.btn_capture_signature);
-        btnClear = itemView.findViewById(R.id.btn_clear_signature);
+        userList = itemView.findViewById(R.id.signature_user_list);
         tvError = itemView.findViewById(R.id.tv_error);
-
-        btnCapture.setOnClickListener(v -> captureSignature());
-        signaturePreviewContainer.setOnClickListener(v -> captureSignature());
-        signaturePreview.setOnClickListener(v -> captureSignature());
-        tvEmpty.setOnClickListener(v -> captureSignature());
-        btnClear.setOnClickListener(v -> clearSignature());
     }
 
     @Override
@@ -62,7 +40,7 @@ public class SignatureViewHolder extends BaseViewHolder {
         signatureItem = (SignatureFormItem) item;
         tvTitle.setText(signatureItem.getTitle());
         tvRequired.setVisibility(signatureItem.isRequired() ? View.VISIBLE : View.GONE);
-        renderSignature();
+        renderUsers();
         updateErrorState();
     }
 
@@ -76,56 +54,54 @@ public class SignatureViewHolder extends BaseViewHolder {
         }
     }
 
-    private void captureSignature() {
+    private void renderUsers() {
+        userList.removeAllViews();
+        if (signatureItem == null || signatureItem.getUsers() == null || signatureItem.getUsers().isEmpty()) {
+            TextView emptyView = new TextView(itemView.getContext());
+            emptyView.setPadding(0, 12, 0, 12);
+            emptyView.setText(R.string.offline_text_no_signature_users);
+            emptyView.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_content));
+            userList.addView(emptyView);
+            return;
+        }
+
+        for (String userName : signatureItem.getUsers()) {
+            View row = LayoutInflater.from(itemView.getContext())
+                    .inflate(R.layout.custom_form_item_signature_user_row, userList, false);
+            TextView nameView = row.findViewById(R.id.signature_user_name);
+            TextView statusView = row.findViewById(R.id.signature_status);
+            boolean signed = signatureItem.getSignature(userName) != null;
+            nameView.setText(userName);
+            statusView.setText(signed
+                    ? R.string.offline_text_signature_set
+                    : R.string.offline_text_signature_not_set);
+            statusView.setTextColor(signed
+                    ? itemView.getContext().getColor(R.color.huozige_blue)
+                    : Color.GRAY);
+            row.setContentDescription(itemView.getContext().getString(
+                    R.string.offline_cd_signature_user_status,
+                    userName,
+                    statusView.getText()));
+            row.setOnClickListener(v -> captureSignature(userName));
+            userList.addView(row);
+        }
+    }
+
+    private void captureSignature(String userName) {
         if (!(itemView.getContext() instanceof SignatureCaptureHost)) {
             Toast.makeText(itemView.getContext(), R.string.offline_toast_signature_not_supported, Toast.LENGTH_SHORT).show();
             return;
         }
-        ((SignatureCaptureHost) itemView.getContext()).captureSignature(signatureItem, signature -> {
+        ((SignatureCaptureHost) itemView.getContext()).captureSignature(signatureItem, userName, signature -> {
             if (signature == null) {
                 return;
             }
-            signatureItem.setSignature(signature);
+            signatureItem.setSignature(userName, signature);
             signatureItem.clearError();
-            renderSignature();
+            renderUsers();
+            updateErrorState();
             notifySignatureChanged();
         });
-    }
-
-    private void clearSignature() {
-        if (signatureItem == null || signatureItem.isEmpty()) {
-            return;
-        }
-        AttachmentFormItemValue signature = signatureItem.getSignature();
-        if (signature != null) {
-            OfflineImageFileHelper.deleteLocalFile(
-                    itemView.getContext(),
-                    signatureItem.getPatternId(),
-                    signature.getFileName());
-        }
-        signatureItem.clearSignature();
-        renderSignature();
-        notifySignatureChanged();
-    }
-
-    private void renderSignature() {
-        AttachmentFormItemValue signature = signatureItem == null ? null : signatureItem.getSignature();
-        File signatureFile = signature == null
-                ? null
-                : Utils.resolveLocalFile(itemView.getContext(), signatureItem.getPatternId(), signature.getFileName());
-        boolean hasPreview = signatureFile != null && signatureFile.exists();
-        signaturePreview.setVisibility(hasPreview ? View.VISIBLE : View.GONE);
-        tvEmpty.setVisibility(hasPreview ? View.GONE : View.VISIBLE);
-        btnClear.setEnabled(hasPreview);
-        if (hasPreview) {
-            Glide.with(itemView)
-                    .load(Uri.fromFile(signatureFile))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .dontAnimate()
-                    .into(signaturePreview);
-        } else {
-            signaturePreview.setImageDrawable(null);
-        }
     }
 
     private void notifySignatureChanged() {

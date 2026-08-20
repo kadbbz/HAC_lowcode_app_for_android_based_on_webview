@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,9 +20,11 @@ import androidx.annotation.Nullable;
 public class SignaturePadView extends View {
     private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private final Paint guidePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
     private Bitmap existingBitmap;
     private boolean hasStroke;
+    private String guideText = "";
 
     public SignaturePadView(Context context) {
         super(context);
@@ -45,6 +48,9 @@ public class SignaturePadView extends View {
         strokePaint.setStrokeWidth(4f * getResources().getDisplayMetrics().density);
         strokePaint.setStrokeCap(Paint.Cap.ROUND);
         strokePaint.setStrokeJoin(Paint.Join.ROUND);
+        guidePaint.setColor(Color.rgb(215, 220, 225));
+        guidePaint.setTextAlign(Paint.Align.CENTER);
+        guidePaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
         setBackgroundColor(Color.WHITE);
     }
 
@@ -54,6 +60,7 @@ public class SignaturePadView extends View {
         if (existingBitmap != null && !existingBitmap.isRecycled()) {
             canvas.drawBitmap(existingBitmap, null, new RectF(0, 0, getWidth(), getHeight()), bitmapPaint);
         }
+        drawGuideText(canvas);
         canvas.drawPath(path, strokePaint);
     }
 
@@ -89,6 +96,11 @@ public class SignaturePadView extends View {
 
     public boolean hasExistingSignature() {
         return existingBitmap != null && !existingBitmap.isRecycled();
+    }
+
+    public void setGuideText(@Nullable String guideText) {
+        this.guideText = guideText == null ? "" : guideText.trim();
+        invalidate();
     }
 
     public void setExistingBitmap(@Nullable Bitmap bitmap) {
@@ -131,5 +143,21 @@ public class SignaturePadView extends View {
             existingBitmap.recycle();
         }
         existingBitmap = null;
+    }
+
+    private void drawGuideText(Canvas canvas) {
+        if (guideText.isEmpty() || getWidth() <= 0 || getHeight() <= 0) {
+            return;
+        }
+        float textSize = getHeight() * 0.62f;
+        guidePaint.setTextSize(textSize);
+        float maxWidth = getWidth() * 0.78f;
+        float measuredWidth = guidePaint.measureText(guideText);
+        if (measuredWidth > maxWidth && measuredWidth > 0) {
+            guidePaint.setTextSize(textSize * maxWidth / measuredWidth);
+        }
+        Paint.FontMetrics metrics = guidePaint.getFontMetrics();
+        float baseline = getHeight() / 2f - (metrics.ascent + metrics.descent) / 2f;
+        canvas.drawText(guideText, getWidth() / 2f, baseline, guidePaint);
     }
 }

@@ -95,6 +95,9 @@
     <string name="offline_text_unnamed_file">未命名文件</string>
     <string name="offline_text_image_load_failed">图片加载失败</string>
     <string name="offline_text_signature_set">已签名</string>
+    <string name="offline_text_signature_not_set">未签名</string>
+    <string name="offline_text_signature_progress">已签名 %1$d/%2$d</string>
+    <string name="offline_text_no_signature_users">暂无签名人</string>
     <string name="offline_hint_signature">请在此处签名</string>
     <string name="offline_text_time_hour">时</string>
     <string name="offline_text_time_minute">分</string>
@@ -132,6 +135,7 @@
     <string name="offline_cd_upload_image">上传图片</string>
     <string name="offline_cd_delete_image">删除图片</string>
     <string name="offline_cd_signature">签名</string>
+    <string name="offline_cd_signature_user_status">%1$s，%2$s，点击签名</string>
     <string name="offline_button_sign">签名</string>
     <string name="offline_button_clear_signature">清除签名</string>
     <string name="offline_toast_signature_not_supported">当前页面不支持签名</string>

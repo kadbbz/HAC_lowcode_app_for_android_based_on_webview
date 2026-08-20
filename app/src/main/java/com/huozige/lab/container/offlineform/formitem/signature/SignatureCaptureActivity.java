@@ -24,14 +24,15 @@ import java.io.FileOutputStream;
  */
 public class SignatureCaptureActivity extends AppCompatActivity {
     public static final String EXTRA_TITLE = "signature-title";
+    public static final String EXTRA_USER_NAME = "signature-user-name";
     public static final String EXTRA_EXISTING_PATH = "signature-existing-path";
     public static final String EXTRA_OUTPUT_PATH = "signature-output-path";
     public static final String EXTRA_UNCHANGED = "signature-unchanged";
-    public static final String EXTRA_WATERMARK_ALREADY_PRESENT = "signature-watermark-already-present";
 
-    public static Intent createIntent(Context context, String title, String existingPath) {
+    public static Intent createIntent(Context context, String title, String userName, String existingPath) {
         Intent intent = new Intent(context, SignatureCaptureActivity.class);
         intent.putExtra(EXTRA_TITLE, title);
+        intent.putExtra(EXTRA_USER_NAME, userName);
         intent.putExtra(EXTRA_EXISTING_PATH, existingPath);
         return intent;
     }
@@ -49,9 +50,11 @@ public class SignatureCaptureActivity extends AppCompatActivity {
         signaturePad = findViewById(R.id.signature_pad);
         TextView titleView = findViewById(R.id.signature_title);
         String title = getIntent().getStringExtra(EXTRA_TITLE);
-        titleView.setText(title == null || title.isEmpty()
-                ? getString(R.string.offline_title_signature)
-                : title);
+        String userName = getIntent().getStringExtra(EXTRA_USER_NAME);
+        titleView.setText(userName == null || userName.isEmpty()
+                ? title == null || title.isEmpty() ? getString(R.string.offline_title_signature) : title
+                : userName);
+        signaturePad.setGuideText(userName);
         loadExistingSignature();
 
         findViewById(R.id.button_cancel_signature).setOnClickListener(v -> finish());
@@ -81,7 +84,6 @@ public class SignatureCaptureActivity extends AppCompatActivity {
             return;
         }
 
-        boolean watermarkAlreadyPresent = signaturePad.hasExistingSignature();
         Bitmap bitmap = signaturePad.exportBitmap();
         File outputFile = new File(getCacheDir(), "offline_signature_" + System.currentTimeMillis() + ".png");
         try (FileOutputStream output = new FileOutputStream(outputFile)) {
@@ -90,7 +92,6 @@ public class SignatureCaptureActivity extends AppCompatActivity {
             }
             Intent result = new Intent();
             result.putExtra(EXTRA_OUTPUT_PATH, outputFile.getAbsolutePath());
-            result.putExtra(EXTRA_WATERMARK_ALREADY_PRESENT, watermarkAlreadyPresent);
             setResult(Activity.RESULT_OK, result);
             finish();
         } catch (Exception e) {

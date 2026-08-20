@@ -19,6 +19,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -226,7 +227,10 @@ public class OfflineFormFileHelper {
             BaseFormItem field = node.getField();
             if (field != null && field.getId() != null && !field.getId().isEmpty()) {
                 String rawValue = values.getString(field.getId());
-                if (field instanceof ImageFormItem) {
+                if (field instanceof SignatureFormItem) {
+                    SignatureFormItem.parseAttachments(rawValue).forEach(signature ->
+                            OfflineImageFileHelper.deleteLocalFile(context, patternId, signature.getFileName()));
+                } else if (field instanceof ImageFormItem) {
                     ImageFormItem.parseImages(rawValue).forEach(image ->
                             OfflineImageFileHelper.deleteLocalFile(context, patternId, image.getFileName()));
                 } else if (OfflineFormItemType.FILE.getValue().equals(field.getItemType())) {
