@@ -255,10 +255,128 @@ public class OfflinePlusProxy extends AbstractProxy{
         Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(definitionFile);
         normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
         result.put("projectId", projectId);
-        result.put("records", records);
+        result.put("records", buildExportRecords(records, definitionFile));
         result.put("attachments", buildExportAttachments(records, definitionFile));
         result.put("signature", readSignatureDataUrl(context, projectId));
         return result;
+    }
+
+    /**
+     * 将本地记录中的 key-value 字段转换为导出用的字段对象，附带表单定义中的 ODate 更新时间。
+     * 本地记录文件仍保持 Map<String, String>，避免影响离线填报和历史记录编辑。
+     */
+    private JSONArray buildExportRecords(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
+        JSONArray result = new JSONArray();
+        if (records == null) {
+            return result;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null) {
+                continue;
+            }
+            JSONObject recordJson = new JSONObject();
+            recordJson.put("recordId", record.getRecordId());
+            recordJson.put("patternId", record.getPatternId());
+            recordJson.put("schemaVersion", record.getSchemaVersion());
+            recordJson.put("status", record.getStatus());
+            recordJson.put("createdAt", record.getCreatedAt());
+            recordJson.put("updatedAt", record.getUpdatedAt());
+            recordJson.put("values", buildExportValues(record.getValues(), definitionFile));
+            result.add(recordJson);
+        }
+        return result;
+    }
+
+    private JSONObject buildExportValues(Map<String, String> values, OfflineFormDefinitionFile definitionFile) {
+        JSONObject result = new JSONObject();
+        if (values == null || values.isEmpty()) {
+            return result;
+        }
+
+        List<OfflineFormStep> steps = definitionFile == null || definitionFile.getJsonSchema() == null
+                ? null : definitionFile.getJsonSchema().getSteps();
+        if (steps != null) {
+            for (OfflineFormStep step : steps) {
+                if (step != null) {
+                    collectExportValues(result, values, step.getItems());
+                }
+            }
+        }
+
+        // 对定义中不存在的历史字段也保留原始值，避免导出时丢数据。
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            if (!result.containsKey(entry.getKey())) {
+                result.put(entry.getKey(), buildExportFieldValue(entry.getValue(), null));
+            }
+        }
+        return result;
+    }
+
+    private void collectExportValues(JSONObject target, Map<String, String> values, List<OfflineFormNode> nodes) {
+        if (target == null || values == null || nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                String rawValue = values.get(field.getId());
+                target.put(field.getId(), buildExportFieldValue(rawValue, field));
+            }
+            collectExportValues(target, values, node.getChildren());
+        }
+    }
+
+    private JSONObject buildExportFieldValue(String rawValue, BaseFormItem field) {
+        JSONObject valueObject = new JSONObject();
+        if (field instanceof ListFormItem) {
+            valueObject.put("value", buildExportListValue((ListFormItem) field, rawValue));
+        } else {
+            valueObject.put("value", rawValue == null ? "" : rawValue);
+        }
+        if (field != null && field.getUpdateTime() != null) {
+            valueObject.put("updateTime", field.getUpdateTime());
+        }
+        return valueObject;
+    }
+
+    private JSONArray buildExportListValue(ListFormItem listItem, String rawValue) {
+        JSONArray result = new JSONArray();
+        JSONArray rows = ListFormItem.parseRows(rawValue);
+        for (int i = 0; i < rows.size(); i++) {
+            JSONObject rowValue = rows.getJSONObject(i);
+            if (rowValue == null) {
+                continue;
+            }
+            JSONObject exportedRow = new JSONObject();
+            collectExportRowValues(exportedRow, rowValue, listItem.getTemplateNodes());
+            for (String fieldId : rowValue.keySet()) {
+                if (!exportedRow.containsKey(fieldId)) {
+                    exportedRow.put(fieldId, buildExportFieldValue(rowValue.getString(fieldId), null));
+                }
+            }
+            result.add(exportedRow);
+        }
+        return result;
+    }
+
+    private void collectExportRowValues(JSONObject target, JSONObject rowValues, List<OfflineFormNode> nodes) {
+        if (target == null || rowValues == null || nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                target.put(field.getId(), buildExportFieldValue(rowValues.getString(field.getId()), field));
+            }
+            collectExportRowValues(target, rowValues, node.getChildren());
+        }
     }
 
     private List<OfflineFormRecord> readSubmittedRecords(Context context, String projectId) {

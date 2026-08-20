@@ -16,6 +16,7 @@ import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormIte
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.util.ODateUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,7 +66,9 @@ public final class OfflineFormItemRegistry {
             handler = getHandler(OfflineFormItemType.TEXT.getValue());
         }
         normalizeOptions(input, handler);
-        return handler.fromInput(input);
+        BaseFormItem item = handler.fromInput(input);
+        item.setUpdateTime(input.updateTime == null ? ODateUtils.now() : input.updateTime);
+        return item;
     }
 
     private static void normalizeOptions(FormItemInput input, OfflineFormItemHandler handler) {

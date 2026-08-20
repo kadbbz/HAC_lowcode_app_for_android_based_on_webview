@@ -12,6 +12,8 @@ public abstract class BaseFormItem {
     private String hint;
     private boolean required;
     private String errorMessage;
+    // 组件定义的最后更新时间，使用 OLE Automation Date（ODate）表示。
+    private Double updateTime;
 
     public BaseFormItem(String itemType, String id, String title, String hint, boolean required) {
         this.itemType = itemType;
