@@ -85,6 +85,8 @@
     <string name="offline_text_unknown_record_time">未知填报时间</string>
     <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>
     <string name="offline_text_default_step">步骤%1$d</string>
+    <string name="offline_hint_step_swipe_left">请向左滑动，查看后续步骤</string>
+    <string name="offline_hint_step_swipe_right">请向右滑动，查看前面步骤</string>
     <string name="offline_text_search_keyword">搜索：%1$s</string>
     <string name="offline_text_project_meta">项目编号：%1$s</string>
     <string name="offline_text_image_count">%1$d 张图片</string>

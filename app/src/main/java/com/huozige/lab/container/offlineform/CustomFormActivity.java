@@ -88,6 +88,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
     private TabLayout _stepTabLayout;
+    private ImageView _stepScrollLeftHint;
+    private ImageView _stepScrollRightHint;
     private LinearLayout _itemNavigationLayout;
     private LinearLayout _searchKeywordLayout;
     private TextView _previousItemButton;
@@ -144,6 +146,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _recyclerView = findViewById(R.id.recycler_view);
         _formScrollView = findViewById(R.id.scroll_form);
         _stepTabLayout = findViewById(R.id.tab_steps);
+        _stepScrollLeftHint = findViewById(R.id.hint_step_scroll_left);
+        _stepScrollRightHint = findViewById(R.id.hint_step_scroll_right);
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
         _searchKeywordLayout = findViewById(R.id.layout_search_keyword);
         _previousItemButton = findViewById(R.id.button_previous_item);
@@ -341,6 +345,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
+        _stepTabLayout.setOnScrollChangeListener((view, scrollX, scrollY, oldScrollX, oldScrollY) -> updateStepScrollHints());
+        _stepScrollLeftHint.setOnClickListener(v -> Toast.makeText(
+                this, R.string.offline_hint_step_swipe_right, Toast.LENGTH_SHORT).show());
+        _stepScrollRightHint.setOnClickListener(v -> Toast.makeText(
+                this, R.string.offline_hint_step_swipe_left, Toast.LENGTH_SHORT).show());
     }
 
     private void setupFilterModeSpinner() {
@@ -524,6 +533,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (!_formLoaded) {
             _adapter.setDisplayItems(new ArrayList<>());
             _stepTabLayout.setVisibility(View.GONE);
+            updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
             return;
         }
@@ -739,6 +749,28 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             _stepTabLayout.addTab(_stepTabLayout.newTab().setText(title), i == _currentStepIndex);
         }
         _updatingTabs = false;
+        _stepTabLayout.post(this::updateStepScrollHints);
+    }
+
+    private void updateStepScrollHints() {
+        if (!_formLoaded || _definition == null || _definition.getSteps().size() <= 1
+                || _stepTabLayout.getVisibility() != View.VISIBLE) {
+            _stepScrollLeftHint.setVisibility(View.GONE);
+            _stepScrollRightHint.setVisibility(View.GONE);
+            return;
+        }
+
+        View tabStrip = _stepTabLayout.getChildAt(0);
+        int maxScrollX = tabStrip == null ? 0 : Math.max(0, tabStrip.getWidth() - _stepTabLayout.getWidth());
+        if (maxScrollX == 0) {
+            _stepScrollLeftHint.setVisibility(View.GONE);
+            _stepScrollRightHint.setVisibility(View.GONE);
+            return;
+        }
+
+        int scrollX = _stepTabLayout.getScrollX();
+        _stepScrollLeftHint.setVisibility(scrollX > 1 ? View.VISIBLE : View.GONE);
+        _stepScrollRightHint.setVisibility(scrollX < maxScrollX - 1 ? View.VISIBLE : View.GONE);
     }
 
     private Map<String, String> collectAllFormData() {

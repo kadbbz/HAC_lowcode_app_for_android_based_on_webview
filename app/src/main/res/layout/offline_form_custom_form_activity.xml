@@ -14,15 +14,51 @@
         android:gravity="end|center_vertical"
         android:orientation="horizontal">
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_steps"
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:tabIndicatorColor="@color/huozige_blue"
-            app:tabMode="scrollable"
-            app:tabSelectedTextColor="@color/huozige_blue"
-            app:tabTextColor="@color/gray" />
+            android:layout_weight="1">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                app:tabIndicatorColor="@color/huozige_blue"
+                app:tabMode="scrollable"
+                app:tabSelectedTextColor="@color/huozige_blue"
+                app:tabTextColor="@color/gray" />
+
+            <ImageView
+                android:id="@+id/hint_step_scroll_left"
+                android:layout_width="40dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="@null"
+                android:elevation="2dp"
+                android:importantForAccessibility="no"
+                android:padding="4dp"
+                android:src="@drawable/ic_offline_step_arrow_left"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/hint_step_scroll_right"
+                android:layout_width="40dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="@null"
+                android:elevation="2dp"
+                android:importantForAccessibility="no"
+                android:padding="4dp"
+                android:src="@drawable/ic_offline_step_arrow_right"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
         <com.huozige.lab.container.offlineform.ReselectSpinner
             android:id="@+id/spinner_filter_mode"
