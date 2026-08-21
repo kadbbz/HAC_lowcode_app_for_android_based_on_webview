@@ -12,6 +12,7 @@ import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemH
 import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.radio.RadioFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
@@ -27,6 +28,7 @@ public final class OfflineFormItemRegistry {
 
     static {
         register(new SelectFormItemHandler());
+        register(new RadioFormItemHandler());
         register(new PasswordFormItemHandler());
         register(new DatePickerFormItemHandler());
         register(new TimePickerFormItemHandler());
@@ -42,6 +44,10 @@ public final class OfflineFormItemRegistry {
 
     public static void register(OfflineFormItemHandler handler) {
         HANDLERS_BY_TYPE.put(handler.getType(), handler);
+        // 兼容低代码端将 radio 类型直接写成 "radio" 的历史/简写配置。
+        if (OfflineFormItemType.RADIO.getValue().equals(handler.getType())) {
+            HANDLERS_BY_TYPE.put("radio", handler);
+        }
     }
 
     public static Map<String, OfflineFormItemHandler> getHandlers() {

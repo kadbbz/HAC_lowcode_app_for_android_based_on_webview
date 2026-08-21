@@ -4,6 +4,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,8 +37,9 @@ public class SelectFormItem extends BaseFormItem {
 
     public void setSelectedValue(String value) {
         this.selectedValue = value;
+        this.selectedDisplayText = null;
         for (Option option : options) {
-            if (option.getValue().equals(value)) {
+            if (Objects.equals(option.getValue(), value)) {
                 this.selectedDisplayText = option.getDisplayText();
                 break;
             }

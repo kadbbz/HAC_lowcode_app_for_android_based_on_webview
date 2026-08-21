@@ -4,6 +4,7 @@ public enum OfflineFormItemViewType {
     TEXT(1),
     PASSWORD(2),
     SELECT(3),
+    RADIO(10),
     DATE_PICKER(4),
     TIME_PICKER(5),
     IMAGE(6),

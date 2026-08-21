@@ -4,6 +4,7 @@ public enum OfflineFormItemType {
     TEXT("textItem"),
     PASSWORD("passwordItem"),
     SELECT("selectItem"),
+    RADIO("radioItem"),
     DATE_PICKER("datePicker"),
     TIME_PICKER("timePicker"),
     IMAGE("imageItem"),
