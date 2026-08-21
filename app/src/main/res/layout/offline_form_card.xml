@@ -14,11 +14,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <View
-            android:id="@+id/themeView"
-            android:layout_width="6dp"
-            android:layout_height="match_parent" />
-
         <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -40,8 +40,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
     private static final int MENU_ID_DELETE_CONFIG = 4;
     // 普通模式下卡片内容左侧内边距。
     private static final int CONTENT_PADDING_DP = 16;
-    private static final int UNEXPORTED_STATUS_COLOR = 0xFFF44336;
-    private static final int EXPORTED_STATUS_COLOR = 0xFF4CAF50;
 
     // 当前列表展示的表单定义索引项，数据来源于本地索引文件。
     private List<OfflineFormDefinitionIndexItem> _cardItems;
@@ -76,7 +74,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         holder.descriptionTextView.setText(item.getDescription());
         holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
         boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
-        holder.themeView.setBackgroundColor(exported ? EXPORTED_STATUS_COLOR : UNEXPORTED_STATUS_COLOR);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
         holder.actionButton.setVisibility(_sortMode ? View.GONE : View.VISIBLE);
 
@@ -292,7 +289,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         TextView metaTextView;
         TextView actionButton;
         LinearLayout contentLayout;
-        View themeView;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -301,7 +297,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             metaTextView = itemView.findViewById(R.id.metaTextView);
             actionButton = itemView.findViewById(R.id.cmdOpenActions);
             contentLayout = itemView.findViewById(R.id.contentLayout);
-            themeView = itemView.findViewById(R.id.themeView);
         }
     }
 
