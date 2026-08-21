@@ -2,12 +2,10 @@ package com.huozige.lab.container.proxy.support.offlinecustomform;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,11 +21,13 @@ import com.huozige.lab.container.offlineform.OfflineExportedRecordDetailActivity
 import com.huozige.lab.container.offlineform.OfflineProjectRecordActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
+import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
+import java.io.File;
 import java.util.List;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
@@ -36,9 +36,12 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCardAdapter.ViewHolder> {
     private static final int MENU_ID_FILL_RECORD = 1;
     private static final int MENU_ID_PROJECT_DETAIL = 2;
-    private static final int MENU_ID_DELETE_CONFIG = 3;
+    private static final int MENU_ID_PREVIEW_MANUAL = 3;
+    private static final int MENU_ID_DELETE_CONFIG = 4;
     // 普通模式下卡片内容左侧内边距。
     private static final int CONTENT_PADDING_DP = 16;
+    private static final int UNEXPORTED_STATUS_COLOR = 0xFFF44336;
+    private static final int EXPORTED_STATUS_COLOR = 0xFF4CAF50;
 
     // 当前列表展示的表单定义索引项，数据来源于本地索引文件。
     private List<OfflineFormDefinitionIndexItem> _cardItems;
@@ -72,9 +75,8 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
         holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
-        String theme = OfflineComputedHelper.resolveThemeColor(item.getComputed().getTheme());
-        holder.themeView.setBackgroundColor(OfflineComputedHelper.parseColor(theme));
-        holder.imageView.setImageBitmap(createIconBitmap(item.getPatternId(), item.getSchemaVersion(), theme));
+        boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
+        holder.themeView.setBackgroundColor(exported ? EXPORTED_STATUS_COLOR : UNEXPORTED_STATUS_COLOR);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
         holder.actionButton.setVisibility(_sortMode ? View.GONE : View.VISIBLE);
 
@@ -84,7 +86,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             if (_sortMode) {
                 return;
             }
-            if (OfflineFormExportStatusHelper.isExported(_context, item)) {
+            if (exported) {
                 return;
             }
 
@@ -124,11 +126,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         notifyItemMoved(fromPosition, toPosition);
     }
 
-    // 头像不落盘保存，列表绑定时根据项目编号和版本号现场生成稳定图案。
-    private Bitmap createIconBitmap(String patternId, String schemaVersion, String theme) {
-        return OfflineComputedHelper.createIconBitmap(patternId + "|" + schemaVersion, theme);
-    }
-
     private void setContentPaddingStart(ViewHolder holder, int paddingStart) {
         holder.contentLayout.setPadding(paddingStart, holder.contentLayout.getPaddingTop(), holder.contentLayout.getPaddingRight(), holder.contentLayout.getPaddingBottom());
     }
@@ -139,6 +136,8 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
 //                .setIcon(R.drawable.ic_offline_menu_fill);
 //        popupMenu.getMenu().add(0, MENU_ID_PROJECT_DETAIL, MENU_ID_PROJECT_DETAIL, R.string.offline_menu_project_detail)
 //                .setIcon(R.drawable.ic_offline_menu_detail);
+        popupMenu.getMenu().add(0, MENU_ID_PREVIEW_MANUAL, MENU_ID_PREVIEW_MANUAL, R.string.offline_menu_preview_manual)
+                .setIcon(R.drawable.ic_offline_menu_detail);
         popupMenu.getMenu().add(0, MENU_ID_DELETE_CONFIG, MENU_ID_DELETE_CONFIG, R.string.offline_menu_delete_form)
                 .setIcon(R.drawable.ic_offline_menu_delete);
         popupMenu.setForceShowIcon(true);
@@ -153,6 +152,10 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         }
         if (menuItem.getItemId() == MENU_ID_PROJECT_DETAIL) {
             openProjectRecords(item);
+            return true;
+        }
+        if (menuItem.getItemId() == MENU_ID_PREVIEW_MANUAL) {
+            openManualPdf(item);
             return true;
         }
         if (menuItem.getItemId() == MENU_ID_DELETE_CONFIG) {
@@ -252,6 +255,30 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         _context.startActivity(intent);
     }
 
+    private void openManualPdf(OfflineFormDefinitionIndexItem item) {
+        File manualFile = OfflineFormFileHelper.getManualPdfFile(_context, item.getPatternId());
+        if (!manualFile.exists()) {
+            Toast.makeText(_context, R.string.offline_toast_manual_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(_context, PDFPreviewActivity.class);
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_LOCAL_FILE_PATH, manualFile.getAbsolutePath());
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, manualFile.getName());
+        try {
+            _context.startActivity(intent);
+        } catch (RuntimeException e) {
+            Intent externalIntent = new Intent(Intent.ACTION_VIEW);
+            externalIntent.setDataAndType(DeviceUtility.pathToUri(manualFile.getAbsolutePath()), "application/pdf");
+            externalIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                _context.startActivity(externalIntent);
+            } catch (RuntimeException ignored) {
+                Toast.makeText(_context, R.string.offline_toast_no_app_open_file, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void putProjectExtras(Intent intent, OfflineFormDefinitionIndexItem item) {
         intent.putExtra("patternId", item.getPatternId());
         intent.putExtra("title", item.getTitle());
@@ -264,7 +291,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         TextView descriptionTextView;
         TextView metaTextView;
         TextView actionButton;
-        ImageView imageView;
         LinearLayout contentLayout;
         View themeView;
 
@@ -274,7 +300,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             descriptionTextView = itemView.findViewById(R.id.descriptionTextView);
             metaTextView = itemView.findViewById(R.id.metaTextView);
             actionButton = itemView.findViewById(R.id.cmdOpenActions);
-            imageView = itemView.findViewById(R.id.imageView);
             contentLayout = itemView.findViewById(R.id.contentLayout);
             themeView = itemView.findViewById(R.id.themeView);
         }

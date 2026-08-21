@@ -126,9 +126,30 @@ public class OfflinePlusProxy extends AbstractProxy{
             return;
         }
 
+        // 手册 PDF 改由 offlinePlusDownloadManualPdfAsync 单独下载，添加表单时不再阻塞等待手册。
+        finishAddPattern(null, CallbackParams.success("success"), null);
+    }
+
+    /**
+     * 下载并绑定离线表单的说明 PDF。manualPdfUrl 为空时会删除已绑定的手册。
+     */
+    @JavascriptInterface
+    public void offlinePlusDownloadManualPdfAsync(String patternId, String manualPdfUrl, String ticket) {
+        writeInfoLog("OfflinePlusDownloadManualPdfAsync");
+        registryCallbackTicket(ticket);
+
+        Context context = this.getWebView().getContext();
+        if (StringUtils.isNullOrBlank(patternId)) {
+            finishManualDownload(null, CallbackParams.error("patternId is empty."), null);
+            return;
+        }
+        if (OfflineFormFileHelper.readDefinition(context, patternId) == null) {
+            finishManualDownload(null, CallbackParams.error("patternId does not exist."), null);
+            return;
+        }
         if (StringUtils.isNullOrBlank(manualPdfUrl)) {
-            OfflineFormFileHelper.deleteManualPdfFile(context, inputObj.patternId);
-            finishAddPattern(null, CallbackParams.success("success"), null);
+            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+            finishManualDownload(null, CallbackParams.success("success"), null);
             return;
         }
 
@@ -136,14 +157,13 @@ public class OfflinePlusProxy extends AbstractProxy{
         ProgressDialog progressDialog = showManualDownloadDialog(context);
         new Thread(() -> {
             try {
-                saveManualPdf(context, inputObj.patternId, manualPdfUrl, currentUrl, progressDialog);
-                finishAddPattern(progressDialog, CallbackParams.success("success"), null);
+                saveManualPdf(context, patternId, manualPdfUrl, currentUrl, progressDialog);
+                finishManualDownload(progressDialog, CallbackParams.success("success"), null);
             } catch (Exception e) {
-                finishAddPattern(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
+                finishManualDownload(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
             }
         }).start();
     }
-
     private String getCurrentUrlOnUiThread() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return this.getWebView().getUrl();
@@ -937,7 +957,15 @@ public class OfflinePlusProxy extends AbstractProxy{
         return String.format(java.util.Locale.CHINA, "%.2f MB", bytes / 1024.0 / 1024.0);
     }
 
+    private void finishManualDownload(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        finishAsyncOperation(progressDialog, callbackParams, errorLog);
+    }
+
     private void finishAddPattern(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        finishAsyncOperation(progressDialog, callbackParams, errorLog);
+    }
+
+    private void finishAsyncOperation(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
         runOnUiThread(() -> {
             if (progressDialog != null && progressDialog.isShowing()) {
                 progressDialog.dismiss();
