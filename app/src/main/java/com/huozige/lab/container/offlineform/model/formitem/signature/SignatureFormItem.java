@@ -19,6 +19,7 @@ public class SignatureFormItem extends BaseFormItem {
     private List<String> users = new ArrayList<>();
     private List<SignatureFormItemValue> signatures = new ArrayList<>();
     private String patternId = "";
+    private String disclaimer = "";
 
     public SignatureFormItem(String itemType, String id, String title, String hint, boolean required) {
         super(itemType, id, title, hint, required);

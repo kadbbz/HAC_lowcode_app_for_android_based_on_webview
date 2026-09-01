@@ -79,6 +79,10 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 
 public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost, SignatureCaptureHost {
     public static final String EXTRA_RECORD_ID = "recordId";
+    private static final String STATE_RECORD_ID = "offline_form_record_id";
+    private static final String STATE_CURRENT_STEP_INDEX = "offline_form_current_step_index";
+    private static final String STATE_FILTER_MODE = "offline_form_filter_mode";
+    private static final String STATE_SEARCH_KEYWORD = "offline_form_search_keyword";
     private static final int MENU_ID_SAVE_RECORD = 1;
     private static final int FILTER_ALL = 0;
     private static final int FILTER_UNFILLED = 1;
@@ -131,6 +135,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         _intent = getIntent();
 
+        // 如果 Activity 因系统原因被重建，优先恢复本次会话刚刚自动保存的草稿。
+        if (savedInstanceState != null) {
+            String savedRecordId = savedInstanceState.getString(STATE_RECORD_ID);
+            if (savedRecordId != null && !savedRecordId.isEmpty()) {
+                _intent.putExtra(EXTRA_RECORD_ID, savedRecordId);
+            }
+        }
+
         initViews();
         setupRecyclerView();
         registerImageCaptureLauncher();
@@ -140,6 +152,44 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         registerSignatureCaptureLauncher();
         loadFormDataFromJson();
         setupListeners();
+        restoreUiState(savedInstanceState);
+    }
+
+    @Override
+    protected void onPause() {
+        // 旋转、切后台、启动拍照/文件选择等场景都会先进入 onPause，提前落盘可避免只依赖显式“保存”。
+        saveDraftIfNeeded();
+        super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        saveDraftIfNeeded();
+        if (_editingRecord != null) {
+            outState.putString(STATE_RECORD_ID, _editingRecord.getRecordId());
+        }
+        outState.putInt(STATE_CURRENT_STEP_INDEX, _currentStepIndex);
+        outState.putInt(STATE_FILTER_MODE, _filterMode);
+        outState.putString(STATE_SEARCH_KEYWORD, _searchKeyword);
+        super.onSaveInstanceState(outState);
+    }
+
+    private void restoreUiState(Bundle savedInstanceState) {
+        if (savedInstanceState == null || !_formLoaded || _definition == null
+                || _definition.getSteps() == null || _definition.getSteps().isEmpty()) {
+            return;
+        }
+
+        _currentStepIndex = Math.max(0, Math.min(
+                savedInstanceState.getInt(STATE_CURRENT_STEP_INDEX, 0),
+                _definition.getSteps().size() - 1));
+        _filterMode = savedInstanceState.getInt(STATE_FILTER_MODE, FILTER_ALL);
+        if (_filterMode < FILTER_ALL || _filterMode > FILTER_FILLED) {
+            _filterMode = FILTER_ALL;
+        }
+        _searchKeyword = savedInstanceState.getString(STATE_SEARCH_KEYWORD, "");
+        setFilterModeSelection(_filterMode);
+        renderCurrentStep();
     }
 
     private void initViews() {
@@ -1045,6 +1095,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 this,
                 item == null ? getString(R.string.offline_title_signature) : item.getTitle(),
                 userName,
+                item == null ? "" : item.getDisclaimer(),
                 existingPath));
     }
 

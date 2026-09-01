@@ -17,6 +17,8 @@ import lombok.Setter;
 @Setter
 public class SignatureFormItemOptions {
     private Object users;
+    // 打开签名页时显示在左上角的说明，例如免责声明或签名提示。
+    private String disclaimer = "";
 
     public List<String> resolveUsers() {
         Set<String> result = new LinkedHashSet<>();

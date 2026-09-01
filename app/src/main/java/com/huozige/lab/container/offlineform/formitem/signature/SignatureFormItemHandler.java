@@ -36,6 +36,7 @@ public class SignatureFormItemHandler implements OfflineFormItemHandler {
         SignatureFormItemOptions options = (SignatureFormItemOptions) input.options;
         if (options != null) {
             item.setUsers(options.resolveUsers());
+            item.setDisclaimer(options.getDisclaimer());
         }
         item.setValue(input.value);
         return item;
@@ -52,6 +53,7 @@ public class SignatureFormItemHandler implements OfflineFormItemHandler {
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(signatureItem);
         JSONObject options = new JSONObject();
         options.put("users", signatureItem.getUsers());
+        options.put("disclaimer", signatureItem.getDisclaimer());
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
         return jsonObject;
     }

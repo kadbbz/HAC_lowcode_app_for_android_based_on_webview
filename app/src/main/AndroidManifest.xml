@@ -142,7 +142,9 @@
         <activity
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
-        <activity android:name=".offlineform.CustomFormActivity"
+        <activity
+            android:name=".offlineform.CustomFormActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize"
             android:exported="false" />
         <activity android:name=".offlineform.OfflinePlusListActivity"
             android:exported="false" />

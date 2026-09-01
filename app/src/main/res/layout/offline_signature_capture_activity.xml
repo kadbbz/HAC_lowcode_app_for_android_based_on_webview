@@ -54,13 +54,33 @@
 
     </LinearLayout>
 
-    <com.huozige.lab.container.offlineform.formitem.signature.SignaturePadView
-        android:id="@+id/signature_pad"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp"
-        android:layout_weight="1"
-        android:background="@drawable/offline_signature_pad_bg" />
+        android:layout_weight="1">
+
+        <com.huozige.lab.container.offlineform.formitem.signature.SignaturePadView
+            android:id="@+id/signature_pad"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/offline_signature_pad_bg" />
+
+        <TextView
+            android:id="@+id/signature_disclaimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:gravity="start"
+            android:textColor="#5F6368"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </LinearLayout>

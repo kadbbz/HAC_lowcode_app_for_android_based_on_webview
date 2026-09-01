@@ -25,14 +25,16 @@ import java.io.FileOutputStream;
 public class SignatureCaptureActivity extends AppCompatActivity {
     public static final String EXTRA_TITLE = "signature-title";
     public static final String EXTRA_USER_NAME = "signature-user-name";
+    public static final String EXTRA_DISCLAIMER = "signature-disclaimer";
     public static final String EXTRA_EXISTING_PATH = "signature-existing-path";
     public static final String EXTRA_OUTPUT_PATH = "signature-output-path";
     public static final String EXTRA_UNCHANGED = "signature-unchanged";
 
-    public static Intent createIntent(Context context, String title, String userName, String existingPath) {
+    public static Intent createIntent(Context context, String title, String userName, String disclaimer, String existingPath) {
         Intent intent = new Intent(context, SignatureCaptureActivity.class);
         intent.putExtra(EXTRA_TITLE, title);
         intent.putExtra(EXTRA_USER_NAME, userName);
+        intent.putExtra(EXTRA_DISCLAIMER, disclaimer);
         intent.putExtra(EXTRA_EXISTING_PATH, existingPath);
         return intent;
     }
@@ -49,11 +51,19 @@ public class SignatureCaptureActivity extends AppCompatActivity {
 
         signaturePad = findViewById(R.id.signature_pad);
         TextView titleView = findViewById(R.id.signature_title);
+        TextView disclaimerView = findViewById(R.id.signature_disclaimer);
         String title = getIntent().getStringExtra(EXTRA_TITLE);
         String userName = getIntent().getStringExtra(EXTRA_USER_NAME);
+        String disclaimer = getIntent().getStringExtra(EXTRA_DISCLAIMER);
         titleView.setText(userName == null || userName.isEmpty()
                 ? title == null || title.isEmpty() ? getString(R.string.offline_title_signature) : title
                 : userName);
+        if (disclaimer == null || disclaimer.trim().isEmpty()) {
+            disclaimerView.setVisibility(View.GONE);
+        } else {
+            disclaimerView.setText(disclaimer);
+            disclaimerView.setVisibility(View.VISIBLE);
+        }
         signaturePad.setGuideText(userName);
         loadExistingSignature();
 
