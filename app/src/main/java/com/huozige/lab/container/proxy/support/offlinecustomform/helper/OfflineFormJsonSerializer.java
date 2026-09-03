@@ -74,6 +74,8 @@ class OfflineFormJsonSerializer {
             NodeJson nodeJson = new NodeJson();
             nodeJson.nodeType = node.getNodeType();
             nodeJson.title = node.getTitle();
+            nodeJson.enableProgress = node.isEnableProgress();
+            nodeJson.progressIdentifier = node.isProgressIdentifier();
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
                 nodeJson.field = OfflineFormItemRegistry.toJson(node.getField());
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
@@ -113,6 +115,8 @@ class OfflineFormJsonSerializer {
             OfflineFormNode node = new OfflineFormNode();
             node.setNodeType(nodeJson.nodeType);
             node.setTitle(nodeJson.title);
+            node.setEnableProgress(nodeJson.enableProgress);
+            node.setProgressIdentifier(nodeJson.progressIdentifier);
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
                 node.setField(OfflineFormItemRegistry.fromInput(buildInputFromJson(nodeJson.field)));
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
@@ -162,6 +166,8 @@ class OfflineFormJsonSerializer {
         public String title = "";
         public String content = "";
         public boolean defaultCollapsed;
+        public boolean enableProgress;
+        public boolean progressIdentifier;
         public JSONObject field;
         public List<NodeJson> children = new ArrayList<>();
     }

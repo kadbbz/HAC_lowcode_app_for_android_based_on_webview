@@ -19,5 +19,9 @@ public class OfflineComputedInfo {
     private List<String> displayColumns = new ArrayList<>();
     // 历史填报记录表每页显示的记录数。
     private int recordPageSize = DEFAULT_RECORD_PAGE_SIZE;
+    // 当前表单最近一条填报记录的进度统计。
+    private int totalFillItems;
+    private int filledFillItems;
+    private double completionRate;
 
 }

@@ -25,10 +25,12 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineF
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.utilities.DeviceUtility;
 
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
@@ -73,6 +75,14 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
         holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
+        OfflineComputedInfo computed = item.getComputed() == null ? new OfflineComputedInfo() : item.getComputed();
+        holder.totalProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_total, computed.getTotalFillItems()));
+        holder.filledProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_filled, computed.getFilledFillItems()));
+        holder.rateProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_rate,
+                String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())));
         boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
         holder.actionButton.setVisibility(_sortMode ? View.GONE : View.VISIBLE);
@@ -287,6 +297,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         TextView titleTextView;
         TextView descriptionTextView;
         TextView metaTextView;
+        TextView totalProgressTextView;
+        TextView filledProgressTextView;
+        TextView rateProgressTextView;
         TextView actionButton;
         LinearLayout contentLayout;
 
@@ -295,6 +308,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             titleTextView = itemView.findViewById(R.id.titleTextView);
             descriptionTextView = itemView.findViewById(R.id.descriptionTextView);
             metaTextView = itemView.findViewById(R.id.metaTextView);
+            totalProgressTextView = itemView.findViewById(R.id.totalProgressTextView);
+            filledProgressTextView = itemView.findViewById(R.id.filledProgressTextView);
+            rateProgressTextView = itemView.findViewById(R.id.rateProgressTextView);
             actionButton = itemView.findViewById(R.id.cmdOpenActions);
             contentLayout = itemView.findViewById(R.id.contentLayout);
         }

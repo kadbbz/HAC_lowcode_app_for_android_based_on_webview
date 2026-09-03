@@ -8,9 +8,12 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionOrder;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
@@ -110,6 +113,7 @@ public class OfflineFormFileHelper {
 
     public static void writeRecord(Context context, OfflineFormRecord record) {
         JsonFileHelper.writeObjectToFile(new File(getRecordsDir(context, record.getPatternId()), record.getRecordId() + ".json"), record);
+        refreshProgress(context, record.getPatternId());
     }
 
     public static OfflineFormRecord readRecord(Context context, String patternId, String recordId) {
@@ -128,6 +132,7 @@ public class OfflineFormFileHelper {
         boolean deleted = JsonFileHelper.deleteFileOrDirectory(recordFile);
         if (deleted) {
             deleteRecordAttachmentFiles(context, patternId, record);
+            refreshProgress(context, patternId);
         }
         return deleted;
     }
@@ -184,6 +189,9 @@ public class OfflineFormFileHelper {
                 if (jsonObject != null) {
                     OfflineFormDefinitionFile definitionFile = OfflineFormJsonSerializer.restoreDefinitionFileFromJson(jsonObject);
                     OfflineFormDefinition definition = definitionFile.getJsonSchema();
+                    if (refreshDefinitionProgress(context, definitionFile)) {
+                        writeDefinition(context, definition.getPatternId(), definitionFile);
+                    }
                     definitions.add(new OfflineFormDefinitionIndexItem(
                             definition.getTitle(),
                             definition.getDescription(),
@@ -197,6 +205,42 @@ public class OfflineFormFileHelper {
             }
         }
         return definitions;
+    }
+
+    /** 依据当前表单最近更新的记录刷新并持久化列表需要的进度元数据。 */
+    public static void refreshProgress(Context context, String patternId) {
+        if (patternId == null || patternId.isEmpty()) {
+            return;
+        }
+        OfflineFormDefinitionFile definitionFile = readDefinition(context, patternId);
+        if (definitionFile == null) {
+            return;
+        }
+        if (refreshDefinitionProgress(context, definitionFile)) {
+            writeDefinition(context, patternId, definitionFile);
+        }
+    }
+
+    private static boolean refreshDefinitionProgress(Context context, OfflineFormDefinitionFile definitionFile) {
+        if (definitionFile == null || definitionFile.getJsonSchema() == null) {
+            return false;
+        }
+        if (definitionFile.getComputed() == null) {
+            definitionFile.setComputed(new OfflineComputedInfo());
+        }
+
+        List<OfflineFormRecord> records = readRecords(context, definitionFile.getJsonSchema().getPatternId());
+        OfflineFormRecord latestRecord = records.isEmpty() ? null : records.get(0);
+        OfflineFormProgress progress = OfflineFormProgressCalculator.calculate(
+                definitionFile.getJsonSchema(), latestRecord);
+        OfflineComputedInfo computed = definitionFile.getComputed();
+        boolean changed = computed.getTotalFillItems() != progress.getTotalFillItems()
+                || computed.getFilledFillItems() != progress.getFilledFillItems()
+                || Double.compare(computed.getCompletionRate(), progress.getCompletionRate()) != 0;
+        computed.setTotalFillItems(progress.getTotalFillItems());
+        computed.setFilledFillItems(progress.getFilledFillItems());
+        computed.setCompletionRate(progress.getCompletionRate());
+        return changed;
     }
 
     private static void deleteRecordAttachmentFiles(Context context, String patternId, OfflineFormRecord record) {

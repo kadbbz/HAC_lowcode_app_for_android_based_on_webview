@@ -17,6 +17,10 @@ public class OfflineFormNode {
     private String title = "";
     private String content = "";
     private boolean defaultCollapsed;
+    // 仅根节点的该配置参与统计；嵌套节点的值不会单独形成统计单位。
+    private boolean enableProgress;
+    // group 内字段节点的填报标识配置。
+    private boolean progressIdentifier;
     private BaseFormItem field;
     private List<OfflineFormNode> children = new ArrayList<>();
 }

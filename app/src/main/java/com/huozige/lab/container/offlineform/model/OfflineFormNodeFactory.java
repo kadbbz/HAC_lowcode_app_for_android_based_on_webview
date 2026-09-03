@@ -30,6 +30,10 @@ public final class OfflineFormNodeFactory {
             node.setTitle(nodeInput.title);
             node.setContent(nodeInput.content);
             node.setDefaultCollapsed(nodeInput.defaultCollapsed);
+            node.setEnableProgress(nodeInput.enableProgress || nodeInput.enableProgressStatistics);
+            node.setProgressIdentifier(nodeInput.progressIdentifier
+                    || nodeInput.isProgressItem
+                    || nodeInput.isFillProgressItem);
             if (OfflineFormNode.TYPE_FIELD.equals(nodeInput.nodeType) && nodeInput.field != null) {
                 node.setField(OfflineFormItemRegistry.fromInput(nodeInput.field));
             } else {
@@ -60,6 +64,8 @@ public final class OfflineFormNodeFactory {
         node.setTitle(source.getTitle());
         node.setContent(source.getContent());
         node.setDefaultCollapsed(source.isDefaultCollapsed());
+        node.setEnableProgress(source.isEnableProgress());
+        node.setProgressIdentifier(source.isProgressIdentifier());
         if (source.getField() != null) {
             node.setField(cloneFormItem(source.getField()));
         }
