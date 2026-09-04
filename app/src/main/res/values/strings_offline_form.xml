@@ -102,6 +102,9 @@
     <string name="offline_text_progress_total">总填报项：%1$d</string>
     <string name="offline_text_progress_filled">已填报项：%1$d</string>
     <string name="offline_text_progress_rate">完成率：%1$s</string>
+    <string name="offline_progress_label_total">总填报项</string>
+    <string name="offline_progress_label_completed">已填报项</string>
+    <string name="offline_progress_label_completion_rate">完成率</string>
     <string name="offline_text_no_signature_users">暂无签名人</string>
     <string name="offline_hint_signature">请在此处签名</string>
     <string name="offline_text_time_hour">时</string>

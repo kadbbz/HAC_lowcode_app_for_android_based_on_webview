@@ -20,7 +20,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressDisplay;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
@@ -40,6 +45,29 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<OfflineFormDisplayItem> rootItems = new ArrayList<>();
     private Set<Integer> collapsedGroupIds = new HashSet<>();
     private Map<Integer, OfflineFormItemHandler> handlersByViewType = new HashMap<>();
+    private OfflineFormDefinition definition;
+    private Map<String, String> formValues = new HashMap<>();
+    private OnDocumentClickListener documentClickListener;
+    private String documentFileName = "manual.pdf";
+
+    public interface OnDocumentClickListener {
+        void onDocumentClick(OfflineFormDisplayItem item);
+    }
+
+    public void setProgressContext(OfflineFormDefinition definition, Map<String, String> formValues) {
+        this.definition = definition;
+        this.formValues = formValues == null ? new HashMap<>() : new HashMap<>(formValues);
+    }
+
+    public void setOnDocumentClickListener(OnDocumentClickListener listener) {
+        documentClickListener = listener;
+    }
+
+    public void setDocumentFileName(String fileName) {
+        if (fileName != null && !fileName.isEmpty()) {
+            documentFileName = fileName;
+        }
+    }
 
     public void setDisplayItems(List<OfflineFormDisplayItem> items) {
         displayItems = new ArrayList<>(items);
@@ -286,18 +314,148 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setText(item.getNode().getTitle());
 
-        TextView contentView = new TextView(itemView.getContext());
-        contentView.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_content));
-        contentView.setTextSize(14);
-        contentView.setPadding(0, dp(itemView.getContext(), 4), 0, 0);
-        contentView.setText(item.getNode().getContent());
-
         container.addView(titleView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        OfflineFormNode node = item.getNode();
+        String textMode = node.getTextMode();
+        if (textMode == null || textMode.isEmpty() || OfflineFormNode.TEXT_MODE_TEXT.equals(textMode)) {
+            addTextContent(container, node.getContent());
+        } else if (OfflineFormNode.TEXT_MODE_PROGRESS.equals(textMode)) {
+            addProgressContent(container, itemView.getContext(), node.getProgressDisplay());
+        } else if (OfflineFormNode.TEXT_MODE_DOCUMENT.equals(textMode)) {
+            addDocumentContent(container, item);
+        } else {
+            // 未知模式按普通文本处理，保证旧版本或新增模式不会让节点内容消失。
+            addTextContent(container, node.getContent());
+        }
+    }
+
+    private void addTextContent(LinearLayout container, String content) {
+        TextView contentView = createTextValueView(container.getContext());
+        contentView.setText(content == null ? "" : content);
         container.addView(contentView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private void addProgressContent(LinearLayout container, Context context, OfflineFormProgressDisplay display) {
+        OfflineFormProgress progress = OfflineFormProgressCalculator.calculate(definition, formValues);
+        OfflineFormProgressDisplay safeDisplay = display == null ? new OfflineFormProgressDisplay() : display;
+        int metricCount = (safeDisplay.isTotal() ? 1 : 0)
+                + (safeDisplay.isCompleted() ? 1 : 0)
+                + (safeDisplay.isCompletionRate() ? 1 : 0);
+        if (metricCount == 0) {
+            return;
+        }
+
+        LinearLayout metricsLayout = new LinearLayout(context);
+        metricsLayout.setOrientation(LinearLayout.HORIZONTAL);
+        metricsLayout.setGravity(Gravity.CENTER_VERTICAL);
+        metricsLayout.setPadding(dp(context, 6), dp(context, 10), dp(context, 6), dp(context, 10));
+        metricsLayout.setBackground(createRoundedBackground(context, R.color.offline_form_progress_bg, 8));
+
+        int metricIndex = 0;
+        if (safeDisplay.isTotal()) {
+            metricIndex = addProgressMetric(metricsLayout, context,
+                    context.getString(R.string.offline_progress_label_total),
+                    String.valueOf(progress.getTotalFillItems()), false, metricIndex);
+        }
+        if (safeDisplay.isCompleted()) {
+            metricIndex = addProgressMetric(metricsLayout, context,
+                    context.getString(R.string.offline_progress_label_completed),
+                    String.valueOf(progress.getFilledFillItems()), false, metricIndex);
+        }
+        if (safeDisplay.isCompletionRate()) {
+            addProgressMetric(metricsLayout, context,
+                    context.getString(R.string.offline_progress_label_completion_rate),
+                    String.format(java.util.Locale.CHINA, "%.0f%%", progress.getCompletionRate()), true, metricIndex);
+        }
+        LinearLayout.LayoutParams metricsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        metricsParams.topMargin = dp(context, 8);
+        container.addView(metricsLayout, metricsParams);
+    }
+
+    private void addDocumentContent(LinearLayout container, OfflineFormDisplayItem item) {
+        TextView documentView = createTextValueView(container.getContext());
+        documentView.setText(documentFileName);
+        documentView.setTextColor(container.getContext().getColor(R.color.huozige_blue));
+        documentView.setGravity(Gravity.CENTER_VERTICAL);
+        documentView.setPadding(0, dp(container.getContext(), 8), 0, dp(container.getContext(), 4));
+        documentView.setPaintFlags(documentView.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        documentView.setOnClickListener(v -> {
+            if (documentClickListener != null) {
+                documentClickListener.onDocumentClick(item);
+            }
+        });
+        container.addView(documentView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private int addProgressMetric(
+            LinearLayout parent,
+            Context context,
+            String label,
+            String value,
+            boolean highlight,
+            int metricIndex) {
+        if (metricIndex > 0) {
+            View divider = new View(context);
+            divider.setBackgroundColor(context.getColor(R.color.offline_form_progress_divider));
+            parent.addView(divider, new LinearLayout.LayoutParams(
+                    dp(context, 1), dp(context, 34)));
+        }
+
+        LinearLayout metricLayout = new LinearLayout(context);
+        metricLayout.setOrientation(LinearLayout.VERTICAL);
+        metricLayout.setGravity(Gravity.CENTER);
+
+        TextView labelView = new TextView(context);
+        labelView.setText(label);
+        labelView.setTextColor(context.getColor(R.color.offline_form_progress_label));
+        labelView.setTextSize(12);
+        labelView.setGravity(Gravity.CENTER);
+
+        TextView valueView = new TextView(context);
+        valueView.setText(value);
+        valueView.setTextColor(context.getColor(highlight
+                ? R.color.offline_form_progress_value_highlight
+                : R.color.offline_form_progress_value));
+        valueView.setTextSize(highlight ? 20 : 18);
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setGravity(Gravity.CENTER);
+        metricLayout.addView(labelView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        metricLayout.addView(valueView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout.LayoutParams metricParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        metricParams.leftMargin = dp(context, 4);
+        metricParams.rightMargin = dp(context, 4);
+        parent.addView(metricLayout, metricParams);
+        return metricIndex + 1;
+    }
+
+    private TextView createTextValueView(Context context) {
+        TextView textView = new TextView(context);
+        textView.setTextColor(context.getColor(R.color.offline_form_text_content));
+        textView.setTextSize(14);
+        textView.setPadding(0, dp(context, 4), 0, 0);
+        return textView;
+    }
+
+    private static GradientDrawable createRoundedBackground(Context context, int colorResId, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(context.getColor(colorResId));
+        drawable.setCornerRadius(dp(context, radius));
+        return drawable;
     }
 
     private BaseViewHolder createFieldViewHolder(ViewGroup parent, OfflineFormDisplayItem item) {

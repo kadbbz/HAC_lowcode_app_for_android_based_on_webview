@@ -67,6 +67,7 @@ import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
+import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -219,6 +220,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void setupRecyclerView() {
         _adapter = new FormAdapter();
+        _adapter.setDocumentFileName(OfflineFormFileHelper.getManualPdfFile(
+                this, _intent.getStringExtra("patternId")).getName());
+        _adapter.setOnDocumentClickListener(item -> openManualPdf());
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
     }
@@ -591,6 +595,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         renderStepTabs();
         renderSearchKeyword();
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
+        _adapter.setProgressContext(_definition, collectAllFormData());
         _adapter.setDisplayItems(buildCurrentStepDisplayItems(step));
         updateItemNavigationVisibility();
         if (step.getTitle() != null && !step.getTitle().isEmpty()) {
@@ -829,6 +834,20 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             formData.put(item.getId(), item.getValue());
         }
         return formData;
+    }
+
+    private void openManualPdf() {
+        String patternId = _intent.getStringExtra("patternId");
+        File manualFile = OfflineFormFileHelper.getManualPdfFile(this, patternId);
+        if (!manualFile.exists()) {
+            Toast.makeText(this, R.string.offline_toast_manual_missing, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(this, PDFPreviewActivity.class);
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_LOCAL_FILE_PATH, manualFile.getAbsolutePath());
+        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, manualFile.getName());
+        startActivity(intent);
     }
 
     private void saveDraftIfNeeded() {

@@ -12,6 +12,8 @@ public class PatternNodeInput {
     public String nodeType = OfflineFormNode.TYPE_GROUP;
     public String title = "";
     public String content = "";
+    public String textMode = OfflineFormNode.TEXT_MODE_TEXT;
+    public OfflineFormProgressDisplay progressDisplay = new OfflineFormProgressDisplay();
     public boolean defaultCollapsed;
     // 根节点开启后作为一个填报进度统计单位；group 子节点使用 progressIdentifier 作为标识项。
     public boolean enableProgress;

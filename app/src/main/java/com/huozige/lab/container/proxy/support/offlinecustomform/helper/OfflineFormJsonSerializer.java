@@ -9,6 +9,7 @@ import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressDisplay;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
@@ -74,6 +75,8 @@ class OfflineFormJsonSerializer {
             NodeJson nodeJson = new NodeJson();
             nodeJson.nodeType = node.getNodeType();
             nodeJson.title = node.getTitle();
+            nodeJson.textMode = node.getTextMode();
+            nodeJson.progressDisplay = node.getProgressDisplay();
             nodeJson.enableProgress = node.isEnableProgress();
             nodeJson.progressIdentifier = node.isProgressIdentifier();
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
@@ -115,6 +118,11 @@ class OfflineFormJsonSerializer {
             OfflineFormNode node = new OfflineFormNode();
             node.setNodeType(nodeJson.nodeType);
             node.setTitle(nodeJson.title);
+            node.setTextMode(nodeJson.textMode == null || nodeJson.textMode.isEmpty()
+                    ? OfflineFormNode.TEXT_MODE_TEXT : nodeJson.textMode);
+            node.setProgressDisplay(nodeJson.progressDisplay == null
+                    ? new OfflineFormProgressDisplay()
+                    : nodeJson.progressDisplay);
             node.setEnableProgress(nodeJson.enableProgress);
             node.setProgressIdentifier(nodeJson.progressIdentifier);
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())) {
@@ -165,6 +173,8 @@ class OfflineFormJsonSerializer {
         public String nodeType = OfflineFormNode.TYPE_GROUP;
         public String title = "";
         public String content = "";
+        public String textMode = OfflineFormNode.TEXT_MODE_TEXT;
+        public OfflineFormProgressDisplay progressDisplay = new OfflineFormProgressDisplay();
         public boolean defaultCollapsed;
         public boolean enableProgress;
         public boolean progressIdentifier;

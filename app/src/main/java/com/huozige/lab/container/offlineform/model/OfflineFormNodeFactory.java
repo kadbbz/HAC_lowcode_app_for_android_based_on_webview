@@ -29,6 +29,10 @@ public final class OfflineFormNodeFactory {
             node.setNodeType(nodeInput.nodeType);
             node.setTitle(nodeInput.title);
             node.setContent(nodeInput.content);
+            node.setTextMode(nodeInput.textMode == null || nodeInput.textMode.isEmpty()
+                    ? OfflineFormNode.TEXT_MODE_TEXT : nodeInput.textMode);
+            node.setProgressDisplay(nodeInput.progressDisplay == null
+                    ? new OfflineFormProgressDisplay() : nodeInput.progressDisplay);
             node.setDefaultCollapsed(nodeInput.defaultCollapsed);
             node.setEnableProgress(nodeInput.enableProgress || nodeInput.enableProgressStatistics);
             node.setProgressIdentifier(nodeInput.progressIdentifier
@@ -63,6 +67,13 @@ public final class OfflineFormNodeFactory {
         node.setNodeType(source.getNodeType());
         node.setTitle(source.getTitle());
         node.setContent(source.getContent());
+        node.setTextMode(source.getTextMode());
+        node.setProgressDisplay(source.getProgressDisplay() == null
+                ? new OfflineFormProgressDisplay()
+                : new OfflineFormProgressDisplay(
+                        source.getProgressDisplay().isTotal(),
+                        source.getProgressDisplay().isCompleted(),
+                        source.getProgressDisplay().isCompletionRate()));
         node.setDefaultCollapsed(source.isDefaultCollapsed());
         node.setEnableProgress(source.isEnableProgress());
         node.setProgressIdentifier(source.isProgressIdentifier());

@@ -12,10 +12,15 @@ public class OfflineFormNode {
     public static final String TYPE_GROUP = "group";
     public static final String TYPE_TEXT = "text";
     public static final String TYPE_FIELD = "field";
+    public static final String TEXT_MODE_TEXT = "text";
+    public static final String TEXT_MODE_PROGRESS = "progress";
+    public static final String TEXT_MODE_DOCUMENT = "document";
 
     private String nodeType = TYPE_GROUP;
     private String title = "";
     private String content = "";
+    private String textMode = TEXT_MODE_TEXT;
+    private OfflineFormProgressDisplay progressDisplay = new OfflineFormProgressDisplay();
     private boolean defaultCollapsed;
     // 仅根节点的该配置参与统计；嵌套节点的值不会单独形成统计单位。
     private boolean enableProgress;
