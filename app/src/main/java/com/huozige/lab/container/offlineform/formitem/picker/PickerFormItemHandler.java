@@ -25,7 +25,11 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
             item.setValue(input.value);
         }
         PickerFormItemOptions options = (PickerFormItemOptions) input.options;
-        item.setIncludeSeconds(options != null && options.isIncludeSeconds());
+        if (getPickerMode() == PickerMode.DATE) {
+            item.setIncludeTime(options != null && options.isIncludeTime());
+        } else {
+            item.setIncludeSeconds(options != null && options.isIncludeSeconds());
+        }
         return item;
     }
 
@@ -38,7 +42,11 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
     public JSONObject toJson(BaseFormItem item) {
         PickerFormItem pickerItem = (PickerFormItem) item;
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(pickerItem);
-        if (pickerItem.isIncludeSeconds()) {
+        if (getPickerMode() == PickerMode.DATE && pickerItem.isIncludeTime()) {
+            PickerFormItemOptions options = new PickerFormItemOptions();
+            options.setIncludeTime(true);
+            jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
+        } else if (getPickerMode() == PickerMode.TIME && pickerItem.isIncludeSeconds()) {
             PickerFormItemOptions options = new PickerFormItemOptions();
             options.setIncludeSeconds(true);
             jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);

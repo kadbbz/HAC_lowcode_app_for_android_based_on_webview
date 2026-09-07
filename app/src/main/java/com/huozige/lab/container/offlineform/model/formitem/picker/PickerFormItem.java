@@ -11,6 +11,7 @@ import lombok.Setter;
 public class PickerFormItem extends BaseFormItem {
     private String value = "";
     private boolean includeSeconds;
+    private boolean includeTime;
 
     public PickerFormItem(String itemType, String id, String title, String hint, boolean required) {
         super(itemType, id, title, hint, required);

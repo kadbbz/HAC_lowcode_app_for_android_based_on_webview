@@ -2,6 +2,7 @@ package com.huozige.lab.container.offlineform.formitem.picker;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -15,8 +16,13 @@ import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+
+import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
 public class PickerViewHolder extends BaseViewHolder {
     private final PickerMode pickerMode;
@@ -55,60 +61,156 @@ public class PickerViewHolder extends BaseViewHolder {
     }
 
     private void showDatePicker() {
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = createInitialCalendar();
 
-        new DatePickerDialog(itemView.getContext(), (view, year, month, dayOfMonth) -> {
-            pickerItem.setValue(String.format(Locale.CHINA, "%04d/%d/%d", year, month + 1, dayOfMonth));
-            pickerItem.clearError();
-            bindValue();
-            updateErrorState();
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+        DatePickerDialog dialog = new DatePickerDialog(
+                itemView.getContext(),
+                (view, year, month, dayOfMonth) -> {
+                    if (pickerItem.isIncludeTime()) {
+                        showDateTimePicker(year, month, dayOfMonth, calendar);
+                    } else {
+                        commitValue(String.format(Locale.CHINA, "%04d/%d/%d", year, month + 1, dayOfMonth));
+                    }
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH));
+        dialog.setTitle(R.string.offline_title_select_date);
+        dialog.show();
+    }
+
+    private void showDateTimePicker(int year, int month, int dayOfMonth, Calendar calendar) {
+        NumberPicker hourPicker = createTimeNumberPicker(0, 23, calendar.get(Calendar.HOUR_OF_DAY));
+        NumberPicker minutePicker = createTimeNumberPicker(0, 59, calendar.get(Calendar.MINUTE));
+        NumberPicker secondPicker = createTimeNumberPicker(0, 59, calendar.get(Calendar.SECOND));
+
+        new AlertDialog.Builder(itemView.getContext())
+                .setTitle(R.string.offline_title_select_time)
+                .setView(createTimePickerLayout(
+                        hourPicker,
+                        minutePicker,
+                        secondPicker,
+                        String.format(Locale.CHINA, "%d年%d月%d日", year, month + 1, dayOfMonth)))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    commitValue(String.format(
+                            Locale.CHINA,
+                            "%04d/%d/%d %02d:%02d:%02d",
+                            year,
+                            month + 1,
+                            dayOfMonth,
+                            hourPicker.getValue(),
+                            minutePicker.getValue(),
+                            secondPicker.getValue()));
+                })
+                .show();
     }
 
     private void showTimePicker() {
-        Calendar calendar = Calendar.getInstance();
-        int second = calendar.get(Calendar.SECOND);
+        Calendar calendar = createInitialCalendar();
 
         if (!pickerItem.isIncludeSeconds()) {
             new TimePickerDialog(itemView.getContext(), (view, hourOfDay, minute) -> {
-                pickerItem.setValue(String.format(Locale.CHINA, "%02d:%02d", hourOfDay, minute));
-                pickerItem.clearError();
-                bindValue();
-                updateErrorState();
+                commitValue(String.format(Locale.CHINA, "%02d:%02d", hourOfDay, minute));
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
             return;
         }
 
         NumberPicker hourPicker = createTimeNumberPicker(0, 23, calendar.get(Calendar.HOUR_OF_DAY));
         NumberPicker minutePicker = createTimeNumberPicker(0, 59, calendar.get(Calendar.MINUTE));
-        NumberPicker secondPicker = createTimeNumberPicker(0, 59, second);
-
-        LinearLayout contentLayout = new LinearLayout(itemView.getContext());
-        contentLayout.setOrientation(LinearLayout.HORIZONTAL);
-        contentLayout.setGravity(Gravity.CENTER);
-        contentLayout.setPadding(0, 24, 0, 8);
-        contentLayout.addView(createTimePickerColumn(hourPicker, itemView.getContext().getString(R.string.offline_text_time_hour)));
-        contentLayout.addView(createTimePickerColumn(minutePicker, itemView.getContext().getString(R.string.offline_text_time_minute)));
-        contentLayout.addView(createTimePickerColumn(secondPicker, itemView.getContext().getString(R.string.offline_text_time_second)));
+        NumberPicker secondPicker = createTimeNumberPicker(0, 59, calendar.get(Calendar.SECOND));
 
         new AlertDialog.Builder(itemView.getContext())
-                .setView(contentLayout)
+                .setTitle(R.string.offline_title_select_time)
+                .setView(createTimePickerLayout(hourPicker, minutePicker, secondPicker, null))
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    pickerItem.setValue(String.format(Locale.CHINA, "%02d:%02d:%02d", hourPicker.getValue(), minutePicker.getValue(), secondPicker.getValue()));
-                    pickerItem.clearError();
-                    bindValue();
-                    updateErrorState();
+                    commitValue(String.format(
+                            Locale.CHINA,
+                            "%02d:%02d:%02d",
+                            hourPicker.getValue(),
+                            minutePicker.getValue(),
+                            secondPicker.getValue()));
                 })
                 .show();
+    }
+
+    private LinearLayout createTimePickerLayout(
+            NumberPicker hourPicker,
+            NumberPicker minutePicker,
+            NumberPicker secondPicker,
+            String selectedDate) {
+        LinearLayout contentLayout = new LinearLayout(itemView.getContext());
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setPadding(dp(itemView.getContext(), 20), 0, dp(itemView.getContext(), 20), dp(itemView.getContext(), 8));
+
+        if (selectedDate != null) {
+            contentLayout.addView(createSelectedDateView(selectedDate));
+        }
+
+        LinearLayout pickerRow = new LinearLayout(itemView.getContext());
+        pickerRow.setOrientation(LinearLayout.HORIZONTAL);
+        pickerRow.setGravity(Gravity.CENTER);
+        pickerRow.addView(createTimePickerColumn(hourPicker, itemView.getContext().getString(R.string.offline_text_time_hour)), createTimeColumnParams());
+        pickerRow.addView(createTimeSeparator());
+        pickerRow.addView(createTimePickerColumn(minutePicker, itemView.getContext().getString(R.string.offline_text_time_minute)), createTimeColumnParams());
+        pickerRow.addView(createTimeSeparator());
+        pickerRow.addView(createTimePickerColumn(secondPicker, itemView.getContext().getString(R.string.offline_text_time_second)), createTimeColumnParams());
+        contentLayout.addView(pickerRow, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        return contentLayout;
+    }
+
+    private TextView createSelectedDateView(String selectedDate) {
+        TextView dateView = new TextView(itemView.getContext());
+        dateView.setText(selectedDate);
+        dateView.setTextColor(itemView.getContext().getColor(R.color.huozige_blue));
+        dateView.setTextSize(16);
+        dateView.setGravity(Gravity.CENTER);
+        dateView.setPadding(0, dp(itemView.getContext(), 10), 0, dp(itemView.getContext(), 10));
+
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(itemView.getContext().getColor(R.color.offline_form_group_bg));
+        background.setCornerRadius(dp(itemView.getContext(), 8));
+        dateView.setBackground(background);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = dp(itemView.getContext(), 8);
+        dateView.setLayoutParams(params);
+        return dateView;
+    }
+
+    private LinearLayout.LayoutParams createTimeColumnParams() {
+        return new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+    }
+
+    private TextView createTimeSeparator() {
+        TextView separator = new TextView(itemView.getContext());
+        separator.setText(":");
+        separator.setTextSize(28);
+        separator.setGravity(Gravity.CENTER);
+        separator.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_title));
+        return separator;
+    }
+
+    private void commitValue(String value) {
+        pickerItem.setValue(value);
+        pickerItem.clearError();
+        bindValue();
+        updateErrorState();
     }
 
     private NumberPicker createTimeNumberPicker(int minValue, int maxValue, int value) {
         NumberPicker numberPicker = new NumberPicker(itemView.getContext());
         numberPicker.setMinValue(minValue);
         numberPicker.setMaxValue(maxValue);
-        numberPicker.setValue(value);
         numberPicker.setFormatter(value1 -> String.format(Locale.CHINA, "%02d", value1));
+        numberPicker.setValue(value);
+        numberPicker.setWrapSelectorWheel(true);
+        numberPicker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
         return numberPicker;
     }
 
@@ -120,9 +222,37 @@ public class PickerViewHolder extends BaseViewHolder {
         TextView labelView = new TextView(itemView.getContext());
         labelView.setText(label);
         labelView.setGravity(Gravity.CENTER);
+        labelView.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_content));
+        labelView.setTextSize(12);
         columnLayout.addView(numberPicker, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         columnLayout.addView(labelView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         return columnLayout;
+    }
+
+    private Calendar createInitialCalendar() {
+        Calendar calendar = Calendar.getInstance();
+        String value = pickerItem == null ? null : pickerItem.getValue();
+        if (value == null || value.trim().isEmpty()) {
+            return calendar;
+        }
+
+        String[] patterns = pickerMode == PickerMode.DATE
+                ? new String[]{"yyyy/M/d HH:mm:ss", "yyyy/M/d"}
+                : new String[]{"HH:mm:ss", "HH:mm"};
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.CHINA);
+                dateFormat.setLenient(false);
+                Date parsedValue = dateFormat.parse(value);
+                if (parsedValue != null) {
+                    calendar.setTime(parsedValue);
+                    return calendar;
+                }
+            } catch (ParseException ignored) {
+                // 尝试下一个兼容格式。
+            }
+        }
+        return calendar;
     }
 
     @Override
@@ -161,4 +291,5 @@ public class PickerViewHolder extends BaseViewHolder {
             tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_normal);
         }
     }
+
 }

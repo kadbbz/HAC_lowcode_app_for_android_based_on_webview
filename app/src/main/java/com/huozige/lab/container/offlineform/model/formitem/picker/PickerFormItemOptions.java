@@ -7,4 +7,5 @@ import lombok.Setter;
 @Setter
 public class PickerFormItemOptions {
     private boolean includeSeconds;
+    private boolean includeTime;
 }
