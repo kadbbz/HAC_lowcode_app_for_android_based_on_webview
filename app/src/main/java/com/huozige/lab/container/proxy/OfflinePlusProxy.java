@@ -115,7 +115,7 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     @JavascriptInterface
-    public void offlinePlusAddPatternAsync(String input, String manualPdfUrl, String signatureBase64) {
+    public void offlinePlusAddPatternAsync(String input) {
         writeInfoLog("OfflinePlusAddPattern");
 
         PatternInput inputObj = JSON.parseObject(input, PatternInput.class);
@@ -125,7 +125,6 @@ public class OfflinePlusProxy extends AbstractProxy{
         Context context = this.getWebView().getContext();
         try {
             parseJsonToFile(context, inputObj);
-            saveSignature(context, inputObj.patternId, signatureBase64);
         } catch (Exception e) {
             finishAddPattern(null, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_add_pattern_failed, e));
             return;
@@ -979,14 +978,6 @@ public class OfflinePlusProxy extends AbstractProxy{
         return StringUtils.isNotBlank(currentUrl)
                 ? new URL(new URL(currentUrl), manualPdfUrl).toString()
                 : new URL(manualPdfUrl).toString();
-    }
-
-    private void saveSignature(Context context, String patternId, String signatureBase64) throws IOException {
-        if (StringUtils.isNullOrBlank(signatureBase64)) {
-            OfflineFormFileHelper.deleteSignatureFile(context, patternId);
-            return;
-        }
-        OfflineFormFileHelper.writeSignatureBase64(context, patternId, signatureBase64);
     }
 
     private String readSignatureDataUrl(Context context, String patternId) {
