@@ -395,7 +395,16 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         documentList.setPadding(dp(context, 8), dp(context, 4), dp(context, 8), dp(context, 4));
         documentList.setBackground(createRoundedBackground(context, R.color.offline_form_document_list_bg, 8));
 
-        for (String fileName : fileNames) {
+        if (fileNames.isEmpty()) {
+            TextView emptyView = new TextView(context);
+            emptyView.setText(R.string.offline_document_empty_hint);
+            emptyView.setTextColor(context.getColor(R.color.offline_form_document_meta));
+            emptyView.setTextSize(14);
+            emptyView.setGravity(Gravity.CENTER);
+            emptyView.setPadding(dp(context, 10), dp(context, 14), dp(context, 10), dp(context, 14));
+            documentList.addView(emptyView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        } else for (String fileName : fileNames) {
             LinearLayout documentRow = new LinearLayout(context);
             documentRow.setOrientation(LinearLayout.HORIZONTAL);
             documentRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -475,9 +484,6 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         if (fileNames.isEmpty()) {
             fileNames.addAll(documentFileNames);
-        }
-        if (fileNames.isEmpty()) {
-            fileNames.add("manual.pdf");
         }
         return fileNames;
     }
