@@ -124,6 +124,7 @@
     <string name="offline_title_signature">签名</string>
     <string name="offline_button_open_manual">查看手册</string>
     <string name="offline_menu_preview_manual">预览说明</string>
+    <string name="offline_document_preview_hint">点击预览</string>
     <string name="offline_menu_delete_draft_records">清理所有草稿</string>
     <string name="offline_menu_delete_exported_records">清理所有已导出数据</string>
     <string name="offline_text_config_basic_info">项目编号：%1$s\n版本号：%2$s\n名称：%3$s\n备注：%4$s\n字段数：%5$d\n文件路径：%6$s</string>

@@ -19,5 +19,10 @@
     <color name="offline_form_progress_label">#60717D</color>
     <color name="offline_form_progress_value">#1677A9</color>
     <color name="offline_form_progress_value_highlight">#0087C7</color>
+    <color name="offline_form_document_list_bg">#F4F7FA</color>
+    <color name="offline_form_document_name">#263746</color>
+    <color name="offline_form_document_meta">#7A8A96</color>
+    <color name="offline_form_document_item_stroke">#DCE5EC</color>
+    <color name="offline_form_document_item_pressed">#EAF6FD</color>
 
 </resources>

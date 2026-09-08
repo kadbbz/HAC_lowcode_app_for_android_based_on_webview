@@ -26,12 +26,15 @@ import com.huozige.lab.container.offlineform.model.PatternInput;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
 import com.huozige.lab.container.utilities.StringUtils;
+import com.huozige.lab.container.utilities.HACDownloadManager;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
@@ -53,6 +56,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -131,10 +136,13 @@ public class OfflinePlusProxy extends AbstractProxy{
     }
 
     /**
-     * 下载并绑定离线表单的说明 PDF。manualPdfUrl 为空时会删除已绑定的手册。
+     * 下载并绑定离线表单的说明文档。
      */
     @JavascriptInterface
-    public void offlinePlusDownloadManualPdfAsync(String patternId, String manualPdfUrl, String ticket) {
+    public void offlinePlusDownloadManualPdfAsync(
+            String patternId,
+            String[] manualPdfUrl,
+            String ticket) {
         writeInfoLog("OfflinePlusDownloadManualPdfAsync");
         registryCallbackTicket(ticket);
 
@@ -147,7 +155,7 @@ public class OfflinePlusProxy extends AbstractProxy{
             finishManualDownload(null, CallbackParams.error("patternId does not exist."), null);
             return;
         }
-        if (StringUtils.isNullOrBlank(manualPdfUrl)) {
+        if (manualPdfUrl == null || manualPdfUrl.length == 0) {
             OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
             finishManualDownload(null, CallbackParams.success("success"), null);
             return;
@@ -157,7 +165,7 @@ public class OfflinePlusProxy extends AbstractProxy{
         ProgressDialog progressDialog = showManualDownloadDialog(context);
         new Thread(() -> {
             try {
-                saveManualPdf(context, patternId, manualPdfUrl, currentUrl, progressDialog);
+                saveManualDocuments(context, patternId, manualPdfUrl, currentUrl, progressDialog);
                 finishManualDownload(progressDialog, CallbackParams.success("success"), null);
             } catch (Exception e) {
                 finishManualDownload(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
@@ -277,10 +285,34 @@ public class OfflinePlusProxy extends AbstractProxy{
         Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(definitionFile);
         normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
         result.put("projectId", projectId);
+        OfflineFormProgress progress = calculateExportProgress(definitionFile, records);
+        result.put("totalFillItems", progress.getTotalFillItems());
+        result.put("filledFillItems", progress.getFilledFillItems());
+        result.put("completionRate", progress.getCompletionRate());
         result.put("records", buildExportRecords(records, definitionFile));
         result.put("attachments", buildExportAttachments(records, definitionFile));
         result.put("signature", readSignatureDataUrl(context, projectId));
         return result;
+    }
+
+    private OfflineFormProgress calculateExportProgress(
+            OfflineFormDefinitionFile definitionFile,
+            List<OfflineFormRecord> records) {
+        if (definitionFile == null || definitionFile.getJsonSchema() == null
+                || records == null || records.isEmpty()) {
+            return OfflineFormProgress.empty();
+        }
+        // 导出结果包含多条记录时，进度按每条记录分别统计后汇总，避免只返回最近一条记录的进度。
+        int total = 0;
+        int filled = 0;
+        for (OfflineFormRecord record : records) {
+            OfflineFormProgress recordProgress = OfflineFormProgressCalculator.calculate(
+                    definitionFile.getJsonSchema(), record);
+            total += recordProgress.getTotalFillItems();
+            filled += recordProgress.getFilledFillItems();
+        }
+        double completionRate = total == 0 ? 0d : filled * 100d / total;
+        return new OfflineFormProgress(total, filled, completionRate);
     }
 
     /**
@@ -816,59 +848,131 @@ public class OfflinePlusProxy extends AbstractProxy{
         OfflineFormFileHelper.writeDefinition(context, input.patternId, definitionFile);
     }
 
-    private void saveManualPdf(Context context, String patternId, String manualPdfUrl, String currentUrl, ProgressDialog progressDialog) throws IOException {
-        if (StringUtils.isNullOrBlank(manualPdfUrl)) {
+    private void saveManualDocuments(
+            Context context,
+            String patternId,
+            String[] manualPdfUrls,
+            String currentUrl,
+            ProgressDialog progressDialog) throws IOException {
+        // 一次调用代表一组完整资源，先清理旧文件，避免旧说明文档残留在列表中。
+        OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+        if (manualPdfUrls == null || manualPdfUrls.length == 0) {
             return;
         }
 
-        File targetFile = OfflineFormFileHelper.getManualPdfFile(context, patternId);
-        File tempFile = OfflineFormFileHelper.getManualPdfTempFile(context, patternId);
-
-        File parentFile = targetFile.getParentFile();
-        if (parentFile != null && !parentFile.exists()) {
-            parentFile.mkdirs();
+        List<String> urls = new ArrayList<>();
+        for (String url : manualPdfUrls) {
+            if (StringUtils.isNotBlank(url)) {
+                urls.add(url.trim());
+            }
+        }
+        if (urls.isEmpty()) {
+            return;
         }
 
-        HttpURLConnection connection = null;
-        try {
-            String resolvedManualPdfUrl = resolveManualPdfUrl(manualPdfUrl, currentUrl);
-            connection = (HttpURLConnection) new URL(resolvedManualPdfUrl).openConnection();
-            String cookie = CookieManager.getInstance().getCookie(resolvedManualPdfUrl);
-            if (StringUtils.isNotBlank(cookie)) {
-                connection.setRequestProperty("Cookie", cookie);
-            }
-            connection.connect();
-            int responseCode = connection.getResponseCode();
-            if (responseCode < 200 || responseCode >= 300) {
-                throw new IOException(context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode));
-            }
+        File manualFilesDir = OfflineFormFileHelper.getManualFilesDir(context, patternId);
+        if (!manualFilesDir.exists() && !manualFilesDir.mkdirs()) {
+            throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
+        }
 
-            int contentLength = connection.getContentLength();
-            try (InputStream input = connection.getInputStream();
-                 FileOutputStream output = new FileOutputStream(tempFile)) {
-                byte[] buffer = new byte[8192];
-                long totalRead = 0;
-                long startTime = System.currentTimeMillis();
-                updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
-                int read;
-                while ((read = input.read(buffer)) >= 0) {
-                    output.write(buffer, 0, read);
-                    totalRead += read;
-                    updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+        List<String> usedFileNames = new ArrayList<>();
+        try {
+            for (int index = 0; index < urls.size(); index++) {
+                String resolvedUrl = resolveManualPdfUrl(urls.get(index), currentUrl);
+                HttpURLConnection connection = null;
+                File tempFile = null;
+                try {
+                    connection = (HttpURLConnection) new URL(resolvedUrl).openConnection();
+                    String cookie = CookieManager.getInstance().getCookie(resolvedUrl);
+                    if (StringUtils.isNotBlank(cookie)) {
+                        connection.setRequestProperty("Cookie", cookie);
+                    }
+                    connection.connect();
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode < 200 || responseCode >= 300) {
+                        throw new IOException(context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode));
+                    }
+
+                    String fileName = HACDownloadManager.parseContentDisposition(
+                            connection.getHeaderField("Content-Disposition"));
+                    if (StringUtils.isNullOrBlank(fileName)) {
+                        fileName = getFileNameFromUrl(resolvedUrl, index);
+                    }
+                    fileName = makeUniqueFileName(fileName, usedFileNames);
+                    File targetFile = OfflineFormFileHelper.getManualFile(context, patternId, fileName);
+                    if (targetFile == null) {
+                        throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
+                    }
+                    tempFile = new File(manualFilesDir, "." + targetFile.getName() + ".tmp");
+
+                    int contentLength = connection.getContentLength();
+                    try (InputStream input = connection.getInputStream();
+                         FileOutputStream output = new FileOutputStream(tempFile)) {
+                        byte[] buffer = new byte[8192];
+                        long totalRead = 0;
+                        long startTime = System.currentTimeMillis();
+                        updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+                        int read;
+                        while ((read = input.read(buffer)) >= 0) {
+                            output.write(buffer, 0, read);
+                            totalRead += read;
+                            updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+                        }
+                    }
+
+                    Files.move(tempFile.toPath(), targetFile.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                    usedFileNames.add(targetFile.getName());
+                } finally {
+                    if (tempFile != null && tempFile.exists() && !tempFile.delete()) {
+                        writeErrorLog("删除离线说明文档临时文件失败：" + tempFile.getAbsolutePath());
+                    }
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
                 }
             }
-
-            Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            if (tempFile.exists() && !tempFile.delete()) {
-                writeErrorLog("删除离线手册临时文件失败：" + tempFile.getAbsolutePath());
-            }
+            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
             throw e;
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
+    }
+
+    private String getFileNameFromUrl(String url, int index) {
+        try {
+            String path = new URL(url).getPath();
+            int separatorIndex = path == null ? -1 : path.lastIndexOf('/');
+            String fileName = separatorIndex >= 0 ? path.substring(separatorIndex + 1) : path;
+            fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
+            return StringUtils.isNotBlank(fileName) ? fileName : "document-" + (index + 1) + ".pdf";
+        } catch (Exception ignored) {
+            return "document-" + (index + 1) + ".pdf";
+        }
+    }
+
+    private String makeUniqueFileName(String fileName, List<String> usedFileNames) {
+        String normalized = fileName == null ? "" : fileName.replace('\\', '/');
+        int separatorIndex = normalized.lastIndexOf('/');
+        if (separatorIndex >= 0) {
+            normalized = normalized.substring(separatorIndex + 1);
+        }
+        if (StringUtils.isNullOrBlank(normalized) || ".".equals(normalized) || "..".equals(normalized)) {
+            normalized = "document.pdf";
+        }
+
+        String baseName = normalized;
+        String extension = "";
+        int dotIndex = normalized.lastIndexOf('.');
+        if (dotIndex > 0) {
+            baseName = normalized.substring(0, dotIndex);
+            extension = normalized.substring(dotIndex);
+        }
+        String candidate = normalized;
+        int suffix = 2;
+        while (usedFileNames.contains(candidate)) {
+            candidate = baseName + " (" + suffix++ + ")" + extension;
+        }
+        return candidate;
     }
 
     private String resolveManualPdfUrl(String manualPdfUrl, String currentUrl) throws IOException {

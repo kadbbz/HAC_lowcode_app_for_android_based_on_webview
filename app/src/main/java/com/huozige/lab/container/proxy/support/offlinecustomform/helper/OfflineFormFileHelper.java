@@ -44,6 +44,7 @@ public class OfflineFormFileHelper {
     private static final String RECORDS_DIR = "records";
     private static final String MANUAL_FILE = "manual.pdf";
     private static final String MANUAL_TEMP_FILE = "manual.pdf.tmp";
+    private static final String MANUAL_FILES_DIR = "manuals";
     private static final String SIGNATURE_FILE = "signature.png";
 
     public static List<OfflineFormDefinitionIndexItem> readDefinitions(Context context) {
@@ -87,11 +88,55 @@ public class OfflineFormFileHelper {
     }
 
     public static File getManualPdfFile(Context context, String patternId) {
-        return new File(getPatternDir(context, patternId), MANUAL_FILE);
+        File legacyFile = new File(getPatternDir(context, patternId), MANUAL_FILE);
+        if (legacyFile.exists()) {
+            return legacyFile;
+        }
+
+        List<File> manualFiles = getManualFiles(context, patternId);
+        return manualFiles.isEmpty() ? legacyFile : manualFiles.get(0);
     }
 
     public static File getManualPdfTempFile(Context context, String patternId) {
         return new File(getPatternDir(context, patternId), MANUAL_TEMP_FILE);
+    }
+
+    public static List<File> getManualFiles(Context context, String patternId) {
+        List<File> manualFiles = new ArrayList<>();
+        File manualFilesDir = getManualFilesDir(context, patternId);
+        File[] files = manualFilesDir.listFiles(file -> file.isFile()
+                && !file.getName().startsWith(".")
+                && !file.getName().endsWith(".tmp"));
+        if (files != null) {
+            Collections.addAll(manualFiles, files);
+            Collections.sort(manualFiles, (left, right) -> left.getName().compareToIgnoreCase(right.getName()));
+        }
+        if (manualFiles.isEmpty()) {
+            File legacyFile = new File(getPatternDir(context, patternId), MANUAL_FILE);
+            if (legacyFile.exists() && legacyFile.isFile()) {
+                manualFiles.add(legacyFile);
+            }
+        }
+        return manualFiles;
+    }
+
+    public static File getManualFilesDir(Context context, String patternId) {
+        return new File(getPatternDir(context, patternId), MANUAL_FILES_DIR);
+    }
+
+    public static File getManualFile(Context context, String patternId, String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return null;
+        }
+        String safeFileName = fileName.replace('\\', '/');
+        int separatorIndex = safeFileName.lastIndexOf('/');
+        if (separatorIndex >= 0) {
+            safeFileName = safeFileName.substring(separatorIndex + 1);
+        }
+        if (safeFileName.isEmpty() || ".".equals(safeFileName) || "..".equals(safeFileName)) {
+            return null;
+        }
+        return new File(getManualFilesDir(context, patternId), safeFileName);
     }
 
     public static File getSignatureFile(Context context, String patternId) {
@@ -105,6 +150,7 @@ public class OfflineFormFileHelper {
     public static void deleteManualPdfFile(Context context, String patternId) {
         JsonFileHelper.deleteFileOrDirectory(getManualPdfFile(context, patternId));
         JsonFileHelper.deleteFileOrDirectory(getManualPdfTempFile(context, patternId));
+        JsonFileHelper.deleteFileOrDirectory(getManualFilesDir(context, patternId));
     }
 
     public static void deleteSignatureFile(Context context, String patternId) {

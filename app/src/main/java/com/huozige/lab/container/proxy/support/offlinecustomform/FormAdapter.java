@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -20,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
+import com.huozige.lab.container.offlineform.formitem.file.FileExtensionIconView;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
@@ -27,6 +29,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
 import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
 import com.huozige.lab.container.offlineform.model.OfflineFormProgressDisplay;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;
@@ -48,10 +51,10 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private OfflineFormDefinition definition;
     private Map<String, String> formValues = new HashMap<>();
     private OnDocumentClickListener documentClickListener;
-    private String documentFileName = "manual.pdf";
+    private List<String> documentFileNames = new ArrayList<>();
 
     public interface OnDocumentClickListener {
-        void onDocumentClick(OfflineFormDisplayItem item);
+        void onDocumentClick(OfflineFormDisplayItem item, String fileName);
     }
 
     public void setProgressContext(OfflineFormDefinition definition, Map<String, String> formValues) {
@@ -64,9 +67,14 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public void setDocumentFileName(String fileName) {
+        documentFileNames.clear();
         if (fileName != null && !fileName.isEmpty()) {
-            documentFileName = fileName;
+            documentFileNames.add(fileName);
         }
+    }
+
+    public void setDocumentFileNames(List<String> fileNames) {
+        documentFileNames = fileNames == null ? new ArrayList<>() : new ArrayList<>(fileNames);
     }
 
     public void setDisplayItems(List<OfflineFormDisplayItem> items) {
@@ -380,20 +388,98 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void addDocumentContent(LinearLayout container, OfflineFormDisplayItem item) {
-        TextView documentView = createTextValueView(container.getContext());
-        documentView.setText(documentFileName);
-        documentView.setTextColor(container.getContext().getColor(R.color.huozige_blue));
-        documentView.setGravity(Gravity.CENTER_VERTICAL);
-        documentView.setPadding(0, dp(container.getContext(), 8), 0, dp(container.getContext(), 4));
-        documentView.setPaintFlags(documentView.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
-        documentView.setOnClickListener(v -> {
-            if (documentClickListener != null) {
-                documentClickListener.onDocumentClick(item);
+        List<String> fileNames = getDocumentFileNames(item);
+        Context context = container.getContext();
+        LinearLayout documentList = new LinearLayout(context);
+        documentList.setOrientation(LinearLayout.VERTICAL);
+        documentList.setPadding(dp(context, 8), dp(context, 4), dp(context, 8), dp(context, 4));
+        documentList.setBackground(createRoundedBackground(context, R.color.offline_form_document_list_bg, 8));
+
+        for (String fileName : fileNames) {
+            LinearLayout documentRow = new LinearLayout(context);
+            documentRow.setOrientation(LinearLayout.HORIZONTAL);
+            documentRow.setGravity(Gravity.CENTER_VERTICAL);
+            documentRow.setPadding(dp(context, 10), dp(context, 8), dp(context, 8), dp(context, 8));
+            documentRow.setBackgroundResource(R.drawable.offline_document_item_bg);
+            documentRow.setClickable(true);
+            documentRow.setFocusable(true);
+            documentRow.setContentDescription(fileName);
+
+            FileExtensionIconView fileIcon = new FileExtensionIconView(context);
+            fileIcon.setExtension(Utils.getExtension(fileName));
+            documentRow.addView(fileIcon, new LinearLayout.LayoutParams(
+                    dp(context, 36), dp(context, 36)));
+
+            LinearLayout textLayout = new LinearLayout(context);
+            textLayout.setOrientation(LinearLayout.VERTICAL);
+            textLayout.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+            textParams.setMargins(dp(context, 10), 0, dp(context, 8), 0);
+
+            TextView nameView = new TextView(context);
+            nameView.setText(fileName);
+            nameView.setTextColor(context.getColor(R.color.offline_form_document_name));
+            nameView.setTextSize(14);
+            nameView.setTypeface(null, Typeface.BOLD);
+            nameView.setSingleLine(true);
+            nameView.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
+
+            TextView actionView = new TextView(context);
+            actionView.setText(R.string.offline_document_preview_hint);
+            actionView.setTextColor(context.getColor(R.color.offline_form_document_meta));
+            actionView.setTextSize(12);
+            actionView.setPadding(0, dp(context, 2), 0, 0);
+
+            textLayout.addView(nameView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            textLayout.addView(actionView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            documentRow.addView(textLayout, textParams);
+
+            ImageView arrowView = new ImageView(context);
+            arrowView.setImageResource(R.drawable.ic_offline_step_arrow_right);
+            arrowView.setAlpha(0.65f);
+            arrowView.setContentDescription(context.getString(R.string.offline_document_preview_hint));
+            documentRow.addView(arrowView, new LinearLayout.LayoutParams(
+                    dp(context, 22), dp(context, 22)));
+
+            documentRow.setOnClickListener(v -> {
+                if (documentClickListener != null) {
+                    documentClickListener.onDocumentClick(item, fileName);
+                }
+            });
+
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 58));
+            rowParams.topMargin = dp(context, 4);
+            rowParams.bottomMargin = dp(context, 4);
+            documentList.addView(documentRow, rowParams);
+        }
+
+        LinearLayout.LayoutParams listParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        listParams.topMargin = dp(context, 8);
+        container.addView(documentList, listParams);
+    }
+
+    private List<String> getDocumentFileNames(OfflineFormDisplayItem item) {
+        List<String> fileNames = new ArrayList<>();
+        String content = item.getNode() == null ? "" : item.getNode().getContent();
+        if (content != null && !content.trim().isEmpty()) {
+            for (String fileName : content.split("\\|", -1)) {
+                if (fileName != null && !fileName.trim().isEmpty()) {
+                    fileNames.add(fileName.trim());
+                }
             }
-        });
-        container.addView(documentView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        if (fileNames.isEmpty()) {
+            fileNames.addAll(documentFileNames);
+        }
+        if (fileNames.isEmpty()) {
+            fileNames.add("manual.pdf");
+        }
+        return fileNames;
     }
 
     private int addProgressMetric(

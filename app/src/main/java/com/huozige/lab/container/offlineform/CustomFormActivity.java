@@ -220,9 +220,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void setupRecyclerView() {
         _adapter = new FormAdapter();
-        _adapter.setDocumentFileName(OfflineFormFileHelper.getManualPdfFile(
-                this, _intent.getStringExtra("patternId")).getName());
-        _adapter.setOnDocumentClickListener(item -> openManualPdf());
+        String patternId = _intent.getStringExtra("patternId");
+        List<File> manualFiles = OfflineFormFileHelper.getManualFiles(this, patternId);
+        List<String> manualFileNames = new ArrayList<>();
+        for (File manualFile : manualFiles) {
+            manualFileNames.add(manualFile.getName());
+        }
+        _adapter.setDocumentFileNames(manualFileNames);
+        _adapter.setOnDocumentClickListener((item, fileName) -> openManualPdf(fileName));
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
     }
@@ -836,9 +841,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return formData;
     }
 
-    private void openManualPdf() {
+    private void openManualPdf(String fileName) {
         String patternId = _intent.getStringExtra("patternId");
-        File manualFile = OfflineFormFileHelper.getManualPdfFile(this, patternId);
+        File manualFile = OfflineFormFileHelper.getManualFile(this, patternId, fileName);
+        if ((manualFile == null || !manualFile.exists()) && "manual.pdf".equals(fileName)) {
+            manualFile = OfflineFormFileHelper.getManualPdfFile(this, patternId);
+        }
         if (!manualFile.exists()) {
             Toast.makeText(this, R.string.offline_toast_manual_missing, Toast.LENGTH_SHORT).show();
             return;
