@@ -1,13 +1,11 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -16,13 +14,14 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
-import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
@@ -59,9 +58,14 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
         holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
-        String theme = OfflineComputedHelper.resolveThemeColor(item.getComputed().getTheme());
-        holder.themeView.setBackgroundColor(OfflineComputedHelper.parseColor(theme));
-        holder.imageView.setImageBitmap(createIconBitmap(item.getPatternId(), item.getSchemaVersion(), theme));
+        OfflineComputedInfo computed = item.getComputed() == null ? new OfflineComputedInfo() : item.getComputed();
+        holder.totalProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_total, computed.getTotalFillItems()));
+        holder.filledProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_filled, computed.getFilledFillItems()));
+        holder.rateProgressTextView.setText(_context.getString(
+                R.string.offline_text_progress_rate,
+                String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())));
         holder.contentLayout.setPadding(dp(_context, CONTENT_PADDING_DP), holder.contentLayout.getPaddingTop(), holder.contentLayout.getPaddingRight(), holder.contentLayout.getPaddingBottom());
         holder.cardView.setCardBackgroundColor(selected ? SELECTED_BACKGROUND_COLOR : Color.WHITE);
 
@@ -157,19 +161,16 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
         }
     }
 
-    private Bitmap createIconBitmap(String patternId, String schemaVersion, String theme) {
-        return OfflineComputedHelper.createIconBitmap(patternId + "|" + schemaVersion, theme);
-    }
-
     static class ViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
         TextView titleTextView;
         TextView descriptionTextView;
         TextView metaTextView;
+        TextView totalProgressTextView;
+        TextView filledProgressTextView;
+        TextView rateProgressTextView;
         CheckBox checkBox;
-        ImageView imageView;
         LinearLayout contentLayout;
-        View themeView;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -177,10 +178,11 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
             titleTextView = itemView.findViewById(R.id.titleTextView);
             descriptionTextView = itemView.findViewById(R.id.descriptionTextView);
             metaTextView = itemView.findViewById(R.id.metaTextView);
+            totalProgressTextView = itemView.findViewById(R.id.totalProgressTextView);
+            filledProgressTextView = itemView.findViewById(R.id.filledProgressTextView);
+            rateProgressTextView = itemView.findViewById(R.id.rateProgressTextView);
             checkBox = itemView.findViewById(R.id.checkBox);
-            imageView = itemView.findViewById(R.id.imageView);
             contentLayout = itemView.findViewById(R.id.contentLayout);
-            themeView = itemView.findViewById(R.id.themeView);
         }
     }
 
