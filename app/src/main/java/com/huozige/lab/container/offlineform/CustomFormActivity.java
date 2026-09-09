@@ -862,7 +862,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (_editingRecord != null && _editingRecord.getStatus() != OfflineFormRecordStatus.DRAFT) {
             return;
         }
-        if (!hasFieldBeforeNextStep()) {
+        if (_editingRecord == null && !hasFilledFormData()) {
             return;
         }
 
@@ -993,6 +993,18 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 if (displayItem.isField()) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasFilledFormData() {
+        if (_definition == null) {
+            return false;
+        }
+        for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(_definition)) {
+            if (item != null && !item.isEmpty()) {
+                return true;
             }
         }
         return false;

@@ -13,7 +13,7 @@ public class OfflineFormExportStatusHelper {
 
     public static boolean hasUnexportedRecords(Context context, OfflineFormDefinitionIndexItem item) {
         Status status = readStatus(context, item);
-        return status.submittedCount > 0 || status.totalCount == 0;
+        return status.submittedCount > 0 || status.draftCount > 0 || status.totalCount == 0;
     }
 
     public static boolean isExported(Context context, OfflineFormDefinitionIndexItem item) {
