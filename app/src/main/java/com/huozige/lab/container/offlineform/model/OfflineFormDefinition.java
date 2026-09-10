@@ -20,6 +20,9 @@ public class OfflineFormDefinition {
     // 表单定义备注，用于历史填报列表描述展示。
     private String description = "";
     // 表单步骤定义，原生填报页根据步骤中的节点树渲染控件。
+    private List<OfflineFormCardStyle> cardStyle = new ArrayList<>();
     private List<OfflineFormStep> steps = new ArrayList<>();
 
 }
+
+

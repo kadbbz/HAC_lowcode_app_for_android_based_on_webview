@@ -2,33 +2,33 @@ package com.huozige.lab.container.proxy.support.offlinecustomform;
 
 import android.content.Context;
 import android.content.Intent;
-import android.view.MenuItem;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Gravity;
+import android.graphics.Typeface;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.CustomFormActivity;
 import com.huozige.lab.container.offlineform.OfflineExportedRecordDetailActivity;
-import com.huozige.lab.container.offlineform.OfflineProjectRecordActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
-import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormCardStyle;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
-import com.huozige.lab.container.utilities.DeviceUtility;
 
-import java.io.File;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,10 +36,6 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 
 // 历史填报列表的卡片适配器，只负责列表 UI 展示、拖拽排序和进入项目填报记录页。
 public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCardAdapter.ViewHolder> {
-    private static final int MENU_ID_FILL_RECORD = 1;
-    private static final int MENU_ID_PROJECT_DETAIL = 2;
-    private static final int MENU_ID_PREVIEW_MANUAL = 3;
-    private static final int MENU_ID_DELETE_CONFIG = 4;
     // 普通模式下卡片内容左侧内边距。
     private static final int CONTENT_PADDING_DP = 16;
 
@@ -72,9 +68,21 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OfflineFormDefinitionIndexItem item = _cardItems.get(position);
 
-        holder.titleTextView.setText(item.getTitle());
-        holder.descriptionTextView.setText(item.getDescription());
-        holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
+        OfflineFormDefinition definition = readDefinition(item);
+        List<OfflineFormCardStyle> styles = definition == null ? null : definition.getCardStyle();
+        boolean dynamic = styles != null && !styles.isEmpty();
+        holder.dynamicCardLayout.removeAllViews();
+        holder.dynamicCardLayout.setVisibility(dynamic ? View.VISIBLE : View.GONE);
+        holder.titleTextView.setVisibility(dynamic ? View.GONE : View.VISIBLE);
+        holder.descriptionTextView.setVisibility(dynamic ? View.GONE : View.VISIBLE);
+        holder.metaTextView.setVisibility(dynamic ? View.GONE : View.VISIBLE);
+        holder.progressLayout.setVisibility(dynamic ? View.GONE : View.VISIBLE);
+        if (dynamic) renderCardStyle(holder, item, definition, styles);
+        else {
+            holder.titleTextView.setText(item.getTitle());
+            holder.descriptionTextView.setText(item.getDescription());
+            holder.metaTextView.setText(OfflineFormExportStatusHelper.buildProjectMetaText(_context, item));
+        }
         OfflineComputedInfo computed = item.getComputed() == null ? new OfflineComputedInfo() : item.getComputed();
         holder.totalProgressTextView.setText(_context.getString(
                 R.string.offline_text_progress_total, computed.getTotalFillItems()));
@@ -85,7 +93,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
                 String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())));
         boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
-        holder.actionButton.setVisibility(_sortMode ? View.GONE : View.VISIBLE);
 
 
         // 排序时点击不进入填报，避免拖拽过程中误打开项目填报页。
@@ -98,13 +105,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             }
 
             openLatestRecord(item);
-        });
-        holder.actionButton.setOnClickListener(v -> {
-            if (_sortMode) {
-                return;
-            }
-
-            showProjectActionMenu(holder.actionButton, item);
         });
     }
 
@@ -137,39 +137,139 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         holder.contentLayout.setPadding(paddingStart, holder.contentLayout.getPaddingTop(), holder.contentLayout.getPaddingRight(), holder.contentLayout.getPaddingBottom());
     }
 
-    private void showProjectActionMenu(View anchor, OfflineFormDefinitionIndexItem item) {
-        PopupMenu popupMenu = new PopupMenu(_context, anchor);
-//        popupMenu.getMenu().add(0, MENU_ID_FILL_RECORD, MENU_ID_FILL_RECORD, R.string.offline_menu_fill_record)
-//                .setIcon(R.drawable.ic_offline_menu_fill);
-//        popupMenu.getMenu().add(0, MENU_ID_PROJECT_DETAIL, MENU_ID_PROJECT_DETAIL, R.string.offline_menu_project_detail)
-//                .setIcon(R.drawable.ic_offline_menu_detail);
-        popupMenu.getMenu().add(0, MENU_ID_PREVIEW_MANUAL, MENU_ID_PREVIEW_MANUAL, R.string.offline_menu_preview_manual)
-                .setIcon(R.drawable.ic_offline_menu_detail);
-        popupMenu.getMenu().add(0, MENU_ID_DELETE_CONFIG, MENU_ID_DELETE_CONFIG, R.string.offline_menu_delete_form)
-                .setIcon(R.drawable.ic_offline_menu_delete);
-        popupMenu.setForceShowIcon(true);
-        popupMenu.setOnMenuItemClickListener(menuItem -> handleProjectActionMenuItemClick(menuItem, item));
-        popupMenu.show();
+    private OfflineFormDefinition readDefinition(OfflineFormDefinitionIndexItem item) {
+        if (item == null || item.getPatternId() == null || item.getPatternId().isEmpty()) {
+            return null;
+        }
+        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(_context, item.getPatternId());
+        return definitionFile == null ? null : definitionFile.getJsonSchema();
     }
 
-    private boolean handleProjectActionMenuItemClick(MenuItem menuItem, OfflineFormDefinitionIndexItem item) {
-        if (menuItem.getItemId() == MENU_ID_FILL_RECORD) {
-            openNewRecord(item);
-            return true;
+    private void renderCardStyle(ViewHolder holder,
+                                 OfflineFormDefinitionIndexItem item,
+                                 OfflineFormDefinition definition,
+                                 List<OfflineFormCardStyle> styles) {
+        OfflineComputedInfo computed = item.getComputed() == null
+                ? new OfflineComputedInfo() : item.getComputed();
+        boolean showDelete = false;
+        for (OfflineFormCardStyle style : styles) {
+            if (style == null || style.getType() == null) {
+                continue;
+            }
+
+            if ("system".equalsIgnoreCase(style.getType())
+                    && "delete".equalsIgnoreCase(style.getProperty())) {
+                showDelete = true;
+                continue;
+            }
+
+            if ("system".equalsIgnoreCase(style.getType())
+                    && "progress".equalsIgnoreCase(style.getProperty())) {
+                addProgressLayout(holder.dynamicCardLayout, computed);
+                continue;
+            }
+
+            TextView valueView = new TextView(_context);
+            valueView.setText(resolveCardText(style, item, definition));
+            valueView.setTextSize(resolveCardFontSize(style.getFontSize()));
+            valueView.setTypeface(Typeface.DEFAULT,
+                    style.isBold() ? Typeface.BOLD : Typeface.NORMAL);
+            valueView.setTextColor(android.graphics.Color.DKGRAY);
+            valueView.setPadding(0, dp(_context, 4), 0, dp(_context, 4));
+            holder.dynamicCardLayout.addView(valueView,
+                    new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT));
         }
-        if (menuItem.getItemId() == MENU_ID_PROJECT_DETAIL) {
-            openProjectRecords(item);
-            return true;
+
+        if (showDelete && !_sortMode) {
+            addDeleteAction(holder.dynamicCardLayout, item);
         }
-        if (menuItem.getItemId() == MENU_ID_PREVIEW_MANUAL) {
-            openManualPdf(item);
-            return true;
+    }
+
+    private void addProgressLayout(LinearLayout parent, OfflineComputedInfo computed) {
+        LinearLayout progressLayout = new LinearLayout(_context);
+        progressLayout.setOrientation(LinearLayout.HORIZONTAL);
+        progressLayout.setBaselineAligned(false);
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.topMargin = dp(_context, 10);
+        parent.addView(progressLayout, layoutParams);
+
+        addProgressText(progressLayout,
+                _context.getString(R.string.offline_text_progress_total, computed.getTotalFillItems()),
+                Gravity.START);
+        addProgressText(progressLayout,
+                _context.getString(R.string.offline_text_progress_filled, computed.getFilledFillItems()),
+                Gravity.CENTER);
+        addProgressText(progressLayout,
+                _context.getString(R.string.offline_text_progress_rate,
+                        String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())),
+                Gravity.END);
+    }
+
+    private void addProgressText(LinearLayout parent, String text, int gravity) {
+        TextView textView = new TextView(_context);
+        textView.setText(text);
+        textView.setTextColor(android.graphics.Color.DKGRAY);
+        textView.setTextSize(12f);
+        textView.setGravity(gravity);
+        parent.addView(textView, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+    }
+
+    private void addDeleteAction(LinearLayout parent, OfflineFormDefinitionIndexItem item) {
+        LinearLayout actionLayout = new LinearLayout(_context);
+        actionLayout.setGravity(Gravity.END);
+
+        LinearLayout.LayoutParams actionLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionLayoutParams.topMargin = dp(_context, 8);
+        parent.addView(actionLayout, actionLayoutParams);
+
+        TextView deleteButton = new TextView(_context);
+        deleteButton.setText(R.string.offline_button_delete);
+        deleteButton.setTextColor(_context.getColor(R.color.red));
+        deleteButton.setTextSize(14f);
+        deleteButton.setGravity(Gravity.CENTER);
+        deleteButton.setMinHeight(dp(_context, 40));
+        deleteButton.setPadding(dp(_context, 12), 0, dp(_context, 12), 0);
+        deleteButton.setCompoundDrawablePadding(dp(_context, 4));
+        deleteButton.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_delete_image, 0, 0, 0);
+        deleteButton.setCompoundDrawableTintList(
+                ColorStateList.valueOf(_context.getColor(R.color.red)));
+        deleteButton.setBackgroundResource(R.drawable.offline_list_delete_button_bg);
+        deleteButton.setOnClickListener(v -> confirmDeleteConfig(item));
+        actionLayout.addView(deleteButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private String resolveCardText(OfflineFormCardStyle style,
+                                   OfflineFormDefinitionIndexItem item,
+                                   OfflineFormDefinition definition) {
+        String type = style.getType();
+        if ("text".equalsIgnoreCase(type)) {
+            return style.getContent() == null ? "" : style.getContent();
         }
-        if (menuItem.getItemId() == MENU_ID_DELETE_CONFIG) {
-            confirmDeleteConfig(item);
-            return true;
+        if (!"form".equalsIgnoreCase(type) || definition == null) {
+            return "";
         }
-        return false;
+        String property = style.getProperty();
+        if ("patternId".equals(property)) return definition.getPatternId();
+        if ("title".equals(property)) return definition.getTitle();
+        if ("description".equals(property)) return definition.getDescription();
+        if ("schemaVersion".equals(property)) return definition.getSchemaVersion();
+        if ("status".equals(property)) {
+            return OfflineFormExportStatusHelper.buildExportStatusText(_context, item);
+        }
+        return "";
+    }
+
+    private float resolveCardFontSize(String fontSize) {
+        if ("small".equalsIgnoreCase(fontSize)) return 12f;
+        if ("large".equalsIgnoreCase(fontSize)) return 18f;
+        return 14f;
     }
 
     private void confirmDeleteConfig(OfflineFormDefinitionIndexItem item) {
@@ -255,37 +355,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         _context.startActivity(intent);
     }
 
-    private void openProjectRecords(OfflineFormDefinitionIndexItem item) {
-        Intent intent = new Intent(_context, OfflineProjectRecordActivity.class);
-        putProjectExtras(intent, item);
-        intent.putExtra("status", item.getStatus());
-        _context.startActivity(intent);
-    }
-
-    private void openManualPdf(OfflineFormDefinitionIndexItem item) {
-        File manualFile = OfflineFormFileHelper.getManualPdfFile(_context, item.getPatternId());
-        if (!manualFile.exists()) {
-            Toast.makeText(_context, R.string.offline_toast_manual_missing, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent intent = new Intent(_context, PDFPreviewActivity.class);
-        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_LOCAL_FILE_PATH, manualFile.getAbsolutePath());
-        intent.putExtra(PDFPreviewActivity.EXTRA_KEY_FILENAME, manualFile.getName());
-        try {
-            _context.startActivity(intent);
-        } catch (RuntimeException e) {
-            Intent externalIntent = new Intent(Intent.ACTION_VIEW);
-            externalIntent.setDataAndType(DeviceUtility.pathToUri(manualFile.getAbsolutePath()), "application/pdf");
-            externalIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            try {
-                _context.startActivity(externalIntent);
-            } catch (RuntimeException ignored) {
-                Toast.makeText(_context, R.string.offline_toast_no_app_open_file, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     private void putProjectExtras(Intent intent, OfflineFormDefinitionIndexItem item) {
         intent.putExtra("patternId", item.getPatternId());
         intent.putExtra("title", item.getTitle());
@@ -300,8 +369,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         TextView totalProgressTextView;
         TextView filledProgressTextView;
         TextView rateProgressTextView;
-        TextView actionButton;
         LinearLayout contentLayout;
+        LinearLayout dynamicCardLayout;
+        LinearLayout progressLayout;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -311,8 +381,9 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             totalProgressTextView = itemView.findViewById(R.id.totalProgressTextView);
             filledProgressTextView = itemView.findViewById(R.id.filledProgressTextView);
             rateProgressTextView = itemView.findViewById(R.id.rateProgressTextView);
-            actionButton = itemView.findViewById(R.id.cmdOpenActions);
             contentLayout = itemView.findViewById(R.id.contentLayout);
+            dynamicCardLayout = itemView.findViewById(R.id.dynamicCardLayout);
+            progressLayout = itemView.findViewById(R.id.progressLayout);
         }
     }
 
@@ -320,3 +391,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         void onProjectDeleted(OfflineFormDefinitionIndexItem item);
     }
 }
+
+
+

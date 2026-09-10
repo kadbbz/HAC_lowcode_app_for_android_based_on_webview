@@ -26,6 +26,11 @@ public class OfflineFormExportStatusHelper {
         return projectMeta + "\n" + readStatus(context, item).getDisplayText();
     }
 
+    public static String buildExportStatusText(Context context, OfflineFormDefinitionIndexItem item) {
+        Status status = readStatus(context, item);
+        return (status.submittedCount > 0 || status.draftCount > 0 || status.totalCount == 0) ? "未导出" : "已导出";
+    }
+
     private static Status readStatus(Context context, OfflineFormDefinitionIndexItem item) {
         Status status = new Status();
         if (item == null || item.getPatternId() == null || item.getPatternId().isEmpty()) {
@@ -67,3 +72,4 @@ public class OfflineFormExportStatusHelper {
         }
     }
 }
+

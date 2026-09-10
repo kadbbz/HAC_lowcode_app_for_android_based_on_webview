@@ -7,6 +7,7 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemJsonHelper;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormCardStyle;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormProgressDisplay;
@@ -26,6 +27,7 @@ class OfflineFormJsonSerializer {
         definitionJson.jsonSchema.schemaVersion = definition.getSchemaVersion();
         definitionJson.jsonSchema.title = definition.getTitle();
         definitionJson.jsonSchema.description = definition.getDescription();
+        definitionJson.jsonSchema.cardStyle = definition.getCardStyle();
         definitionJson.jsonSchema.steps = buildStepJsonList(definition.getSteps());
         definitionJson.computed = definitionFile.getComputed();
         return (JSONObject) JSON.toJSON(definitionJson);
@@ -43,6 +45,7 @@ class OfflineFormJsonSerializer {
             definition.setSchemaVersion(definitionJson.jsonSchema.schemaVersion);
             definition.setTitle(definitionJson.jsonSchema.title);
             definition.setDescription(definitionJson.jsonSchema.description);
+            definition.setCardStyle(definitionJson.jsonSchema.cardStyle == null ? new ArrayList<>() : definitionJson.jsonSchema.cardStyle);
             definition.setSteps(parseStepJsonList(definitionJson.jsonSchema.steps));
         }
         definitionFile.setJsonSchema(definition);
@@ -160,6 +163,7 @@ class OfflineFormJsonSerializer {
         public String schemaVersion = "";
         public String title = "";
         public String description = "";
+        public List<OfflineFormCardStyle> cardStyle = new ArrayList<>();
         public List<StepJson> steps = new ArrayList<>();
     }
 
@@ -182,3 +186,4 @@ class OfflineFormJsonSerializer {
         public List<NodeJson> children = new ArrayList<>();
     }
 }
+

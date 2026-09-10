@@ -14,6 +14,9 @@ public class PatternInput {
     public String title = "";
     public String description = "";
 
+    public List<OfflineFormCardStyle> cardStyle = new ArrayList<>();
     public List<PatternStepInput> steps = new ArrayList<>();
     public List<String> displayColumns = new ArrayList<>();
 }
+
+

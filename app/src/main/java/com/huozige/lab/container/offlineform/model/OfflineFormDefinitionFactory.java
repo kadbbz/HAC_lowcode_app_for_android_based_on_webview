@@ -12,6 +12,7 @@ public class OfflineFormDefinitionFactory {
                 input.schemaVersion,
                 input.title,
                 input.description,
+                input.cardStyle,
                 buildSteps(input.steps)
         );
     }
@@ -33,3 +34,6 @@ public class OfflineFormDefinitionFactory {
         return result;
     }
 }
+
+
+
