@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
@@ -48,6 +50,8 @@ public class SignaturePadView extends View {
         strokePaint.setStrokeWidth(4f * getResources().getDisplayMetrics().density);
         strokePaint.setStrokeCap(Paint.Cap.ROUND);
         strokePaint.setStrokeJoin(Paint.Join.ROUND);
+        // Keep the guide visible through the saved PNG's white background while its dark strokes stay on top.
+        bitmapPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.MULTIPLY));
         guidePaint.setColor(Color.rgb(215, 220, 225));
         guidePaint.setTextAlign(Paint.Align.CENTER);
         guidePaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
@@ -57,10 +61,10 @@ public class SignaturePadView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        drawGuideText(canvas);
         if (existingBitmap != null && !existingBitmap.isRecycled()) {
             canvas.drawBitmap(existingBitmap, null, new RectF(0, 0, getWidth(), getHeight()), bitmapPaint);
         }
-        drawGuideText(canvas);
         canvas.drawPath(path, strokePaint);
     }
 
