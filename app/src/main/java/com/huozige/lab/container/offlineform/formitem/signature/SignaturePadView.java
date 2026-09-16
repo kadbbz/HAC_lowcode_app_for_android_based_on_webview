@@ -9,7 +9,6 @@ import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -52,9 +51,6 @@ public class SignaturePadView extends View {
         strokePaint.setStrokeJoin(Paint.Join.ROUND);
         // Keep the guide visible through the saved PNG's white background while its dark strokes stay on top.
         bitmapPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.MULTIPLY));
-        guidePaint.setColor(Color.rgb(215, 220, 225));
-        guidePaint.setTextAlign(Paint.Align.CENTER);
-        guidePaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
         setBackgroundColor(Color.WHITE);
     }
 
@@ -150,18 +146,6 @@ public class SignaturePadView extends View {
     }
 
     private void drawGuideText(Canvas canvas) {
-        if (guideText.isEmpty() || getWidth() <= 0 || getHeight() <= 0) {
-            return;
-        }
-        float textSize = getHeight() * 0.62f;
-        guidePaint.setTextSize(textSize);
-        float maxWidth = getWidth() * 0.78f;
-        float measuredWidth = guidePaint.measureText(guideText);
-        if (measuredWidth > maxWidth && measuredWidth > 0) {
-            guidePaint.setTextSize(textSize * maxWidth / measuredWidth);
-        }
-        Paint.FontMetrics metrics = guidePaint.getFontMetrics();
-        float baseline = getHeight() / 2f - (metrics.ascent + metrics.descent) / 2f;
-        canvas.drawText(guideText, getWidth() / 2f, baseline, guidePaint);
+        SignatureGuideRenderer.draw(canvas, getWidth(), getHeight(), guideText, guidePaint);
     }
 }
