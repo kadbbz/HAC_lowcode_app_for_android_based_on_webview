@@ -174,7 +174,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
             valueView.setTextSize(resolveCardFontSize(style.getFontSize()));
             valueView.setTypeface(Typeface.DEFAULT,
                     style.isBold() ? Typeface.BOLD : Typeface.NORMAL);
-            valueView.setTextColor(android.graphics.Color.DKGRAY);
+            valueView.setTextColor(resolveCardTextColor(style.getColor()));
             valueView.setPadding(0, dp(_context, 4), 0, dp(_context, 4));
             holder.dynamicCardLayout.addView(valueView,
                     new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -270,6 +270,13 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         if ("small".equalsIgnoreCase(fontSize)) return 12f;
         if ("large".equalsIgnoreCase(fontSize)) return 18f;
         return 14f;
+    }
+
+    private int resolveCardTextColor(String color) {
+        if ("secondary".equalsIgnoreCase(color)) {
+            return _context.getColor(R.color.gray);
+        }
+        return _context.getColor(R.color.black);
     }
 
     private void confirmDeleteConfig(OfflineFormDefinitionIndexItem item) {

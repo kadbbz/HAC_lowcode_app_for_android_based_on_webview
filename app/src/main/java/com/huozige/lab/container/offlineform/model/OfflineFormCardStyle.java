@@ -8,5 +8,6 @@ public class OfflineFormCardStyle {
     public String content = "";
     public String property = "";
     public String fontSize = "medium";
+    public String color = "primary";
     public boolean bold;
 }
