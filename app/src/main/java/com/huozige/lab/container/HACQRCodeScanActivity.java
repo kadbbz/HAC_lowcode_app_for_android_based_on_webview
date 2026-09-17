@@ -26,6 +26,8 @@ public class HACQRCodeScanActivity extends BarcodeCameraScanActivity {
      * 存放条码类型的Extra名称
      */
     public static final String EXTRA_KEY_SCAN_HINTS = "hints";
+    // 允许不同扫码入口单独控制是否播放扫码提示音，默认保持原有的播放行为。
+    public static final String EXTRA_KEY_PLAY_BEEP = "playBeep";
     /**
      * 仅处理QR码，速度更快
      */
@@ -43,8 +45,8 @@ public class HACQRCodeScanActivity extends BarcodeCameraScanActivity {
     @Override
     public void initCameraScan(@NonNull CameraScan<Result> cameraScan) {
         super.initCameraScan(cameraScan);
-        // 根据需要设置CameraScan相关配置
-        cameraScan.setPlayBeep(true);
+        // 根据调用入口传入的参数决定是否播放提示音；未传时默认播放。
+        cameraScan.setPlayBeep(getIntent().getBooleanExtra(EXTRA_KEY_PLAY_BEEP, true));
     }
 
     @Nullable

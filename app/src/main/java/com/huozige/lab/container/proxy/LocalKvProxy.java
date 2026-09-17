@@ -8,9 +8,13 @@ import com.huozige.lab.container.proxy.support.realm.LocalKv_Bundle;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import io.realm.Realm;
+import io.realm.RealmModel;
 
 /**
  * 让页面存取本地KV数据库
@@ -25,7 +29,6 @@ import io.realm.Realm;
  */
 public class LocalKvProxy extends AbstractProxy {
 
-    private static final String VERSION_NA = "N/A";
     private static final String VALUE_NA = "DATA_NOT_FOUND";
     private static final String KEY_TEMPLATE = "%s|%s";
 
@@ -60,7 +63,7 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void upsert(String key, String valueString) {
-        upsertV(key, valueString, VERSION_NA);
+        upsertV(key, valueString, VERSION_DEFAULT);
     }
 
     /**
@@ -72,7 +75,7 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public void retrieve(String key, String cell) {
-        retrieveV(key, VERSION_NA, cell);
+        retrieveV(key, VERSION_DEFAULT, cell);
     }
 
     /**
@@ -83,7 +86,7 @@ public class LocalKvProxy extends AbstractProxy {
      */
     @JavascriptInterface
     public String retrieve2(String key) {
-        return retrieveV2(key, VERSION_NA);
+        return retrieveV2(key, VERSION_DEFAULT);
     }
 
     /**
@@ -114,6 +117,34 @@ public class LocalKvProxy extends AbstractProxy {
             bundle.value = valueString;
             bundle.version = finalVersion;
             transactionRealm.insertOrUpdate(bundle);
+
+            writeInfoLog("本地缓存已更新");
+        });
+    }
+
+    public void upsertVRange(Map<String, String> valueList, String version) {
+
+        registryForFeatureUsageAnalyze("use_localdb_feature", "upsert");
+
+        if (null == version) {
+            version = VERSION_DEFAULT;
+        }
+
+        String finalVersion = version;
+        writeInfoLog("批量更新本地缓存中的项目，数量" + valueList.size() + "，版本：" + finalVersion);
+
+        Realm.getDefaultInstance().executeTransaction(transactionRealm -> {
+
+            Collection<LocalKv_Bundle> bundles = Collections.emptyList();
+
+            valueList.forEach((String key, String valueString) -> {
+
+                String bKey = String.format(KEY_TEMPLATE, getEntryHost(), key);
+
+                bundles.add(new LocalKv_Bundle(bKey, valueString, finalVersion));
+            });
+            transactionRealm.insertOrUpdate(bundles);
+
 
             writeInfoLog("本地缓存已更新");
         });

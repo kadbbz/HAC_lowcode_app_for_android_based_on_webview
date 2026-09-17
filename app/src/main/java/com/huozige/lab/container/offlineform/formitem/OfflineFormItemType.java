@@ -1,0 +1,24 @@
+package com.huozige.lab.container.offlineform.formitem;
+
+public enum OfflineFormItemType {
+    TEXT("textItem"),
+    PASSWORD("passwordItem"),
+    SELECT("selectItem"),
+    RADIO("radioItem"),
+    DATE_PICKER("datePicker"),
+    TIME_PICKER("timePicker"),
+    IMAGE("imageItem"),
+    SIGNATURE("signatureItem"),
+    FILE("fileItem"),
+    LIST("listItem");
+
+    private final String value;
+
+    OfflineFormItemType(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+}

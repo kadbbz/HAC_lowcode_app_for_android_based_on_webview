@@ -1,0 +1,102 @@
+package com.huozige.lab.container.offlineform.formitem;
+
+import android.content.Context;
+import android.view.View;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.huozige.lab.container.offlineform.formitem.file.FileFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.image.ImageFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.list.ListFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.password.PasswordFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.picker.DatePickerFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.radio.RadioFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
+import com.huozige.lab.container.offlineform.util.ODateUtils;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public final class OfflineFormItemRegistry {
+    private static final Map<String, OfflineFormItemHandler> HANDLERS_BY_TYPE = new HashMap<>();
+
+    static {
+        register(new SelectFormItemHandler());
+        register(new RadioFormItemHandler());
+        register(new PasswordFormItemHandler());
+        register(new DatePickerFormItemHandler());
+        register(new TimePickerFormItemHandler());
+        register(new ImageFormItemHandler());
+        register(new SignatureFormItemHandler());
+        register(new FileFormItemHandler());
+        register(new ListFormItemHandler());
+        register(new TextFormItemHandler());
+    }
+
+    private OfflineFormItemRegistry() {
+    }
+
+    public static void register(OfflineFormItemHandler handler) {
+        HANDLERS_BY_TYPE.put(handler.getType(), handler);
+        // 兼容低代码端将 radio 类型直接写成 "radio" 的历史/简写配置。
+        if (OfflineFormItemType.RADIO.getValue().equals(handler.getType())) {
+            HANDLERS_BY_TYPE.put("radio", handler);
+        }
+    }
+
+    public static Map<String, OfflineFormItemHandler> getHandlers() {
+        return Collections.unmodifiableMap(HANDLERS_BY_TYPE);
+    }
+
+    public static OfflineFormItemHandler getHandler(String type) {
+        OfflineFormItemHandler handler = HANDLERS_BY_TYPE.get(type);
+        if (handler != null) {
+            return handler;
+        }
+        throw new IllegalArgumentException("Unknown item type: " + type);
+    }
+
+    public static int getViewType(BaseFormItem item) {
+        return getHandler(item.getItemType()).getViewType();
+    }
+
+    public static BaseFormItem fromInput(FormItemInput input) {
+        OfflineFormItemHandler handler = HANDLERS_BY_TYPE.get(input.itemType);
+        if (handler == null) {
+            handler = getHandler(OfflineFormItemType.TEXT.getValue());
+        }
+        normalizeOptions(input, handler);
+        BaseFormItem item = handler.fromInput(input);
+        item.setUpdateTime(input.updateTime == null ? ODateUtils.now() : input.updateTime);
+        return item;
+    }
+
+    private static void normalizeOptions(FormItemInput input, OfflineFormItemHandler handler) {
+        if (input.options == null) {
+            return;
+        }
+        Class<?> optionsClass = handler.getOptionsClass();
+        if (optionsClass == null || optionsClass.isInstance(input.options)) {
+            return;
+        }
+        input.options = JSON.parseObject(JSON.toJSONString(input.options), optionsClass);
+    }
+
+    public static Class<?> getOptionsClass(String type) {
+        return getHandler(type).getOptionsClass();
+    }
+
+    public static JSONObject toJson(BaseFormItem item) {
+        return getHandler(item.getItemType()).toJson(item);
+    }
+
+    public static View createReadOnlyView(Context context, BaseFormItem item, String rawValue, boolean compact) {
+        return getHandler(item.getItemType()).createReadOnlyView(context, item, rawValue, compact);
+    }
+}
