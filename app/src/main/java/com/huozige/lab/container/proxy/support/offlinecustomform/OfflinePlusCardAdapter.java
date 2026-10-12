@@ -16,9 +16,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.CustomFormActivity;
-import com.huozige.lab.container.offlineform.OfflineExportedRecordDetailActivity;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
@@ -91,16 +91,14 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         holder.rateProgressTextView.setText(_context.getString(
                 R.string.offline_text_progress_rate,
                 String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())));
-        boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
+        boolean unfinished = OfflineFormExportStatusHelper.hasUnfinishedWorkingRecord(_context, item);
+        applyCardStroke(holder, unfinished);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
 
 
         // 排序时点击不进入填报，避免拖拽过程中误打开项目填报页。
         holder.itemView.setOnClickListener(v -> {
             if (_sortMode) {
-                return;
-            }
-            if (exported) {
                 return;
             }
 
@@ -330,36 +328,43 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         _context.startActivity(intent);
     }
 
+    /**
+     * 入口统一：打开最新一条未导出记录（工作记录）；没有则新建。
+     * 已导出记录不再从卡片进入（在填报记录页查看）。
+     */
     private void openLatestRecord(OfflineFormDefinitionIndexItem item) {
         List<OfflineFormRecord> records = OfflineFormFileHelper.readRecords(_context, item.getPatternId());
-        if (records.isEmpty()) {
-            openNewRecord(item);
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+                continue;
+            }
+            if (!item.getSchemaVersion().equals(record.getSchemaVersion())) {
+                Toast.makeText(_context, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intent = new Intent(_context, CustomFormActivity.class);
+            putProjectExtras(intent, item);
+            intent.putExtra("schemaVersion", record.getSchemaVersion());
+            intent.putExtra(CustomFormActivity.EXTRA_RECORD_ID, record.getRecordId());
+            _context.startActivity(intent);
             return;
         }
-
-        OfflineFormRecord latestRecord = records.get(0);
-        if (latestRecord.getStatus() == OfflineFormRecordStatus.EXPORTED) {
-            openExportedRecordDetail(item, latestRecord);
-            return;
-        }
-
-        if (!item.getSchemaVersion().equals(latestRecord.getSchemaVersion())) {
-            Toast.makeText(_context, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent intent = new Intent(_context, CustomFormActivity.class);
-        putProjectExtras(intent, item);
-        intent.putExtra("schemaVersion", latestRecord.getSchemaVersion());
-        intent.putExtra(CustomFormActivity.EXTRA_RECORD_ID, latestRecord.getRecordId());
-        _context.startActivity(intent);
+        openNewRecord(item);
     }
 
-    private void openExportedRecordDetail(OfflineFormDefinitionIndexItem item, OfflineFormRecord record) {
-        Intent intent = new Intent(_context, OfflineExportedRecordDetailActivity.class);
-        intent.putExtra(OfflineExportedRecordDetailActivity.EXTRA_PATTERN_ID, item.getPatternId());
-        intent.putExtra(OfflineExportedRecordDetailActivity.EXTRA_RECORD_ID, record.getRecordId());
-        _context.startActivity(intent);
+    /** 工作记录存在未完成填报单元时，用提醒色边框提示。 */
+    private void applyCardStroke(ViewHolder holder, boolean unfinished) {
+        if (!(holder.itemView instanceof MaterialCardView)) {
+            return;
+        }
+        MaterialCardView cardView = (MaterialCardView) holder.itemView;
+        if (unfinished) {
+            cardView.setStrokeColor(_context.getColor(R.color.offline_form_card_warning_stroke));
+            cardView.setStrokeWidth(dp(_context, 2));
+        } else {
+            cardView.setStrokeWidth(0);
+        }
     }
 
     private void putProjectExtras(Intent intent, OfflineFormDefinitionIndexItem item) {

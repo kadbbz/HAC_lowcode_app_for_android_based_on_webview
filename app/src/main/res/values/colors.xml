@@ -24,5 +24,6 @@
     <color name="offline_form_document_meta">#7A8A96</color>
     <color name="offline_form_document_item_stroke">#DCE5EC</color>
     <color name="offline_form_document_item_pressed">#EAF6FD</color>
+    <color name="offline_form_card_warning_stroke">#E6A700</color>
 
 </resources>

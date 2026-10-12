@@ -473,24 +473,30 @@ public class OfflinePlusProxy extends AbstractProxy{
             recordJson.put("status", record.getStatus());
             recordJson.put("createdAt", record.getCreatedAt());
             recordJson.put("updatedAt", record.getUpdatedAt());
-            recordJson.put("values", buildExportValues(record.getValues(), definitionFile));
+            recordJson.put("values", buildExportValues(record, definitionFile));
             result.add(recordJson);
         }
         return result;
     }
 
-    private JSONObject buildExportValues(Map<String, String> values, OfflineFormDefinitionFile definitionFile) {
+    /**
+     * 将记录值转换成导出结构：每个字段/子字段的 updateTime 取自记录的 fieldUpdateTimes
+     * （字段变更时间），而不是表单定义。旧记录没有 fieldUpdateTimes 时不输出该字段的 updateTime。
+     */
+    private JSONObject buildExportValues(OfflineFormRecord record, OfflineFormDefinitionFile definitionFile) {
         JSONObject result = new JSONObject();
+        Map<String, String> values = record == null ? null : record.getValues();
         if (values == null || values.isEmpty()) {
             return result;
         }
 
+        Map<String, Object> times = record.getFieldUpdateTimes();
         List<OfflineFormStep> steps = definitionFile == null || definitionFile.getJsonSchema() == null
                 ? null : definitionFile.getJsonSchema().getSteps();
         if (steps != null) {
             for (OfflineFormStep step : steps) {
                 if (step != null) {
-                    collectExportValues(result, values, step.getItems());
+                    collectExportValues(result, values, step.getItems(), times);
                 }
             }
         }
@@ -498,13 +504,15 @@ public class OfflinePlusProxy extends AbstractProxy{
         // 对定义中不存在的历史字段也保留原始值，避免导出时丢数据。
         for (Map.Entry<String, String> entry : values.entrySet()) {
             if (!result.containsKey(entry.getKey())) {
-                result.put(entry.getKey(), buildExportFieldValue(entry.getValue(), null));
+                Object fieldTimes = times == null ? null : times.get(entry.getKey());
+                result.put(entry.getKey(), buildExportFieldValue(entry.getValue(), null, fieldTimes));
             }
         }
         return result;
     }
 
-    private void collectExportValues(JSONObject target, Map<String, String> values, List<OfflineFormNode> nodes) {
+    private void collectExportValues(JSONObject target, Map<String, String> values,
+                                     List<OfflineFormNode> nodes, Map<String, Object> times) {
         if (target == null || values == null || nodes == null) {
             return;
         }
@@ -515,38 +523,44 @@ public class OfflinePlusProxy extends AbstractProxy{
             BaseFormItem field = node.getField();
             if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
                 String rawValue = values.get(field.getId());
-                target.put(field.getId(), buildExportFieldValue(rawValue, field));
+                Object fieldTimes = times == null ? null : times.get(field.getId());
+                target.put(field.getId(), buildExportFieldValue(rawValue, field, fieldTimes));
             }
-            collectExportValues(target, values, node.getChildren());
+            collectExportValues(target, values, node.getChildren(), times);
         }
     }
 
-    private JSONObject buildExportFieldValue(String rawValue, BaseFormItem field) {
+    private JSONObject buildExportFieldValue(String rawValue, BaseFormItem field, Object fieldTimes) {
         JSONObject valueObject = new JSONObject();
         if (field instanceof ListFormItem) {
-            valueObject.put("value", buildExportListValue((ListFormItem) field, rawValue));
-        } else {
-            valueObject.put("value", rawValue == null ? "" : rawValue);
+            valueObject.put("value", buildExportListValue((ListFormItem) field, rawValue, fieldTimes));
+            return valueObject;
         }
-        if (field != null && field.getUpdateTime() != null) {
-            valueObject.put("updateTime", field.getUpdateTime());
+        valueObject.put("value", rawValue == null ? "" : rawValue);
+        Double updateTime = asTimeDouble(fieldTimes);
+        if (updateTime != null) {
+            valueObject.put("updateTime", updateTime);
         }
         return valueObject;
     }
 
-    private JSONArray buildExportListValue(ListFormItem listItem, String rawValue) {
+    private JSONArray buildExportListValue(ListFormItem listItem, String rawValue, Object fieldTimes) {
         JSONArray result = new JSONArray();
         JSONArray rows = ListFormItem.parseRows(rawValue);
+        List<?> rowTimes = fieldTimes instanceof List ? (List<?>) fieldTimes : null;
         for (int i = 0; i < rows.size(); i++) {
             JSONObject rowValue = rows.getJSONObject(i);
             if (rowValue == null) {
                 continue;
             }
+            Map<String, Object> currentRowTimes = rowTimes != null && i < rowTimes.size()
+                    ? asTimeMap(rowTimes.get(i)) : null;
             JSONObject exportedRow = new JSONObject();
-            collectExportRowValues(exportedRow, rowValue, listItem.getTemplateNodes());
+            collectExportRowValues(exportedRow, rowValue, listItem.getTemplateNodes(), currentRowTimes);
             for (String fieldId : rowValue.keySet()) {
                 if (!exportedRow.containsKey(fieldId)) {
-                    exportedRow.put(fieldId, buildExportFieldValue(rowValue.getString(fieldId), null));
+                    Object fieldTime = currentRowTimes == null ? null : currentRowTimes.get(fieldId);
+                    exportedRow.put(fieldId, buildExportFieldValue(rowValue.getString(fieldId), null, fieldTime));
                 }
             }
             result.add(exportedRow);
@@ -554,7 +568,8 @@ public class OfflinePlusProxy extends AbstractProxy{
         return result;
     }
 
-    private void collectExportRowValues(JSONObject target, JSONObject rowValues, List<OfflineFormNode> nodes) {
+    private void collectExportRowValues(JSONObject target, JSONObject rowValues,
+                                        List<OfflineFormNode> nodes, Map<String, Object> times) {
         if (target == null || rowValues == null || nodes == null) {
             return;
         }
@@ -564,10 +579,30 @@ public class OfflinePlusProxy extends AbstractProxy{
             }
             BaseFormItem field = node.getField();
             if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
-                target.put(field.getId(), buildExportFieldValue(rowValues.getString(field.getId()), field));
+                Object fieldTimes = times == null ? null : times.get(field.getId());
+                target.put(field.getId(), buildExportFieldValue(rowValues.getString(field.getId()), field, fieldTimes));
             }
-            collectExportRowValues(target, rowValues, node.getChildren());
+            collectExportRowValues(target, rowValues, node.getChildren(), times);
         }
+    }
+
+    private static Double asTimeDouble(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asTimeMap(Object value) {
+        return value instanceof Map ? (Map<String, Object>) value : null;
     }
 
     private List<OfflineFormRecord> readSubmittedRecords(Context context, String projectId) {

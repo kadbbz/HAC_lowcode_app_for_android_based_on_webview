@@ -29,15 +29,18 @@ public class OfflineFormRecord {
     private long updatedAt;
     // 字段值集合，key 为表单项 id，value 为用户填写值。
     private Map<String, String> values = new HashMap<>();
+    // 字段级更新时间，仅 App 内部维护，结构"与 values 平行"：
+    // 普通字段 -> ODate 数值；列表字段 -> List<Map<子字段id, 时间>>（与行一一对应）。
+    private Map<String, Object> fieldUpdateTimes = new HashMap<>();
 
     public static OfflineFormRecord createSubmitted(String patternId, String schemaVersion, Map<String, String> values) {
         long now = System.currentTimeMillis();
-        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values);
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values, new HashMap<>());
     }
 
     public static OfflineFormRecord createDraft(String patternId, String schemaVersion, Map<String, String> values) {
         long now = System.currentTimeMillis();
-        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.DRAFT, now, now, values);
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.DRAFT, now, now, values, new HashMap<>());
     }
 
     private static String createRecordId() {

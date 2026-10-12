@@ -148,29 +148,10 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return viewType;
     }
 
-    public boolean validateAll() {
-        return validateItems(displayItems);
-    }
-
-    public boolean validateItems(List<OfflineFormDisplayItem> items) {
-        boolean isValid = true;
-        for (OfflineFormDisplayItem displayItem : items) {
-            if (!displayItem.isField()) {
-                continue;
-            }
-            BaseFormItem item = displayItem.getFormItem();
-            if (!item.validate()) {
-                isValid = false;
-            } else {
-                item.clearError();
-            }
-        }
-
-        if (!isValid) {
-            collapsedGroupIds.clear();
-        }
+    /** 展开所有折叠的 group，便于展示校验错误。 */
+    public void expandAllGroups() {
+        collapsedGroupIds.clear();
         notifyDataSetChanged();
-        return isValid;
     }
 
     private void initializeCollapsedGroups() {

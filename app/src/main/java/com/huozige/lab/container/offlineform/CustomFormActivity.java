@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
@@ -54,6 +55,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
+import com.huozige.lab.container.offlineform.model.OfflineFormValidator;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
@@ -63,6 +65,7 @@ import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormIte
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
+import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimes;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
@@ -113,6 +116,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private int _filterModeBeforeSearch = FILTER_ALL;
     private String _searchKeyword = "";
     private OfflineFormRecord _editingRecord;
+    // 上次落盘的"路径→值"快照，用于字段变更检测（仅进程内使用）。
+    private Map<String, String> _lastPersistedSnapshot = new HashMap<>();
     private OfflineFormDefinition _definition;
     private int _currentStepIndex;
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
@@ -153,19 +158,20 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         registerSignatureCaptureLauncher();
         loadFormDataFromJson();
         setupListeners();
+        registerBackHandler();
         restoreUiState(savedInstanceState);
     }
 
     @Override
     protected void onPause() {
         // 旋转、切后台、启动拍照/文件选择等场景都会先进入 onPause，提前落盘可避免只依赖显式“保存”。
-        saveDraftIfNeeded();
+        persistRecord();
         super.onPause();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        saveDraftIfNeeded();
+        persistRecord();
         if (_editingRecord != null) {
             outState.putString(STATE_RECORD_ID, _editingRecord.getRecordId());
         }
@@ -253,11 +259,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             }
 
             try {
-                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                OfflineFormRecord draft = ensureRecordForAttachment();
                 List<AttachmentFormItemValue> images = new ArrayList<>();
                 images.add(OfflineImageFileHelper.saveImage(this, draft.getPatternId(), _pendingImageItem, Uri.parse(uriText)));
                 _pendingImageCallback.onAttachmentsSelected(images);
-                saveDraftIfNeeded();
+                persistRecord();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -275,7 +281,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             }
 
             try {
-                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                OfflineFormRecord draft = ensureRecordForAttachment();
                 List<AttachmentFormItemValue> images = new ArrayList<>();
                 int remainingCount = getRemainingImageCount(_pendingImageItem);
                 for (Uri uri : uris) {
@@ -288,7 +294,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 if (uris.size() > images.size()) {
                     Toast.makeText(this, getString(R.string.offline_toast_image_max_count_reached, _pendingImageItem.getMaxCount()), Toast.LENGTH_SHORT).show();
                 }
-                saveDraftIfNeeded();
+                persistRecord();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -310,7 +316,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 return;
             }
             _pendingImageItem.setImagesFromFileNames(fileNames);
-            saveDraftIfNeeded();
+            persistRecord();
             _adapter.notifyDataSetChanged();
             _pendingImageItem = null;
         });
@@ -324,7 +330,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             }
 
             try {
-                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                OfflineFormRecord draft = ensureRecordForAttachment();
                 List<AttachmentFormItemValue> files = new ArrayList<>();
                 int remainingCount = getRemainingFileCount(_pendingFileItem);
                 for (Uri uri : uris) {
@@ -342,7 +348,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 if (uris.size() > files.size()) {
                     Toast.makeText(this, R.string.offline_toast_file_upload_partial, Toast.LENGTH_SHORT).show();
                 }
-                saveDraftIfNeeded();
+                persistRecord();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, getString(R.string.offline_toast_file_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -374,6 +380,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             Toast.makeText(this, getString(R.string.offline_toast_parse_form_failed, e.getMessage()), Toast.LENGTH_LONG).show();
         }
         _formLoaded = _definition != null && _definition.getSteps() != null && !_definition.getSteps().isEmpty();
+        // 以"装载后的值"作为字段变更检测基准：装载初值不算变更。
+        _lastPersistedSnapshot = OfflineFormFieldTimes.collectValues(_definition);
         renderCurrentStep();
     }
 
@@ -388,7 +396,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 if (_updatingTabs || !_formLoaded || tab.getPosition() == _currentStepIndex) {
                     return;
                 }
-                saveDraftIfNeeded();
+                persistRecord();
                 _currentStepIndex = tab.getPosition();
                 resetFilterMode();
                 renderCurrentStep();
@@ -409,6 +417,32 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 this, R.string.offline_hint_step_swipe_right, Toast.LENGTH_SHORT).show());
         _stepScrollRightHint.setOnClickListener(v -> Toast.makeText(
                 this, R.string.offline_hint_step_swipe_left, Toast.LENGTH_SHORT).show());
+    }
+
+    private void registerBackHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onBackRequested();
+            }
+        });
+    }
+
+    /**
+     * 返回 = 一次收尾：校验 + 落盘 + （未通过时）轻提示，然后退出。
+     * 通过 -> 待上传；不通过 -> 草稿。不阻塞退出，不丢数据。
+     */
+    private void onBackRequested() {
+        if (!_formLoaded || _definition == null || _editRecordMissingOrOutdated) {
+            finish();
+            return;
+        }
+        OfflineFormValidator.Result result = persistRecord();
+        if (result != null && !result.isValid()) {
+            Toast.makeText(this, getString(R.string.offline_toast_saved_incomplete, result.getInvalidCount()),
+                    Toast.LENGTH_SHORT).show();
+        }
+        finish();
     }
 
     private void setupFilterModeSpinner() {
@@ -520,6 +554,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             onSaveMenuClick();
             return true;
         }
+        if (item.getItemId() == android.R.id.home) {
+            onBackRequested();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -559,31 +597,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             Toast.makeText(this, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
             return;
         }
-        if (!validateAllSteps()) {
+        // 提交按钮是唯一"显式校验"入口：校验失败时保留错误信息并停留在表单。
+        OfflineFormValidator.Result result = OfflineFormValidator.evaluate(_definition, true);
+        if (!result.isValid()) {
+            showValidationErrors(result);
             Toast.makeText(this, R.string.offline_toast_check_form_input, Toast.LENGTH_SHORT).show();
-            scrollToFirstError();
             return;
         }
-        submit();
-    }
-
-    private void submit() {
-        Map<String, String> formData = collectAllFormData();
-        String patternId = _intent.getStringExtra("patternId");
-        String schemaVersion = _intent.getStringExtra("schemaVersion");
-        OfflineFormRecord record;
-        if (_editingRecord == null) {
-            record = OfflineFormRecord.createSubmitted(patternId, schemaVersion, formData);
-        } else {
-            _editingRecord.setValues(formData);
-            _editingRecord.setStatus(OfflineFormRecordStatus.SUBMITTED);
-            _editingRecord.setUpdatedAt(System.currentTimeMillis());
-            record = _editingRecord;
-        }
-        // 离线填报数据按表单定义目录保存，删除表单定义时可直接清理对应文件夹。
-        OfflineFormFileHelper.writeRecord(this, record);
-
-
+        persistRecord(true);
         Toast.makeText(this, R.string.offline_toast_record_saved, Toast.LENGTH_SHORT).show();
         finish();
     }
@@ -858,127 +879,81 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         startActivity(intent);
     }
 
-    private void saveDraftIfNeeded() {
-        if (_editingRecord != null && _editingRecord.getStatus() != OfflineFormRecordStatus.DRAFT) {
-            return;
+    /**
+     * 收集当前数据、依据校验结果推导状态并落盘。
+     *
+     * <p>所有落盘点（自动保存 / 返回 / 保存按钮）共用：状态不再是"用户动作的留痕"，
+     * 而是"校验结果的推导值"——存在碰过但未通过校验的填报单元即为草稿，否则为待上传。</p>
+     *
+     * @param forceCreate 无数据时也强制创建记录（附件落盘前需要 recordId）
+     * @return 本次校验结果；未落盘（记录已导出 / 空表单）时返回 null
+     */
+    private OfflineFormValidator.Result persistRecord(boolean forceCreate) {
+        if (!_formLoaded || _definition == null) {
+            return null;
         }
-        if (_editingRecord == null && !hasFilledFormData()) {
-            return;
+        if (_editingRecord != null && _editingRecord.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+            // 已导出记录保持只读，不再改动。
+            return null;
+        }
+        if (!forceCreate && _editingRecord == null && !hasFilledFormData()) {
+            return null;
         }
 
+        OfflineFormValidator.Result result = OfflineFormValidator.evaluate(_definition, false);
+        writeRecord(result.isValid() ? OfflineFormRecordStatus.SUBMITTED : OfflineFormRecordStatus.DRAFT);
+        return result;
+    }
+
+    private OfflineFormValidator.Result persistRecord() {
+        return persistRecord(false);
+    }
+
+    private void writeRecord(OfflineFormRecordStatus status) {
         Map<String, String> formData = collectAllFormData();
-        String patternId = _intent.getStringExtra("patternId");
-        String schemaVersion = _intent.getStringExtra("schemaVersion");
         if (_editingRecord == null) {
-            _editingRecord = OfflineFormRecord.createDraft(patternId, schemaVersion, formData);
-        } else {
-            _editingRecord.setValues(formData);
-            _editingRecord.setStatus(OfflineFormRecordStatus.DRAFT);
-            _editingRecord.setUpdatedAt(System.currentTimeMillis());
+            _editingRecord = OfflineFormRecord.createDraft(
+                    _intent.getStringExtra("patternId"),
+                    _intent.getStringExtra("schemaVersion"),
+                    formData);
         }
+        _editingRecord.setValues(formData);
+        _editingRecord.setStatus(status);
+        _editingRecord.setUpdatedAt(System.currentTimeMillis());
+        _lastPersistedSnapshot = OfflineFormFieldTimes.refresh(_editingRecord, _definition, _lastPersistedSnapshot);
+        // 离线填报数据按表单定义目录保存，删除表单定义时可直接清理对应文件夹。
         OfflineFormFileHelper.writeRecord(this, _editingRecord);
     }
 
-    private boolean validateAllSteps() {
-        int originalStepIndex = _currentStepIndex;
-        int originalFilterMode = _filterMode;
-        String originalSearchKeyword = _searchKeyword;
-        _filterMode = FILTER_ALL;
-        _searchKeyword = "";
-        clearErrorsForEmptyValidationUnits();
-        for (int i = 0; i < _definition.getSteps().size(); i++) {
-            OfflineFormStep step = _definition.getSteps().get(i);
-            boolean rendered = false;
-            for (List<OfflineFormDisplayItem> validationUnit : collectValidationUnits(step)) {
-                if (!hasFilledField(validationUnit)) {
-                    continue;
-                }
-                if (!rendered) {
-                    _currentStepIndex = i;
-                    renderCurrentStep();
-                    rendered = true;
-                }
-                if (!_adapter.validateItems(validationUnit)) {
-                    _searchKeyword = "";
-                    setFilterModeSelection(FILTER_ALL);
-                    return false;
-                }
-            }
+    /** 提交按钮的校验失败反馈：回到全部视图、跳转首个失败步骤、展开折叠组并滚动到首个错误。 */
+    private void showValidationErrors(OfflineFormValidator.Result result) {
+        if (_definition == null || _definition.getSteps() == null || _definition.getSteps().isEmpty()) {
+            return;
         }
-
-        _currentStepIndex = originalStepIndex;
-        _filterMode = originalFilterMode;
-        _searchKeyword = originalSearchKeyword;
-        setFilterModeSelection(_filterMode);
+        if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
+            _searchKeyword = "";
+            _filterMode = FILTER_ALL;
+            _filterModeBeforeSearch = FILTER_ALL;
+            setFilterModeSelection(FILTER_ALL);
+        }
+        if (result.getFirstInvalidStepIndex() >= 0) {
+            _currentStepIndex = Math.min(result.getFirstInvalidStepIndex(), _definition.getSteps().size() - 1);
+        }
         renderCurrentStep();
-        return true;
+        _adapter.expandAllGroups();
+        scrollToFirstError();
     }
 
-    private List<List<OfflineFormDisplayItem>> collectValidationUnits(OfflineFormStep step) {
-        List<OfflineFormDisplayItem> displayItems = OfflineFormDefinitionFlattener.flattenStep(step);
-        List<List<OfflineFormDisplayItem>> validationUnits = new ArrayList<>();
-        for (int i = 0; i < displayItems.size(); i++) {
-            OfflineFormDisplayItem displayItem = displayItems.get(i);
-            if (displayItem.getDepth() != 0) {
-                continue;
-            }
-            if (displayItem.isGroup()) {
-                List<OfflineFormDisplayItem> groupItems = new ArrayList<>();
-                groupItems.add(displayItem);
-                int nextIndex = i + 1;
-                while (nextIndex < displayItems.size() && displayItems.get(nextIndex).getDepth() > 0) {
-                    groupItems.add(displayItems.get(nextIndex));
-                    nextIndex++;
-                }
-                validationUnits.add(groupItems);
-                i = nextIndex - 1;
-            } else if (displayItem.isField()) {
-                List<OfflineFormDisplayItem> fieldItem = new ArrayList<>();
-                fieldItem.add(displayItem);
-                validationUnits.add(fieldItem);
-            }
-        }
-        return validationUnits;
-    }
-
-    private void clearErrorsForEmptyValidationUnits() {
-        for (OfflineFormStep step : _definition.getSteps()) {
-            for (List<OfflineFormDisplayItem> validationUnit : collectValidationUnits(step)) {
-                if (!hasFilledField(validationUnit)) {
-                    clearValidationErrors(validationUnit);
-                }
-            }
-        }
-    }
-
-    private boolean hasFilledField(List<OfflineFormDisplayItem> displayItems) {
-        for (OfflineFormDisplayItem displayItem : displayItems) {
-            if (displayItem.isField() && !displayItem.getFormItem().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void clearValidationErrors(List<OfflineFormDisplayItem> displayItems) {
-        for (OfflineFormDisplayItem displayItem : displayItems) {
-            if (displayItem.isField()) {
-                displayItem.getFormItem().clearError();
-            }
-        }
-    }
-
-    private OfflineFormRecord ensureDraftRecordForAttachment() {
+    /** 附件落盘前确保记录存在（只创建记录，不推导状态；附件添加完成后由 persistRecord 统一推导）。 */
+    private OfflineFormRecord ensureRecordForAttachment() {
         if (_editingRecord == null) {
             _editingRecord = OfflineFormRecord.createDraft(
                     _intent.getStringExtra("patternId"),
                     _intent.getStringExtra("schemaVersion"),
                     collectAllFormData());
-        } else if (_editingRecord.getStatus() == OfflineFormRecordStatus.DRAFT) {
-            _editingRecord.setValues(collectAllFormData());
-            _editingRecord.setUpdatedAt(System.currentTimeMillis());
+            _lastPersistedSnapshot = OfflineFormFieldTimes.collectValues(_definition);
+            OfflineFormFileHelper.writeRecord(this, _editingRecord);
         }
-        OfflineFormFileHelper.writeRecord(this, _editingRecord);
         return _editingRecord;
     }
 
@@ -1061,7 +1036,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     @Override
     public void onImagesChanged(ImageFormItem item) {
-        saveDraftIfNeeded();
+        persistRecord();
     }
 
     private void registerSignatureCaptureLauncher() {
@@ -1087,7 +1062,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                     throw new IllegalArgumentException(getString(R.string.offline_error_image_read_failed));
                 }
 
-                OfflineFormRecord draft = ensureDraftRecordForAttachment();
+                OfflineFormRecord draft = ensureRecordForAttachment();
                 SignatureFormItemValue oldSignature = _pendingSignatureItem.getSignature(_pendingSignatureUserName);
                 AttachmentFormItemValue signature = OfflineImageFileHelper.saveSignature(
                         this,
@@ -1101,7 +1076,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                             draft.getPatternId(),
                             oldSignature.getFileName());
                 }
-                saveDraftIfNeeded();
+                persistRecord();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -1140,7 +1115,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     @Override
     public void onSignatureChanged(SignatureFormItem item) {
-        saveDraftIfNeeded();
+        persistRecord();
     }
 
     @Override
@@ -1152,7 +1127,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     @Override
     public void onFilesChanged(FileFormItem item) {
-        saveDraftIfNeeded();
+        persistRecord();
     }
 
     private int getRemainingImageCount(ImageFormItem item) {

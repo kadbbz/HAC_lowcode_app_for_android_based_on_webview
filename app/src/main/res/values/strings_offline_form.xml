@@ -72,6 +72,7 @@
     <string name="offline_toast_config_missing">未找到本地表单配置</string>
     <string name="offline_toast_record_missing">未找到本地填报记录</string>
     <string name="offline_toast_record_saved">保存成功</string>
+    <string name="offline_toast_saved_incomplete">已保存，还有 %1$d 项未完成</string>
     <string name="offline_toast_check_form_input">请检查表单输入</string>
     <string name="offline_toast_parse_form_failed">解析表单失败：%1$s</string>
     <string name="offline_menu_config_manage">配置管理</string>

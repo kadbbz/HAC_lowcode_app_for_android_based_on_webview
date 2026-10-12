@@ -115,12 +115,31 @@ public class OfflineProjectRecordActivity extends BaseActivity {
             return;
         }
 
+        // 单一工作记录：已存在未导出记录时直接继续填报，避免产生多份草稿。
+        OfflineFormRecord workingRecord = findWorkingRecord();
+        if (workingRecord != null) {
+            openRecord(workingRecord, _schemaVersion);
+            return;
+        }
+
         Intent intent = new Intent(this, CustomFormActivity.class);
         intent.putExtra("patternId", _patternId);
         intent.putExtra("title", _title);
         intent.putExtra("description", _description);
         intent.putExtra("schemaVersion", _schemaVersion);
         startActivity(intent);
+    }
+
+    private OfflineFormRecord findWorkingRecord() {
+        if (!hasPatternId()) {
+            return null;
+        }
+        for (OfflineFormRecord record : OfflineFormFileHelper.readRecords(this, _patternId)) {
+            if (record != null && record.getStatus() != OfflineFormRecordStatus.EXPORTED) {
+                return record;
+            }
+        }
+        return null;
     }
 
     private void renderRecords() {
