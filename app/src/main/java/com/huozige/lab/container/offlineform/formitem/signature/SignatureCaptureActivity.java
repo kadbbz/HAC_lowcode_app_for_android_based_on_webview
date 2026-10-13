@@ -20,7 +20,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 /**
- * 横屏全屏签名页。这里只负责采集原始签名，最终附件保存和水印处理仍由表单页完成。
+ * 横屏全屏签名页。这里只负责采集原始签名，最终附件保存由表单页完成；
+ * 保存的签名图片仅包含笔迹，不含姓名水印与免责声明。
  */
 public class SignatureCaptureActivity extends AppCompatActivity {
     public static final String EXTRA_TITLE = "signature-title";

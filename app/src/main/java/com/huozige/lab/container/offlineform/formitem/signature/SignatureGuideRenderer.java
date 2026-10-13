@@ -5,7 +5,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 
-/** Shared guide styling for the signing screen and exported images. */
+/** Shared guide styling for the signing screen. */
 public final class SignatureGuideRenderer {
     private SignatureGuideRenderer() {
     }

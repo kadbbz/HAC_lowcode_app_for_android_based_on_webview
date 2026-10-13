@@ -5,18 +5,7 @@ import static android.app.Activity.RESULT_OK;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.os.Looper;
-import android.text.Layout;
-import android.text.StaticLayout;
-import android.text.TextPaint;
-import android.util.TypedValue;
 import android.webkit.MimeTypeMap;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -27,7 +16,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.OfflinePlusExportListActivity;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
-import com.huozige.lab.container.offlineform.formitem.signature.SignatureGuideRenderer;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.platform.CallbackParams;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
@@ -322,136 +310,11 @@ public class OfflinePlusProxy extends AbstractProxy{
             if (StringUtils.isNullOrBlank(mimeType)) {
                 mimeType = "application/octet-stream";
             }
-            SignatureExportInfo signatureInfo = findSignatureExportInfo(this.getWebView().getContext(), projectId, localName);
-            if (signatureInfo != null) {
-                return buildSignatureDataUrl(file, signatureInfo);
-            }
+            // 签名文件本身就是纯签名（白底 + 笔迹），导出时不再叠加姓名水印与免责声明。
             return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(readAllBytes(file));
         } catch (Exception e) {
             writeErrorLog("读取离线附件失败：" + localName + "，详情：" + e);
             return "";
-        }
-    }
-
-    private String buildSignatureDataUrl(File file, SignatureExportInfo signatureInfo) throws Exception {
-        Bitmap source = BitmapFactory.decodeFile(file.getAbsolutePath());
-        if (source == null) {
-            return "";
-        }
-        Bitmap result = null;
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            result = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(result);
-            canvas.drawColor(Color.WHITE);
-            SignatureGuideRenderer.draw(canvas, result.getWidth(), result.getHeight(),
-                    signatureInfo.userName, new Paint(Paint.ANTI_ALIAS_FLAG));
-            // Preserve the guide through the white PNG background, with signature strokes above it.
-            Paint signaturePaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-            signaturePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.MULTIPLY));
-            canvas.drawBitmap(source, null,
-                    new android.graphics.RectF(0, 0, result.getWidth(), result.getHeight()), signaturePaint);
-            drawSignatureDisclaimer(canvas, result, signatureInfo.disclaimer);
-            if (!result.compress(Bitmap.CompressFormat.PNG, 100, output)) {
-                throw new IOException("Unable to encode signature PNG");
-            }
-            return "data:image/png;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
-        } finally {
-            source.recycle();
-            if (result != null) {
-                result.recycle();
-            }
-        }
-    }
-
-    private void drawSignatureDisclaimer(Canvas canvas, Bitmap bitmap, String disclaimer) {
-        if (StringUtils.isNullOrBlank(disclaimer)) {
-            return;
-        }
-        TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.rgb(95, 99, 104));
-        paint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f,
-                getWebView().getResources().getDisplayMetrics()));
-        float left = 12f * getWebView().getResources().getDisplayMetrics().density;
-        float top = 10f * getWebView().getResources().getDisplayMetrics().density;
-        int width = Math.max(1, (int) (bitmap.getWidth() - left));
-        StaticLayout layout = StaticLayout.Builder.obtain(disclaimer, 0, disclaimer.length(), paint, width)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setIncludePad(true)
-                .build();
-        canvas.save();
-        canvas.translate(left, top);
-        layout.draw(canvas);
-        canvas.restore();
-    }
-
-    private SignatureExportInfo findSignatureExportInfo(Context context, String projectId, String localName) {
-        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
-        if (definitionFile == null || definitionFile.getJsonSchema() == null
-                || definitionFile.getJsonSchema().getSteps() == null) {
-            return null;
-        }
-        for (OfflineFormRecord record : OfflineFormFileHelper.readRecords(context, projectId)) {
-            if (record == null || record.getValues() == null) {
-                continue;
-            }
-            for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
-                SignatureExportInfo info = findSignatureExportInfo(step == null ? null : step.getItems(), record.getValues(), localName);
-                if (info != null) {
-                    return info;
-                }
-            }
-        }
-        return null;
-    }
-
-    private SignatureExportInfo findSignatureExportInfo(List<OfflineFormNode> nodes, Map<String, String> values, String localName) {
-        if (nodes == null) {
-            return null;
-        }
-        for (OfflineFormNode node : nodes) {
-            if (node == null) {
-                continue;
-            }
-            BaseFormItem field = node.getField();
-            if (field instanceof SignatureFormItem) {
-                List<SignatureFormItemValue> signatures = SignatureFormItem.parseSignatures(values.get(field.getId()), null);
-                for (SignatureFormItemValue signature : signatures) {
-                    if (signature != null && localName.equals(signature.getFileName())) {
-                        return new SignatureExportInfo(signature.getUserName(), ((SignatureFormItem) field).getDisclaimer());
-                    }
-                }
-            } else if (field instanceof ListFormItem) {
-                for (Object row : ListFormItem.parseRows(values.get(field.getId()))) {
-                    if (!(row instanceof JSONObject)) {
-                        continue;
-                    }
-                    JSONObject rowValues = (JSONObject) row;
-                    Map<String, String> childValues = new HashMap<>();
-                    for (String key : rowValues.keySet()) {
-                        childValues.put(key, rowValues.getString(key));
-                    }
-                    SignatureExportInfo info = findSignatureExportInfo(
-                            ((ListFormItem) field).getTemplateNodes(), childValues, localName);
-                    if (info != null) {
-                        return info;
-                    }
-                }
-            }
-            SignatureExportInfo childInfo = findSignatureExportInfo(node.getChildren(), values, localName);
-            if (childInfo != null) {
-                return childInfo;
-            }
-        }
-        return null;
-    }
-
-    private static final class SignatureExportInfo {
-        private final String userName;
-        private final String disclaimer;
-
-        private SignatureExportInfo(String userName, String disclaimer) {
-            this.userName = userName;
-            this.disclaimer = disclaimer;
         }
     }
 
