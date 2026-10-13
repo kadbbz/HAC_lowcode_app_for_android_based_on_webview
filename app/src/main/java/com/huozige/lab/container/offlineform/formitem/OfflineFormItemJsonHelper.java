@@ -15,6 +15,7 @@ public final class OfflineFormItemJsonHelper {
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_HINT, item.getHint());
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_REQUIRED, item.isRequired());
         jsonObject.put(OfflineFormItemJsonKeys.FIELD_ITEM_TYPE, item.getItemType());
+        jsonObject.put(OfflineFormItemJsonKeys.FIELD_SHOW_UPDATE_TIME, item.isShowFieldUpdateTime());
         if (item.getUpdateTime() != null) {
             jsonObject.put(OfflineFormItemJsonKeys.FIELD_UPDATE_TIME, item.getUpdateTime());
         }
@@ -31,6 +32,7 @@ public final class OfflineFormItemJsonHelper {
         input.hint = jsonObject.getString(OfflineFormItemJsonKeys.FIELD_HINT);
         input.required = jsonObject.getBooleanValue(OfflineFormItemJsonKeys.FIELD_REQUIRED);
         input.itemType = jsonObject.getString(OfflineFormItemJsonKeys.FIELD_ITEM_TYPE);
+        input.showFieldUpdateTime = jsonObject.getBooleanValue(OfflineFormItemJsonKeys.FIELD_SHOW_UPDATE_TIME);
         input.value = jsonObject.getString(OfflineFormItemJsonKeys.FIELD_VALUE);
         input.updateTime = jsonObject.getDouble(OfflineFormItemJsonKeys.FIELD_UPDATE_TIME);
         return input;

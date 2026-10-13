@@ -11,6 +11,8 @@ public abstract class BaseFormItem {
     private String title;
     private String hint;
     private boolean required;
+    // 是否在填报页展示该字段的更新时间（字段级开关，缺省不显示）。
+    private boolean showFieldUpdateTime;
     private String errorMessage;
     // 组件定义的最后更新时间，使用 OLE Automation Date（ODate）表示。
     private Double updateTime;

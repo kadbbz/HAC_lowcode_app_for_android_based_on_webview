@@ -269,7 +269,9 @@ public class ListViewHolder extends BaseViewHolder {
             formItem.setTitle(node.getTitle());
         }
         holder.bind(formItem, -1);
-        OfflineFormFieldTimeViews.apply(holder.itemView, rowTimes == null ? null : rowTimes.get(formItem.getId()));
+        holder.setShowFieldUpdateTime(formItem.isShowFieldUpdateTime());
+        OfflineFormFieldTimeViews.apply(holder.itemView,
+                formItem.isShowFieldUpdateTime() && rowTimes != null ? rowTimes.get(formItem.getId()) : null);
         holder.setOnFieldChanged(getFieldChangedCallback());
         formItem.setTitle(originalTitle);
         return holder.itemView;

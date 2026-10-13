@@ -576,13 +576,15 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             formItem.setTitle(displayTitle);
         }
         holder.setOnFieldChanged(this::dispatchFieldChanged);
+        holder.setShowFieldUpdateTime(formItem.isShowFieldUpdateTime());
         if (holder instanceof ListViewHolder) {
             // 列表字段没有单一更新时间：把各行的时间下发给 ListViewHolder，由其渲染到对应子字段。
             ((ListViewHolder) holder).setRowUpdateTimes(resolveListRowTimes(formItem.getId()));
             holder.bind(formItem, position);
         } else {
             holder.bind(formItem, position);
-            OfflineFormFieldTimeViews.apply(holder.itemView, resolveFieldTime(formItem.getId()));
+            OfflineFormFieldTimeViews.apply(holder.itemView,
+                    formItem.isShowFieldUpdateTime() ? resolveFieldTime(formItem.getId()) : null);
         }
         formItem.setTitle(originalTitle);
     }

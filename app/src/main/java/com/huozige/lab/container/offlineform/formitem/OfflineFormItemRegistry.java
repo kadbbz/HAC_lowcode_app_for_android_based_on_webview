@@ -74,6 +74,7 @@ public final class OfflineFormItemRegistry {
         normalizeOptions(input, handler);
         BaseFormItem item = handler.fromInput(input);
         item.setUpdateTime(input.updateTime == null ? ODateUtils.now() : input.updateTime);
+        item.setShowFieldUpdateTime(input.showFieldUpdateTime);
         return item;
     }
 
