@@ -11,14 +11,14 @@ import java.util.List;
 
 public class OfflineFormExportStatusHelper {
 
-    /** 是否存在可上传（已提交待导出）的数据；草稿不再算"未导出"。 */
+    /** 是否存在未导出的数据：有草稿/待上传，或该表单尚无任何记录（尚无记录视为未导出）。 */
     public static boolean hasUnexportedRecords(Context context, OfflineFormDefinitionIndexItem item) {
-        return readStatus(context, item).submittedCount > 0;
+        return readStatus(context, item).hasUnexportedData();
     }
 
-    /** 是否没有任何待上传数据。 */
+    /** 是否已无可导出的数据（口径与列表状态文案一致）。 */
     public static boolean isExported(Context context, OfflineFormDefinitionIndexItem item) {
-        return readStatus(context, item).submittedCount == 0;
+        return !readStatus(context, item).hasUnexportedData();
     }
 
     /**
@@ -82,12 +82,15 @@ public class OfflineFormExportStatusHelper {
         int draftCount;
 
         /**
-         * 统一口径（不再区分 DRAFT/SUBMITTED）：只要还有未导出数据（草稿或待上传），
-         * 或该表单尚无任何记录，即显示"未导出"；否则"已导出"。
+         * 统一口径：只要还有未导出数据（草稿或待上传），或该表单尚无任何记录，即视为"未导出"。
+         * 列表筛选、状态文案、导出可选性都以此为准，避免三处口径不一致。
          */
+        boolean hasUnexportedData() {
+            return submittedCount > 0 || draftCount > 0 || totalCount == 0;
+        }
+
         String getDisplayText() {
-            return (submittedCount > 0 || draftCount > 0 || totalCount == 0)
-                    ? "\u672a\u5bfc\u51fa" : "\u5df2\u5bfc\u51fa";
+            return hasUnexportedData() ? "\u672a\u5bfc\u51fa" : "\u5df2\u5bfc\u51fa";
         }
     }
 }
