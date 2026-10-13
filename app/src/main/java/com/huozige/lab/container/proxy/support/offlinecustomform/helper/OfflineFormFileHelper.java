@@ -153,6 +153,33 @@ public class OfflineFormFileHelper {
         JsonFileHelper.deleteFileOrDirectory(getManualFilesDir(context, patternId));
     }
 
+    /**
+     * 清理说明书目录中不在保留清单内的旧文件，并移除早期遗留的单文件手册。
+     * 仅在「一次下载全部成功」后调用，用于收敛因配置变更而残留的旧手册；
+     * 下载存在失败时不应调用，避免误删服务器仍需要的文件。
+     *
+     * @param keepFileNames 本次下载成功、需要保留的文件名集合
+     */
+    public static void cleanupManualFilesExcept(Context context, String patternId, Set<String> keepFileNames) {
+        File manualFilesDir = getManualFilesDir(context, patternId);
+        File[] files = manualFilesDir.listFiles(file -> file.isFile()
+                && !file.getName().startsWith(".")
+                && !file.getName().endsWith(".tmp"));
+        if (files != null) {
+            for (File file : files) {
+                if (keepFileNames == null || !keepFileNames.contains(file.getName())) {
+                    JsonFileHelper.deleteFileOrDirectory(file);
+                }
+            }
+        }
+
+        // 早期版本使用 patternDir 下的单文件手册，迁移到多文件目录后不再需要。
+        File legacyFile = new File(getPatternDir(context, patternId), MANUAL_FILE);
+        if (legacyFile.exists()) {
+            JsonFileHelper.deleteFileOrDirectory(legacyFile);
+        }
+    }
+
     public static void deleteSignatureFile(Context context, String patternId) {
         JsonFileHelper.deleteFileOrDirectory(getSignatureFile(context, patternId));
     }

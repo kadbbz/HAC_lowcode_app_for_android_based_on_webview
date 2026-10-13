@@ -75,6 +75,8 @@ public class ProxyRegister {
 
         this._proxies.add(new OfflinePlusProxy()); // 离线填报
 
+        this._proxies.add(new NetworkProxy()); // 网络状态检测（弱网策略基础能力）
+
         __instance = this;
     }
 }

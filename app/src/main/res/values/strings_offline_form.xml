@@ -135,6 +135,8 @@
     <string name="offline_error_manual_download_failed">下载手册 PDF 失败：%1$s</string>
     <string name="offline_error_manual_download_failed_with_code">下载手册 PDF 失败：%1$d</string>
     <string name="offline_error_manual_save_failed">保存手册 PDF 失败</string>
+    <string name="offline_error_manual_no_network">当前没有网络连接，无法下载手册，请检查网络后重试</string>
+    <string name="offline_error_manual_partial_failed">部分手册下载失败：%1$s，请检查网络后重试</string>
     <string name="offline_error_select_no_options">没有可选项</string>
     <string name="offline_error_file_size_with_name">文件超过大小限制：%1$s</string>
     <string name="offline_error_file_type_not_supported">不支持的文件类型：%1$s</string>

@@ -75,12 +75,26 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class OfflinePlusProxy extends AbstractProxy{
+
+    /** 说明书 PDF 下载：连接超时（毫秒） */
+    private static final int MANUAL_DOWNLOAD_CONNECT_TIMEOUT_MS = 10_000;
+    /** 说明书 PDF 下载：读取超时（毫秒） */
+    private static final int MANUAL_DOWNLOAD_READ_TIMEOUT_MS = 30_000;
+    /** 说明书 PDF 下载：非计量网络下的最大尝试次数（含首次） */
+    private static final int MANUAL_DOWNLOAD_MAX_ATTEMPTS = 3;
+    /** 说明书 PDF 下载：重试退避起始时长（毫秒） */
+    private static final long MANUAL_DOWNLOAD_RETRY_BASE_DELAY_MS = 800;
+    /** 说明书 PDF 下载：重试退避上限（毫秒） */
+    private static final long MANUAL_DOWNLOAD_RETRY_MAX_DELAY_MS = 4_000;
 
     private ActivityResultLauncher<Intent> _exportMultipleRecordsLauncher;
 
@@ -148,6 +162,12 @@ public class OfflinePlusProxy extends AbstractProxy{
 
     /**
      * 下载并绑定离线表单的说明文档。
+     * <p>
+     * 弱网兜底（见 docs/weak-network-phase1-offline-form-download.md）：
+     * 1. 无网络时快速失败，不进入长等待；
+     * 2. 连接/读取超时 + 瞬时错误重试（退避）；计量网络下不自动重试；
+     * 3. 逐文件独立处理，单个失败不影响已成功的文件；
+     * 4. 下载完整性校验；支持用户取消。
      */
     @JavascriptInterface
     public void offlinePlusDownloadManualPdfAsync(
@@ -172,16 +192,58 @@ public class OfflinePlusProxy extends AbstractProxy{
             return;
         }
 
+        // 弱网兜底：无网络直接失败，避免用户干等超时。
+        NetworkProxy networkProxy = NetworkProxy.getInstance();
+        if (networkProxy != null && !networkProxy.isConnected()) {
+            finishManualDownload(null, CallbackParams.error(context.getString(R.string.offline_error_manual_no_network)), null);
+            return;
+        }
+        // 计量网络（流量/热点）下不自动重试，节省流量。
+        boolean metered = networkProxy != null && networkProxy.isMetered();
+
         String currentUrl = getCurrentUrlOnUiThread();
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        AtomicReference<Thread> workerRef = new AtomicReference<>();
+
         ProgressDialog progressDialog = showManualDownloadDialog(context);
-        new Thread(() -> {
+
+        Thread worker = new Thread(() -> {
             try {
-                saveManualDocuments(context, patternId, manualPdfUrl, currentUrl, progressDialog);
-                finishManualDownload(progressDialog, CallbackParams.success("success"), null);
+                ManualDownloadOutcome outcome = saveManualDocuments(
+                        context, patternId, manualPdfUrl, currentUrl, progressDialog, cancelled, metered);
+                if (cancelled.get()) {
+                    finishManualDownload(progressDialog, CallbackParams.error(CallbackParams.CANCEL_BY_USER), null);
+                } else if (outcome.hasFailure()) {
+                    finishManualDownload(progressDialog,
+                            CallbackParams.error(context.getString(R.string.offline_error_manual_partial_failed, outcome.getFailedSummary())),
+                            null);
+                } else {
+                    finishManualDownload(progressDialog, CallbackParams.success("success"), null);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                finishManualDownload(progressDialog, CallbackParams.error(CallbackParams.CANCEL_BY_USER), null);
             } catch (Exception e) {
                 finishManualDownload(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
             }
-        }).start();
+        });
+        workerRef.set(worker);
+
+        // 支持取消：用户取消时中断下载线程。
+        runOnUiThread(() -> {
+            if (progressDialog != null) {
+                progressDialog.setCancelable(true);
+                progressDialog.setOnCancelListener(dialog -> {
+                    cancelled.set(true);
+                    Thread t = workerRef.get();
+                    if (t != null) {
+                        t.interrupt();
+                    }
+                });
+            }
+        });
+
+        worker.start();
     }
     private String getCurrentUrlOnUiThread() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
@@ -1021,17 +1083,16 @@ public class OfflinePlusProxy extends AbstractProxy{
         OfflineFormFileHelper.writeDefinition(context, input.patternId, definitionFile);
     }
 
-    private void saveManualDocuments(
+    private ManualDownloadOutcome saveManualDocuments(
             Context context,
             String patternId,
             String[] manualPdfUrls,
             String currentUrl,
-            ProgressDialog progressDialog) throws IOException {
-        // 一次调用代表一组完整资源，先清理旧文件，避免旧说明文档残留在列表中。
-        OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
-        if (manualPdfUrls == null || manualPdfUrls.length == 0) {
-            return;
-        }
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled,
+            boolean metered) throws IOException, InterruptedException {
+
+        ManualDownloadOutcome outcome = new ManualDownloadOutcome();
 
         List<String> urls = new ArrayList<>();
         for (String url : manualPdfUrls) {
@@ -1040,7 +1101,8 @@ public class OfflinePlusProxy extends AbstractProxy{
             }
         }
         if (urls.isEmpty()) {
-            return;
+            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+            return outcome;
         }
 
         File manualFilesDir = OfflineFormFileHelper.getManualFilesDir(context, patternId);
@@ -1048,67 +1110,178 @@ public class OfflinePlusProxy extends AbstractProxy{
             throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
         }
 
+        // 逐文件独立处理：单个失败不清空已成功的文件，也不影响其它文件。
         List<String> usedFileNames = new ArrayList<>();
-        try {
-            for (int index = 0; index < urls.size(); index++) {
-                String resolvedUrl = resolveManualPdfUrl(urls.get(index), currentUrl);
-                HttpURLConnection connection = null;
-                File tempFile = null;
-                try {
-                    connection = (HttpURLConnection) new URL(resolvedUrl).openConnection();
-                    String cookie = CookieManager.getInstance().getCookie(resolvedUrl);
-                    if (StringUtils.isNotBlank(cookie)) {
-                        connection.setRequestProperty("Cookie", cookie);
-                    }
-                    connection.connect();
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode < 200 || responseCode >= 300) {
-                        throw new IOException(context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode));
-                    }
+        Set<String> downloadedNames = new HashSet<>();
 
-                    String fileName = HACDownloadManager.parseContentDisposition(
-                            connection.getHeaderField("Content-Disposition"));
-                    if (StringUtils.isNullOrBlank(fileName)) {
-                        fileName = getFileNameFromUrl(resolvedUrl, index);
-                    }
-                    fileName = makeUniqueFileName(fileName, usedFileNames);
-                    File targetFile = OfflineFormFileHelper.getManualFile(context, patternId, fileName);
-                    if (targetFile == null) {
-                        throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
-                    }
-                    tempFile = new File(manualFilesDir, "." + targetFile.getName() + ".tmp");
+        for (int index = 0; index < urls.size(); index++) {
+            if (cancelled.get()) {
+                throw new InterruptedException("cancelled");
+            }
+            String resolvedUrl = resolveManualPdfUrl(urls.get(index), currentUrl);
+            String fallbackName = getFileNameFromUrl(resolvedUrl, index);
+            try {
+                String fileName = downloadSingleManualFile(
+                        context, patternId, resolvedUrl, fallbackName, usedFileNames,
+                        manualFilesDir, progressDialog, cancelled, metered);
+                usedFileNames.add(fileName);
+                downloadedNames.add(fileName);
+                outcome.succeededNames.add(fileName);
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (Exception e) {
+                writeErrorLog("下载离线说明文档失败：" + resolvedUrl + "，详情：" + e);
+                outcome.failures.add(new ManualDownloadFailure(fallbackName, e.getMessage()));
+            }
+        }
 
-                    int contentLength = connection.getContentLength();
-                    try (InputStream input = connection.getInputStream();
-                         FileOutputStream output = new FileOutputStream(tempFile)) {
-                        byte[] buffer = new byte[8192];
-                        long totalRead = 0;
-                        long startTime = System.currentTimeMillis();
-                        updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
-                        int read;
-                        while ((read = input.read(buffer)) >= 0) {
-                            output.write(buffer, 0, read);
-                            totalRead += read;
-                            updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
-                        }
-                    }
+        // 仅在本次全部成功时收敛目录，避免下载失败时误删服务器仍需要的旧手册。
+        if (!outcome.hasFailure()) {
+            OfflineFormFileHelper.cleanupManualFilesExcept(context, patternId, downloadedNames);
+        }
 
-                    Files.move(tempFile.toPath(), targetFile.toPath(),
-                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                    usedFileNames.add(targetFile.getName());
-                } finally {
-                    if (tempFile != null && tempFile.exists() && !tempFile.delete()) {
-                        writeErrorLog("删除离线说明文档临时文件失败：" + tempFile.getAbsolutePath());
-                    }
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
+        return outcome;
+    }
+
+    /**
+     * 下载单个说明书 PDF，带超时、瞬时错误重试与完整性校验。
+     * 4xx 等不可重试错误直接抛出；计量网络下 maxAttempts 为 1（不重试）。
+     *
+     * @return 最终落盘的文件名
+     */
+    private String downloadSingleManualFile(
+            Context context,
+            String patternId,
+            String resolvedUrl,
+            String fallbackName,
+            List<String> usedFileNames,
+            File manualFilesDir,
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled,
+            boolean metered) throws IOException, InterruptedException {
+
+        int maxAttempts = metered ? 1 : MANUAL_DOWNLOAD_MAX_ATTEMPTS;
+        IOException lastError = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (cancelled.get()) {
+                throw new InterruptedException("cancelled");
+            }
+
+            HttpURLConnection connection = null;
+            File tempFile = null;
+            try {
+                connection = (HttpURLConnection) new URL(resolvedUrl).openConnection();
+                connection.setConnectTimeout(MANUAL_DOWNLOAD_CONNECT_TIMEOUT_MS);
+                connection.setReadTimeout(MANUAL_DOWNLOAD_READ_TIMEOUT_MS);
+                String cookie = CookieManager.getInstance().getCookie(resolvedUrl);
+                if (StringUtils.isNotBlank(cookie)) {
+                    connection.setRequestProperty("Cookie", cookie);
+                }
+                connection.connect();
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode < 200 || responseCode >= 300) {
+                    String message = context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode);
+                    // 4xx 视为永久错误，不重试；其余（5xx、408、429 等）可重试。
+                    boolean retryable = responseCode < 400 || responseCode >= 500;
+                    throw new ManualDownloadException(message, retryable);
+                }
+
+                String fileName = HACDownloadManager.parseContentDisposition(
+                        connection.getHeaderField("Content-Disposition"));
+                if (StringUtils.isNullOrBlank(fileName)) {
+                    fileName = fallbackName;
+                }
+                fileName = makeUniqueFileName(fileName, usedFileNames);
+                File targetFile = OfflineFormFileHelper.getManualFile(context, patternId, fileName);
+                if (targetFile == null) {
+                    throw new ManualDownloadException(context.getString(R.string.offline_error_manual_save_failed), false);
+                }
+                tempFile = new File(manualFilesDir, "." + targetFile.getName() + ".tmp");
+
+                int contentLength = connection.getContentLength();
+                long totalRead = downloadToFile(connection, tempFile, contentLength, progressDialog, cancelled);
+
+                // 完整性校验：长度不符视为截断，按可重试错误处理。
+                if (contentLength > 0 && totalRead != contentLength) {
+                    throw new ManualDownloadException(
+                            "手册文件下载不完整（" + totalRead + "/" + contentLength + "）", true);
+                }
+
+                Files.move(tempFile.toPath(), targetFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                tempFile = null; // 已移走，无需再清理临时文件
+                return targetFile.getName();
+            } catch (ManualDownloadException e) {
+                if (!e.retryable) {
+                    throw e;
+                }
+                lastError = e;
+                retryBackoff(attempt, maxAttempts, cancelled);
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (IOException e) {
+                lastError = e;
+                retryBackoff(attempt, maxAttempts, cancelled);
+            } finally {
+                if (tempFile != null && tempFile.exists() && !tempFile.delete()) {
+                    writeErrorLog("删除离线说明文档临时文件失败：" + tempFile.getAbsolutePath());
+                }
+                if (connection != null) {
+                    connection.disconnect();
                 }
             }
-        } catch (IOException e) {
-            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
-            throw e;
         }
+
+        throw lastError != null ? lastError : new IOException("manual download failed");
+    }
+
+    /**
+     * 将响应体写入临时文件，过程中检查取消标记。
+     *
+     * @return 实际写入的字节数
+     */
+    private long downloadToFile(
+            HttpURLConnection connection,
+            File tempFile,
+            int contentLength,
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled) throws IOException, InterruptedException {
+
+        long totalRead = 0;
+        long startTime = System.currentTimeMillis();
+        updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+
+        try (InputStream input = connection.getInputStream();
+             FileOutputStream output = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                if (cancelled.get()) {
+                    throw new InterruptedException("cancelled");
+                }
+                output.write(buffer, 0, read);
+                totalRead += read;
+                updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+            }
+        }
+
+        return totalRead;
+    }
+
+    /**
+     * 指数退避 + 抖动；最后一次尝试后不再等待。
+     */
+    private void retryBackoff(int attempt, int maxAttempts, AtomicBoolean cancelled) throws InterruptedException {
+        if (attempt >= maxAttempts || cancelled.get()) {
+            return;
+        }
+        long delay = Math.min(MANUAL_DOWNLOAD_RETRY_MAX_DELAY_MS,
+                MANUAL_DOWNLOAD_RETRY_BASE_DELAY_MS * (1L << (attempt - 1)));
+        // 在 [delay/2, delay] 区间内抖动，避免多个文件同时重试。
+        delay = delay / 2 + (long) (Math.random() * (delay / 2 + 1));
+        Thread.sleep(delay);
     }
 
     private String getFileNameFromUrl(String url, int index) {
@@ -1252,5 +1425,53 @@ public class OfflinePlusProxy extends AbstractProxy{
             displayColumns.add(item.getId());
         }
         return displayColumns;
+    }
+
+    /**
+     * 说明书下载结果：成功的文件名与失败清单。
+     */
+    private static class ManualDownloadOutcome {
+
+        final List<String> succeededNames = new ArrayList<>();
+        final List<ManualDownloadFailure> failures = new ArrayList<>();
+
+        boolean hasFailure() {
+            return !failures.isEmpty();
+        }
+
+        String getFailedSummary() {
+            List<String> names = new ArrayList<>();
+            for (ManualDownloadFailure failure : failures) {
+                names.add(failure.name);
+            }
+            return String.join("、", names);
+        }
+    }
+
+    /**
+     * 单个说明书下载失败的信息。
+     */
+    private static class ManualDownloadFailure {
+
+        final String name;
+        final String reason;
+
+        ManualDownloadFailure(String name, String reason) {
+            this.name = name;
+            this.reason = reason;
+        }
+    }
+
+    /**
+     * 说明书下载异常。retryable 标记是否属于可重试的瞬时错误。
+     */
+    private static class ManualDownloadException extends IOException {
+
+        final boolean retryable;
+
+        ManualDownloadException(String message, boolean retryable) {
+            super(message);
+            this.retryable = retryable;
+        }
     }
 }
