@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.Menu;
@@ -74,6 +76,7 @@ import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -92,6 +95,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int FILTER_UNFILLED = 1;
     private static final int FILTER_FILLED = 2;
     private static final int FILTER_SEARCH = 3;
+    // 字段变更后延迟落盘，避免逐字符写文件。
+    private static final long AUTO_SAVE_DELAY_MS = 600;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -132,6 +137,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private SignatureFormItem _pendingSignatureItem;
     private String _pendingSignatureUserName;
     private SignatureCallback _pendingSignatureCallback;
+    // 字段变更后的防抖落盘。
+    private final Handler _autoSaveHandler = new Handler(Looper.getMainLooper());
+    private final Runnable _autoSaveRunnable = this::persistRecord;
 
 
     @Override
@@ -165,8 +173,15 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     @Override
     protected void onPause() {
         // 旋转、切后台、启动拍照/文件选择等场景都会先进入 onPause，提前落盘可避免只依赖显式“保存”。
+        _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
         persistRecord();
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
+        super.onDestroy();
     }
 
     @Override
@@ -234,6 +249,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _adapter.setDocumentFileNames(manualFileNames);
         _adapter.setOnDocumentClickListener((item, fileName) -> openManualPdf(fileName));
+        _adapter.setFieldUpdateTimesProvider(() -> _editingRecord == null
+                ? Collections.emptyMap()
+                : _editingRecord.getFieldUpdateTimes());
+        _adapter.setOnFieldChangedListener(this::scheduleAutoSave);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
     }
@@ -907,6 +926,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private OfflineFormValidator.Result persistRecord() {
         return persistRecord(false);
+    }
+
+    /** 字段变更后的防抖落盘：短时间内连续变更只落盘一次。 */
+    private void scheduleAutoSave() {
+        _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
+        _autoSaveHandler.postDelayed(_autoSaveRunnable, AUTO_SAVE_DELAY_MS);
     }
 
     private void writeRecord(OfflineFormRecordStatus status) {

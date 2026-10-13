@@ -201,6 +201,7 @@ public class PickerViewHolder extends BaseViewHolder {
         pickerItem.clearError();
         bindValue();
         updateErrorState();
+        notifyFieldChanged();
     }
 
     private NumberPicker createTimeNumberPicker(int minValue, int maxValue, int value) {

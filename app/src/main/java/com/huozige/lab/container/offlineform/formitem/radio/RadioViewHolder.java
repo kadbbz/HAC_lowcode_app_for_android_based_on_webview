@@ -37,6 +37,7 @@ public class RadioViewHolder extends BaseViewHolder {
                 radioItem.setSelectedValue(String.valueOf(checked.getTag()));
                 radioItem.clearError();
                 updateErrorState();
+                notifyFieldChanged();
             }
         });
     }

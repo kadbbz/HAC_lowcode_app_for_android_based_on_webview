@@ -100,6 +100,7 @@
     <string name="offline_text_signature_set">已签名</string>
     <string name="offline_text_signature_not_set">未签名</string>
     <string name="offline_text_signature_progress">已签名 %1$d/%2$d</string>
+    <string name="offline_text_field_update_time">更新时间：%1$s</string>
     <string name="offline_text_progress_total">总填报项：%1$d</string>
     <string name="offline_text_progress_filled">已填报项：%1$d</string>
     <string name="offline_text_progress_rate">完成率：%1$s</string>

@@ -105,6 +105,7 @@ public class SignatureViewHolder extends BaseViewHolder {
     }
 
     private void notifySignatureChanged() {
+        notifyFieldChanged();
         if (itemView.getContext() instanceof SignatureCaptureHost) {
             ((SignatureCaptureHost) itemView.getContext()).onSignatureChanged(signatureItem);
         }

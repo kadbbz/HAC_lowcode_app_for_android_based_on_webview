@@ -137,6 +137,7 @@ public class ImageViewHolder extends BaseViewHolder {
         imageItem.clearError();
         renderImages();
         updateErrorState();
+        notifyFieldChanged();
     }
 
     private void renderImages() {
@@ -264,6 +265,7 @@ public class ImageViewHolder extends BaseViewHolder {
     }
 
     private void notifyImagesChanged() {
+        notifyFieldChanged();
         if (itemView.getContext() instanceof ImageCaptureHost) {
             ((ImageCaptureHost) itemView.getContext()).onImagesChanged(imageItem);
         }

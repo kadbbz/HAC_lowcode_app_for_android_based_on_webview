@@ -19,4 +19,8 @@ public final class ODateUtils {
     public static double fromUnixMillis(long millis) {
         return UNIX_EPOCH_AS_ODATE + millis / MILLIS_PER_DAY;
     }
+
+    public static long toUnixMillis(double oDate) {
+        return Math.round((oDate - UNIX_EPOCH_AS_ODATE) * MILLIS_PER_DAY);
+    }
 }

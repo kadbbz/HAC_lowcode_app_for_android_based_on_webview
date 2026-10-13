@@ -19,10 +19,12 @@ import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
+import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimeViews;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 import com.huozige.lab.container.utilities.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
@@ -35,6 +37,8 @@ public class ListViewHolder extends BaseViewHolder {
     private final TextView errorView;
 
     private ListFormItem listItem;
+    // 与行一一对应的子字段更新时间；由上层在 bind 前下发。
+    private List<Map<String, Object>> rowUpdateTimes;
 
     public ListViewHolder(View itemView) {
         super(itemView);
@@ -108,6 +112,11 @@ public class ListViewHolder extends BaseViewHolder {
         bind(item, getAdapterPosition());
     }
 
+    /** 下发与行一一对应的子字段更新时间，需在 {@link #bind} 之前调用。 */
+    public void setRowUpdateTimes(List<Map<String, Object>> rowUpdateTimes) {
+        this.rowUpdateTimes = rowUpdateTimes;
+    }
+
     @Override
     public void bind(BaseFormItem item, int position) {
         listItem = (ListFormItem) item;
@@ -142,6 +151,7 @@ public class ListViewHolder extends BaseViewHolder {
         listItem.clearError();
         renderRows();
         updateErrorState();
+        notifyOuterFieldChanged();
     }
 
     private void renderRows() {
@@ -197,6 +207,7 @@ public class ListViewHolder extends BaseViewHolder {
             if (listItem.removeRow(index)) {
                 renderRows();
                 updateErrorState();
+                notifyOuterFieldChanged();
             }
         });
         header.addView(deleteAction, new LinearLayout.LayoutParams(
@@ -208,7 +219,9 @@ public class ListViewHolder extends BaseViewHolder {
 
         LinearLayout content = new LinearLayout(itemView.getContext());
         content.setOrientation(LinearLayout.VERTICAL);
-        renderNodes(content, row.getNodes(), 0);
+        Map<String, Object> rowTimes = rowUpdateTimes != null && index < rowUpdateTimes.size()
+                ? rowUpdateTimes.get(index) : null;
+        renderNodes(content, row.getNodes(), 0, rowTimes);
 
         rowLayout.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -219,7 +232,7 @@ public class ListViewHolder extends BaseViewHolder {
         return rowLayout;
     }
 
-    private void renderNodes(LinearLayout parent, List<OfflineFormNode> nodes, int depth) {
+    private void renderNodes(LinearLayout parent, List<OfflineFormNode> nodes, int depth, Map<String, Object> rowTimes) {
         if (nodes == null) {
             return;
         }
@@ -228,11 +241,11 @@ public class ListViewHolder extends BaseViewHolder {
                 continue;
             }
             if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType()) && node.getField() != null) {
-                parent.addView(createFieldView(parent, node, depth), createChildLayoutParams());
+                parent.addView(createFieldView(parent, node, depth, rowTimes), createChildLayoutParams());
             } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType())) {
                 parent.addView(createTextView(node, depth), createChildLayoutParams());
             } else {
-                parent.addView(createGroupView(node, depth), createChildLayoutParams());
+                parent.addView(createGroupView(node, depth, rowTimes), createChildLayoutParams());
             }
         }
     }
@@ -245,7 +258,7 @@ public class ListViewHolder extends BaseViewHolder {
         return params;
     }
 
-    private View createFieldView(ViewGroup parent, OfflineFormNode node, int depth) {
+    private View createFieldView(ViewGroup parent, OfflineFormNode node, int depth, Map<String, Object> rowTimes) {
         BaseFormItem formItem = node.getField();
         OfflineFormItemHandler handler = OfflineFormItemRegistry.getHandler(formItem.getItemType());
         BaseViewHolder holder = handler.createEditViewHolder(parent);
@@ -256,11 +269,13 @@ public class ListViewHolder extends BaseViewHolder {
             formItem.setTitle(node.getTitle());
         }
         holder.bind(formItem, -1);
+        OfflineFormFieldTimeViews.apply(holder.itemView, rowTimes == null ? null : rowTimes.get(formItem.getId()));
+        holder.setOnFieldChanged(getFieldChangedCallback());
         formItem.setTitle(originalTitle);
         return holder.itemView;
     }
 
-    private View createGroupView(OfflineFormNode node, int depth) {
+    private View createGroupView(OfflineFormNode node, int depth, Map<String, Object> rowTimes) {
         LinearLayout groupLayout = new LinearLayout(itemView.getContext());
         groupLayout.setOrientation(LinearLayout.VERTICAL);
         groupLayout.setPadding(dp(itemView.getContext(), depth * 12), dp(itemView.getContext(), 4), 0, 0);
@@ -273,7 +288,7 @@ public class ListViewHolder extends BaseViewHolder {
         groupLayout.addView(groupTitle, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        renderNodes(groupLayout, node.getChildren(), depth + 1);
+        renderNodes(groupLayout, node.getChildren(), depth + 1, rowTimes);
         return groupLayout;
     }
 

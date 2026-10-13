@@ -22,6 +22,7 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemRegistry;
 import com.huozige.lab.container.offlineform.formitem.file.FileExtensionIconView;
+import com.huozige.lab.container.offlineform.formitem.list.ListViewHolder;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
@@ -29,6 +30,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
 import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
 import com.huozige.lab.container.offlineform.model.OfflineFormProgressDisplay;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimeViews;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
@@ -52,9 +54,37 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private Map<String, String> formValues = new HashMap<>();
     private OnDocumentClickListener documentClickListener;
     private List<String> documentFileNames = new ArrayList<>();
+    // 字段更新时间提供者：随记录变化实时取值，避免 notifyDataSetChanged 时读到旧快照。
+    private FieldUpdateTimesProvider fieldUpdateTimesProvider;
+    // 字段值变更监听：用于即时刷新更新时间并安排防抖落盘。
+    private OnFieldChangedListener onFieldChangedListener;
 
     public interface OnDocumentClickListener {
         void onDocumentClick(OfflineFormDisplayItem item, String fileName);
+    }
+
+    public interface OnFieldChangedListener {
+        /** 用户完成一次字段值变更（用于防抖落盘）。 */
+        void onFieldChanged();
+    }
+
+    public void setOnFieldChangedListener(OnFieldChangedListener listener) {
+        onFieldChangedListener = listener;
+    }
+
+    public interface FieldUpdateTimesProvider {
+        /** 返回当前记录的字段更新时间（key 为字段 id，列表字段为与行对应的 List<Map>）。 */
+        Map<String, Object> getFieldUpdateTimes();
+    }
+
+    public void setFieldUpdateTimesProvider(FieldUpdateTimesProvider provider) {
+        fieldUpdateTimesProvider = provider;
+    }
+
+    private void dispatchFieldChanged() {
+        if (onFieldChangedListener != null) {
+            onFieldChangedListener.onFieldChanged();
+        }
     }
 
     public void setProgressContext(OfflineFormDefinition definition, Map<String, String> formValues) {
@@ -545,8 +575,38 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if ((originalTitle == null || originalTitle.isEmpty()) && displayTitle != null && !displayTitle.isEmpty()) {
             formItem.setTitle(displayTitle);
         }
-        holder.bind(formItem, position);
+        holder.setOnFieldChanged(this::dispatchFieldChanged);
+        if (holder instanceof ListViewHolder) {
+            // 列表字段没有单一更新时间：把各行的时间下发给 ListViewHolder，由其渲染到对应子字段。
+            ((ListViewHolder) holder).setRowUpdateTimes(resolveListRowTimes(formItem.getId()));
+            holder.bind(formItem, position);
+        } else {
+            holder.bind(formItem, position);
+            OfflineFormFieldTimeViews.apply(holder.itemView, resolveFieldTime(formItem.getId()));
+        }
         formItem.setTitle(originalTitle);
+    }
+
+    private Map<String, Object> currentFieldUpdateTimes() {
+        return fieldUpdateTimesProvider == null ? null : fieldUpdateTimesProvider.getFieldUpdateTimes();
+    }
+
+    private Object resolveFieldTime(String fieldId) {
+        Map<String, Object> times = currentFieldUpdateTimes();
+        return times == null ? null : times.get(fieldId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> resolveListRowTimes(String fieldId) {
+        Object value = resolveFieldTime(fieldId);
+        if (!(value instanceof List)) {
+            return null;
+        }
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Object row : (List<Object>) value) {
+            rows.add(row instanceof Map ? (Map<String, Object>) row : null);
+        }
+        return rows;
     }
 
     private static GradientDrawable createRoundedBackground(View view, int colorResId, int radius) {

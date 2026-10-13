@@ -96,6 +96,7 @@ public class FileViewHolder extends BaseViewHolder {
         fileItem.clearError();
         renderFiles();
         updateErrorState();
+        notifyFieldChanged();
     }
 
     //todo 性能优化
@@ -237,6 +238,7 @@ public class FileViewHolder extends BaseViewHolder {
     }
 
     private void notifyFilesChanged() {
+        notifyFieldChanged();
         if (itemView.getContext() instanceof FileUploadHost) {
             ((FileUploadHost) itemView.getContext()).onFilesChanged(fileItem);
         }

@@ -20,6 +20,8 @@ public class TextViewHolder extends BaseViewHolder {
     private TextView tvRequired;
 
     private TextFormItem item;
+    // bind 期间由代码回填文本，不应视为用户变更。
+    private boolean binding;
 
     public TextViewHolder(View itemView) {
         super(itemView);
@@ -47,6 +49,9 @@ public class TextViewHolder extends BaseViewHolder {
                     item.setValue(s.toString());
                     etInput.post(TextViewHolder.this::updateInputGravity);
                     updateErrorState();
+                    if (!binding) {
+                        notifyFieldChanged();
+                    }
                 }
             }
         });
@@ -63,12 +68,14 @@ public class TextViewHolder extends BaseViewHolder {
         TextFormItem textItem = (TextFormItem) item;
         this.item = textItem;
 
+        binding = true;
         tvTitle.setText(textItem.getTitle());
         etInput.setHint(textItem.getHint());
         configureInput(textItem);
         etInput.setText(textItem.getValue() != null ? textItem.getValue() : "");
         etInput.post(this::updateInputGravity);
         tvRequired.setVisibility(textItem.isRequired() ? View.VISIBLE : View.GONE);
+        binding = false;
 
         updateErrorState();
     }

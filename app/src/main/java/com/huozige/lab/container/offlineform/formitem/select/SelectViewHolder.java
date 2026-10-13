@@ -81,6 +81,7 @@ public class SelectViewHolder extends BaseViewHolder {
                     tvValue.setHint("");
                     selectItem.clearError();
                     updateErrorState();
+                    notifyFieldChanged();
                     dialog.dismiss();
                 })
                 .show();
