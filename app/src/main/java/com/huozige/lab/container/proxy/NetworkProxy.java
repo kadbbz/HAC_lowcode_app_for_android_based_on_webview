@@ -197,6 +197,18 @@ public class NetworkProxy extends AbstractProxy {
     }
 
     /**
+     * 同步查询当前网络状态（直接返回 JSON 字符串，无需回调）。
+     * 供 H5 页面"直接获取网络信息"使用。
+     */
+    @JavascriptInterface
+    public String getStatus() {
+        writeInfoLog("NetworkGetStatusSync");
+        registryForFeatureUsageAnalyze("use_network_status_feature", "getStatusSync");
+
+        return buildCurrentStatus().toJson();
+    }
+
+    /**
      * 订阅网络状态变化。注册后立即回一次当前状态。
      */
     @JavascriptInterface
