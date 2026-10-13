@@ -147,7 +147,8 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize"
             android:exported="false" />
         <activity android:name=".offlineform.OfflinePlusListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflinePlusExportListActivity"
             android:exported="false" />
         <activity android:name=".offlineform.OfflineProjectRecordActivity"

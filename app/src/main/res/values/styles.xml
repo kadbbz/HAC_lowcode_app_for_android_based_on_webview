@@ -8,6 +8,14 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- 离线填报列表使用 MaterialCardView 等 Material 组件，要求主题继承自 Theme.MaterialComponents，
+         否则会在 inflate 卡片时抛出 IllegalArgumentException 并导致页面反复重试布局而无响应。 -->
+    <style name="OfflineFormTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
     <style name="SignatureCaptureTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowFullscreen">true</item>
