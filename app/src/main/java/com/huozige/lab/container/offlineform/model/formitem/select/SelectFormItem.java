@@ -50,6 +50,14 @@ public class SelectFormItem extends BaseFormItem {
         return selectedDisplayText;
     }
 
+    @Override
+    public String getDisplayValue() {
+        // 选项类字段的展示值优先取显示文本，缺失时回退到存储值。
+        return selectedDisplayText != null && !selectedDisplayText.isEmpty()
+                ? selectedDisplayText
+                : selectedValue;
+    }
+
     public void addOption(String value, String displayText) {
         options.add(new Option(value, displayText));
     }

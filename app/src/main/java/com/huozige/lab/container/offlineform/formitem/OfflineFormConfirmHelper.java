@@ -49,7 +49,7 @@ public final class OfflineFormConfirmHelper {
         String message = messageTemplate
                 .replace("{title}", safe(item.getTitle()))
                 .replace("{value}", safe(newDisplayValue))
-                .replace("{oldValue}", safe(item.getValue()));
+                .replace("{oldValue}", safe(item.getDisplayValue()));
 
         new AlertDialog.Builder(context)
                 .setTitle(title)

@@ -31,4 +31,12 @@ public abstract class BaseFormItem {
     public abstract boolean isEmpty();
     public abstract boolean validate();
     public abstract void clearError();
+
+    /**
+     * 用于界面展示的值文本；默认与存储值一致。
+     * 选项类字段（下拉选择、单选框）会覆盖为所选选项的显示文本。
+     */
+    public String getDisplayValue() {
+        return getValue();
+    }
 }
