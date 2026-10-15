@@ -253,6 +253,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 ? Collections.emptyMap()
                 : _editingRecord.getFieldUpdateTimes());
         _adapter.setOnFieldChangedListener(this::scheduleAutoSave);
+        _adapter.setLockedFieldIdsProvider(() -> _editingRecord == null
+                ? null
+                : _editingRecord.getLockedFieldIds());
+        _adapter.setOnFieldLockedListener(this::lockField);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
     }
@@ -932,6 +936,29 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void scheduleAutoSave() {
         _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
         _autoSaveHandler.postDelayed(_autoSaveRunnable, AUTO_SAVE_DELAY_MS);
+    }
+
+    /**
+     * 记录某字段因“二次确认后禁用”而被锁定。
+     * <p>把字段 id 写入记录的 {@code lockedFieldIds} 并安排落盘，重新进入表单后仍保持禁用。</p>
+     */
+    private void lockField(String fieldId) {
+        if (_definition == null || fieldId == null || fieldId.isEmpty()) {
+            return;
+        }
+        if (_editingRecord == null) {
+            _editingRecord = OfflineFormRecord.createDraft(
+                    _intent.getStringExtra("patternId"),
+                    _intent.getStringExtra("schemaVersion"),
+                    collectAllFormData());
+        }
+        if (_editingRecord.getLockedFieldIds() == null) {
+            _editingRecord.setLockedFieldIds(new ArrayList<>());
+        }
+        if (!_editingRecord.getLockedFieldIds().contains(fieldId)) {
+            _editingRecord.getLockedFieldIds().add(fieldId);
+            scheduleAutoSave();
+        }
     }
 
     private void writeRecord(OfflineFormRecordStatus status) {

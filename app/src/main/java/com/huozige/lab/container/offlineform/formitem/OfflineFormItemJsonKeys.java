@@ -6,6 +6,7 @@ public final class OfflineFormItemJsonKeys {
     public static final String FIELD_HINT = "hint";
     public static final String FIELD_REQUIRED = "required";
     public static final String FIELD_SHOW_UPDATE_TIME = "showFieldUpdateTime";
+    public static final String FIELD_CONFIRM = "confirm";
     public static final String FIELD_ITEM_TYPE = "itemType";
     public static final String FIELD_VALUE = "value";
     public static final String FIELD_UPDATE_TIME = "updateTime";

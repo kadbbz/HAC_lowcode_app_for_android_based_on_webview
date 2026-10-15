@@ -16,6 +16,7 @@ import com.huozige.lab.container.offlineform.formitem.radio.RadioFormItemHandler
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.common.FormItemConfirmOptions;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput;
 import com.huozige.lab.container.offlineform.util.ODateUtils;
 
@@ -75,7 +76,20 @@ public final class OfflineFormItemRegistry {
         BaseFormItem item = handler.fromInput(input);
         item.setUpdateTime(input.updateTime == null ? ODateUtils.now() : input.updateTime);
         item.setShowFieldUpdateTime(input.showFieldUpdateTime);
+        item.setConfirmOptions(parseConfirmOptions(input.confirm));
         return item;
+    }
+
+    private static FormItemConfirmOptions parseConfirmOptions(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            FormItemConfirmOptions options = JSON.parseObject(JSON.toJSONString(raw), FormItemConfirmOptions.class);
+            return options != null && options.isEnabled() ? options : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     private static void normalizeOptions(FormItemInput input, OfflineFormItemHandler handler) {

@@ -1,8 +1,10 @@
 package com.huozige.lab.container.offlineform.model;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -32,15 +34,17 @@ public class OfflineFormRecord {
     // 字段级更新时间，仅 App 内部维护，结构"与 values 平行"：
     // 普通字段 -> ODate 数值；列表字段 -> List<Map<子字段id, 时间>>（与行一一对应）。
     private Map<String, Object> fieldUpdateTimes = new HashMap<>();
+    // 已二次确认并锁定的字段 id 集合，仅 App 内部维护，不参与导出。
+    private List<String> lockedFieldIds = new ArrayList<>();
 
     public static OfflineFormRecord createSubmitted(String patternId, String schemaVersion, Map<String, String> values) {
         long now = System.currentTimeMillis();
-        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values, new HashMap<>());
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.SUBMITTED, now, now, values, new HashMap<>(), new ArrayList<>());
     }
 
     public static OfflineFormRecord createDraft(String patternId, String schemaVersion, Map<String, String> values) {
         long now = System.currentTimeMillis();
-        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.DRAFT, now, now, values, new HashMap<>());
+        return new OfflineFormRecord(createRecordId(), patternId, schemaVersion, OfflineFormRecordStatus.DRAFT, now, now, values, new HashMap<>(), new ArrayList<>());
     }
 
     private static String createRecordId() {

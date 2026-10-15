@@ -12,8 +12,12 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 
     // 用户完成一次字段值变更时回调外层（用于防抖落盘）。
     private Runnable onFieldChanged;
+    // 字段被“二次确认后禁用”时回调外层（用于把锁定状态持久化到记录）。
+    private Runnable onFieldLocked;
     // 是否展示该字段的更新时间（字段级开关，由适配器在 bind 前下发）。
     private boolean showFieldUpdateTime;
+    // 是否已因二次确认而被禁用。由适配器在 bind 后下发。
+    private boolean locked;
 
     public BaseViewHolder(View itemView) {
         super(itemView);
@@ -30,9 +34,28 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
         onFieldChanged = listener;
     }
 
+    /** 设置字段锁定回调；由适配器在 bind 前下发。 */
+    public void setOnFieldLocked(Runnable listener) {
+        onFieldLocked = listener;
+    }
+
     /** 设置是否展示该字段的更新时间；由适配器在 bind 前下发。 */
     public void setShowFieldUpdateTime(boolean showFieldUpdateTime) {
         this.showFieldUpdateTime = showFieldUpdateTime;
+    }
+
+    /** 设置锁定状态并立即应用到视图；由适配器在 bind 后下发。 */
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+        applyLockedState();
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    /** 子类覆盖：根据 {@link #isLocked()} 切换禁用/只读的交互与视觉。默认无操作。 */
+    protected void applyLockedState() {
     }
 
     /**
@@ -50,6 +73,13 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
     protected void notifyOuterFieldChanged() {
         if (onFieldChanged != null) {
             onFieldChanged.run();
+        }
+    }
+
+    /** 通知外层该字段已被“二次确认后禁用”，需要持久化锁定状态。 */
+    protected void notifyFieldLocked() {
+        if (onFieldLocked != null) {
+            onFieldLocked.run();
         }
     }
 

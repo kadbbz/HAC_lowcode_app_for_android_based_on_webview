@@ -58,6 +58,10 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private FieldUpdateTimesProvider fieldUpdateTimesProvider;
     // 字段值变更监听：用于即时刷新更新时间并安排防抖落盘。
     private OnFieldChangedListener onFieldChangedListener;
+    // 已锁定（二次确认后禁用）字段 provider。
+    private LockedFieldIdsProvider lockedFieldIdsProvider;
+    // 字段被锁定时回调外层，用于把锁定状态持久化到记录。
+    private OnFieldLockedListener onFieldLockedListener;
 
     public interface OnDocumentClickListener {
         void onDocumentClick(OfflineFormDisplayItem item, String fileName);
@@ -70,6 +74,30 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setOnFieldChangedListener(OnFieldChangedListener listener) {
         onFieldChangedListener = listener;
+    }
+
+    public interface LockedFieldIdsProvider {
+        /** 返回当前记录中已锁定（二次确认后禁用）的字段 id 列表。 */
+        List<String> getLockedFieldIds();
+    }
+
+    public void setLockedFieldIdsProvider(LockedFieldIdsProvider provider) {
+        lockedFieldIdsProvider = provider;
+    }
+
+    public interface OnFieldLockedListener {
+        /** 字段被“二次确认后禁用”时回调（用于持久化锁定状态）。 */
+        void onFieldLocked(String fieldId);
+    }
+
+    public void setOnFieldLockedListener(OnFieldLockedListener listener) {
+        onFieldLockedListener = listener;
+    }
+
+    private void dispatchFieldLocked(String fieldId) {
+        if (onFieldLockedListener != null) {
+            onFieldLockedListener.onFieldLocked(fieldId);
+        }
     }
 
     public interface FieldUpdateTimesProvider {
@@ -576,6 +604,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             formItem.setTitle(displayTitle);
         }
         holder.setOnFieldChanged(this::dispatchFieldChanged);
+        holder.setOnFieldLocked(() -> dispatchFieldLocked(formItem.getId()));
         holder.setShowFieldUpdateTime(formItem.isShowFieldUpdateTime());
         if (holder instanceof ListViewHolder) {
             // 列表字段没有单一更新时间：把各行的时间下发给 ListViewHolder，由其渲染到对应子字段。
@@ -587,6 +616,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     formItem.isShowFieldUpdateTime() ? resolveFieldTime(formItem.getId()) : null);
         }
         formItem.setTitle(originalTitle);
+
+        List<String> lockedFieldIds = lockedFieldIdsProvider == null ? null : lockedFieldIdsProvider.getLockedFieldIds();
+        holder.setLocked(lockedFieldIds != null && lockedFieldIds.contains(formItem.getId()));
     }
 
     private Map<String, Object> currentFieldUpdateTimes() {
