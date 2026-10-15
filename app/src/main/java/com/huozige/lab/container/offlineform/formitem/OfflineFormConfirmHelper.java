@@ -1,7 +1,9 @@
 package com.huozige.lab.container.offlineform.formitem;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.text.TextUtils;
+import android.widget.Button;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -45,33 +47,67 @@ public final class OfflineFormConfirmHelper {
         }
 
         String title = resolve(options.getTitle(), context.getString(R.string.offline_confirm_default_title));
-        String messageTemplate = resolve(options.getMessage(), context.getString(R.string.offline_confirm_default_message));
+        String messageTemplate = resolveMessageTemplate(context, item, options);
         String message = messageTemplate
                 .replace("{title}", safe(item.getTitle()))
                 .replace("{value}", safe(newDisplayValue))
                 .replace("{oldValue}", safe(item.getDisplayValue()));
 
-        new AlertDialog.Builder(context)
+        AlertDialog dialog = new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton(resolve(options.getConfirmButtonText(),
-                        context.getString(R.string.offline_button_confirm)), (dialog, which) -> {
+                        context.getString(R.string.offline_button_confirm)), (d, which) -> {
                     if (onConfirm != null) {
                         onConfirm.run();
                     }
                 })
                 .setNegativeButton(resolve(options.getCancelButtonText(),
-                        context.getString(R.string.offline_button_cancel)), (dialog, which) -> {
+                        context.getString(R.string.offline_button_cancel)), (d, which) -> {
                     if (onCancel != null) {
                         onCancel.run();
                     }
                 })
-                .setOnCancelListener(dialog -> {
+                .setOnCancelListener(d -> {
                     if (onCancel != null) {
                         onCancel.run();
                     }
                 })
-                .show();
+                .create();
+        dialog.show();
+        styleButtons(dialog, context);
+    }
+
+    /**
+     * 选择弹窗内容模板：
+     * 1. 首次填写（当前无值）且配置了「首次填写内容」时优先使用；
+     * 2. 否则使用「弹窗内容」；
+     * 3. 两者都为空时使用默认文案；
+     * 4. 当前无值、但自定义文案依赖 {oldValue} 时，回退到内置的首次填写文案，避免出现「」。
+     */
+    private static String resolveMessageTemplate(Context context, BaseFormItem item, FormItemConfirmOptions options) {
+        String customMessage = options.getMessage();
+        boolean firstFill = item.isEmpty();
+        if (firstFill && !TextUtils.isEmpty(options.getFirstFillMessage())) {
+            return options.getFirstFillMessage();
+        }
+        if (firstFill && !TextUtils.isEmpty(customMessage) && customMessage.contains("{oldValue}")) {
+            return context.getString(R.string.offline_confirm_default_first_fill_message);
+        }
+        return resolve(customMessage, context.getString(R.string.offline_confirm_default_message));
+    }
+
+    /** 区分确定/取消按钮：确定高亮加粗，取消用次要色，避免两个按钮看起来一样。 */
+    private static void styleButtons(AlertDialog dialog, Context context) {
+        Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (positiveButton != null) {
+            positiveButton.setTextColor(context.getColor(R.color.huozige_blue));
+            positiveButton.setTypeface(null, Typeface.BOLD);
+        }
+        Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (negativeButton != null) {
+            negativeButton.setTextColor(context.getColor(R.color.gray));
+        }
     }
 
     private static String resolve(String custom, String fallback) {

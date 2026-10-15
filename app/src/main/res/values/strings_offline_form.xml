@@ -34,6 +34,7 @@
     <string name="offline_button_cancel">取消</string>
     <string name="offline_confirm_default_title">请确认</string>
     <string name="offline_confirm_default_message">确定要将「{title}」修改为「{value}」吗？</string>
+    <string name="offline_confirm_default_first_fill_message">确定要将「{title}」设为「{value}」吗？</string>
     <string name="offline_button_reset">重置</string>
     <string name="offline_button_rotate_left">左转</string>
     <string name="offline_button_rotate_right">右转</string>

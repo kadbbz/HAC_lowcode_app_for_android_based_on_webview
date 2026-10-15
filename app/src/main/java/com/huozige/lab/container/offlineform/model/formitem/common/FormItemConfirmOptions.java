@@ -18,6 +18,8 @@ public class FormItemConfirmOptions {
     private String title;
     /** 弹窗内容；为空时使用默认文案，支持 {title}/{value}/{oldValue} 占位符。 */
     private String message;
+    /** 首次填写（当前无值）时的弹窗内容；为空时回退到 message。 */
+    private String firstFillMessage;
     /** 确定按钮文字；为空时使用默认文案。 */
     private String confirmButtonText;
     /** 取消按钮文字；为空时使用默认文案。 */
