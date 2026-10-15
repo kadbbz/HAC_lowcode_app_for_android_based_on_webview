@@ -1,5 +1,6 @@
 package com.huozige.lab.container.offlineform.formitem.radio;
 
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.RadioButton;
@@ -64,13 +65,18 @@ public class RadioViewHolder extends BaseViewHolder {
     /** 取消确认时把勾选回滚到原值，且不触发任何字段变更回调。 */
     private void restoreCheckedValue(String value) {
         binding = true;
-        for (int i = 0; i < radioGroup.getChildCount(); i++) {
-            View child = radioGroup.getChildAt(i);
-            if (child instanceof RadioButton) {
-                RadioButton radioButton = (RadioButton) child;
-                if (Objects.equals(String.valueOf(radioButton.getTag()), value)) {
-                    radioButton.setChecked(true);
-                    break;
+        if (TextUtils.isEmpty(value)) {
+            // 原始为空：需要清除勾选，否则新选项会一直显示。
+            radioGroup.clearCheck();
+        } else {
+            for (int i = 0; i < radioGroup.getChildCount(); i++) {
+                View child = radioGroup.getChildAt(i);
+                if (child instanceof RadioButton) {
+                    RadioButton radioButton = (RadioButton) child;
+                    if (Objects.equals(String.valueOf(radioButton.getTag()), value)) {
+                        radioButton.setChecked(true);
+                        break;
+                    }
                 }
             }
         }

@@ -97,7 +97,7 @@ public class SelectViewHolder extends BaseViewHolder {
             return;
         }
         OfflineFormConfirmHelper.show(itemView.getContext(), selectItem, selected.getDisplayText(),
-                () -> applySelection(selected), null);
+                () -> applySelection(selected), this::bindValue);
     }
 
     private void applySelection(SelectFormItem.Option selected) {
@@ -138,7 +138,16 @@ public class SelectViewHolder extends BaseViewHolder {
 
         tvTitle.setText(selectItem.getTitle());
         tvRequired.setVisibility(selectItem.isRequired() ? View.VISIBLE : View.GONE);
+        bindValue();
 
+        updateErrorState();
+    }
+
+    /** 按模型当前值刷新显示（用于 bind 与取消确认后的回滚）。 */
+    private void bindValue() {
+        if (selectItem == null) {
+            return;
+        }
         if (selectItem.getValue() != null && !selectItem.getValue().isEmpty()) {
             tvValue.setText(selectItem.getSelectedDisplayText());
             tvValue.setHint("");
@@ -146,8 +155,6 @@ public class SelectViewHolder extends BaseViewHolder {
             tvValue.setText("");
             tvValue.setHint(selectItem.getHint());
         }
-
-        updateErrorState();
     }
 
     @Override
