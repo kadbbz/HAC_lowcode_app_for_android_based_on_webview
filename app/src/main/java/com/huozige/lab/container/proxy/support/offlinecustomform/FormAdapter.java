@@ -62,6 +62,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private LockedFieldIdsProvider lockedFieldIdsProvider;
     // 字段被锁定时回调外层，用于把锁定状态持久化到记录。
     private OnFieldLockedListener onFieldLockedListener;
+    // 需要高亮的字段 id provider（筛选未填时标记缺填的必填项）。
+    private HighlightedFieldIdsProvider highlightedFieldIdsProvider;
 
     public interface OnDocumentClickListener {
         void onDocumentClick(OfflineFormDisplayItem item, String fileName);
@@ -98,6 +100,15 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (onFieldLockedListener != null) {
             onFieldLockedListener.onFieldLocked(fieldId);
         }
+    }
+
+    public interface HighlightedFieldIdsProvider {
+        /** 返回需要高亮的字段 id 列表；无高亮时返回 null。 */
+        List<String> getHighlightedFieldIds();
+    }
+
+    public void setHighlightedFieldIdsProvider(HighlightedFieldIdsProvider provider) {
+        highlightedFieldIdsProvider = provider;
     }
 
     public interface FieldUpdateTimesProvider {
@@ -619,6 +630,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         List<String> lockedFieldIds = lockedFieldIdsProvider == null ? null : lockedFieldIdsProvider.getLockedFieldIds();
         holder.setLocked(lockedFieldIds != null && lockedFieldIds.contains(formItem.getId()));
+
+        List<String> highlightedFieldIds = highlightedFieldIdsProvider == null ? null : highlightedFieldIdsProvider.getHighlightedFieldIds();
+        holder.setHighlighted(highlightedFieldIds != null && highlightedFieldIds.contains(formItem.getId()));
     }
 
     private Map<String, Object> currentFieldUpdateTimes() {

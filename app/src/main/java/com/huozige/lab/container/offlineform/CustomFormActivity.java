@@ -97,6 +97,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int FILTER_SEARCH = 3;
     // 字段变更后延迟落盘，避免逐字符写文件。
     private static final long AUTO_SAVE_DELAY_MS = 600;
+    // “仅未填”筛选下，缺填必填项的高亮持续时间。
+    private static final long REQUIRED_EMPTY_HIGHLIGHT_MS = 3000;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -140,6 +142,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     // 字段变更后的防抖落盘。
     private final Handler _autoSaveHandler = new Handler(Looper.getMainLooper());
     private final Runnable _autoSaveRunnable = this::persistRecord;
+    // “仅未填”高亮的失效时间戳；到期后清除高亮。
+    private long _requiredEmptyHighlightUntil;
+    private final Runnable _clearRequiredEmptyHighlightRunnable = this::clearRequiredEmptyHighlight;
 
 
     @Override
@@ -181,6 +186,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     @Override
     protected void onDestroy() {
         _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
+        _autoSaveHandler.removeCallbacks(_clearRequiredEmptyHighlightRunnable);
         super.onDestroy();
     }
 
@@ -211,6 +217,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _searchKeyword = savedInstanceState.getString(STATE_SEARCH_KEYWORD, "");
         setFilterModeSelection(_filterMode);
+        if (_filterMode == FILTER_UNFILLED) {
+            startRequiredEmptyHighlight();
+        }
         renderCurrentStep();
     }
 
@@ -257,6 +266,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 ? null
                 : _editingRecord.getLockedFieldIds());
         _adapter.setOnFieldLockedListener(this::lockField);
+        _adapter.setHighlightedFieldIdsProvider(() -> _filterMode == FILTER_UNFILLED
+                && System.currentTimeMillis() < _requiredEmptyHighlightUntil
+                ? collectRequiredEmptyFieldIds()
+                : null);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
     }
@@ -490,6 +503,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 _searchKeyword = "";
                 _filterMode = position;
+                if (position == FILTER_UNFILLED) {
+                    startRequiredEmptyHighlight();
+                }
                 renderCurrentStep();
             }
 
@@ -684,13 +700,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private boolean shouldShowRootItemByFilter(OfflineFormDisplayItem item) {
         switch (_filterMode) {
             case FILTER_UNFILLED:
-                return item.isField()
-                        ? item.getFormItem().isEmpty()
-                        : item.isGroup() && hasEmptyField(item.getNode());
+                // 仅必填项参与筛选：存在必填且为空即视为“未填”。
+                return hasRequiredEmptyField(item.getNode());
             case FILTER_FILLED:
-                return item.isField()
-                        ? !item.getFormItem().isEmpty()
-                        : item.isGroup() && hasField(item.getNode()) && !hasEmptyField(item.getNode());
+                // 仅必填项参与筛选：存在必填项且必填项均已填即视为“已填”。
+                return hasRequiredField(item.getNode()) && !hasRequiredEmptyField(item.getNode());
             case FILTER_SEARCH:
                 return matchesSearch(item);
             case FILTER_ALL:
@@ -747,34 +761,81 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return text != null && text.toLowerCase(Locale.CHINA).contains(_searchKeyword.toLowerCase(Locale.CHINA));
     }
 
-    private boolean hasEmptyField(OfflineFormNode node) {
-        if (node == null || node.getChildren() == null) {
+    /**
+     * 节点（含自身与所有后代）是否存在“必填且为空”的表单项。
+     * 非必填项不参与该判定，因此不会让所在项被判为“未填”。
+     */
+    private boolean hasRequiredEmptyField(OfflineFormNode node) {
+        if (node == null) {
+            return false;
+        }
+        if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())
+                && node.getField() != null
+                && node.getField().isRequired()
+                && node.getField().isEmpty()) {
+            return true;
+        }
+        if (node.getChildren() == null) {
             return false;
         }
         for (OfflineFormNode child : node.getChildren()) {
-            if (OfflineFormNode.TYPE_FIELD.equals(child.getNodeType()) && child.getField() != null && child.getField().isEmpty()) {
-                return true;
-            }
-            if (OfflineFormNode.TYPE_GROUP.equals(child.getNodeType()) && hasEmptyField(child)) {
+            if (hasRequiredEmptyField(child)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean hasField(OfflineFormNode node) {
-        if (node == null || node.getChildren() == null) {
+    /** 节点（含自身与所有后代）是否存在必填的表单项。 */
+    private boolean hasRequiredField(OfflineFormNode node) {
+        if (node == null) {
+            return false;
+        }
+        if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())
+                && node.getField() != null
+                && node.getField().isRequired()) {
+            return true;
+        }
+        if (node.getChildren() == null) {
             return false;
         }
         for (OfflineFormNode child : node.getChildren()) {
-            if (OfflineFormNode.TYPE_FIELD.equals(child.getNodeType())) {
-                return true;
-            }
-            if (OfflineFormNode.TYPE_GROUP.equals(child.getNodeType()) && hasField(child)) {
+            if (hasRequiredField(child)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** 当前表单中“必填且为空”的字段 id 集合，供“仅未填”筛选高亮缺填项。 */
+    private List<String> collectRequiredEmptyFieldIds() {
+        List<String> result = new ArrayList<>();
+        if (_definition == null) {
+            return result;
+        }
+        for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(_definition)) {
+            if (item != null && item.isRequired() && item.isEmpty()) {
+                result.add(item.getId());
+            }
+        }
+        return result;
+    }
+
+    /** 进入“仅未填”时开启一次限时高亮：缺填的必填项高亮 3 秒后自动消失。 */
+    private void startRequiredEmptyHighlight() {
+        _requiredEmptyHighlightUntil = System.currentTimeMillis() + REQUIRED_EMPTY_HIGHLIGHT_MS;
+        _autoSaveHandler.removeCallbacks(_clearRequiredEmptyHighlightRunnable);
+        _autoSaveHandler.postDelayed(_clearRequiredEmptyHighlightRunnable, REQUIRED_EMPTY_HIGHLIGHT_MS);
+    }
+
+    private void clearRequiredEmptyHighlight() {
+        if (_requiredEmptyHighlightUntil == 0L) {
+            return;
+        }
+        _requiredEmptyHighlightUntil = 0L;
+        if (_adapter != null) {
+            _adapter.notifyDataSetChanged();
+        }
     }
 
     private void navigateRootItem(int direction) {
