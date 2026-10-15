@@ -35,8 +35,9 @@ import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +49,12 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<OfflineFormDisplayItem> displayItems = new ArrayList<>();
     private List<OfflineFormDisplayItem> rootItems = new ArrayList<>();
-    private Set<Integer> collapsedGroupIds = new HashSet<>();
+    // 折叠状态按分组节点（对象身份）保存，跨重渲染保留；使用 identity set 以规避 OfflineFormNode 的值相等语义。
+    private final Set<OfflineFormNode> collapsedGroupNodes =
+            Collections.newSetFromMap(new IdentityHashMap<OfflineFormNode, Boolean>());
+    // 已按其“默认折叠”配置初始化过的分组节点，保证默认值只应用一次、之后尊重用户操作。
+    private final Set<OfflineFormNode> defaultCollapseInitialized =
+            Collections.newSetFromMap(new IdentityHashMap<OfflineFormNode, Boolean>());
     private Map<Integer, OfflineFormItemHandler> handlersByViewType = new HashMap<>();
     private OfflineFormDefinition definition;
     private Map<String, String> formValues = new HashMap<>();
@@ -148,8 +154,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setDisplayItems(List<OfflineFormDisplayItem> items) {
         displayItems = new ArrayList<>(items);
-        collapsedGroupIds.clear();
-        initializeCollapsedGroups();
+        // 不再清空折叠状态：用户折叠结果跨重渲染保留；仅首次为每个分组应用一次“默认折叠”。
+        initializeCollapseState();
         rebuildRootItems();
         notifyDataSetChanged();
     }
@@ -219,16 +225,15 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /** 展开所有折叠的 group，便于展示校验错误。 */
     public void expandAllGroups() {
-        collapsedGroupIds.clear();
+        collapsedGroupNodes.clear();
         notifyDataSetChanged();
     }
 
     /** 折叠所有分组（含嵌套），便于快速浏览整体结构。 */
     public void collapseAllGroups() {
-        collapsedGroupIds.clear();
         for (OfflineFormDisplayItem item : displayItems) {
-            if (item.isGroup()) {
-                collapsedGroupIds.add(item.getDisplayId());
+            if (item.isGroup() && item.getNode() != null) {
+                collapsedGroupNodes.add(item.getNode());
             }
         }
         notifyDataSetChanged();
@@ -247,10 +252,42 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return -1;
     }
 
-    private void initializeCollapsedGroups() {
-        for (OfflineFormDisplayItem item : displayItems) {
-            if (item.isGroup() && item.getNode().isDefaultCollapsed()) {
-                collapsedGroupIds.add(item.getDisplayId());
+    /**
+     * 为每个首次出现的分组应用一次“默认折叠”配置（并按需级联后代）；
+     * 之后不再重置，以保留用户手动折叠/展开的结果。
+     */
+    private void initializeCollapseState() {
+        for (int i = 0; i < displayItems.size(); i++) {
+            OfflineFormDisplayItem item = displayItems.get(i);
+            if (!item.isGroup() || item.getNode() == null) {
+                continue;
+            }
+            OfflineFormNode node = item.getNode();
+            if (defaultCollapseInitialized.contains(node)) {
+                continue;
+            }
+            defaultCollapseInitialized.add(node);
+            if (node.isDefaultCollapsed()) {
+                collapseGroupWithDescendants(i);
+            }
+        }
+    }
+
+    /** 折叠指定分组，并把其后代分组也一并标记为折叠（父折叠时子也折叠）。 */
+    private void collapseGroupWithDescendants(int groupIndex) {
+        OfflineFormDisplayItem group = displayItems.get(groupIndex);
+        if (group == null || !group.isGroup() || group.getNode() == null) {
+            return;
+        }
+        collapsedGroupNodes.add(group.getNode());
+        int baseDepth = group.getDepth();
+        for (int i = groupIndex + 1; i < displayItems.size(); i++) {
+            OfflineFormDisplayItem item = displayItems.get(i);
+            if (item.getDepth() <= baseDepth) {
+                break;
+            }
+            if (item.isGroup() && item.getNode() != null) {
+                collapsedGroupNodes.add(item.getNode());
             }
         }
     }
@@ -283,12 +320,18 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void toggleGroup(OfflineFormDisplayItem groupItem, TriangleToggleView toggleView, LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
-        if (collapsedGroupIds.contains(groupItem.getDisplayId())) {
-            collapsedGroupIds.remove(groupItem.getDisplayId());
-        } else {
-            collapsedGroupIds.add(groupItem.getDisplayId());
+        OfflineFormNode node = groupItem.getNode();
+        if (node == null) {
+            return;
         }
-        toggleView.setCollapsed(collapsedGroupIds.contains(groupItem.getDisplayId()));
+        if (collapsedGroupNodes.contains(node)) {
+            // 展开：仅展开当前分组，其后代保持各自的折叠状态。
+            collapsedGroupNodes.remove(node);
+        } else {
+            // 折叠：把当前分组及其后代一并标记为折叠。
+            collapseGroupWithDescendants(displayItems.indexOf(groupItem));
+        }
+        toggleView.setCollapsed(collapsedGroupNodes.contains(node));
         renderChildrenContent(childrenLayout, childItems);
     }
 
@@ -370,7 +413,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 1));
 
         TriangleToggleView toggleView = new TriangleToggleView(itemView.getContext());
-        toggleView.setCollapsed(collapsedGroupIds.contains(item.getDisplayId()));
+        toggleView.setCollapsed(collapsedGroupNodes.contains(item.getNode()));
         container.addView(toggleView, new LinearLayout.LayoutParams(
                 dp(itemView.getContext(), 28),
                 dp(itemView.getContext(), 28)));
@@ -758,7 +801,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         childrenLayout.setLayoutTransition(createLayoutTransition());
 
         TriangleToggleView toggleView = bindGroupHeader(header, groupItem, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
-        toggleView.setCollapsed(collapsedGroupIds.contains(groupItem.getDisplayId()));
+        toggleView.setCollapsed(collapsedGroupNodes.contains(groupItem.getNode()));
         groupBlock.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -774,7 +817,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
         childrenLayout.removeAllViews();
-        if (childItems.isEmpty() || collapsedGroupIds.contains(findParentGroupId(childItems))) {
+        if (childItems.isEmpty() || collapsedGroupNodes.contains(findParentNode(childItems))) {
             return;
         }
 
@@ -800,19 +843,19 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    private int findParentGroupId(List<OfflineFormDisplayItem> childItems) {
+    private OfflineFormNode findParentNode(List<OfflineFormDisplayItem> childItems) {
         if (childItems.isEmpty()) {
-            return -1;
+            return null;
         }
         int childIndex = displayItems.indexOf(childItems.get(0));
         int childDepth = childItems.get(0).getDepth();
         for (int i = childIndex - 1; i >= 0; i--) {
             OfflineFormDisplayItem item = displayItems.get(i);
             if (item.isGroup() && item.getDepth() < childDepth) {
-                return item.getDisplayId();
+                return item.getNode();
             }
         }
-        return -1;
+        return null;
     }
 
     private List<OfflineFormDisplayItem> collectDirectChildItems(List<OfflineFormDisplayItem> items, int groupIndex) {
