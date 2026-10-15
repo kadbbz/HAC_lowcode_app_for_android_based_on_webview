@@ -134,8 +134,14 @@ public class OfflinePlusExportListActivity extends BaseActivity {
         String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
         _displayedCardItemList = new ArrayList<>();
         for (OfflineFormDefinitionIndexItem item : _cardItemList) {
-            if (_showUnexportedOnly && !OfflineFormExportStatusHelper.hasUnexportedRecords(this, item)) {
-                continue;
+            if (_showUnexportedOnly) {
+                if (!OfflineFormExportStatusHelper.hasUnexportedRecords(this, item)) {
+                    continue;
+                }
+                // 存在未完成（DRAFT）工作记录的表单不允许导出，不出现在未导出列表中。
+                if (OfflineFormExportStatusHelper.hasUnfinishedWorkingRecord(this, item)) {
+                    continue;
+                }
             }
             if (normalizedKeyword.isEmpty()
                     || containsKeyword(item.getTitle(), normalizedKeyword)

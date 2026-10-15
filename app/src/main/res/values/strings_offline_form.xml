@@ -159,6 +159,7 @@
     <string name="offline_button_sign">签名</string>
     <string name="offline_button_clear_signature">清除签名</string>
     <string name="offline_toast_signature_not_supported">当前页面不支持签名</string>
+    <string name="offline_toast_export_unfinished">该表单存在未完成的填报，请先完成或删除草稿后再导出</string>
     <string name="offline_quick_toggle">快捷操作</string>
     <string name="offline_quick_action_top">回到顶部</string>
     <string name="offline_quick_action_required">跳转到第一个未填必填项</string>

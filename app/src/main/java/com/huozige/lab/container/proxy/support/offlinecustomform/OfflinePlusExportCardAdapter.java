@@ -8,11 +8,12 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
@@ -53,7 +54,10 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OfflineFormDefinitionIndexItem item = _cardItems.get(position);
         boolean exported = OfflineFormExportStatusHelper.isExported(_context, item);
-        boolean selected = isSelected(item);
+        // 存在未完成（DRAFT）工作记录的表单不允许导出：高亮提示并禁用勾选。
+        boolean unfinished = OfflineFormExportStatusHelper.hasUnfinishedWorkingRecord(_context, item);
+        boolean selectable = !exported && !unfinished;
+        boolean selected = selectable && isSelected(item);
 
         holder.titleTextView.setText(item.getTitle());
         holder.descriptionTextView.setText(item.getDescription());
@@ -67,14 +71,30 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
                 R.string.offline_text_progress_rate,
                 String.format(Locale.CHINA, "%.0f%%", computed.getCompletionRate())));
         holder.contentLayout.setPadding(dp(_context, CONTENT_PADDING_DP), holder.contentLayout.getPaddingTop(), holder.contentLayout.getPaddingRight(), holder.contentLayout.getPaddingBottom());
-        holder.cardView.setCardBackgroundColor(selected ? SELECTED_BACKGROUND_COLOR : Color.WHITE);
+        if (unfinished) {
+            holder.cardView.setCardBackgroundColor(Color.WHITE);
+            holder.cardView.setStrokeColor(_context.getColor(R.color.offline_form_card_warning_stroke));
+            holder.cardView.setStrokeWidth(dp(_context, 2));
+        } else {
+            holder.cardView.setCardBackgroundColor(selected ? SELECTED_BACKGROUND_COLOR : Color.WHITE);
+            holder.cardView.setStrokeWidth(0);
+        }
 
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(selected);
-        holder.checkBox.setEnabled(!exported);
-        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> setSelected(item, isChecked));
+        holder.checkBox.setEnabled(selectable);
+        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (selectable) {
+                setSelected(item, isChecked);
+            }
+        });
         holder.itemView.setOnClickListener(v -> {
-            if (exported) {
+            if (unfinished) {
+                // 高亮的表单不可导出：点击时轻提示原因。
+                Toast.makeText(_context, R.string.offline_toast_export_unfinished, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!selectable) {
                 return;
             }
             setSelected(item, !isSelected(item));
@@ -109,12 +129,17 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
         if (items == null || items.isEmpty()) {
             return false;
         }
+        boolean anySelectable = false;
         for (OfflineFormDefinitionIndexItem item : items) {
+            if (!isSelectable(item)) {
+                continue;
+            }
+            anySelectable = true;
             if (!isSelected(item)) {
                 return false;
             }
         }
-        return true;
+        return anySelectable;
     }
 
     public void setSelected(List<OfflineFormDefinitionIndexItem> items, boolean selected) {
@@ -142,7 +167,7 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
         if (item == null || item.getPatternId() == null || item.getPatternId().isEmpty()) {
             return false;
         }
-        if (selected && OfflineFormExportStatusHelper.isExported(_context, item)) {
+        if (selected && !isSelectable(item)) {
             return false;
         }
         if (selected) {
@@ -155,6 +180,15 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
         return item != null && _selectedPatternIds.contains(item.getPatternId());
     }
 
+    /** 是否可被选中导出：未导出、且不存在未完成（DRAFT）工作记录。 */
+    private boolean isSelectable(OfflineFormDefinitionIndexItem item) {
+        if (item == null) {
+            return false;
+        }
+        return !OfflineFormExportStatusHelper.isExported(_context, item)
+                && !OfflineFormExportStatusHelper.hasUnfinishedWorkingRecord(_context, item);
+    }
+
     private void notifySelectionChanged() {
         if (_onSelectionChangedListener != null) {
             _onSelectionChangedListener.onSelectionChanged();
@@ -162,7 +196,7 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        CardView cardView;
+        MaterialCardView cardView;
         TextView titleTextView;
         TextView descriptionTextView;
         TextView metaTextView;
@@ -174,7 +208,7 @@ public class OfflinePlusExportCardAdapter extends RecyclerView.Adapter<OfflinePl
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            cardView = (CardView) itemView;
+            cardView = (MaterialCardView) itemView;
             titleTextView = itemView.findViewById(R.id.titleTextView);
             descriptionTextView = itemView.findViewById(R.id.descriptionTextView);
             metaTextView = itemView.findViewById(R.id.metaTextView);
