@@ -15,6 +15,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.OfflinePlusExportListActivity;
+import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
 import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
 import com.huozige.lab.container.platform.CallbackParams;
@@ -112,6 +113,19 @@ public class OfflinePlusProxy extends AbstractProxy{
     @Override
     public String getName() {
         return "offlinePlus";
+    }
+
+    /**
+     * H5 直接调用：跳转到离线填报列表页。
+     * <p>
+     * 离线填报是离线场景的核心能力，因此这里不受 {@link com.huozige.lab.container.utilities.DeviceUtility}
+     * 离线模式的页面导航拦截，也不受顶部“离线填报入口”菜单显隐配置的影响。
+     */
+    @JavascriptInterface
+    public void offlinePlusOpenFormList() {
+        writeInfoLog("OfflinePlusOpenFormList");
+
+        runOnUiThread(() -> startActivity(OfflinePlusListActivity.class));
     }
 
     @JavascriptInterface
