@@ -7,6 +7,7 @@ import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.switchitem.SwitchFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 
 import java.util.List;
@@ -32,6 +33,8 @@ public final class OfflineFormItemValueHelper {
             ((SignatureFormItem) formItem).setValue(value);
         } else if (formItem instanceof FileFormItem) {
             ((FileFormItem) formItem).setValue(value);
+        } else if (formItem instanceof SwitchFormItem) {
+            ((SwitchFormItem) formItem).setValue(value);
         } else if (formItem instanceof ListFormItem) {
             ((ListFormItem) formItem).setValue(value);
         }

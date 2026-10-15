@@ -101,7 +101,7 @@ public final class OfflineFormValidator {
 
     private static boolean hasFilledField(List<OfflineFormDisplayItem> displayItems) {
         for (OfflineFormDisplayItem displayItem : displayItems) {
-            if (displayItem.isField() && !displayItem.getFormItem().isEmpty()) {
+            if (displayItem.isField() && displayItem.getFormItem().countsAsTouched()) {
                 return true;
             }
         }

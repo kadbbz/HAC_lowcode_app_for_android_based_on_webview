@@ -740,10 +740,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         switch (_filterMode) {
             case FILTER_UNFILLED:
                 // 仅必填项参与筛选：存在必填且为空即视为“未填”。
-                return hasRequiredEmptyField(item.getNode());
+                return hasRequiredUnsatisfiedField(item.getNode());
             case FILTER_FILLED:
                 // 仅必填项参与筛选：存在必填项且必填项均已填即视为“已填”。
-                return hasRequiredField(item.getNode()) && !hasRequiredEmptyField(item.getNode());
+                return hasRequiredField(item.getNode()) && !hasRequiredUnsatisfiedField(item.getNode());
             case FILTER_SEARCH:
                 return matchesSearch(item);
             case FILTER_ALL:
@@ -801,24 +801,25 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     /**
-     * 节点（含自身与所有后代）是否存在“必填且为空”的表单项。
-     * 非必填项不参与该判定，因此不会让所在项被判为“未填”。
+     * 节点（含自身与所有后代）是否存在“必填未满足”的表单项。
+     * 判定口径为 {@link com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem#isRequiredSatisfied()}：
+     * 普通字段为“为空”，开关为“未打开”。非必填项不参与该判定。
      */
-    private boolean hasRequiredEmptyField(OfflineFormNode node) {
+    private boolean hasRequiredUnsatisfiedField(OfflineFormNode node) {
         if (node == null) {
             return false;
         }
         if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())
                 && node.getField() != null
                 && node.getField().isRequired()
-                && node.getField().isEmpty()) {
+                && !node.getField().isRequiredSatisfied()) {
             return true;
         }
         if (node.getChildren() == null) {
             return false;
         }
         for (OfflineFormNode child : node.getChildren()) {
-            if (hasRequiredEmptyField(child)) {
+            if (hasRequiredUnsatisfiedField(child)) {
                 return true;
             }
         }
@@ -894,22 +895,22 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    /** 取节点子树中第一个“必填且为空”的表单项 id。 */
-    private String findFirstRequiredEmptyFieldId(OfflineFormNode node) {
+    /** 取节点子树中第一个“必填未满足”的表单项 id。 */
+    private String findFirstRequiredUnsatisfiedFieldId(OfflineFormNode node) {
         if (node == null) {
             return null;
         }
         if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())
                 && node.getField() != null
                 && node.getField().isRequired()
-                && node.getField().isEmpty()) {
+                && !node.getField().isRequiredSatisfied()) {
             return node.getField().getId();
         }
         if (node.getChildren() == null) {
             return null;
         }
         for (OfflineFormNode child : node.getChildren()) {
-            String fieldId = findFirstRequiredEmptyFieldId(child);
+            String fieldId = findFirstRequiredUnsatisfiedFieldId(child);
             if (fieldId != null) {
                 return fieldId;
             }
@@ -1192,7 +1193,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             return false;
         }
         for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(_definition)) {
-            if (item != null && !item.isEmpty()) {
+            if (item != null && item.hasUserInput()) {
                 return true;
             }
         }
@@ -1400,7 +1401,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 if (item.getDepth() != 0) {
                     continue;
                 }
-                if (hasRequiredEmptyField(item.getNode())) {
+                if (hasRequiredUnsatisfiedField(item.getNode())) {
                     targetStep = s;
                     targetRootNode = item.getNode();
                     break;
@@ -1427,7 +1428,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             // 目标字段由本方法统一高亮，这里不再对整条顶级项闪光。
             scrollToRootItem(position, false);
         }
-        String fieldId = findFirstRequiredEmptyFieldId(targetRootNode);
+        String fieldId = findFirstRequiredUnsatisfiedFieldId(targetRootNode);
         if (fieldId != null) {
             startFieldHighlight(Collections.singletonList(fieldId));
         }

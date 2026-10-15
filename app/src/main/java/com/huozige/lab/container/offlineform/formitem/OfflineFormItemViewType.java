@@ -10,7 +10,8 @@ public enum OfflineFormItemViewType {
     IMAGE(6),
     FILE(7),
     LIST(8),
-    SIGNATURE(9);
+    SIGNATURE(9),
+    SWITCH(11);
 
     private final int value;
 

@@ -10,6 +10,7 @@ public enum OfflineFormItemType {
     IMAGE("imageItem"),
     SIGNATURE("signatureItem"),
     FILE("fileItem"),
+    SWITCH("switchItem"),
     LIST("listItem");
 
     private final String value;

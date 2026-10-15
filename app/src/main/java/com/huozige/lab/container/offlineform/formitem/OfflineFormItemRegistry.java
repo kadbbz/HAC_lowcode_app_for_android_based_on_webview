@@ -14,6 +14,7 @@ import com.huozige.lab.container.offlineform.formitem.picker.TimePickerFormItemH
 import com.huozige.lab.container.offlineform.formitem.select.SelectFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.radio.RadioFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureFormItemHandler;
+import com.huozige.lab.container.offlineform.formitem.switchitem.SwitchFormItemHandler;
 import com.huozige.lab.container.offlineform.formitem.text.TextFormItemHandler;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemConfirmOptions;
@@ -35,6 +36,7 @@ public final class OfflineFormItemRegistry {
         register(new TimePickerFormItemHandler());
         register(new ImageFormItemHandler());
         register(new SignatureFormItemHandler());
+        register(new SwitchFormItemHandler());
         register(new FileFormItemHandler());
         register(new ListFormItemHandler());
         register(new TextFormItemHandler());
