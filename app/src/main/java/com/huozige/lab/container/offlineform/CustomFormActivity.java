@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -97,8 +98,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int FILTER_SEARCH = 3;
     // 字段变更后延迟落盘，避免逐字符写文件。
     private static final long AUTO_SAVE_DELAY_MS = 600;
-    // “仅未填”筛选下，缺填必填项的高亮持续时间。
-    private static final long REQUIRED_EMPTY_HIGHLIGHT_MS = 3000;
+    // 字段高亮闪光的持续时间（“仅未填”筛选与“跳转首个未填必填项”共用）。
+    private static final long FIELD_HIGHLIGHT_MS = 1000;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -139,12 +140,15 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private SignatureFormItem _pendingSignatureItem;
     private String _pendingSignatureUserName;
     private SignatureCallback _pendingSignatureCallback;
+    // 右下角悬浮快捷按钮组。
+    private OfflineQuickActionView _quickActions;
     // 字段变更后的防抖落盘。
     private final Handler _autoSaveHandler = new Handler(Looper.getMainLooper());
     private final Runnable _autoSaveRunnable = this::persistRecord;
-    // “仅未填”高亮的失效时间戳；到期后清除高亮。
-    private long _requiredEmptyHighlightUntil;
-    private final Runnable _clearRequiredEmptyHighlightRunnable = this::clearRequiredEmptyHighlight;
+    // 需要高亮的字段 id 集合与失效时间戳；到期后清除高亮。
+    private final List<String> _highlightFieldIds = new ArrayList<>();
+    private long _highlightUntil;
+    private final Runnable _clearHighlightRunnable = this::clearFieldHighlight;
 
 
     @Override
@@ -164,6 +168,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         initViews();
         setupRecyclerView();
+        setupQuickActions();
         registerImageCaptureLauncher();
         registerImageUploadLauncher();
         registerImagePreviewLauncher();
@@ -186,7 +191,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     @Override
     protected void onDestroy() {
         _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
-        _autoSaveHandler.removeCallbacks(_clearRequiredEmptyHighlightRunnable);
+        _autoSaveHandler.removeCallbacks(_clearHighlightRunnable);
         super.onDestroy();
     }
 
@@ -217,10 +222,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _searchKeyword = savedInstanceState.getString(STATE_SEARCH_KEYWORD, "");
         setFilterModeSelection(_filterMode);
+        renderCurrentStep();
         if (_filterMode == FILTER_UNFILLED) {
             startRequiredEmptyHighlight();
         }
-        renderCurrentStep();
     }
 
     private void initViews() {
@@ -266,12 +271,40 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 ? null
                 : _editingRecord.getLockedFieldIds());
         _adapter.setOnFieldLockedListener(this::lockField);
-        _adapter.setHighlightedFieldIdsProvider(() -> _filterMode == FILTER_UNFILLED
-                && System.currentTimeMillis() < _requiredEmptyHighlightUntil
-                ? collectRequiredEmptyFieldIds()
-                : null);
+        _adapter.setHighlightedFieldIdsProvider(() ->
+                System.currentTimeMillis() < _highlightUntil ? new ArrayList<>(_highlightFieldIds) : null);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
+    }
+
+    /** 装配右下角悬浮快捷按钮组：回到顶部、跳转首个未填必填项、折叠所有分组。 */
+    private void setupQuickActions() {
+        ViewGroup content = findViewById(android.R.id.content);
+        _quickActions = new OfflineQuickActionView(this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                _quickActions.getPreferredWidth(), _quickActions.getPreferredHeight());
+        params.gravity = Gravity.END | Gravity.BOTTOM;
+        params.rightMargin = dp(this, 16);
+        params.bottomMargin = dp(this, 72);
+        content.addView(_quickActions, params);
+        _quickActions.setActionListener(new OfflineQuickActionView.ActionListener() {
+            @Override
+            public void onScrollToTop() {
+                _formScrollView.smoothScrollTo(0, 0);
+            }
+
+            @Override
+            public void onJumpToFirstRequiredEmpty() {
+                jumpToFirstRequiredEmpty();
+            }
+
+            @Override
+            public void onCollapseAllGroups() {
+                if (_adapter != null) {
+                    _adapter.collapseAllGroups();
+                }
+            }
+        });
     }
 
     private void setupBottomHintHeight() {
@@ -503,10 +536,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 _searchKeyword = "";
                 _filterMode = position;
+                renderCurrentStep();
                 if (position == FILTER_UNFILLED) {
                     startRequiredEmptyHighlight();
                 }
-                renderCurrentStep();
             }
 
             @Override
@@ -654,7 +687,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             _stepTabLayout.setVisibility(View.GONE);
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
+            if (_quickActions != null) {
+                _quickActions.setVisibility(View.GONE);
+            }
             return;
+        }
+        if (_quickActions != null) {
+            _quickActions.setVisibility(View.VISIBLE);
         }
 
         renderStepTabs();
@@ -821,21 +860,61 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return result;
     }
 
-    /** 进入“仅未填”时开启一次限时高亮：缺填的必填项高亮 3 秒后自动消失。 */
+    /** 进入“仅未填”时开启一次限时高亮：缺填的必填项高亮 1 秒后自动消失。 */
     private void startRequiredEmptyHighlight() {
-        _requiredEmptyHighlightUntil = System.currentTimeMillis() + REQUIRED_EMPTY_HIGHLIGHT_MS;
-        _autoSaveHandler.removeCallbacks(_clearRequiredEmptyHighlightRunnable);
-        _autoSaveHandler.postDelayed(_clearRequiredEmptyHighlightRunnable, REQUIRED_EMPTY_HIGHLIGHT_MS);
+        startFieldHighlight(collectRequiredEmptyFieldIds());
     }
 
-    private void clearRequiredEmptyHighlight() {
-        if (_requiredEmptyHighlightUntil == 0L) {
-            return;
+    /** 高亮指定字段若干（1 秒后自动清除）；用于“仅未填”筛选与“跳转首个未填必填项”。 */
+    private void startFieldHighlight(List<String> fieldIds) {
+        _highlightFieldIds.clear();
+        if (fieldIds != null) {
+            for (String fieldId : fieldIds) {
+                if (fieldId != null && !fieldId.isEmpty()) {
+                    _highlightFieldIds.add(fieldId);
+                }
+            }
         }
-        _requiredEmptyHighlightUntil = 0L;
+        _highlightUntil = System.currentTimeMillis() + FIELD_HIGHLIGHT_MS;
         if (_adapter != null) {
             _adapter.notifyDataSetChanged();
         }
+        _autoSaveHandler.removeCallbacks(_clearHighlightRunnable);
+        _autoSaveHandler.postDelayed(_clearHighlightRunnable, FIELD_HIGHLIGHT_MS);
+    }
+
+    private void clearFieldHighlight() {
+        if (_highlightUntil == 0L && _highlightFieldIds.isEmpty()) {
+            return;
+        }
+        _highlightUntil = 0L;
+        _highlightFieldIds.clear();
+        if (_adapter != null) {
+            _adapter.notifyDataSetChanged();
+        }
+    }
+
+    /** 取节点子树中第一个“必填且为空”的表单项 id。 */
+    private String findFirstRequiredEmptyFieldId(OfflineFormNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType())
+                && node.getField() != null
+                && node.getField().isRequired()
+                && node.getField().isEmpty()) {
+            return node.getField().getId();
+        }
+        if (node.getChildren() == null) {
+            return null;
+        }
+        for (OfflineFormNode child : node.getChildren()) {
+            String fieldId = findFirstRequiredEmptyFieldId(child);
+            if (fieldId != null) {
+                return fieldId;
+            }
+        }
+        return null;
     }
 
     private void navigateRootItem(int direction) {
@@ -865,6 +944,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void scrollToRootItem(int position) {
+        scrollToRootItem(position, true);
+    }
+
+    private void scrollToRootItem(int position, boolean highlight) {
         _recyclerView.scrollToPosition(position);
         _recyclerView.postDelayed(() -> {
             View itemView = getRootItemView(position);
@@ -873,7 +956,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             }
             int scrollY = Math.max(0, _recyclerView.getTop() + itemView.getTop() - dp(this, 8));
             _formScrollView.smoothScrollTo(0, scrollY);
-            playHighlight(itemView);
+            if (highlight) {
+                playHighlight(itemView);
+            }
         }, 80);
     }
 
@@ -884,7 +969,23 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void updateItemNavigationVisibility() {
         int itemCount = _adapter == null ? 0 : _adapter.getItemCount();
-        _itemNavigationLayout.setVisibility(_formLoaded && itemCount > 1 ? View.VISIBLE : View.GONE);
+        boolean visible = _formLoaded && itemCount > 1;
+        _itemNavigationLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+        updateQuickActionsInset(visible);
+    }
+
+    /**
+     * 底部导航栏可见时收窄拖动下界，避免悬浮按钮被拖到导航栏上；
+     * 贴底距离固定预留导航栏高度，避免导航栏显隐时按钮跳位。
+     */
+    private void updateQuickActionsInset(boolean navigationVisible) {
+        if (_quickActions == null) {
+            return;
+        }
+        int navHeight = navigationVisible
+                ? Math.max(_itemNavigationLayout.getHeight(), dp(this, 56))
+                : 0;
+        _quickActions.setBottomInset(navHeight);
     }
 
     private void playHighlight(View itemView) {
@@ -1284,6 +1385,52 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _pendingSignatureItem = null;
         _pendingSignatureUserName = null;
         _pendingSignatureCallback = null;
+    }
+
+    /** 跳转到全表单第一个“必填且为空”的表单项：必要时切换步骤并展开分组，然后滚动并高亮。 */
+    private void jumpToFirstRequiredEmpty() {
+        if (!_formLoaded || _definition == null || _definition.getSteps() == null) {
+            return;
+        }
+        int targetStep = -1;
+        OfflineFormNode targetRootNode = null;
+        for (int s = 0; s < _definition.getSteps().size() && targetRootNode == null; s++) {
+            List<OfflineFormDisplayItem> items = OfflineFormDefinitionFlattener.flattenStep(_definition.getSteps().get(s));
+            for (OfflineFormDisplayItem item : items) {
+                if (item.getDepth() != 0) {
+                    continue;
+                }
+                if (hasRequiredEmptyField(item.getNode())) {
+                    targetStep = s;
+                    targetRootNode = item.getNode();
+                    break;
+                }
+            }
+        }
+        if (targetRootNode == null) {
+            Toast.makeText(this, R.string.offline_toast_no_required_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 复位筛选，保证目标项可见。
+        if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
+            _searchKeyword = "";
+            _filterMode = FILTER_ALL;
+            _filterModeBeforeSearch = FILTER_ALL;
+            setFilterModeSelection(FILTER_ALL);
+        }
+        _currentStepIndex = Math.max(0, Math.min(targetStep, _definition.getSteps().size() - 1));
+        renderCurrentStep();
+        _adapter.expandAllGroups();
+        int position = _adapter.getRootPositionForNode(targetRootNode);
+        if (position >= 0) {
+            // 目标字段由本方法统一高亮，这里不再对整条顶级项闪光。
+            scrollToRootItem(position, false);
+        }
+        String fieldId = findFirstRequiredEmptyFieldId(targetRootNode);
+        if (fieldId != null) {
+            startFieldHighlight(Collections.singletonList(fieldId));
+        }
     }
 
     private void scrollToFirstError() {

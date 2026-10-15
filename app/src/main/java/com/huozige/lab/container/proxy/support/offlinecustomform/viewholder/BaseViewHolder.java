@@ -1,5 +1,9 @@
 package com.huozige.lab.container.proxy.support.offlinecustomform.viewholder;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
@@ -12,6 +16,10 @@ import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimeViews;
 
 public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 
+    // 高亮闪光：与“上一项/下一项”高亮一致的前景色淡出，持续 1 秒。
+    private static final int HIGHLIGHT_DURATION_MS = 1000;
+    private static final int HIGHLIGHT_START_ALPHA = 72;
+
     // 用户完成一次字段值变更时回调外层（用于防抖落盘）。
     private Runnable onFieldChanged;
     // 字段被“二次确认后禁用”时回调外层（用于把锁定状态持久化到记录）。
@@ -20,14 +28,12 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
     private boolean showFieldUpdateTime;
     // 是否已因二次确认而被禁用。由适配器在 bind 后下发。
     private boolean locked;
-    // 字段行原始背景，用于高亮解除后还原。
-    private final Drawable originalBackground;
-    // 是否处于高亮状态（筛选时标记缺填的必填项）。由适配器在 bind 后下发。
-    private boolean highlighted;
+    // 高亮闪光动画及其原始前景，用于取消或结束时还原。
+    private Drawable originalForeground;
+    private ValueAnimator highlightAnimator;
 
     public BaseViewHolder(View itemView) {
         super(itemView);
-        this.originalBackground = itemView.getBackground();
     }
 
     public abstract void bind(BaseFormItem item);
@@ -67,23 +73,46 @@ public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 
     /** 设置高亮状态并立即应用到视图；由适配器在 bind 后下发。 */
     public void setHighlighted(boolean highlighted) {
-        if (this.highlighted == highlighted) {
-            return;
+        if (highlighted) {
+            startHighlightFlash();
+        } else {
+            stopHighlightFlash();
         }
-        this.highlighted = highlighted;
-        applyHighlightState();
     }
 
     public boolean isHighlighted() {
-        return highlighted;
+        return highlightAnimator != null;
     }
 
-    /** 子类可覆盖以定制高亮表现；默认切换字段行根布局背景。 */
-    protected void applyHighlightState() {
-        if (highlighted) {
-            itemView.setBackgroundResource(R.drawable.offline_form_item_highlight_bg);
-        } else {
-            itemView.setBackground(originalBackground);
+    /**
+     * 播放一次高亮闪光：与“上一项/下一项”高亮一致——整行叠加湖蓝前景色，
+     * 透明度从 {@link #HIGHLIGHT_START_ALPHA} 淡出到 0，持续 {@link #HIGHLIGHT_DURATION_MS} 毫秒。
+     */
+    private void startHighlightFlash() {
+        stopHighlightFlash();
+        originalForeground = itemView.getForeground();
+        ColorDrawable highlight = new ColorDrawable(itemView.getContext().getColor(R.color.huozige_blue));
+        highlight.setAlpha(HIGHLIGHT_START_ALPHA);
+        itemView.setForeground(highlight);
+
+        highlightAnimator = ValueAnimator.ofInt(HIGHLIGHT_START_ALPHA, 0);
+        highlightAnimator.setDuration(HIGHLIGHT_DURATION_MS);
+        highlightAnimator.addUpdateListener(animation -> highlight.setAlpha((int) animation.getAnimatedValue()));
+        highlightAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                itemView.setForeground(originalForeground);
+                highlightAnimator = null;
+            }
+        });
+        highlightAnimator.start();
+    }
+
+    private void stopHighlightFlash() {
+        if (highlightAnimator != null) {
+            highlightAnimator.cancel();
+            highlightAnimator = null;
+            itemView.setForeground(originalForeground);
         }
     }
 

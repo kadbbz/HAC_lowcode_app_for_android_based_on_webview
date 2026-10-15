@@ -223,6 +223,30 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
+    /** 折叠所有分组（含嵌套），便于快速浏览整体结构。 */
+    public void collapseAllGroups() {
+        collapsedGroupIds.clear();
+        for (OfflineFormDisplayItem item : displayItems) {
+            if (item.isGroup()) {
+                collapsedGroupIds.add(item.getDisplayId());
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    /** 返回指定节点对应的顶级项（depth=0）在 rootItems 中的位置；未找到返回 -1。 */
+    public int getRootPositionForNode(OfflineFormNode node) {
+        if (node == null) {
+            return -1;
+        }
+        for (int i = 0; i < rootItems.size(); i++) {
+            if (rootItems.get(i).getNode() == node) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private void initializeCollapsedGroups() {
         for (OfflineFormDisplayItem item : displayItems) {
             if (item.isGroup() && item.getNode().isDefaultCollapsed()) {
