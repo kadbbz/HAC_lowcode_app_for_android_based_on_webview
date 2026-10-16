@@ -12,3 +12,6 @@ local.properties
 /debug
 /app/release
 /app/debug
+
+# 本地设计稿/方案，不进版本库
+/docs/
