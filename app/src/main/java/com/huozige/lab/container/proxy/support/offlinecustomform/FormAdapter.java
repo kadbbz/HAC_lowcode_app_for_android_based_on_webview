@@ -489,41 +489,51 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         } else if (OfflineFormNode.TEXT_MODE_DOCUMENT.equals(textMode)) {
             addDocumentContent(container, item);
         } else {
-            // 普通文本（含未知模式）统一渲染为「说明」callout，保证内容不会消失。
-            addNoteContent(container, node);
+            // 普通文本（含未知模式）渲染为「只读字段」，保证内容不会消失。
+            addReadOnlyRow(container, node);
         }
     }
 
-    /** 说明行：浅蓝 callout，左侧 3dp 品牌竖条（由背景 drawable 绘制）+ 标题 + 正文。 */
-    private void addNoteContent(LinearLayout container, OfflineFormNode node) {
+    /** 普通文本行：只读字段样式——标签在上（灰）、值在下（深），与可编辑字段同构。 */
+    private void addReadOnlyRow(LinearLayout container, OfflineFormNode node) {
         Context context = container.getContext();
-        LinearLayout note = new LinearLayout(context);
-        note.setOrientation(LinearLayout.VERTICAL);
-        note.setBackgroundResource(R.drawable.offline_form_note_bg);
-        note.setPadding(dp(context, 15), dp(context, 11), dp(context, 13), dp(context, 11));
-
         String title = node.getTitle();
-        if (title != null && !title.isEmpty()) {
-            TextView titleView = new TextView(context);
-            titleView.setText(title);
-            titleView.setTextColor(context.getColor(R.color.offline_form_ink));
-            titleView.setTextSize(13.5f);
-            titleView.setTypeface(null, Typeface.BOLD);
-            note.addView(titleView, new LinearLayout.LayoutParams(
+        String content = node.getContent() == null ? "" : node.getContent();
+        boolean hasTitle = title != null && !title.isEmpty();
+
+        if (!hasTitle && content.isEmpty()) {
+            return;
+        }
+
+        LinearLayout column = new LinearLayout(context);
+        column.setOrientation(LinearLayout.VERTICAL);
+
+        if (hasTitle) {
+            TextView labelView = new TextView(context);
+            labelView.setText(title);
+            labelView.setTextColor(context.getColor(R.color.offline_form_muted));
+            labelView.setTextSize(12.5f);
+            column.addView(labelView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
-        TextView contentView = new TextView(context);
-        contentView.setText(node.getContent() == null ? "" : node.getContent());
-        contentView.setTextColor(context.getColor(R.color.offline_form_sec));
-        contentView.setTextSize(13);
-        contentView.setLineSpacing(dp(context, 2), 1f);
-        note.addView(contentView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (!content.isEmpty()) {
+            TextView valueView = new TextView(context);
+            valueView.setText(content);
+            valueView.setTextColor(context.getColor(R.color.offline_form_ink));
+            valueView.setTextSize(15);
+            valueView.setLineSpacing(dp(context, 2), 1f);
+            LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (hasTitle) {
+                valueParams.topMargin = dp(context, 3);
+            }
+            column.addView(valueView, valueParams);
+        }
 
-        container.addView(note, new LinearLayout.LayoutParams(
+        container.addView(column, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
     }
