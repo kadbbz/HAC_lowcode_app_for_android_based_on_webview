@@ -29,6 +29,7 @@ class OfflineFormJsonSerializer {
         definitionJson.jsonSchema.description = definition.getDescription();
         definitionJson.jsonSchema.cardStyle = definition.getCardStyle();
         definitionJson.jsonSchema.steps = buildStepJsonList(definition.getSteps());
+        definitionJson.jsonSchema.layoutMode = definition.getLayoutMode();
         definitionJson.computed = definitionFile.getComputed();
         return (JSONObject) JSON.toJSON(definitionJson);
     }
@@ -47,6 +48,8 @@ class OfflineFormJsonSerializer {
             definition.setDescription(definitionJson.jsonSchema.description);
             definition.setCardStyle(definitionJson.jsonSchema.cardStyle == null ? new ArrayList<>() : definitionJson.jsonSchema.cardStyle);
             definition.setSteps(parseStepJsonList(definitionJson.jsonSchema.steps));
+            // 旧 definition 文件无此字段 -> 空串 -> flat，行为完全不变。
+            definition.setLayoutMode(OfflineFormDefinition.normalizeLayoutMode(definitionJson.jsonSchema.layoutMode));
         }
         definitionFile.setJsonSchema(definition);
         return definitionFile;
@@ -165,6 +168,7 @@ class OfflineFormJsonSerializer {
         public String description = "";
         public List<OfflineFormCardStyle> cardStyle = new ArrayList<>();
         public List<StepJson> steps = new ArrayList<>();
+        public String layoutMode = "";
     }
 
     private static class StepJson {

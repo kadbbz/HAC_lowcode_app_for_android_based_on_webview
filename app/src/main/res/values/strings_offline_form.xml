@@ -167,4 +167,6 @@
     <string name="offline_quick_action_required">跳转到第一个未填必填项</string>
     <string name="offline_quick_action_collapse">折叠所有分组</string>
     <string name="offline_toast_no_required_empty">没有未填的必填项</string>
+    <string name="offline_page_indicator">第 %1$d / %2$d 组 · %3$s</string>
+    <string name="offline_page_indicator_untitled">第 %1$d / %2$d 组</string>
 </resources>

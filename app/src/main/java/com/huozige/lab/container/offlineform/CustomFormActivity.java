@@ -55,6 +55,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattene
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormPage;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
 import com.huozige.lab.container.offlineform.model.OfflineFormStep;
@@ -89,6 +90,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     public static final String EXTRA_RECORD_ID = "recordId";
     private static final String STATE_RECORD_ID = "offline_form_record_id";
     private static final String STATE_CURRENT_STEP_INDEX = "offline_form_current_step_index";
+    private static final String STATE_CURRENT_PAGE_INDEX = "offline_form_current_page_index";
     private static final String STATE_FILTER_MODE = "offline_form_filter_mode";
     private static final String STATE_SEARCH_KEYWORD = "offline_form_search_keyword";
     private static final int MENU_ID_SAVE_RECORD = 1;
@@ -108,6 +110,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ImageView _stepScrollRightHint;
     private LinearLayout _itemNavigationLayout;
     private LinearLayout _searchKeywordLayout;
+    private TextView _pageIndicator;
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
@@ -128,6 +131,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private Map<String, String> _lastPersistedSnapshot = new HashMap<>();
     private OfflineFormDefinition _definition;
     private int _currentStepIndex;
+    // 逐组分页布局下的当前页下标（仅对当前 step 有意义）。
+    private int _currentPageIndex;
+    // 当前 step 的页集合；flat 布局下始终为空。
+    private List<OfflineFormPage> _pages = new ArrayList<>();
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
     private ActivityResultLauncher<String> _imageUploadLauncher;
     private ActivityResultLauncher<Intent> _imagePreviewLauncher;
@@ -202,6 +209,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             outState.putString(STATE_RECORD_ID, _editingRecord.getRecordId());
         }
         outState.putInt(STATE_CURRENT_STEP_INDEX, _currentStepIndex);
+        outState.putInt(STATE_CURRENT_PAGE_INDEX, _currentPageIndex);
         outState.putInt(STATE_FILTER_MODE, _filterMode);
         outState.putString(STATE_SEARCH_KEYWORD, _searchKeyword);
         super.onSaveInstanceState(outState);
@@ -216,6 +224,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _currentStepIndex = Math.max(0, Math.min(
                 savedInstanceState.getInt(STATE_CURRENT_STEP_INDEX, 0),
                 _definition.getSteps().size() - 1));
+        _currentPageIndex = Math.max(0, savedInstanceState.getInt(STATE_CURRENT_PAGE_INDEX, 0));
         _filterMode = savedInstanceState.getInt(STATE_FILTER_MODE, FILTER_ALL);
         if (_filterMode < FILTER_ALL || _filterMode > FILTER_FILLED) {
             _filterMode = FILTER_ALL;
@@ -236,6 +245,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _stepScrollRightHint = findViewById(R.id.hint_step_scroll_right);
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
         _searchKeywordLayout = findViewById(R.id.layout_search_keyword);
+        _pageIndicator = findViewById(R.id.text_page_indicator);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
@@ -455,8 +465,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void setupListeners() {
-        _previousItemButton.setOnClickListener(v -> navigateRootItem(-1));
-        _nextItemButton.setOnClickListener(v -> navigateRootItem(1));
+        _previousItemButton.setOnClickListener(v -> navigateItem(-1));
+        _nextItemButton.setOnClickListener(v -> navigateItem(1));
         _searchKeywordLayout.setOnClickListener(v -> clearSearchFilter());
         setupFilterModeSpinner();
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -467,10 +477,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 }
                 persistRecord();
                 _currentStepIndex = tab.getPosition();
+                // 切到新步骤时回到该步骤的第一页；分页与步骤切换互相独立。
+                _currentPageIndex = 0;
                 resetFilterMode();
                 renderCurrentStep();
-                _recyclerView.scrollToPosition(0);
-                _formScrollView.scrollTo(0, 0);
+                resetScroll();
             }
 
             @Override
@@ -687,24 +698,181 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             _stepTabLayout.setVisibility(View.GONE);
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
+            _pageIndicator.setVisibility(View.GONE);
             if (_quickActions != null) {
                 _quickActions.setVisibility(View.GONE);
             }
             return;
         }
         if (_quickActions != null) {
-            _quickActions.setVisibility(View.VISIBLE);
+            // 悬浮快捷按钮（回到顶部 / 跳转未填 / 折叠分组）仅在平铺布局下提供。
+            _quickActions.setVisibility(isPagedLayout() ? View.GONE : View.VISIBLE);
+        }
+
+        if (isPagedLayout()) {
+            // 分页是引导式逐组填写，不使用筛选/搜索，避免页数抖动。
+            _filterMode = FILTER_ALL;
+            _searchKeyword = "";
+            _filterModeBeforeSearch = FILTER_ALL;
         }
 
         renderStepTabs();
-        renderSearchKeyword();
+        renderFilterControls();
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
         _adapter.setProgressContext(_definition, collectAllFormData());
-        _adapter.setDisplayItems(buildCurrentStepDisplayItems(step));
-        updateItemNavigationVisibility();
+        preparePages(step);
+        renderCurrentPageContent(step);
         if (step.getTitle() != null && !step.getTitle().isEmpty()) {
             setTitle(step.getTitle());
         }
+    }
+
+    /** 是否处于逐组分页布局。 */
+    private boolean isPagedLayout() {
+        return _definition != null
+                && OfflineFormDefinition.LAYOUT_MODE_PAGED.equals(_definition.getLayoutMode());
+    }
+
+    /** 依据当前布局准备页集合，并把 _currentPageIndex 收敛到合法范围。 */
+    private void preparePages(OfflineFormStep step) {
+        if (!isPagedLayout()) {
+            _pages = new ArrayList<>();
+            _currentPageIndex = 0;
+            return;
+        }
+        _pages = OfflineFormDefinitionFlattener.splitIntoPages(step);
+        _currentPageIndex = clampPageIndex(_currentPageIndex);
+    }
+
+    private int clampPageIndex(int index) {
+        if (_pages.isEmpty()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(index, _pages.size() - 1));
+    }
+
+    /** 只刷新内容区（展示项 + 分页指示器 + 底部导航态），用于页内翻页。 */
+    private void renderCurrentPageContent(OfflineFormStep step) {
+        List<OfflineFormDisplayItem> items;
+        if (isPagedLayout()) {
+            items = _pages.isEmpty() ? new ArrayList<>() : _pages.get(_currentPageIndex).getItems();
+        } else {
+            items = buildCurrentStepDisplayItems(step);
+        }
+        _adapter.setDisplayItems(items);
+        renderPageIndicator();
+        updateItemNavigationVisibility();
+    }
+
+    private void renderPageIndicator() {
+        if (!isPagedLayout() || _pages.isEmpty()) {
+            _pageIndicator.setVisibility(View.GONE);
+            return;
+        }
+        // 只有分组页有标题；散项页（连续 text / 裸 field 合并）不展示指示器文案。
+        if (!isGroupPage(_pages.get(_currentPageIndex))) {
+            _pageIndicator.setVisibility(View.GONE);
+            return;
+        }
+        _pageIndicator.setVisibility(View.VISIBLE);
+        String title = currentPageTitle();
+        if (title.isEmpty()) {
+            _pageIndicator.setText(getString(R.string.offline_page_indicator_untitled,
+                    _currentPageIndex + 1, _pages.size()));
+        } else {
+            _pageIndicator.setText(getString(R.string.offline_page_indicator,
+                    _currentPageIndex + 1, _pages.size(), title));
+        }
+    }
+
+    private String currentPageTitle() {
+        if (_pages.isEmpty()) {
+            return "";
+        }
+        return pageTitle(_pages.get(_currentPageIndex));
+    }
+
+    private String pageTitle(OfflineFormPage page) {
+        OfflineFormNode node = page == null ? null : page.getRootNode();
+        if (node == null) {
+            return "";
+        }
+        String title = node.getTitle();
+        if (title != null && !title.isEmpty()) {
+            return title;
+        }
+        if (node.getField() != null && node.getField().getTitle() != null) {
+            return node.getField().getTitle();
+        }
+        return "";
+    }
+
+    /** 是否为分组页：分组各自成页，散项（连续 text / 裸 field）合并成一页。 */
+    private boolean isGroupPage(OfflineFormPage page) {
+        OfflineFormNode node = page == null ? null : page.getRootNode();
+        return node != null && OfflineFormNode.TYPE_GROUP.equals(node.getNodeType());
+    }
+
+    private void resetScroll() {
+        _recyclerView.scrollToPosition(0);
+        _formScrollView.scrollTo(0, 0);
+    }
+
+    /** 底部导航按布局分流：平铺为滚动跳转，分页为页内翻页。 */
+    private void navigateItem(int direction) {
+        if (isPagedLayout()) {
+            navigatePage(direction);
+        } else {
+            navigateRootItem(direction);
+        }
+    }
+
+    private void navigatePage(int direction) {
+        if (!isPagedLayout() || _pages.isEmpty()) {
+            return;
+        }
+        int target = _currentPageIndex + direction;
+        if (target < 0 || target >= _pages.size()) {
+            return;
+        }
+        _currentPageIndex = target;
+        // 刷新进度节点取值的快照，避免翻页后进度文本停留在上一页的数据。
+        _adapter.setProgressContext(_definition, collectAllFormData());
+        renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
+        resetScroll();
+    }
+
+    private int findPageIndexForRoot(OfflineFormNode rootNode) {
+        if (rootNode == null) {
+            return -1;
+        }
+        for (int i = 0; i < _pages.size(); i++) {
+            OfflineFormPage page = _pages.get(i);
+            if (page.getRootNode() == rootNode) {
+                return i;
+            }
+            // 散项页的 rootNode 只是该页首个节点，其余节点需要逐项比对。
+            for (OfflineFormDisplayItem item : page.getItems()) {
+                if (item.getNode() == rootNode) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findPageIndexForField(BaseFormItem field) {
+        if (field == null) {
+            return -1;
+        }
+        for (int i = 0; i < _pages.size(); i++) {
+            for (OfflineFormDisplayItem item : _pages.get(i).getItems()) {
+                if (item.getFormItem() == field) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private List<OfflineFormDisplayItem> buildCurrentStepDisplayItems(OfflineFormStep step) {
@@ -752,7 +920,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    private void renderSearchKeyword() {
+    /** 渲染顶部筛选入口；分页布局下整体隐藏，仅保留步骤 Tab。 */
+    private void renderFilterControls() {
+        if (isPagedLayout()) {
+            _searchKeywordLayout.setVisibility(View.GONE);
+            _filterModeSpinner.setVisibility(View.GONE);
+            return;
+        }
         boolean searching = _filterMode == FILTER_SEARCH && !_searchKeyword.isEmpty();
         _searchKeywordLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
         _filterModeSpinner.setVisibility(searching ? View.GONE : View.VISIBLE);
@@ -969,10 +1143,33 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void updateItemNavigationVisibility() {
-        int itemCount = _adapter == null ? 0 : _adapter.getItemCount();
-        boolean visible = _formLoaded && itemCount > 1;
+        if (_itemNavigationLayout == null) {
+            return;
+        }
+        boolean visible;
+        if (!_formLoaded) {
+            visible = false;
+        } else if (isPagedLayout()) {
+            // 分页布局下当页可能只有一个顶级项，不能再用 adapter 项数判断；按页数决定。
+            visible = _pages.size() > 1;
+        } else {
+            visible = _adapter != null && _adapter.getItemCount() > 1;
+        }
         _itemNavigationLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        updateQuickActionsInset(visible);
+        updateItemNavigationButtons();
+        // 分页布局下悬浮按钮已隐藏，无需为其预留导航栏高度。
+        updateQuickActionsInset(visible && !isPagedLayout());
+    }
+
+    /** 分页布局下按页码边界禁用「上一项 / 下一项」；平铺布局下保持始终可用。 */
+    private void updateItemNavigationButtons() {
+        boolean paged = isPagedLayout();
+        boolean previousEnabled = !paged || _currentPageIndex > 0;
+        boolean nextEnabled = !paged || _currentPageIndex < _pages.size() - 1;
+        _previousItemButton.setEnabled(previousEnabled);
+        _nextItemButton.setEnabled(nextEnabled);
+        _previousItemButton.setAlpha(previousEnabled ? 1f : 0.4f);
+        _nextItemButton.setAlpha(nextEnabled ? 1f : 0.4f);
     }
 
     /**
@@ -1155,6 +1352,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             _currentStepIndex = Math.min(result.getFirstInvalidStepIndex(), _definition.getSteps().size() - 1);
         }
         renderCurrentStep();
+        if (isPagedLayout() && !result.getInvalidFields().isEmpty()) {
+            // 分页下定位到首个失败字段所在页；validator 只给到 step 粒度，这里反查所属页。
+            int pageIndex = findPageIndexForField(result.getInvalidFields().get(0));
+            if (pageIndex >= 0 && pageIndex != _currentPageIndex) {
+                _currentPageIndex = pageIndex;
+                renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
+            }
+        }
         _adapter.expandAllGroups();
         scrollToFirstError();
     }
@@ -1422,11 +1627,23 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _currentStepIndex = Math.max(0, Math.min(targetStep, _definition.getSteps().size() - 1));
         renderCurrentStep();
+        if (isPagedLayout()) {
+            // 分页下目标顶级项即一页，直接翻到该页后整页可见，无需滚动定位。
+            int pageIndex = findPageIndexForRoot(targetRootNode);
+            if (pageIndex >= 0 && pageIndex != _currentPageIndex) {
+                _currentPageIndex = pageIndex;
+                renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
+            }
+        }
         _adapter.expandAllGroups();
-        int position = _adapter.getRootPositionForNode(targetRootNode);
-        if (position >= 0) {
-            // 目标字段由本方法统一高亮，这里不再对整条顶级项闪光。
-            scrollToRootItem(position, false);
+        if (isPagedLayout()) {
+            resetScroll();
+        } else {
+            int position = _adapter.getRootPositionForNode(targetRootNode);
+            if (position >= 0) {
+                // 目标字段由本方法统一高亮，这里不再对整条顶级项闪光。
+                scrollToRootItem(position, false);
+            }
         }
         String fieldId = findFirstRequiredUnsatisfiedFieldId(targetRootNode);
         if (fieldId != null) {
@@ -1435,6 +1652,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void scrollToFirstError() {
+        if (isPagedLayout()) {
+            // 每页内容有限，直接回到页首即可看到错误。
+            resetScroll();
+            return;
+        }
         List<BaseFormItem> items = _adapter.getFormItems();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i).getErrorMessage() != null) {
