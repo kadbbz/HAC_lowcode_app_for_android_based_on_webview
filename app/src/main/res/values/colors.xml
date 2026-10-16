@@ -22,6 +22,7 @@
     <color name="offline_form_field_fill">#F7F9FB</color>
     <color name="offline_form_danger">#E5484D</color>
     <color name="offline_form_ok">#12A150</color>
+    <color name="offline_form_switch_off">#B8C4CC</color>
     <color name="offline_form_group_bg">#EAF6FD</color>
     <color name="offline_form_text_bg">#FFFFFFFF</color>
     <color name="offline_form_text_title">#2F3A45</color>

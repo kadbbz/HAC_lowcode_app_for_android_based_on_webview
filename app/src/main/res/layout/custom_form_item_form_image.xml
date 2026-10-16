@@ -19,9 +19,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/offline_form_ink"
-            android:textSize="13.5sp"
-            android:textStyle="bold" />
+            android:textColor="@color/offline_form_muted"
+            android:textSize="12.5sp" />
 
         <TextView
             android:id="@+id/tv_required"
@@ -30,7 +29,7 @@
             android:layout_marginStart="3dp"
             android:text="*"
             android:textColor="@color/offline_form_danger"
-            android:textSize="13.5sp"
+            android:textSize="12.5sp"
             android:textStyle="bold"
             android:visibility="gone" />
 

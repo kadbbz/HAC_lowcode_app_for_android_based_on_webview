@@ -67,16 +67,16 @@ public class ListViewHolder extends BaseViewHolder {
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        titleView.setTextSize(13.5f);
-        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_ink));
-        titleView.setTypeface(null, Typeface.BOLD);
+        titleView.setTextSize(12.5f);
+        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_muted));
+        titleView.setTypeface(null, Typeface.NORMAL);
         titleRow.addView(titleView, new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1));
 
         requiredView.setText("*");
-        requiredView.setTextSize(13.5f);
+        requiredView.setTextSize(12.5f);
         requiredView.setTextColor(itemView.getContext().getColor(R.color.offline_form_danger));
         titleRow.addView(requiredView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
