@@ -21,4 +21,10 @@ public class LocalKv_Bundle extends RealmObject {
     @Required
     @Index
     public String version;
+
+    public LocalKv_Bundle(String key, String value, String version){
+        this.key = key;
+        this.value = value;
+        this.version = version;
+    }
 }

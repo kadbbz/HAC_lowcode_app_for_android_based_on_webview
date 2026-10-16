@@ -121,35 +121,33 @@ public class HACDownloadManager {
     public static String parseContentDisposition(String contentDisposition) {
         if (contentDisposition == null) return null;
 
-        // 匹配标准的 filename 属性
-        Pattern pattern = Pattern.compile("filename\\s*=\\s*\"?([^\";]+)\"?", Pattern.CASE_INSENSITIVE);
+        // 优先匹配 RFC 5987 的 filename* 属性，避免普通 filename 匹配结果覆盖正确的编码文件名。
+        Pattern pattern = Pattern.compile(
+                "filename\\*\\s*=\\s*\"?([^']*)'([^']*)'([^;\"]*)\"?",
+                Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(contentDisposition);
+        if (matcher.find()) {
+            String charset = matcher.group(1);
+            String encodedFilename = matcher.group(3);
+            if (charset != null && encodedFilename != null) {
+                try {
+                    encodedFilename = encodedFilename.trim();
+                    return URLDecoder.decode(encodedFilename, charset.trim());
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // 匹配标准的 filename 属性
+        pattern = Pattern.compile("filename\\s*=\\s*\"?([^\";]+)\"?", Pattern.CASE_INSENSITIVE);
+        matcher = pattern.matcher(contentDisposition);
         if (matcher.find()) {
             String filename = matcher.group(1);
             assert filename != null;
             filename = filename.trim();
             if (!TextUtils.isEmpty(filename)) {
                 return decodeFilename(filename);
-            }
-        }
-
-        // 匹配编码格式的 filename* 属性（RFC 5987）
-        pattern = Pattern.compile("filename\\*\\s*=\\s*([^;]+)'?([^']*)'?(.+)", Pattern.CASE_INSENSITIVE);
-        matcher = pattern.matcher(contentDisposition);
-        if (matcher.find()) {
-            String charset = matcher.group(1);
-            String lang = matcher.group(2); // 可忽略
-            String encodedFilename = matcher.group(3);
-
-            try {
-                assert charset != null;
-                if (charset.equalsIgnoreCase("UTF-8")) {
-                    return URLDecoder.decode(encodedFilename, "UTF-8");
-                } else {
-                    return URLDecoder.decode(encodedFilename, charset);
-                }
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
         }
 

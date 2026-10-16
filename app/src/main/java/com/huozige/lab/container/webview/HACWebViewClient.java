@@ -20,8 +20,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
+import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.io.ByteArrayOutputStream;
@@ -33,6 +35,10 @@ import java.io.InputStream;
  */
 public class HACWebViewClient extends WebViewClient {
 
+    private static final String RESOURCE_ERROR_PAGE = "file:///android_asset/error/resource_unavailable.html";
+    private static final String ACTION_RETRY = "hac-error://retry";
+    private static final String ACTION_OFFLINE_FORM = "hac-error://offline-form";
+
     BaseActivity _context; // 包含有浏览器内核的上下文
     private AbstractStaticFilesCacheFilter cacheFilter;
 
@@ -43,6 +49,9 @@ public class HACWebViewClient extends WebViewClient {
     private HttpAuthHandler _authHandler;
 
     private String _hacJsContent;
+    private String _retryUrl;
+    private boolean _loadingHomePage;
+    private boolean _showingResourceError;
 
     private void loadJsContent() {
         try {
@@ -119,6 +128,18 @@ public class HACWebViewClient extends WebViewClient {
         XLog.v("请求地址：" + request.getUrl());
 
         // 获取请求地址
+        String requestedUrl = request.getUrl().toString();
+        if (ACTION_RETRY.equalsIgnoreCase(requestedUrl)) {
+            _showingResourceError = false;
+            view.loadUrl(_retryUrl == null || _retryUrl.isEmpty()
+                    ? ConfigManager.getInstance().getEntry() : _retryUrl);
+            return true;
+        }
+        if (ACTION_OFFLINE_FORM.equalsIgnoreCase(requestedUrl)) {
+            _context.startActivity(new Intent(_context, OfflinePlusListActivity.class));
+            return true;
+        }
+
         String reqUriSchema = request.getUrl().getScheme();
 
         // 特殊协议，直接跳过
@@ -157,28 +178,55 @@ public class HACWebViewClient extends WebViewClient {
      */
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-        XLog.e("页面加载出错，Url：" + request.getUrl() + "，错误码（WebResourceError）：" + error.getErrorCode() + "，详细信息：" + error.getDescription());
-
-        // 对超时错误做特殊处理
-        if (error.getErrorCode() == WebViewClient.ERROR_CONNECT || error.getErrorCode() == WebViewClient.ERROR_TIMEOUT || error.getErrorCode() == WebViewClient.ERROR_HOST_LOOKUP) {
-            if (request.getUrl().toString().equalsIgnoreCase(view.getUrl())) {
-
-                // 只有页面出现异常才会提示这个错误，需要应对某些JS加载失败，但系统依然可用的场景
-                // 网络异常专属错误页面
-                view.loadUrl("file:///android_asset/error/timeout.html");
-            }
-        } else {
-
-            // 其他异常的提示页面
-            view.loadUrl("file:///android_asset/error/error.html");
+        XLog.e("页面或资源加载失败，Url：" + request.getUrl() + "，错误码：" + error.getErrorCode());
+        if (shouldShowResourceError(request)) {
+            showResourceError(view);
         }
+    }
+
+    @Override
+    public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        super.onReceivedHttpError(view, request, errorResponse);
+        if (errorResponse.getStatusCode() >= 400 && shouldShowResourceError(request)) {
+            XLog.e("首页资源请求失败，Url：" + request.getUrl() + "，HTTP状态码：" + errorResponse.getStatusCode());
+            showResourceError(view);
+        }
+    }
+
+    private boolean shouldShowResourceError(WebResourceRequest request) {
+        if (_showingResourceError || request == null || request.getUrl() == null) return false;
+        if (!_loadingHomePage) return false;
+        if (request.isForMainFrame()) return true;
+        String path = request.getUrl().getPath();
+        if (path == null) return false;
+        path = path.toLowerCase();
+        return path.endsWith(".js") || path.endsWith(".css") || path.endsWith(".html")
+                || path.endsWith(".htm") || path.endsWith(".woff") || path.endsWith(".woff2")
+                || path.endsWith(".ttf") || path.endsWith(".otf");
+    }
+
+    private void showResourceError(WebView view) {
+        _showingResourceError = true;
+        _loadingHomePage = false;
+        view.stopLoading();
+        view.loadUrl(RESOURCE_ERROR_PAGE);
     }
 
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
         _alreadyInjected = false;
+        if (!url.startsWith("file:///android_asset/error/")) {
+            _retryUrl = url;
+            _loadingHomePage = _loadingHomePage || samePage(url, ConfigManager.getInstance().getEntry());
+            _showingResourceError = false;
+        }
         XLog.v("页面加载开始：" + url);
+    }
+
+    private boolean samePage(String first, String second) {
+        if (first == null || second == null) return false;
+        return first.replaceAll("/+$", "").equalsIgnoreCase(second.replaceAll("/+$", ""));
     }
 
     /**
@@ -188,6 +236,9 @@ public class HACWebViewClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
+        if (!url.startsWith("file:///android_asset/error/")) {
+            _loadingHomePage = false;
+        }
         XLog.v("页面加载完成：" + url);
     }
 
