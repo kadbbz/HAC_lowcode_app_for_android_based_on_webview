@@ -169,4 +169,12 @@
     <string name="offline_toast_no_required_empty">没有未填的必填项</string>
     <string name="offline_page_indicator">第 %1$d / %2$d 组 · %3$s</string>
     <string name="offline_page_indicator_untitled">第 %1$d / %2$d 组</string>
+    <string name="offline_button_group_directory">目录</string>
+    <string name="offline_page_count">第 %1$d / %2$d 组</string>
+    <string name="offline_dialog_group_directory_title">分组目录</string>
+    <string name="offline_group_status_done">已完成</string>
+    <string name="offline_group_status_doing">进行中</string>
+    <string name="offline_group_status_todo">未开始</string>
+    <string name="offline_group_directory_summary">共 %1$d 组 · 已完成 %2$d · 进行中 %3$d</string>
+    <string name="offline_group_directory_untitled">其他</string>
 </resources>

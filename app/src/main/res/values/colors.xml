@@ -9,7 +9,19 @@
     <color name="gray">#808080</color>
     <color name="red">#CE2013</color>
     <color name="black">#000000</color>
-    <color name="offline_form_page_bg">#F4F7FA</color>
+    <color name="offline_form_page_bg">#EEF2F6</color>
+    <!-- 分页布局视觉标准 v1 令牌 -->
+    <color name="offline_form_ink">#1F2A33</color>
+    <color name="offline_form_sec">#5F6B76</color>
+    <color name="offline_form_muted">#93A1AC</color>
+    <color name="offline_form_brand_deep">#0B6E9B</color>
+    <color name="offline_form_brand_tint">#EAF6FD</color>
+    <color name="offline_form_brand_tint_2">#F3F9FD</color>
+    <color name="offline_form_line">#EDF1F5</color>
+    <color name="offline_form_line_strong">#DCE5EC</color>
+    <color name="offline_form_field_fill">#F7F9FB</color>
+    <color name="offline_form_danger">#E5484D</color>
+    <color name="offline_form_ok">#12A150</color>
     <color name="offline_form_group_bg">#EAF6FD</color>
     <color name="offline_form_text_bg">#FFFFFFFF</color>
     <color name="offline_form_text_title">#2F3A45</color>

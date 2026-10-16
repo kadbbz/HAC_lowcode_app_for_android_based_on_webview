@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/select_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="16dp"
+    android:paddingTop="13dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="13dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal">
 
         <TextView
@@ -20,41 +22,47 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textColor="@color/offline_form_ink"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_required"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
             android:text="*"
-            android:textColor="@color/red"
-            android:textSize="16sp"
+            android:textColor="@color/offline_form_danger"
+            android:textSize="13.5sp"
+            android:textStyle="bold"
             android:visibility="gone" />
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tv_value"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:background="@drawable/custom_form_bg_edittext_normal"
+        android:clickable="true"
+        android:drawableEnd="@drawable/ic_offline_chevron"
+        android:drawablePadding="6dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:hint="@string/offline_hint_select"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/offline_form_ink"
+        android:textColorHint="@color/offline_form_muted"
+        android:textSize="15sp" />
 
-        <TextView
-            android:id="@+id/tv_value"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:gravity="center_vertical"
-            android:background="@drawable/custom_form_bg_edittext_normal"
-            android:textSize="14sp"
-            android:hint="@string/offline_hint_select"
-            android:clickable="true"
-            android:focusable="true"/>
-
-        <TextView
-            android:id="@+id/tv_error"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="@color/red"
-            android:paddingTop="4dp"
-            android:visibility="gone"/>
+    <TextView
+        android:id="@+id/tv_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:textColor="@color/offline_form_danger"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
 </LinearLayout>

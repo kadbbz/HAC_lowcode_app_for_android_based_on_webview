@@ -20,6 +20,9 @@ import java.util.Objects;
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
 public class RadioViewHolder extends BaseViewHolder {
+    // 选项之间的水平间距（胶囊之间留白）。
+    private static final int CHIP_GAP_DP = 8;
+
     private final TextView tvTitle;
     private final RadioGroup radioGroup;
     private final TextView tvError;
@@ -108,15 +111,10 @@ public class RadioViewHolder extends BaseViewHolder {
         radioGroup.setOrientation(radioItem.isHorizontal() ? RadioGroup.HORIZONTAL : RadioGroup.VERTICAL);
         List<RadioFormItem.Option> options = radioItem.getOptions();
         int checkedId = -1;
-        for (RadioFormItem.Option option : options) {
-            RadioButton radioButton = new RadioButton(itemView.getContext());
-            radioButton.setText(option.getDisplayText());
-            radioButton.setTag(option.getValue());
-            radioButton.setGravity(Gravity.CENTER_VERTICAL);
-            radioButton.setId(View.generateViewId());
-            radioButton.setPadding(0, dp(itemView.getContext(), 4), dp(itemView.getContext(), 12), dp(itemView.getContext(), 4));
-            radioGroup.addView(radioButton, new RadioGroup.LayoutParams(
-                    RadioGroup.LayoutParams.WRAP_CONTENT, RadioGroup.LayoutParams.WRAP_CONTENT));
+        for (int i = 0; i < options.size(); i++) {
+            RadioFormItem.Option option = options.get(i);
+            RadioButton radioButton = createChipRadioButton(option.getDisplayText(), option.getValue(), i > 0);
+            radioGroup.addView(radioButton);
             if (Objects.equals(option.getValue(), radioItem.getValue())) {
                 checkedId = radioButton.getId();
             }
@@ -124,6 +122,31 @@ public class RadioViewHolder extends BaseViewHolder {
         if (checkedId != -1) radioGroup.check(checkedId);
         binding = false;
         updateErrorState();
+    }
+
+    /** 用普通 RadioButton 呈现胶囊样式：去掉圆点、加胶囊背景与状态文字色。 */
+    private RadioButton createChipRadioButton(String label, String value, boolean withStartGap) {
+        RadioButton radioButton = new RadioButton(itemView.getContext());
+        radioButton.setText(label);
+        radioButton.setTag(value);
+        radioButton.setId(View.generateViewId());
+        radioButton.setButtonDrawable(null);
+        radioButton.setBackgroundResource(R.drawable.offline_form_chip_bg);
+        radioButton.setTextColor(itemView.getContext().getColorStateList(R.color.offline_form_chip_text));
+        radioButton.setTextSize(14);
+        radioButton.setGravity(Gravity.CENTER);
+        radioButton.setMinWidth(0);
+        radioButton.setMinimumWidth(0);
+        radioButton.setMinHeight(dp(itemView.getContext(), 34));
+        radioButton.setPadding(dp(itemView.getContext(), 16), dp(itemView.getContext(), 8),
+                dp(itemView.getContext(), 16), dp(itemView.getContext(), 8));
+        if (withStartGap) {
+            RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
+                    RadioGroup.LayoutParams.WRAP_CONTENT, RadioGroup.LayoutParams.WRAP_CONTENT);
+            params.leftMargin = dp(itemView.getContext(), CHIP_GAP_DP);
+            radioButton.setLayoutParams(params);
+        }
+        return radioButton;
     }
 
     @Override

@@ -3,12 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="16dp"
+    android:paddingTop="13dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="13dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal">
 
         <TextView
@@ -16,16 +19,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textColor="@color/offline_form_ink"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_required"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
             android:text="*"
-            android:textColor="@color/red"
-            android:textSize="16sp"
+            android:textColor="@color/offline_form_danger"
+            android:textSize="13.5sp"
+            android:textStyle="bold"
             android:visibility="gone" />
 
     </LinearLayout>
@@ -40,8 +46,8 @@
         android:id="@+id/tv_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="4dp"
-        android:textColor="@color/red"
+        android:paddingTop="6dp"
+        android:textColor="@color/offline_form_danger"
         android:textSize="12sp"
         android:visibility="gone" />
 

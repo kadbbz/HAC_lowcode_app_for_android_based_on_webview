@@ -57,6 +57,8 @@ public class ListViewHolder extends BaseViewHolder {
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.setPadding(dp(parent.getContext(), 16), dp(parent.getContext(), 13),
+                dp(parent.getContext(), 16), dp(parent.getContext(), 13));
         return root;
     }
 
@@ -65,8 +67,8 @@ public class ListViewHolder extends BaseViewHolder {
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        titleView.setTextSize(15);
-        titleView.setTextColor(itemView.getContext().getColor(android.R.color.black));
+        titleView.setTextSize(13.5f);
+        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_ink));
         titleView.setTypeface(null, Typeface.BOLD);
         titleRow.addView(titleView, new LinearLayout.LayoutParams(
                 0,
@@ -74,8 +76,8 @@ public class ListViewHolder extends BaseViewHolder {
                 1));
 
         requiredView.setText("*");
-        requiredView.setTextSize(16);
-        requiredView.setTextColor(itemView.getContext().getColor(android.R.color.holo_red_dark));
+        requiredView.setTextSize(13.5f);
+        requiredView.setTextColor(itemView.getContext().getColor(R.color.offline_form_danger));
         titleRow.addView(requiredView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));

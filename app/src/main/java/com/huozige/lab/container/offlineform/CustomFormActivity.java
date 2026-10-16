@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +26,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +40,7 @@ import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
@@ -98,6 +101,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final int FILTER_UNFILLED = 1;
     private static final int FILTER_FILLED = 2;
     private static final int FILTER_SEARCH = 3;
+    // 分组目录里的页状态。
+    private static final int PAGE_STATUS_TODO = 0;
+    private static final int PAGE_STATUS_DOING = 1;
+    private static final int PAGE_STATUS_DONE = 2;
     // 字段变更后延迟落盘，避免逐字符写文件。
     private static final long AUTO_SAVE_DELAY_MS = 600;
     // 字段高亮闪光的持续时间（“仅未填”筛选与“跳转首个未填必填项”共用）。
@@ -110,19 +117,26 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ImageView _stepScrollRightHint;
     private LinearLayout _itemNavigationLayout;
     private LinearLayout _searchKeywordLayout;
-    private TextView _pageIndicator;
+    private LinearLayout _pageIndicatorLayout;
+    private TextView _pageNameTextView;
+    private TextView _pageCountTextView;
+    private View _pageProgressFill;
+    private TextView _groupDirectoryButton;
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
     private TextView _searchKeywordTextView;
+    private TextView _searchFilterButton;
     private ImageView _clearSearchButton;
-    private Spinner _filterModeSpinner;
+    private RadioGroup _segFilter;
     private FormAdapter _adapter;
     private Intent _intent;
     private boolean _formLoaded;
     private boolean _editRecordMissingOrOutdated;
     private boolean _updatingTabs;
-    private AdapterView.OnItemSelectedListener _filterModeSelectedListener;
+    private boolean _updatingFilter;
+    // 渲染重入保护：任何监听器触发的嵌套 renderCurrentStep 直接忽略，避免无限递归。
+    private boolean _renderingStep;
     private int _filterMode = FILTER_ALL;
     private int _filterModeBeforeSearch = FILTER_ALL;
     private String _searchKeyword = "";
@@ -245,13 +259,18 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _stepScrollRightHint = findViewById(R.id.hint_step_scroll_right);
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
         _searchKeywordLayout = findViewById(R.id.layout_search_keyword);
-        _pageIndicator = findViewById(R.id.text_page_indicator);
+        _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
+        _pageNameTextView = findViewById(R.id.text_page_name);
+        _pageCountTextView = findViewById(R.id.text_page_count);
+        _pageProgressFill = findViewById(R.id.view_page_progress_fill);
+        _groupDirectoryButton = findViewById(R.id.button_group_directory);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
         _searchKeywordTextView = findViewById(R.id.text_search_keyword);
+        _searchFilterButton = findViewById(R.id.button_search_filter);
         _clearSearchButton = findViewById(R.id.button_clear_search);
-        _filterModeSpinner = findViewById(R.id.spinner_filter_mode);
+        _segFilter = findViewById(R.id.seg_filter);
         setupClearSearchButtonBackground();
         setupBottomHintHeight();
     }
@@ -468,7 +487,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
         _searchKeywordLayout.setOnClickListener(v -> clearSearchFilter());
-        setupFilterModeSpinner();
+        _searchFilterButton.setOnClickListener(v -> showSearchDialog());
+        _groupDirectoryButton.setOnClickListener(v -> showGroupDirectory());
+        _segFilter.setOnCheckedChangeListener((group, checkedId) -> onFilterSegmentChanged(checkedId));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -525,48 +546,31 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         finish();
     }
 
-    private void setupFilterModeSpinner() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.offline_form_filter_spinner_item, new String[]{
-                getString(R.string.offline_filter_all),
-                getString(R.string.offline_filter_unfilled),
-                getString(R.string.offline_filter_filled),
-                getString(R.string.offline_filter_search)
-        });
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        _filterModeSpinner.setAdapter(adapter);
-        _filterModeSpinner.setSelection(FILTER_ALL);
-        _filterModeSelectedListener = new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == FILTER_SEARCH) {
-                    if (_filterMode != FILTER_SEARCH) {
-                        _filterModeBeforeSearch = _filterMode;
-                    }
-                    showSearchDialog();
-                    return;
-                }
-                _searchKeyword = "";
-                _filterMode = position;
-                renderCurrentStep();
-                if (position == FILTER_UNFILLED) {
-                    startRequiredEmptyHighlight();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        };
-        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
+    /** 筛选分段（Step 级）：全部 / 仅未填 / 仅已填。 */
+    private void onFilterSegmentChanged(int checkedId) {
+        if (_updatingFilter) {
+            return;
+        }
+        _searchKeyword = "";
+        if (checkedId == R.id.filter_unfilled) {
+            _filterMode = FILTER_UNFILLED;
+        } else if (checkedId == R.id.filter_filled) {
+            _filterMode = FILTER_FILLED;
+        } else {
+            _filterMode = FILTER_ALL;
+        }
+        _filterModeBeforeSearch = _filterMode;
+        renderCurrentStep();
+        if (_filterMode == FILTER_UNFILLED) {
+            startRequiredEmptyHighlight();
+        }
     }
 
     private void resetFilterMode() {
-        _filterModeSpinner.setOnItemSelectedListener(null);
         _filterMode = FILTER_ALL;
         _filterModeBeforeSearch = FILTER_ALL;
         _searchKeyword = "";
-        _filterModeSpinner.setSelection(FILTER_ALL);
-        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
+        setFilterModeSelection(FILTER_ALL);
     }
 
     private void showSearchDialog() {
@@ -600,7 +604,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _filterModeBeforeSearch = _filterMode == FILTER_SEARCH ? _filterModeBeforeSearch : _filterMode;
         _filterMode = FILTER_SEARCH;
-        setFilterModeSelection(FILTER_SEARCH);
         renderCurrentStep();
     }
 
@@ -608,19 +611,22 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _searchKeyword = "";
         _filterMode = FILTER_ALL;
         _filterModeBeforeSearch = FILTER_ALL;
-        setFilterModeSelection(FILTER_ALL);
         renderCurrentStep();
     }
 
     private void restoreFilterModeBeforeSearch() {
         _filterMode = _filterModeBeforeSearch;
-        setFilterModeSelection(_filterMode);
+        renderCurrentStep();
     }
 
     private void setFilterModeSelection(int filterMode) {
-        _filterModeSpinner.setOnItemSelectedListener(null);
-        _filterModeSpinner.setSelection(filterMode);
-        _filterModeSpinner.setOnItemSelectedListener(_filterModeSelectedListener);
+        int target = filterMode == FILTER_UNFILLED ? R.id.filter_unfilled
+                : filterMode == FILTER_FILLED ? R.id.filter_filled : R.id.filter_all;
+        if (_segFilter.getCheckedRadioButtonId() != target) {
+            _updatingFilter = true;
+            _segFilter.check(target);
+            _updatingFilter = false;
+        }
     }
 
     @Override
@@ -693,12 +699,24 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void renderCurrentStep() {
+        if (_renderingStep) {
+            return;
+        }
+        _renderingStep = true;
+        try {
+            renderCurrentStepInternal();
+        } finally {
+            _renderingStep = false;
+        }
+    }
+
+    private void renderCurrentStepInternal() {
         if (!_formLoaded) {
             _adapter.setDisplayItems(new ArrayList<>());
             _stepTabLayout.setVisibility(View.GONE);
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
-            _pageIndicator.setVisibility(View.GONE);
+            _pageIndicatorLayout.setVisibility(View.GONE);
             if (_quickActions != null) {
                 _quickActions.setVisibility(View.GONE);
             }
@@ -707,13 +725,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (_quickActions != null) {
             // 悬浮快捷按钮（回到顶部 / 跳转未填 / 折叠分组）仅在平铺布局下提供。
             _quickActions.setVisibility(isPagedLayout() ? View.GONE : View.VISIBLE);
-        }
-
-        if (isPagedLayout()) {
-            // 分页是引导式逐组填写，不使用筛选/搜索，避免页数抖动。
-            _filterMode = FILTER_ALL;
-            _searchKeyword = "";
-            _filterModeBeforeSearch = FILTER_ALL;
         }
 
         renderStepTabs();
@@ -740,8 +751,41 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             _currentPageIndex = 0;
             return;
         }
-        _pages = OfflineFormDefinitionFlattener.splitIntoPages(step);
+        // 分页下筛选会改变页数：页集合按当前筛选结果重算。
+        List<OfflineFormPage> allPages = OfflineFormDefinitionFlattener.splitIntoPages(step);
+        _pages = new ArrayList<>();
+        for (OfflineFormPage page : allPages) {
+            if (pageMatchesFilter(page)) {
+                _pages.add(page);
+            }
+        }
         _currentPageIndex = clampPageIndex(_currentPageIndex);
+    }
+
+    /** 分页模式下，某页是否处于当前筛选结果内（页数随筛选重算）。 */
+    private boolean pageMatchesFilter(OfflineFormPage page) {
+        if (page == null) {
+            return false;
+        }
+        switch (_filterMode) {
+            case FILTER_UNFILLED:
+                return hasRequiredUnsatisfiedField(page.getRootNode());
+            case FILTER_FILLED:
+                return hasRequiredField(page.getRootNode()) && !hasRequiredUnsatisfiedField(page.getRootNode());
+            case FILTER_SEARCH:
+                if (_searchKeyword.isEmpty()) {
+                    return true;
+                }
+                for (OfflineFormDisplayItem item : page.getItems()) {
+                    if (matchesSearch(item)) {
+                        return true;
+                    }
+                }
+                return false;
+            case FILTER_ALL:
+            default:
+                return true;
+        }
     }
 
     private int clampPageIndex(int index) {
@@ -753,8 +797,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     /** 只刷新内容区（展示项 + 分页指示器 + 底部导航态），用于页内翻页。 */
     private void renderCurrentPageContent(OfflineFormStep step) {
+        boolean paged = isPagedLayout();
+        _adapter.setPagedMode(paged);
         List<OfflineFormDisplayItem> items;
-        if (isPagedLayout()) {
+        if (paged) {
             items = _pages.isEmpty() ? new ArrayList<>() : _pages.get(_currentPageIndex).getItems();
         } else {
             items = buildCurrentStepDisplayItems(step);
@@ -765,24 +811,19 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void renderPageIndicator() {
-        if (!isPagedLayout() || _pages.isEmpty()) {
-            _pageIndicator.setVisibility(View.GONE);
+        boolean showIndicator = isPagedLayout() && !_pages.isEmpty()
+                // 只有分组页有标题；散项页（连续 text / 裸 field 合并）不展示指示器。
+                && isGroupPage(_pages.get(_currentPageIndex));
+        if (!showIndicator) {
+            _pageIndicatorLayout.setVisibility(View.GONE);
             return;
         }
-        // 只有分组页有标题；散项页（连续 text / 裸 field 合并）不展示指示器文案。
-        if (!isGroupPage(_pages.get(_currentPageIndex))) {
-            _pageIndicator.setVisibility(View.GONE);
-            return;
-        }
-        _pageIndicator.setVisibility(View.VISIBLE);
-        String title = currentPageTitle();
-        if (title.isEmpty()) {
-            _pageIndicator.setText(getString(R.string.offline_page_indicator_untitled,
-                    _currentPageIndex + 1, _pages.size()));
-        } else {
-            _pageIndicator.setText(getString(R.string.offline_page_indicator,
-                    _currentPageIndex + 1, _pages.size(), title));
-        }
+        _pageIndicatorLayout.setVisibility(View.VISIBLE);
+        _pageNameTextView.setText(currentPageTitle());
+        _pageCountTextView.setText(getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size()));
+        LinearLayout.LayoutParams progressParams = (LinearLayout.LayoutParams) _pageProgressFill.getLayoutParams();
+        progressParams.weight = (float) (_currentPageIndex + 1) / _pages.size();
+        _pageProgressFill.setLayoutParams(progressParams);
     }
 
     private String currentPageTitle() {
@@ -920,18 +961,16 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    /** 渲染顶部筛选入口；分页布局下整体隐藏，仅保留步骤 Tab。 */
+    /** 渲染筛选行：分段选中态或搜索态（Step 级，两种布局一致）。 */
     private void renderFilterControls() {
-        if (isPagedLayout()) {
-            _searchKeywordLayout.setVisibility(View.GONE);
-            _filterModeSpinner.setVisibility(View.GONE);
-            return;
-        }
         boolean searching = _filterMode == FILTER_SEARCH && !_searchKeyword.isEmpty();
         _searchKeywordLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
-        _filterModeSpinner.setVisibility(searching ? View.GONE : View.VISIBLE);
+        _segFilter.setVisibility(searching ? View.GONE : View.VISIBLE);
+        _searchFilterButton.setVisibility(searching ? View.GONE : View.VISIBLE);
         if (searching) {
             _searchKeywordTextView.setText(getString(R.string.offline_text_search_keyword, _searchKeyword));
+        } else {
+            setFilterModeSelection(_filterMode);
         }
     }
 
@@ -1664,6 +1703,136 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 break;
             }
         }
+    }
+
+    /** 打开「分组目录」：列出所有页（分组），可跳转并显示完成状态。分组很多时用它导航。 */
+    private void showGroupDirectory() {
+        if (!isPagedLayout() || _pages.isEmpty()) {
+            return;
+        }
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View content = LayoutInflater.from(this).inflate(R.layout.offline_form_group_directory_sheet, null);
+        TextView titleView = content.findViewById(R.id.group_directory_title);
+        TextView subtitleView = content.findViewById(R.id.group_directory_subtitle);
+        LinearLayout list = content.findViewById(R.id.group_directory_list);
+
+        titleView.setText(R.string.offline_dialog_group_directory_title);
+
+        int done = 0;
+        int doing = 0;
+        for (OfflineFormPage page : _pages) {
+            int status = pageStatus(page);
+            if (status == PAGE_STATUS_DONE) {
+                done++;
+            } else if (status == PAGE_STATUS_DOING) {
+                doing++;
+            }
+        }
+        subtitleView.setText(getString(R.string.offline_group_directory_summary, _pages.size(), done, doing));
+
+        for (int i = 0; i < _pages.size(); i++) {
+            list.addView(createDirectoryRow(dialog, i));
+        }
+
+        dialog.setContentView(content);
+        dialog.show();
+    }
+
+    private View createDirectoryRow(BottomSheetDialog dialog, int pageIndex) {
+        OfflineFormPage page = _pages.get(pageIndex);
+        boolean current = pageIndex == _currentPageIndex;
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(this, 10), dp(this, 11), dp(this, 10), dp(this, 11));
+        if (current) {
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(getColor(R.color.offline_form_brand_tint));
+            bg.setCornerRadius(dp(this, 10));
+            row.setBackground(bg);
+        }
+
+        TextView numberView = new TextView(this);
+        numberView.setText(String.format(Locale.CHINA, "%02d", pageIndex + 1));
+        numberView.setTextSize(12);
+        numberView.setTypeface(null, android.graphics.Typeface.BOLD);
+        numberView.setTextColor(getColor(current ? R.color.huozige_blue : R.color.offline_form_muted));
+        numberView.setGravity(Gravity.END);
+        row.addView(numberView, new LinearLayout.LayoutParams(dp(this, 26), ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView nameView = new TextView(this);
+        nameView.setText(directoryPageName(page));
+        nameView.setTextSize(14);
+        nameView.setTypeface(null, android.graphics.Typeface.BOLD);
+        nameView.setTextColor(getColor(R.color.offline_form_ink));
+        nameView.setSingleLine(true);
+        nameView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        nameParams.leftMargin = dp(this, 12);
+        nameParams.rightMargin = dp(this, 8);
+        row.addView(nameView, nameParams);
+
+        int status = pageStatus(page);
+        TextView statusView = new TextView(this);
+        statusView.setTextSize(11);
+        statusView.setTypeface(null, android.graphics.Typeface.BOLD);
+        statusView.setPadding(dp(this, 8), dp(this, 3), dp(this, 8), dp(this, 3));
+        GradientDrawable statusBg = new GradientDrawable();
+        statusBg.setCornerRadius(dp(this, 20));
+        if (status == PAGE_STATUS_DONE) {
+            statusView.setText(R.string.offline_group_status_done);
+            statusView.setTextColor(getColor(R.color.offline_form_ok));
+            statusBg.setColor(0xFFE7F7EE);
+        } else if (status == PAGE_STATUS_DOING) {
+            statusView.setText(R.string.offline_group_status_doing);
+            statusView.setTextColor(getColor(R.color.offline_form_brand_deep));
+            statusBg.setColor(getColor(R.color.offline_form_brand_tint));
+        } else {
+            statusView.setText(R.string.offline_group_status_todo);
+            statusView.setTextColor(getColor(R.color.offline_form_muted));
+            statusBg.setColor(0xFFEEF1F4);
+        }
+        statusView.setBackground(statusBg);
+        row.addView(statusView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        row.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (pageIndex != _currentPageIndex) {
+                _currentPageIndex = pageIndex;
+                renderCurrentStep();
+                resetScroll();
+            }
+        });
+        return row;
+    }
+
+    private String directoryPageName(OfflineFormPage page) {
+        String title = pageTitle(page);
+        return title == null || title.isEmpty()
+                ? getString(R.string.offline_group_directory_untitled)
+                : title;
+    }
+
+    private int pageStatus(OfflineFormPage page) {
+        OfflineFormNode root = page.getRootNode();
+        if (hasRequiredField(root) && !hasRequiredUnsatisfiedField(root)) {
+            return PAGE_STATUS_DONE;
+        }
+        if (pageHasUserInput(page)) {
+            return PAGE_STATUS_DOING;
+        }
+        return PAGE_STATUS_TODO;
+    }
+
+    private boolean pageHasUserInput(OfflineFormPage page) {
+        for (OfflineFormDisplayItem item : page.getItems()) {
+            if (item.isField() && item.getFormItem() != null && item.getFormItem().hasUserInput()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

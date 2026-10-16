@@ -46,7 +46,10 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 
 public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_ROOT_GROUP = 10003;
+    private static final int VIEW_TYPE_PAGE = 10004;
 
+    // 逐组分页布局：整个页面渲染为一张卡片（一个聚合一张卡）。
+    private boolean pagedMode;
     private List<OfflineFormDisplayItem> displayItems = new ArrayList<>();
     private List<OfflineFormDisplayItem> rootItems = new ArrayList<>();
     // 折叠状态按分组节点（对象身份）保存，跨重渲染保留；使用 identity set 以规避 OfflineFormNode 的值相等语义。
@@ -152,6 +155,11 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         documentFileNames = fileNames == null ? new ArrayList<>() : new ArrayList<>(fileNames);
     }
 
+    /** 切换逐组分页渲染：整页合并为一张卡片。 */
+    public void setPagedMode(boolean paged) {
+        this.pagedMode = paged;
+    }
+
     public void setDisplayItems(List<OfflineFormDisplayItem> items) {
         displayItems = new ArrayList<>(items);
         // 不再清空折叠状态：用户折叠结果跨重渲染保留；仅首次为每个分组应用一次“默认折叠”。
@@ -173,6 +181,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_PAGE) {
+            return new PageCardViewHolder(createPageCard(parent));
+        }
         if (viewType == VIEW_TYPE_ROOT_GROUP) {
             return new RootGroupViewHolder(createRootGroupContainer(parent));
         }
@@ -189,6 +200,10 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (pagedMode) {
+            ((PageCardViewHolder) holder).bind(displayItems);
+            return;
+        }
         OfflineFormDisplayItem item = rootItems.get(position);
         if (holder instanceof RootGroupViewHolder) {
             ((RootGroupViewHolder) holder).bind(item, collectGroupItems(position));
@@ -205,11 +220,17 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
+        if (pagedMode) {
+            return displayItems.isEmpty() ? 0 : 1;
+        }
         return rootItems.size();
     }
 
     @Override
     public int getItemViewType(int position) {
+        if (pagedMode) {
+            return VIEW_TYPE_PAGE;
+        }
         OfflineFormDisplayItem item = rootItems.get(position);
         if (item.isGroup()) {
             return VIEW_TYPE_ROOT_GROUP;
@@ -335,6 +356,34 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         renderChildrenContent(childrenLayout, childItems);
     }
 
+    /** 分页模式下的一整页卡片（一个聚合一张卡）。 */
+    private View createPageCard(ViewGroup parent) {
+        Context context = parent.getContext();
+        LinearLayout outer = new LinearLayout(context);
+        RecyclerView.LayoutParams outerParams = new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        outerParams.setMargins(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12));
+        outer.setLayoutParams(outerParams);
+        outer.setOrientation(LinearLayout.VERTICAL);
+
+        CardView cardView = new CardView(context);
+        cardView.setCardBackgroundColor(context.getColor(R.color.white));
+        cardView.setRadius(dp(context, 14));
+        cardView.setCardElevation(dp(context, 1));
+        cardView.setUseCompatPadding(false);
+
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        cardView.addView(content, new CardView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        outer.addView(cardView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        return outer;
+    }
+
     private View createRootGroupContainer(ViewGroup parent) {
         LinearLayout outer = new LinearLayout(parent.getContext());
         outer.setLayoutParams(new RecyclerView.LayoutParams(
@@ -386,24 +435,24 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindGroupHeader(View itemView, OfflineFormDisplayItem item) {
+        Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
-        int startPadding = dp(itemView.getContext(), 14 + Math.max(0, item.getDepth() - 1) * 16);
-        container.setPadding(startPadding, dp(itemView.getContext(), item.getDepth() == 0 ? 12 : 8), dp(itemView.getContext(), 14), dp(itemView.getContext(), item.getDepth() == 0 ? 10 : 6));
-        container.setBackground(item.getDepth() == 0 ? createRoundedBackground(itemView, R.color.white, 6) : null);
+        container.setPadding(dp(context, 16), dp(context, 11), dp(context, 16), dp(context, 11));
+        container.setBackground(null);
 
-        View accentView = new View(itemView.getContext());
+        View accentView = new View(context);
         GradientDrawable accentBackground = new GradientDrawable();
-        accentBackground.setColor(itemView.getContext().getColor(R.color.huozige_blue));
-        accentBackground.setCornerRadius(dp(itemView.getContext(), 2));
+        accentBackground.setColor(context.getColor(R.color.huozige_blue));
+        accentBackground.setCornerRadius(dp(context, 2));
         accentView.setBackground(accentBackground);
-        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(dp(itemView.getContext(), 4), dp(itemView.getContext(), 18));
-        accentParams.setMargins(0, 0, dp(itemView.getContext(), 8), 0);
+        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(dp(context, 3), dp(context, 15));
+        accentParams.setMargins(0, 0, dp(context, 8), 0);
         container.addView(accentView, accentParams);
 
-        TextView titleView = new TextView(itemView.getContext());
-        titleView.setTextColor(itemView.getContext().getColor(R.color.huozige_blue));
-        titleView.setTextSize(15);
+        TextView titleView = new TextView(context);
+        titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+        titleView.setTextSize(13.5f);
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
         titleView.setText(item.getNode().getTitle());
@@ -412,11 +461,11 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1));
 
-        TriangleToggleView toggleView = new TriangleToggleView(itemView.getContext());
+        TriangleToggleView toggleView = new TriangleToggleView(context);
         toggleView.setCollapsed(collapsedGroupNodes.contains(item.getNode()));
         container.addView(toggleView, new LinearLayout.LayoutParams(
-                dp(itemView.getContext(), 28),
-                dp(itemView.getContext(), 28)));
+                dp(context, 28),
+                dp(context, 28)));
     }
 
     private TriangleToggleView bindGroupHeader(View itemView, OfflineFormDisplayItem item, View.OnClickListener clickListener) {
@@ -427,40 +476,54 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindStaticText(View itemView, OfflineFormDisplayItem item) {
+        Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
-        int startPadding = dp(itemView.getContext(), 14 + Math.max(0, item.getDepth() - 1) * 16);
-        container.setPadding(startPadding, dp(itemView.getContext(), 8), dp(itemView.getContext(), 14), dp(itemView.getContext(), 10));
-        container.setBackground(createRoundedBackground(itemView, R.color.offline_form_text_bg, 6));
-
-        TextView titleView = new TextView(itemView.getContext());
-        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_title));
-        titleView.setTextSize(13);
-        titleView.setTypeface(null, Typeface.BOLD);
-        titleView.setText(item.getNode().getTitle());
-
-        container.addView(titleView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        container.setPadding(dp(context, 16), dp(context, 13), dp(context, 16), dp(context, 13));
+        container.setBackground(null);
 
         OfflineFormNode node = item.getNode();
         String textMode = node.getTextMode();
-        if (textMode == null || textMode.isEmpty() || OfflineFormNode.TEXT_MODE_TEXT.equals(textMode)) {
-            addTextContent(container, node.getContent());
-        } else if (OfflineFormNode.TEXT_MODE_PROGRESS.equals(textMode)) {
-            addProgressContent(container, itemView.getContext(), node.getProgressDisplay());
+        if (OfflineFormNode.TEXT_MODE_PROGRESS.equals(textMode)) {
+            addProgressContent(container, context, node.getProgressDisplay());
         } else if (OfflineFormNode.TEXT_MODE_DOCUMENT.equals(textMode)) {
             addDocumentContent(container, item);
         } else {
-            // 未知模式按普通文本处理，保证旧版本或新增模式不会让节点内容消失。
-            addTextContent(container, node.getContent());
+            // 普通文本（含未知模式）统一渲染为「说明」callout，保证内容不会消失。
+            addNoteContent(container, node);
         }
     }
 
-    private void addTextContent(LinearLayout container, String content) {
-        TextView contentView = createTextValueView(container.getContext());
-        contentView.setText(content == null ? "" : content);
-        container.addView(contentView, new LinearLayout.LayoutParams(
+    /** 说明行：浅蓝 callout，左侧 3dp 品牌竖条（由背景 drawable 绘制）+ 标题 + 正文。 */
+    private void addNoteContent(LinearLayout container, OfflineFormNode node) {
+        Context context = container.getContext();
+        LinearLayout note = new LinearLayout(context);
+        note.setOrientation(LinearLayout.VERTICAL);
+        note.setBackgroundResource(R.drawable.offline_form_note_bg);
+        note.setPadding(dp(context, 15), dp(context, 11), dp(context, 13), dp(context, 11));
+
+        String title = node.getTitle();
+        if (title != null && !title.isEmpty()) {
+            TextView titleView = new TextView(context);
+            titleView.setText(title);
+            titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+            titleView.setTextSize(13.5f);
+            titleView.setTypeface(null, Typeface.BOLD);
+            note.addView(titleView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        TextView contentView = new TextView(context);
+        contentView.setText(node.getContent() == null ? "" : node.getContent());
+        contentView.setTextColor(context.getColor(R.color.offline_form_sec));
+        contentView.setTextSize(13);
+        contentView.setLineSpacing(dp(context, 2), 1f);
+        note.addView(contentView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        container.addView(note, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
     }
@@ -673,8 +736,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindFieldViewHolder(BaseViewHolder holder, OfflineFormDisplayItem item, int position) {
-        int startPadding = dp(holder.itemView.getContext(), 16 + Math.max(0, item.getDepth() - 1) * 16);
-        holder.itemView.setPadding(startPadding, dp(holder.itemView.getContext(), 8), dp(holder.itemView.getContext(), 16), dp(holder.itemView.getContext(), 8));
+        // 行内边距由字段布局自身统一控制（16dp / 13dp）；嵌套层级由分组引导线表达，不再按 depth 缩进。
         BaseFormItem formItem = item.getFormItem();
         String originalTitle = formItem.getTitle();
         String displayTitle = item.getFieldDisplayTitle();
@@ -776,6 +838,21 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    private class PageCardViewHolder extends RecyclerView.ViewHolder {
+        private final LinearLayout contentLayout;
+
+        PageCardViewHolder(View itemView) {
+            super(itemView);
+            CardView cardView = (CardView) ((LinearLayout) itemView).getChildAt(0);
+            contentLayout = (LinearLayout) cardView.getChildAt(0);
+        }
+
+        void bind(List<OfflineFormDisplayItem> pageItems) {
+            contentLayout.removeAllViews();
+            renderChildrenContent(contentLayout, pageItems);
+        }
+    }
+
     private class RootGroupViewHolder extends RecyclerView.ViewHolder {
         private final LinearLayout contentLayout;
 
@@ -792,27 +869,47 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem, List<OfflineFormDisplayItem> childItems) {
-        LinearLayout groupBlock = new LinearLayout(parentLayout.getContext());
+        Context context = parentLayout.getContext();
+        LinearLayout groupBlock = new LinearLayout(context);
         groupBlock.setOrientation(LinearLayout.VERTICAL);
 
         View header = createGroupHeader(groupBlock);
-        LinearLayout childrenLayout = new LinearLayout(parentLayout.getContext());
+        LinearLayout childrenLayout = new LinearLayout(context);
         childrenLayout.setOrientation(LinearLayout.VERTICAL);
         childrenLayout.setLayoutTransition(createLayoutTransition());
+        // 层级引导线：背景 drawable 在左侧画 1dp 竖线，随子内容高度自动伸缩（不用卡中卡、不用测量依赖的竖条 View）。
+        childrenLayout.setBackgroundResource(R.drawable.offline_form_guide_bg);
+        childrenLayout.setPadding(dp(context, 13), 0, 0, 0);
 
         TriangleToggleView toggleView = bindGroupHeader(header, groupItem, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
         toggleView.setCollapsed(collapsedGroupNodes.contains(groupItem.getNode()));
         groupBlock.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        groupBlock.addView(childrenLayout, new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams guideParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        guideParams.leftMargin = dp(context, 14);
+        guideParams.bottomMargin = dp(context, 8);
+        groupBlock.addView(childrenLayout, guideParams);
         parentLayout.addView(groupBlock, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         renderChildrenContent(childrenLayout, childItems);
+    }
+
+    /** 行与行之间的发丝分隔线（左右内缩 16dp）。 */
+    private void addRowDivider(LinearLayout parent) {
+        Context context = parent.getContext();
+        View divider = new View(context);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 1));
+        params.leftMargin = dp(context, 16);
+        params.rightMargin = dp(context, 16);
+        divider.setLayoutParams(params);
+        divider.setBackgroundResource(R.drawable.offline_form_row_divider);
+        parent.addView(divider);
     }
 
     private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
@@ -821,8 +918,13 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         }
 
+        boolean first = true;
         for (int i = 0; i < childItems.size(); i++) {
             OfflineFormDisplayItem child = childItems.get(i);
+            if (!first) {
+                addRowDivider(childrenLayout);
+            }
+            first = false;
             if (child.isGroup()) {
                 List<OfflineFormDisplayItem> nestedChildren = collectDirectChildItems(childItems, i);
                 addGroupBlock(childrenLayout, child, nestedChildren);
