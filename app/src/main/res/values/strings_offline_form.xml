@@ -111,11 +111,12 @@
     <string name="offline_progress_label_completion_rate">完成率</string>
     <string name="offline_text_no_signature_users">暂无签名人</string>
     <string name="offline_hint_signature">请在此处签名</string>
-    <string name="offline_text_time_hour">时</string>
-    <string name="offline_text_time_minute">分</string>
-    <string name="offline_text_time_second">秒</string>
     <string name="offline_title_select_date">选择日期</string>
     <string name="offline_title_select_time">选择时间</string>
+    <string name="offline_wheel_preview_date">%1$d年%2$d月%3$d日</string>
+    <string name="offline_wheel_preview_date_time">%1$d年%2$d月%3$d日 %4$02d:%5$02d:%6$02d</string>
+    <string name="offline_wheel_preview_time">%1$02d:%2$02d</string>
+    <string name="offline_wheel_preview_time_seconds">%1$02d:%2$02d:%3$02d</string>
     <string name="offline_table_column_version">版本号</string>
     <string name="offline_table_column_updated_at">更新时间</string>
     <string name="offline_table_column_actions">操作</string>

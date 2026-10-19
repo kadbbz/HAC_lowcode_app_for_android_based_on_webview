@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部抽屉式滚轮选择器：日期与时间共用一行滚轮，单位信息由顶部实时预览承担。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingBottom="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/wheel_picker_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:minWidth="52dp"
+            android:text="@string/offline_button_cancel"
+            android:textColor="@color/offline_form_sec"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/wheel_picker_title"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="@color/offline_form_ink"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/wheel_picker_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="end|center_vertical"
+            android:minWidth="52dp"
+            android:text="@string/offline_button_confirm"
+            android:textColor="@color/huozige_blue"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line" />
+
+    <!-- 实时预览：滚轮只显示数字，这里同步显示带单位的结果，兼顾可读性与列宽。 -->
+    <TextView
+        android:id="@+id/wheel_picker_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="18dp"
+        android:textColor="@color/huozige_blue"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- 单行滚轮：年 月 日 时 分 秒，按模式隐藏不需要的列 -->
+    <LinearLayout
+        android:id="@+id/wheel_picker_row"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_year"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.15" />
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_month"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_day"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_hour"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_minute"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <com.zyyoona7.wheel.WheelView
+            android:id="@+id/wheel_second"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+</LinearLayout>
