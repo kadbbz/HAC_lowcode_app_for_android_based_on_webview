@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="12dp"
+    android:viewportWidth="12"
+    android:viewportHeight="12">
+    <!-- 圆头细描边叉：比实心多边形更柔和，不抢输入框的视觉重心 -->
+    <path
+        android:pathData="M3.4,3.4L8.6,8.6M8.6,3.4L3.4,8.6"
+        android:strokeColor="@color/offline_form_brand_deep"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.5" />
+</vector>
