@@ -3,6 +3,7 @@ package com.huozige.lab.container.offlineform;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,13 +14,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.InputType;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -34,7 +38,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -95,6 +98,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final String STATE_CURRENT_STEP_INDEX = "offline_form_current_step_index";
     private static final String STATE_CURRENT_PAGE_INDEX = "offline_form_current_page_index";
     private static final String STATE_FILTER_MODE = "offline_form_filter_mode";
+    private static final String STATE_FILTER_MODE_BEFORE_SEARCH = "offline_form_filter_mode_before_search";
     private static final String STATE_SEARCH_KEYWORD = "offline_form_search_keyword";
     private static final int MENU_ID_SAVE_RECORD = 1;
     private static final int FILTER_ALL = 0;
@@ -116,7 +120,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ImageView _stepScrollLeftHint;
     private ImageView _stepScrollRightHint;
     private LinearLayout _itemNavigationLayout;
-    private LinearLayout _searchKeywordLayout;
+    private LinearLayout _filterSegmentLayout;
+    private LinearLayout _searchInputLayout;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
     private TextView _pageCountTextView;
@@ -125,7 +130,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
-    private TextView _searchKeywordTextView;
+    private EditText _searchInput;
     private TextView _searchFilterButton;
     private ImageView _clearSearchButton;
     private RadioGroup _segFilter;
@@ -135,6 +140,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private boolean _editRecordMissingOrOutdated;
     private boolean _updatingTabs;
     private boolean _updatingFilter;
+    // 程序化回填搜索框内容时置位，避免触发自身的实时筛选。
+    private boolean _syncingSearchInput;
     // 渲染重入保护：任何监听器触发的嵌套 renderCurrentStep 直接忽略，避免无限递归。
     private boolean _renderingStep;
     private int _filterMode = FILTER_ALL;
@@ -225,6 +232,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         outState.putInt(STATE_CURRENT_STEP_INDEX, _currentStepIndex);
         outState.putInt(STATE_CURRENT_PAGE_INDEX, _currentPageIndex);
         outState.putInt(STATE_FILTER_MODE, _filterMode);
+        outState.putInt(STATE_FILTER_MODE_BEFORE_SEARCH, _filterModeBeforeSearch);
         outState.putString(STATE_SEARCH_KEYWORD, _searchKeyword);
         super.onSaveInstanceState(outState);
     }
@@ -240,8 +248,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
                 _definition.getSteps().size() - 1));
         _currentPageIndex = Math.max(0, savedInstanceState.getInt(STATE_CURRENT_PAGE_INDEX, 0));
         _filterMode = savedInstanceState.getInt(STATE_FILTER_MODE, FILTER_ALL);
-        if (_filterMode < FILTER_ALL || _filterMode > FILTER_FILLED) {
+        if (_filterMode < FILTER_ALL || _filterMode > FILTER_SEARCH) {
             _filterMode = FILTER_ALL;
+        }
+        _filterModeBeforeSearch = savedInstanceState.getInt(STATE_FILTER_MODE_BEFORE_SEARCH, FILTER_ALL);
+        if (_filterModeBeforeSearch < FILTER_ALL || _filterModeBeforeSearch > FILTER_FILLED) {
+            _filterModeBeforeSearch = FILTER_ALL;
         }
         _searchKeyword = savedInstanceState.getString(STATE_SEARCH_KEYWORD, "");
         setFilterModeSelection(_filterMode);
@@ -258,7 +270,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _stepScrollLeftHint = findViewById(R.id.hint_step_scroll_left);
         _stepScrollRightHint = findViewById(R.id.hint_step_scroll_right);
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
-        _searchKeywordLayout = findViewById(R.id.layout_search_keyword);
+        _filterSegmentLayout = findViewById(R.id.layout_filter_segment);
+        _searchInputLayout = findViewById(R.id.layout_search_input);
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
         _pageCountTextView = findViewById(R.id.text_page_count);
@@ -267,19 +280,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
-        _searchKeywordTextView = findViewById(R.id.text_search_keyword);
+        _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
         _clearSearchButton = findViewById(R.id.button_clear_search);
         _segFilter = findViewById(R.id.seg_filter);
-        setupClearSearchButtonBackground();
         setupBottomHintHeight();
-    }
-
-    private void setupClearSearchButtonBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setShape(GradientDrawable.OVAL);
-        background.setColor(getColor(R.color.gray));
-        _clearSearchButton.setBackground(background);
     }
 
     private void setupRecyclerView() {
@@ -486,8 +491,31 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void setupListeners() {
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
-        _searchKeywordLayout.setOnClickListener(v -> clearSearchFilter());
-        _searchFilterButton.setOnClickListener(v -> showSearchDialog());
+        _searchFilterButton.setOnClickListener(v -> enterSearchMode());
+        _clearSearchButton.setOnClickListener(v -> exitSearchMode(true));
+        _searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                onSearchKeywordChanged(s == null ? "" : s.toString());
+            }
+        });
+        _searchInput.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                // 关键词已实时生效，收键盘即可让结果完整可见。
+                hideSoftKeyboard();
+                _searchInput.clearFocus();
+                return true;
+            }
+            return false;
+        });
         _groupDirectoryButton.setOnClickListener(v -> showGroupDirectory());
         _segFilter.setOnCheckedChangeListener((group, checkedId) -> onFilterSegmentChanged(checkedId));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -532,8 +560,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     /**
      * 返回 = 一次收尾：校验 + 落盘 + （未通过时）轻提示，然后退出。
      * 通过 -> 待上传；不通过 -> 草稿。不阻塞退出，不丢数据。
+     * 搜索态下返回只用来退出搜索，不离开表单。
      */
     private void onBackRequested() {
+        if (_filterMode == FILTER_SEARCH) {
+            exitSearchMode(true);
+            return;
+        }
         if (!_formLoaded || _definition == null || _editRecordMissingOrOutdated) {
             finish();
             return;
@@ -566,57 +599,78 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
+    /** 复位筛选到「全部」，同时退出搜索态（清空关键词、收起键盘）。 */
     private void resetFilterMode() {
         _filterMode = FILTER_ALL;
         _filterModeBeforeSearch = FILTER_ALL;
         _searchKeyword = "";
+        hideSoftKeyboard();
+        _searchInput.clearFocus();
         setFilterModeSelection(FILTER_ALL);
     }
 
-    private void showSearchDialog() {
-        LinearLayout container = new LinearLayout(this);
-        container.setPadding(dp(this, 24), 0, dp(this, 24), 0);
-
-        EditText input = new EditText(this);
-        input.setSingleLine(true);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setHint(R.string.offline_hint_field_search);
-        input.setText(_searchKeyword);
-        input.setSelectAllOnFocus(true);
-        container.addView(input, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.offline_dialog_search_title)
-                .setView(container)
-                .setPositiveButton(R.string.offline_button_confirm, (dialog, which) -> applySearchFilter(input.getText().toString()))
-                .setNegativeButton(R.string.offline_button_cancel, (dialog, which) -> restoreFilterModeBeforeSearch())
-                .setOnCancelListener(dialog -> restoreFilterModeBeforeSearch())
-                .show();
+    /**
+     * 点击「搜索」：不弹窗，直接把筛选行替换为输入框，并拉起键盘开始输入。
+     * 进入搜索态时关键词为空，因此列表先退回「全部」结果。
+     */
+    private void enterSearchMode() {
+        if (_filterMode != FILTER_SEARCH) {
+            _filterModeBeforeSearch = _filterMode;
+            _filterMode = FILTER_SEARCH;
+            _searchKeyword = "";
+        }
+        renderCurrentStep();
+        // 输入框刚由 GONE 转 VISIBLE，等一帧再取焦点与键盘，避免弹窗失败。
+        _searchInput.post(() -> {
+            _searchInput.requestFocus();
+            showSoftKeyboard();
+        });
     }
 
-    private void applySearchFilter(String keyword) {
-        _searchKeyword = keyword == null ? "" : keyword.trim();
-        if (_searchKeyword.isEmpty()) {
-            clearSearchFilter();
+    /** 输入框内容变化：实时筛选（keep 焦点，只重绘内容与分页指示器）。 */
+    private void onSearchKeywordChanged(String keyword) {
+        if (_syncingSearchInput || _filterMode != FILTER_SEARCH) {
             return;
         }
-        _filterModeBeforeSearch = _filterMode == FILTER_SEARCH ? _filterModeBeforeSearch : _filterMode;
-        _filterMode = FILTER_SEARCH;
+        String normalized = keyword == null ? "" : keyword.trim();
+        if (normalized.equals(_searchKeyword)) {
+            return;
+        }
+        _searchKeyword = normalized;
         renderCurrentStep();
     }
 
-    private void clearSearchFilter() {
+    /**
+     * 退出搜索态：清空关键词、收起键盘，并把整行还原为分段筛选。
+     *
+     * @param restorePreviousMode true = 回到进入搜索前的分段项；false = 回到「全部」。
+     */
+    private void exitSearchMode(boolean restorePreviousMode) {
+        hideSoftKeyboard();
+        _searchInput.clearFocus();
         _searchKeyword = "";
-        _filterMode = FILTER_ALL;
-        _filterModeBeforeSearch = FILTER_ALL;
+        int previousMode = _filterModeBeforeSearch;
+        if (previousMode < FILTER_ALL || previousMode > FILTER_FILLED) {
+            previousMode = FILTER_ALL;
+        }
+        _filterMode = restorePreviousMode ? previousMode : FILTER_ALL;
+        _filterModeBeforeSearch = _filterMode;
+        setFilterModeSelection(_filterMode);
         renderCurrentStep();
     }
 
-    private void restoreFilterModeBeforeSearch() {
-        _filterMode = _filterModeBeforeSearch;
-        renderCurrentStep();
+    private void showSoftKeyboard() {
+        InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (manager != null) {
+            manager.showSoftInput(_searchInput, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    private void hideSoftKeyboard() {
+        InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (manager != null) {
+            manager.hideSoftInputFromWindow(_searchInput.getWindowToken(), 0);
+        }
     }
 
     private void setFilterModeSelection(int filterMode) {
@@ -961,17 +1015,27 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    /** 渲染筛选行：分段选中态或搜索态（Step 级，两种布局一致）。 */
+    /** 渲染筛选行：搜索态整行换成输入框，非搜索态显示分段筛选（Step 级，两种布局一致）。 */
     private void renderFilterControls() {
-        boolean searching = _filterMode == FILTER_SEARCH && !_searchKeyword.isEmpty();
-        _searchKeywordLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
-        _segFilter.setVisibility(searching ? View.GONE : View.VISIBLE);
-        _searchFilterButton.setVisibility(searching ? View.GONE : View.VISIBLE);
-        if (searching) {
-            _searchKeywordTextView.setText(getString(R.string.offline_text_search_keyword, _searchKeyword));
-        } else {
+        boolean searching = _filterMode == FILTER_SEARCH;
+        _filterSegmentLayout.setVisibility(searching ? View.GONE : View.VISIBLE);
+        _searchInputLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
+        syncSearchInputText();
+        if (!searching) {
             setFilterModeSelection(_filterMode);
         }
+    }
+
+    /** 把状态里的关键词回填到输入框（带重入保护，避免输入过程中重置光标）。 */
+    private void syncSearchInputText() {
+        String current = _searchInput.getText() == null ? "" : _searchInput.getText().toString();
+        if (current.equals(_searchKeyword)) {
+            return;
+        }
+        _syncingSearchInput = true;
+        _searchInput.setText(_searchKeyword);
+        _searchInput.setSelection(_searchKeyword.length());
+        _syncingSearchInput = false;
     }
 
     private boolean matchesSearch(OfflineFormDisplayItem item) {
@@ -1382,10 +1446,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             return;
         }
         if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
-            _searchKeyword = "";
-            _filterMode = FILTER_ALL;
-            _filterModeBeforeSearch = FILTER_ALL;
-            setFilterModeSelection(FILTER_ALL);
+            resetFilterMode();
         }
         if (result.getFirstInvalidStepIndex() >= 0) {
             _currentStepIndex = Math.min(result.getFirstInvalidStepIndex(), _definition.getSteps().size() - 1);
@@ -1659,10 +1720,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         // 复位筛选，保证目标项可见。
         if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
-            _searchKeyword = "";
-            _filterMode = FILTER_ALL;
-            _filterModeBeforeSearch = FILTER_ALL;
-            setFilterModeSelection(FILTER_ALL);
+            resetFilterMode();
         }
         _currentStepIndex = Math.max(0, Math.min(targetStep, _definition.getSteps().size() - 1));
         renderCurrentStep();
