@@ -113,7 +113,8 @@
     <string name="offline_hint_signature">请在此处签名</string>
     <string name="offline_title_select_date">选择日期</string>
     <string name="offline_title_select_time">选择时间</string>
-    <string name="offline_wheel_today">今天</string>
+    <string name="offline_wheel_previous">上一步</string>
+    <string name="offline_wheel_next">下一步</string>
     <string name="offline_wheel_preview_date">%1$d年%2$d月%3$d日</string>
     <string name="offline_wheel_preview_date_time">%1$d年%2$d月%3$d日 %4$02d:%5$02d:%6$02d</string>
     <string name="offline_wheel_preview_time">%1$02d:%2$02d</string>

@@ -16,6 +16,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.FormItemInput
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItemOptions;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
+import com.huozige.lab.container.utilities.StringUtils;
 
 public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
     @Override
@@ -27,6 +28,11 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
         PickerFormItemOptions options = (PickerFormItemOptions) input.options;
         if (getPickerMode() == PickerMode.DATE) {
             item.setIncludeTime(options != null && options.isIncludeTime());
+            if (options != null) {
+                item.setDateRangeMode(options.getDateRangeMode());
+                item.setMinDate(options.getMinDate());
+                item.setMaxDate(options.getMaxDate());
+            }
         } else {
             item.setIncludeSeconds(options != null && options.isIncludeSeconds());
         }
@@ -42,10 +48,25 @@ public abstract class PickerFormItemHandler implements OfflineFormItemHandler {
     public JSONObject toJson(BaseFormItem item) {
         PickerFormItem pickerItem = (PickerFormItem) item;
         JSONObject jsonObject = OfflineFormItemJsonHelper.buildBaseOutput(pickerItem);
-        if (getPickerMode() == PickerMode.DATE && pickerItem.isIncludeTime()) {
-            PickerFormItemOptions options = new PickerFormItemOptions();
-            options.setIncludeTime(true);
-            jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
+        if (getPickerMode() == PickerMode.DATE) {
+            // 仅在有额外配置时才输出 options，保持默认日期项的 JSON 形状不变。
+            boolean deadline = "deadline".equalsIgnoreCase(pickerItem.getDateRangeMode());
+            boolean hasRange = !StringUtils.isNullOrBlank(pickerItem.getMinDate())
+                    || !StringUtils.isNullOrBlank(pickerItem.getMaxDate());
+            if (pickerItem.isIncludeTime() || deadline || hasRange) {
+                PickerFormItemOptions options = new PickerFormItemOptions();
+                options.setIncludeTime(pickerItem.isIncludeTime());
+                if (deadline) {
+                    options.setDateRangeMode("deadline");
+                }
+                if (!StringUtils.isNullOrBlank(pickerItem.getMinDate())) {
+                    options.setMinDate(pickerItem.getMinDate());
+                }
+                if (!deadline && !StringUtils.isNullOrBlank(pickerItem.getMaxDate())) {
+                    options.setMaxDate(pickerItem.getMaxDate());
+                }
+                jsonObject.put(OfflineFormItemJsonKeys.FIELD_OPTIONS, options);
+            }
         } else if (getPickerMode() == PickerMode.TIME && pickerItem.isIncludeSeconds()) {
             PickerFormItemOptions options = new PickerFormItemOptions();
             options.setIncludeSeconds(true);

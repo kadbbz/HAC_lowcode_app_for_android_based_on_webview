@@ -57,6 +57,9 @@ public class PickerViewHolder extends BaseViewHolder {
                 itemView.getContext(),
                 createInitialCalendar(),
                 pickerItem.isIncludeTime(),
+                pickerItem.getDateRangeMode(),
+                pickerItem.getMinDate(),
+                pickerItem.getMaxDate(),
                 this::commitValue);
     }
 
