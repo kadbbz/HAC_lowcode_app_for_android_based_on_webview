@@ -53,19 +53,48 @@
         android:layout_height="1dp"
         android:background="@color/offline_form_line" />
 
-    <!-- 实时预览：滚轮只显示数字，这里同步显示带单位的结果，兼顾可读性与列宽。 -->
-    <TextView
-        android:id="@+id/wheel_picker_preview"
+    <!-- 实时预览 + 快捷入口：日期结果显示在左，右侧「今天」一键跳到当前日期。 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="16dp"
         android:paddingTop="10dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="18dp"
-        android:textColor="@color/huozige_blue"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:id="@+id/wheel_picker_preview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="start"
+            android:singleLine="true"
+            android:textColor="@color/offline_form_ink"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/wheel_picker_today"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/offline_form_today_chip_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minWidth="52dp"
+            android:minHeight="32dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/offline_wheel_today"
+            android:textColor="@color/offline_form_brand_deep"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
     <!-- 单行滚轮：年 月 日 时 分 秒，按模式隐藏不需要的列 -->
     <LinearLayout

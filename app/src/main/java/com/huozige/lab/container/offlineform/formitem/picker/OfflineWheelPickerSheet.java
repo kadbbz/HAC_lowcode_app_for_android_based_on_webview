@@ -79,6 +79,7 @@ public final class OfflineWheelPickerSheet {
     private WheelView<String> minuteWheel;
     private WheelView<String> secondWheel;
     private TextView previewView;
+    private TextView todayShortcut;
     private WheelHaptics haptics;
 
     /** 重建日期列数据时置位，避免联动回调自我递归，也避免程序化改值误触振动。 */
@@ -126,6 +127,7 @@ public final class OfflineWheelPickerSheet {
         TextView titleView = content.findViewById(R.id.wheel_picker_title);
         titleView.setText(dateMode ? R.string.offline_title_select_date : R.string.offline_title_select_time);
         previewView = content.findViewById(R.id.wheel_picker_preview);
+        todayShortcut = content.findViewById(R.id.wheel_picker_today);
         haptics = new WheelHaptics(context);
 
         yearWheel = content.findViewById(R.id.wheel_year);
@@ -152,6 +154,9 @@ public final class OfflineWheelPickerSheet {
         }
         attachHaptics();
         updatePreview();
+
+        setColumnVisible(todayShortcut, dateMode);
+        todayShortcut.setOnClickListener(v -> applyToday());
 
         content.findViewById(R.id.wheel_picker_cancel).setOnClickListener(v -> dialog.dismiss());
         content.findViewById(R.id.wheel_picker_confirm).setOnClickListener(v -> {
@@ -317,6 +322,20 @@ public final class OfflineWheelPickerSheet {
         } finally {
             rebuildingDays = false;
         }
+    }
+
+    /**
+     * 快捷把日期滚轮跳到今天；时间滚轮保持用户当前选择（仅日期模式可用）。
+     */
+    private void applyToday() {
+        Calendar today = Calendar.getInstance();
+        int year = clamp(today.get(Calendar.YEAR), MIN_YEAR, MAX_YEAR);
+        yearWheel.setSelectedItemPosition(year - MIN_YEAR, false);
+        monthWheel.setSelectedItemPosition(today.get(Calendar.MONTH), false);
+        // 年、月变化会通过联动回调重建日列，这里再定位到今天的日。
+        dayWheel.setSelectedItemPosition(today.get(Calendar.DAY_OF_MONTH) - 1, false);
+        updatePreview();
+        haptics.tick();
     }
 
     /** 预览文案：带单位的完整结果，随滚轮滚动实时更新。 */

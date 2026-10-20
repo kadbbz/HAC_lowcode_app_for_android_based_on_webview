@@ -1,5 +1,8 @@
 package com.huozige.lab.container.offlineform.formitem.picker;
 
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.TextView;
 
@@ -19,7 +22,6 @@ public class PickerViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvValue;
     private final TextView tvError;
-    private final TextView tvRequired;
 
     private PickerFormItem pickerItem;
 
@@ -29,7 +31,6 @@ public class PickerViewHolder extends BaseViewHolder {
         tvTitle = itemView.findViewById(R.id.tv_title);
         tvValue = itemView.findViewById(R.id.tv_value);
         tvError = itemView.findViewById(R.id.tv_error);
-        tvRequired = itemView.findViewById(R.id.tv_required);
         setupListeners();
     }
 
@@ -110,10 +111,25 @@ public class PickerViewHolder extends BaseViewHolder {
     @Override
     public void bind(BaseFormItem item, int position) {
         pickerItem = (PickerFormItem) item;
-        tvTitle.setText(pickerItem.getTitle());
-        tvRequired.setVisibility(pickerItem.isRequired() ? View.VISIBLE : View.GONE);
+        bindTitle();
         bindValue();
         updateErrorState();
+    }
+
+    /** 一行式标题：必填星号并入标题文本，保证它紧跟标签而不是被 weight 推到取值旁边。 */
+    private void bindTitle() {
+        String title = pickerItem.getTitle() == null ? "" : pickerItem.getTitle();
+        SpannableStringBuilder builder = new SpannableStringBuilder(title);
+        if (pickerItem.isRequired()) {
+            int starStart = builder.length();
+            builder.append(" *");
+            builder.setSpan(
+                    new ForegroundColorSpan(itemView.getContext().getColor(R.color.offline_form_danger)),
+                    starStart,
+                    builder.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        tvTitle.setText(builder);
     }
 
     private void bindValue() {
@@ -129,14 +145,16 @@ public class PickerViewHolder extends BaseViewHolder {
 
     @Override
     public void updateErrorState() {
-        if (pickerItem != null && pickerItem.getErrorMessage() != null) {
+        boolean hasError = pickerItem != null && pickerItem.getErrorMessage() != null;
+        if (hasError) {
             tvError.setVisibility(View.VISIBLE);
             tvError.setText(pickerItem.getErrorMessage());
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_error);
         } else {
             tvError.setVisibility(View.GONE);
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_normal);
         }
+        // 一行式样式没有输入框背景，错误态改用取值文字变红来提示。
+        tvValue.setTextColor(itemView.getContext().getColor(
+                hasError ? R.color.offline_form_danger : R.color.offline_form_ink));
     }
 
 }
