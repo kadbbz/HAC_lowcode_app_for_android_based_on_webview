@@ -53,13 +53,13 @@
         android:layout_height="1dp"
         android:background="@color/offline_form_line" />
 
-    <!-- 实时预览：只展示当前选择结果，操作按钮集中在标题栏左侧/右侧。 -->
+    <!-- 实时预览：只展示当前选择结果（居中），操作按钮集中在标题栏左侧/右侧。 -->
     <TextView
         android:id="@+id/wheel_picker_preview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
-        android:gravity="start"
+        android:gravity="center"
         android:paddingStart="16dp"
         android:paddingTop="10dp"
         android:paddingEnd="16dp"

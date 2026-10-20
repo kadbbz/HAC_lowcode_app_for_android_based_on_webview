@@ -371,7 +371,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         cardView.setCardBackgroundColor(context.getColor(R.color.white));
         cardView.setRadius(dp(context, 14));
         cardView.setCardElevation(dp(context, 1));
-        cardView.setUseCompatPadding(false);
+        // 阴影必须画在自身 bounds 内：父容器与卡片等大时会裁掉直边阴影，只在圆角缺口处留下一道深色弧。
+        cardView.setUseCompatPadding(true);
 
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
