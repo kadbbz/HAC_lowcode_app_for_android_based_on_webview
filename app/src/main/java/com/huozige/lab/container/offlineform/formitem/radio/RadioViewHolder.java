@@ -20,8 +20,8 @@ import java.util.Objects;
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
 public class RadioViewHolder extends BaseViewHolder {
-    // 选项之间的水平间距（胶囊之间留白）。
-    private static final int CHIP_GAP_DP = 8;
+    // 横向排列时选项之间的水平间距。
+    private static final int OPTION_GAP_DP = 8;
 
     private final TextView tvTitle;
     private final RadioGroup radioGroup;
@@ -108,13 +108,19 @@ public class RadioViewHolder extends BaseViewHolder {
         tvRequired.setVisibility(radioItem.isRequired() ? View.VISIBLE : View.GONE);
         binding = true;
         radioGroup.removeAllViews();
-        radioGroup.setOrientation(radioItem.isHorizontal() ? RadioGroup.HORIZONTAL : RadioGroup.VERTICAL);
+        boolean horizontal = radioItem.isHorizontal();
+        radioGroup.setOrientation(horizontal ? RadioGroup.HORIZONTAL : RadioGroup.VERTICAL);
         List<RadioFormItem.Option> options = radioItem.getOptions();
         int checkedId = -1;
         for (int i = 0; i < options.size(); i++) {
             RadioFormItem.Option option = options.get(i);
-            RadioButton radioButton = createChipRadioButton(option.getDisplayText(), option.getValue(), i > 0);
-            radioGroup.addView(radioButton);
+            RadioButton radioButton = createDefaultRadioButton(option.getDisplayText(), option.getValue());
+            RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
+                    RadioGroup.LayoutParams.WRAP_CONTENT, RadioGroup.LayoutParams.WRAP_CONTENT);
+            if (horizontal && i > 0) {
+                params.leftMargin = dp(itemView.getContext(), OPTION_GAP_DP);
+            }
+            radioGroup.addView(radioButton, params);
             if (Objects.equals(option.getValue(), radioItem.getValue())) {
                 checkedId = radioButton.getId();
             }
@@ -124,28 +130,14 @@ public class RadioViewHolder extends BaseViewHolder {
         updateErrorState();
     }
 
-    /** 用普通 RadioButton 呈现胶囊样式：去掉圆点、加胶囊背景与状态文字色。 */
-    private RadioButton createChipRadioButton(String label, String value, boolean withStartGap) {
+    /** 使用系统默认的 RadioButton 样式渲染选项，仅补足基础行内间距，不覆写选择点、背景与文字样式。 */
+    private RadioButton createDefaultRadioButton(String label, String value) {
         RadioButton radioButton = new RadioButton(itemView.getContext());
         radioButton.setText(label);
         radioButton.setTag(value);
         radioButton.setId(View.generateViewId());
-        radioButton.setButtonDrawable(null);
-        radioButton.setBackgroundResource(R.drawable.offline_form_chip_bg);
-        radioButton.setTextColor(itemView.getContext().getColorStateList(R.color.offline_form_chip_text));
-        radioButton.setTextSize(14);
-        radioButton.setGravity(Gravity.CENTER);
-        radioButton.setMinWidth(0);
-        radioButton.setMinimumWidth(0);
-        radioButton.setMinHeight(dp(itemView.getContext(), 34));
-        radioButton.setPadding(dp(itemView.getContext(), 16), dp(itemView.getContext(), 8),
-                dp(itemView.getContext(), 16), dp(itemView.getContext(), 8));
-        if (withStartGap) {
-            RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
-                    RadioGroup.LayoutParams.WRAP_CONTENT, RadioGroup.LayoutParams.WRAP_CONTENT);
-            params.leftMargin = dp(itemView.getContext(), CHIP_GAP_DP);
-            radioButton.setLayoutParams(params);
-        }
+        radioButton.setGravity(Gravity.CENTER_VERTICAL);
+        radioButton.setPadding(0, dp(itemView.getContext(), 4), 0, dp(itemView.getContext(), 4));
         return radioButton;
     }
 
