@@ -1,11 +1,13 @@
 package com.huozige.lab.container.offlineform.formitem.switchitem;
 
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.SwitchCompat;
+
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.OfflineCheckBoxView;
-import com.huozige.lab.container.offlineform.OfflineSwitchView;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormConfirmHelper;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.common.FormItemConfirmOptions;
@@ -17,8 +19,8 @@ public class SwitchViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvError;
     private final TextView tvRequired;
-    private final OfflineSwitchView switchView;
-    private final OfflineCheckBoxView checkBoxView;
+    private final SwitchCompat switchView;
+    private final CheckBox checkBoxView;
 
     private SwitchFormItem switchItem;
     // bind 期间由代码回填选中态，不应视为用户变更。
@@ -32,28 +34,27 @@ public class SwitchViewHolder extends BaseViewHolder {
         switchView = itemView.findViewById(R.id.switch_view);
         checkBoxView = itemView.findViewById(R.id.checkbox_view);
 
-        switchView.setOnCheckedChangeListener((view, isChecked) -> handleToggle(isChecked));
-        checkBoxView.setOnCheckedChangeListener((view, isChecked) -> handleToggle(isChecked));
-    }
-
-    /** 用户切换开关/复选框后的统一处理：二次确认后才写入；取消则回滚显示。 */
-    private void handleToggle(boolean isChecked) {
-        if (binding || switchItem == null || isLocked()) {
-            return;
-        }
-        boolean previous = switchItem.isChecked();
-        if (isChecked == previous) {
-            return;
-        }
-        if (OfflineFormConfirmHelper.isEnabled(switchItem)) {
-            int labelRes = isChecked ? R.string.offline_switch_on : R.string.offline_switch_off;
-            OfflineFormConfirmHelper.show(switchView.getContext(), switchItem,
-                    switchView.getContext().getString(labelRes),
-                    () -> applyChecked(isChecked),
-                    () -> restoreChecked(previous));
-        } else {
-            applyChecked(isChecked);
-        }
+        CompoundButton.OnCheckedChangeListener listener = (buttonView, isChecked) -> {
+            if (binding || switchItem == null || isLocked()) {
+                return;
+            }
+            boolean previous = switchItem.isChecked();
+            if (isChecked == previous) {
+                return;
+            }
+            if (OfflineFormConfirmHelper.isEnabled(switchItem)) {
+                // 二次确认：确认后才写入新值并刷新更新时间；取消则回滚。
+                int labelRes = isChecked ? R.string.offline_switch_on : R.string.offline_switch_off;
+                OfflineFormConfirmHelper.show(buttonView.getContext(), switchItem,
+                        buttonView.getContext().getString(labelRes),
+                        () -> applyChecked(isChecked),
+                        () -> restoreChecked(previous));
+            } else {
+                applyChecked(isChecked);
+            }
+        };
+        switchView.setOnCheckedChangeListener(listener);
+        checkBoxView.setOnCheckedChangeListener(listener);
     }
 
     /** 确认通过后写入新值；按配置禁用时同时锁定并通知外层持久化。 */
@@ -73,8 +74,8 @@ public class SwitchViewHolder extends BaseViewHolder {
     /** 取消确认时把选中态回滚到原值，且不触发任何字段变更回调。 */
     private void restoreChecked(boolean checked) {
         binding = true;
-        switchView.setChecked(checked, false);
-        checkBoxView.setChecked(checked, false);
+        switchView.setChecked(checked);
+        checkBoxView.setChecked(checked);
         binding = false;
     }
 
@@ -95,8 +96,8 @@ public class SwitchViewHolder extends BaseViewHolder {
 
         binding = true;
         boolean checked = switchItem.isChecked();
-        switchView.setChecked(checked, false);
-        checkBoxView.setChecked(checked, false);
+        switchView.setChecked(checked);
+        checkBoxView.setChecked(checked);
         binding = false;
 
         updateErrorState();

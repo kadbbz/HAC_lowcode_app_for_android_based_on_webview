@@ -41,12 +41,18 @@
 
         </LinearLayout>
 
-        <com.huozige.lab.container.offlineform.OfflineSwitchView
+        <!-- 系统默认开关偏小，按 1.25 倍绘制放大（PDA 场景更醒目）；marginEnd 预留放大后向右溢出的空间，gravity 保证放大前后垂直居中不被裁剪 -->
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switch_view"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:gravity="center_vertical"
+            android:minHeight="44dp"
+            android:scaleX="1.25"
+            android:scaleY="1.25" />
 
-        <com.huozige.lab.container.offlineform.OfflineCheckBoxView
+        <CheckBox
             android:id="@+id/checkbox_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

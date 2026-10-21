@@ -163,10 +163,6 @@
     <string name="offline_toast_signature_not_supported">当前页面不支持签名</string>
     <string name="offline_switch_on">是</string>
     <string name="offline_switch_off">否</string>
-    <string name="offline_switch_state_on">开关，开</string>
-    <string name="offline_switch_state_off">开关，关</string>
-    <string name="offline_checkbox_state_on">复选框，已选</string>
-    <string name="offline_checkbox_state_off">复选框，未选</string>
     <string name="offline_toast_export_unfinished">该表单存在未完成的填报，请先完成或删除草稿后再导出</string>
     <string name="offline_quick_toggle">快捷操作</string>
     <string name="offline_quick_action_top">回到顶部</string>
