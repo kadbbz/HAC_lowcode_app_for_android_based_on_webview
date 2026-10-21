@@ -401,7 +401,7 @@ public class ImageViewHolder extends BaseViewHolder {
         private final SquareFrameLayout previewContainer;
         private final ImageView preview;
         private final TextView errorView;
-        private final TextView deleteBar;
+        private final View deleteBar;
 
         ImageTileViewHolder(@NonNull View itemView) {
             super(itemView);
