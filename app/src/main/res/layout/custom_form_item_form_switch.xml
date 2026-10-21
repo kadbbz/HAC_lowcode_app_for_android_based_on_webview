@@ -1,65 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 开关项：字段名在上、开关控件在下，与其他字段项保持同一套结构与默认高度。 -->
+<!--
+  开关项：全局响应式规则——宽度足够时「标签在左、开关在右」，
+  空间不足时自动退回「标签在上、开关在下」。判定逻辑见 ResponsiveFieldRow。
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="@dimen/offline_form_item_min_height"
     android:orientation="vertical"
     android:paddingStart="@dimen/offline_form_item_padding_horizontal"
     android:paddingTop="@dimen/offline_form_item_padding_vertical"
     android:paddingEnd="@dimen/offline_form_item_padding_horizontal"
     android:paddingBottom="@dimen/offline_form_item_padding_vertical">
 
-    <LinearLayout
+    <com.huozige.lab.container.offlineform.formitem.ResponsiveFieldRow
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/offline_form_item_label_gap"
-        android:orientation="horizontal">
+        app:rf_controlMinWidth="@dimen/offline_form_control_min_width_switch">
 
-        <TextView
-            android:id="@+id/tv_title"
+        <!-- 子 View 顺序固定：第 1 个为标签组，第 2 个为控件 -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/offline_form_muted"
-            android:textSize="12.5sp" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_required"
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/offline_form_muted"
+                android:textSize="12.5sp" />
+
+            <TextView
+                android:id="@+id/tv_required"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="*"
+                android:textColor="@color/offline_form_danger"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
-            android:text="*"
-            android:textColor="@color/offline_form_danger"
-            android:textSize="12.5sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/offline_form_field_min_height"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <!-- 系统默认开关偏小，按 1.25 倍绘制放大（PDA 场景更醒目）；marginStart 预留放大后向左溢出的空间，gravity 保证放大前后垂直居中不被裁剪 -->
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switch_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_height="@dimen/offline_form_field_min_height"
             android:gravity="center_vertical"
-            android:minHeight="44dp"
-            android:scaleX="1.25"
-            android:scaleY="1.25" />
+            android:orientation="horizontal">
 
-        <CheckBox
-            android:id="@+id/checkbox_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+            <!-- 系统默认开关偏小，按 1.25 倍绘制放大（PDA 场景更醒目）；marginStart 预留放大后向左溢出的空间，gravity 保证放大前后垂直居中不被裁剪 -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:gravity="center_vertical"
+                android:minHeight="44dp"
+                android:scaleX="1.25"
+                android:scaleY="1.25" />
 
-    </LinearLayout>
+            <CheckBox
+                android:id="@+id/checkbox_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </com.huozige.lab.container.offlineform.formitem.ResponsiveFieldRow>
 
     <TextView
         android:id="@+id/tv_error"

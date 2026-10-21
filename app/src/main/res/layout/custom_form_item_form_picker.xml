@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 日期/时间选择项：字段名在上、选择结果在下，与其他字段项保持同一套结构与默认高度。 -->
+<!-- 日期/时间选择项：字段名在上、选择结果在下；取值行不套边框 / 卡片，右对齐并保留尾部箭头。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/picker_container"
     android:layout_width="match_parent"
@@ -40,19 +40,17 @@
 
     </LinearLayout>
 
+    <!-- 取值行：不套边框 / 卡片，取值右对齐，尾部箭头提示可点击 -->
     <TextView
         android:id="@+id/tv_value"
         android:layout_width="match_parent"
         android:layout_height="@dimen/offline_form_field_min_height"
-        android:background="@drawable/custom_form_bg_edittext_normal"
         android:clickable="true"
         android:drawableEnd="@drawable/ic_offline_chevron"
         android:drawablePadding="6dp"
         android:ellipsize="end"
         android:focusable="true"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:gravity="end|center_vertical"
         android:singleLine="true"
         android:textColor="@color/offline_form_ink"
         android:textColorHint="@color/offline_form_muted"

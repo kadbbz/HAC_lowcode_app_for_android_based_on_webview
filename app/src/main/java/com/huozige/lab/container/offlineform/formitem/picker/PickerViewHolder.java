@@ -126,8 +126,20 @@ public class PickerViewHolder extends BaseViewHolder {
             tvValue.setHint("");
         } else {
             tvValue.setText("");
-            tvValue.setHint(pickerItem.getHint());
+            tvValue.setHint(resolveEmptyHint());
         }
+    }
+
+    /** 未选择时的提示：优先用插件配置的 hint，未配置则按类型给默认水印。 */
+    private CharSequence resolveEmptyHint() {
+        String hint = pickerItem.getHint();
+        if (hint != null && !hint.trim().isEmpty()) {
+            return hint;
+        }
+        return itemView.getContext().getString(
+                pickerMode == PickerMode.DATE
+                        ? R.string.offline_hint_pick_date
+                        : R.string.offline_hint_pick_time);
     }
 
     @Override

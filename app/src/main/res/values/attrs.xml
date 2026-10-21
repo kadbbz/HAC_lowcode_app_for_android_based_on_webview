@@ -1,4 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-
+    <declare-styleable name="ResponsiveFieldRow">
+        <!-- 左右排列时控件需要的最小可用宽度；小于该值时自动改为上下排列。 -->
+        <attr name="rf_controlMinWidth" format="dimension" />
+    </declare-styleable>
 </resources>

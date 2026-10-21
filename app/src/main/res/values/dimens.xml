@@ -11,4 +11,15 @@
     <dimen name="offline_form_item_padding_vertical">12dp</dimen>
     <dimen name="offline_form_item_label_gap">8dp</dimen>
     <dimen name="offline_form_field_min_height">46dp</dimen>
+
+    <!--
+      标签 + 控件「左右排列」的全局规则（当前仅开关组件启用 auto）：
+      空间足够时标签在左、控件在右；空间不足时自动退回上下排列。
+    -->
+    <dimen name="offline_form_field_inline_gap">12dp</dimen>
+    <dimen name="offline_form_field_inline_min_height">46dp</dimen>
+    <dimen name="offline_form_field_stacked_min_height">72dp</dimen>
+    <dimen name="offline_form_control_min_width_switch">64dp</dimen>
+    <!-- 左右排列时标签最多占行宽的比例，超过即视为放不下、退回上下排列。 -->
+    <item name="offline_form_field_inline_label_max_ratio" type="fraction">40%</item>
 </resources>

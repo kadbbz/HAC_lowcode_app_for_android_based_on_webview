@@ -190,6 +190,8 @@
     <string name="offline_error_file_size">文件超过大小限制</string>
     <string name="offline_error_image_read_failed">无法读取图片</string>
     <string name="offline_hint_select">请选择</string>
+    <string name="offline_hint_pick_date">请选择日期</string>
+    <string name="offline_hint_pick_time">请选择时间</string>
     <string name="offline_form_field_title_placeholder">标题</string>
     <string name="offline_cd_file">文件</string>
     <string name="offline_cd_delete_file">删除文件</string>
