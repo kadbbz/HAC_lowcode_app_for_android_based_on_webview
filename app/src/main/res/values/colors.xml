@@ -21,6 +21,7 @@
     <color name="offline_form_line_strong">#DCE5EC</color>
     <color name="offline_form_field_fill">#F7F9FB</color>
     <color name="offline_form_danger">#E5484D</color>
+    <color name="offline_form_danger_pressed">#C93A3F</color>
     <color name="offline_form_ok">#12A150</color>
     <color name="offline_form_group_bg">#EAF6FD</color>
     <color name="offline_form_text_bg">#FFFFFFFF</color>

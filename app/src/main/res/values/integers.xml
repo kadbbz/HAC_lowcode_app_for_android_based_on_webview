@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 离线填报：图片宫格列数。默认 3 列；宽度 ≥ 600dp 的大屏 / 横屏由 values-w600dp 覆盖为 4 列。 -->
+    <integer name="offline_form_image_grid_span">3</integer>
+</resources>
