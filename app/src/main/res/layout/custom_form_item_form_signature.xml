@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 签名列表项：整块卡片包裹。单人直接展示签名项；多人展示摘要 + 进度条，点击打开人员签名抽屉。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -9,45 +10,139 @@
     android:paddingBottom="13dp">
 
     <LinearLayout
+        android:id="@+id/signature_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:orientation="horizontal">
+        android:background="@drawable/offline_signature_card_bg"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/offline_form_field_title_placeholder"
+                android:textColor="@color/offline_form_muted"
+                android:textSize="12.5sp" />
+
+            <TextView
+                android:id="@+id/tv_required"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="*"
+                android:textColor="@color/offline_form_danger"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_signature_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textColor="@color/offline_form_sec"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- 多人：可点击的摘要行（已签人数 / 待签提示 + 箭头） -->
+        <LinearLayout
+            android:id="@+id/signature_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/offline_signature_summary_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/offline_signature_summary_icon_bg"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_offline_sign_pen" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/signature_summary_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/signature_summary_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/offline_form_muted"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_offline_chevron" />
+
+        </LinearLayout>
+
+        <!-- 多人：签名进度条 -->
+        <LinearLayout
+            android:id="@+id/layout_signature_progress"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/offline_signature_progress_track"
+            android:orientation="horizontal"
+            android:visibility="gone" />
+
+        <!-- 单人：直接展示该人员的签名项（卡片背景在代码里去掉，融入外层卡片） -->
+        <LinearLayout
+            android:id="@+id/signature_single_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone" />
 
         <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
+            android:id="@+id/tv_error"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/offline_form_muted"
-            android:textSize="12.5sp" />
-
-        <TextView
-            android:id="@+id/tv_required"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
-            android:text="*"
+            android:paddingTop="6dp"
             android:textColor="@color/offline_form_danger"
-            android:textSize="12.5sp"
-            android:textStyle="bold"
+            android:textSize="12sp"
             android:visibility="gone" />
 
     </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/signature_user_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" />
-
-    <TextView
-        android:id="@+id/tv_error"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="6dp"
-        android:textColor="@color/offline_form_danger"
-        android:textSize="12sp"
-        android:visibility="gone" />
 
 </LinearLayout>

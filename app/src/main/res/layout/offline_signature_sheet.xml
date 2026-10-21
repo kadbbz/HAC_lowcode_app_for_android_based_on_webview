@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 人员签名抽屉：标题 + 已签计数 + 进度条 + 签名人卡片列表（可滚动，高度在代码中按内容收敛）。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingBottom="12dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/offline_sheet_handle_bg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/signature_sheet_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/offline_form_ink"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/signature_sheet_close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/offline_cd_close"
+            android:padding="6dp"
+            android:src="@drawable/ic_offline_close_small" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/signature_sheet_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="end"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:textColor="@color/offline_form_sec"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:id="@+id/signature_sheet_progress"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/offline_signature_progress_track"
+        android:orientation="horizontal" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/signature_sheet_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:id="@+id/signature_sheet_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="8dp" />
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
