@@ -134,6 +134,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
+    private View _stepFooterDivider;
+    private View _filterFooterDivider;
     private EditText _searchInput;
     private TextView _searchFilterButton;
     private ImageView _clearSearchButton;
@@ -292,6 +294,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
+        _stepFooterDivider = findViewById(R.id.divider_step_bar_footer);
+        _filterFooterDivider = findViewById(R.id.divider_filter_footer);
         _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
         _clearSearchButton = findViewById(R.id.button_clear_search);
@@ -780,6 +784,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (!_formLoaded) {
             _adapter.setDisplayItems(new ArrayList<>());
             _stepTabLayout.setVisibility(View.GONE);
+            _stepFooterDivider.setVisibility(View.GONE);
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
             _pageIndicatorLayout.setVisibility(View.GONE);
@@ -872,8 +877,31 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             items = buildCurrentStepDisplayItems(step);
         }
         _adapter.setDisplayItems(items);
+        applyContentSurface(paged);
         renderPageIndicator();
         updateItemNavigationVisibility();
+    }
+
+    /**
+     * 内容区底色与留白随布局切换。
+     *
+     * <p>分页布局下整页只有一个表单组，内容直接铺在白色页面上（不再套卡片、不再画行分隔线），
+     * 因此去掉 RecyclerView 的四周留白、并把滚动区域铺白，避免页脚露出灰色底；
+     * 平铺布局仍用灰色页面底衬托分组卡片。</p>
+     */
+    private void applyContentSurface(boolean paged) {
+        if (_formScrollView != null) {
+            _formScrollView.setBackgroundColor(getColor(
+                    paged ? R.color.white : R.color.offline_form_page_bg));
+        }
+        if (_recyclerView != null) {
+            int inset = dp(this, 4);
+            int padding = paged ? 0 : inset;
+            _recyclerView.setPadding(padding, padding, padding, padding);
+        }
+        if (_filterFooterDivider != null) {
+            _filterFooterDivider.setVisibility(paged ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void renderPageIndicator() {
@@ -1320,7 +1348,13 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
     private void renderStepTabs() {
         _updatingTabs = true;
-        _stepTabLayout.setVisibility(_definition.getSteps().size() > 1 ? View.VISIBLE : View.GONE);
+        boolean showTabs = _definition.getSteps().size() > 1;
+        _stepTabLayout.setVisibility(showTabs ? View.VISIBLE : View.GONE);
+        // 分页布局下 Tab 与页头同处白色区域，用一条发丝线分隔；平铺布局保持原样。
+        if (_stepFooterDivider != null) {
+            _stepFooterDivider.setVisibility(
+                    showTabs && isPagedLayout() ? View.VISIBLE : View.GONE);
+        }
         _stepTabLayout.removeAllTabs();
         for (int i = 0; i < _definition.getSteps().size(); i++) {
             OfflineFormStep step = _definition.getSteps().get(i);

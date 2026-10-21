@@ -48,7 +48,17 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_ROOT_GROUP = 10003;
     private static final int VIEW_TYPE_PAGE = 10004;
 
-    // 逐组分页布局：整个页面渲染为一张卡片（一个聚合一张卡）。
+    /**
+     * 分页布局下是否在表单项之间画发丝分隔线。
+     * <p>视觉评审开关：分页页只有一组内容，是否加分隔线属于风格取舍，改这一个常量即可整体切换。</p>
+     */
+    private static final boolean PAGED_ITEM_DIVIDERS = true;
+    /** 分页布局下分隔线左右内缩（dp）；当前取 0 = 通栏，取 16 则与表单项内容基线对齐。 */
+    private static final int PAGED_ITEM_DIVIDER_INSET_DP = 0;
+    /** 平铺布局（分组卡片内）分隔线的左右内缩。 */
+    private static final int CARD_ITEM_DIVIDER_INSET_DP = 16;
+
+    // 逐组分页布局：每页只有一个表单组，页面内容直接平铺在白色页面上，不再套卡片。
     private boolean pagedMode;
     private List<OfflineFormDisplayItem> displayItems = new ArrayList<>();
     private List<OfflineFormDisplayItem> rootItems = new ArrayList<>();
@@ -155,7 +165,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         documentFileNames = fileNames == null ? new ArrayList<>() : new ArrayList<>(fileNames);
     }
 
-    /** 切换逐组分页渲染：整页合并为一张卡片。 */
+    /** 切换逐组分页渲染：每页只有一个表单组，内容直接平铺在页面上（无卡片）。 */
     public void setPagedMode(boolean paged) {
         this.pagedMode = paged;
     }
@@ -182,7 +192,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_PAGE) {
-            return new PageCardViewHolder(createPageCard(parent));
+            return new PageViewHolder(createPageContainer(parent));
         }
         if (viewType == VIEW_TYPE_ROOT_GROUP) {
             return new RootGroupViewHolder(createRootGroupContainer(parent));
@@ -201,7 +211,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (pagedMode) {
-            ((PageCardViewHolder) holder).bind(displayItems);
+            ((PageViewHolder) holder).bind(displayItems);
             return;
         }
         OfflineFormDisplayItem item = rootItems.get(position);
@@ -353,36 +363,25 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             collapseGroupWithDescendants(displayItems.indexOf(groupItem));
         }
         toggleView.setCollapsed(collapsedGroupNodes.contains(node));
-        renderChildrenContent(childrenLayout, childItems);
+        renderChildrenContent(childrenLayout, childItems, !pagedMode);
     }
 
-    /** 分页模式下的一整页卡片（一个聚合一张卡）。 */
-    private View createPageCard(ViewGroup parent) {
+    /**
+     * 分页模式下的页面容器：整页就是当前表单组的全部内容。
+     *
+     * <p>一页只有一个表单组，容器本身就是页面，不再套白色圆角卡片；内容按表单项顺序直接排列，
+     * 表单项之间的间距由表单项自身的上下内边距控制，是否加分隔线由 {@link #PAGED_ITEM_DIVIDERS} 统一切换。</p>
+     */
+    private View createPageContainer(ViewGroup parent) {
         Context context = parent.getContext();
-        LinearLayout outer = new LinearLayout(context);
-        RecyclerView.LayoutParams outerParams = new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        outerParams.setMargins(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12));
-        outer.setLayoutParams(outerParams);
-        outer.setOrientation(LinearLayout.VERTICAL);
-
-        CardView cardView = new CardView(context);
-        cardView.setCardBackgroundColor(context.getColor(R.color.white));
-        cardView.setRadius(dp(context, 14));
-        cardView.setCardElevation(dp(context, 1));
-        // 阴影必须画在自身 bounds 内：父容器与卡片等大时会裁掉直边阴影，只在圆角缺口处留下一道深色弧。
-        cardView.setUseCompatPadding(true);
-
-        LinearLayout content = new LinearLayout(context);
-        content.setOrientation(LinearLayout.VERTICAL);
-        cardView.addView(content, new CardView.LayoutParams(
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setLayoutParams(new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        outer.addView(cardView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        return outer;
+        // 页面底色：与页面顶部 Tab / 指示器 / 筛选行一致，形成整页白色表单。
+        container.setBackgroundColor(context.getColor(R.color.white));
+        return container;
     }
 
     private View createRootGroupContainer(ViewGroup parent) {
@@ -480,7 +479,12 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
-        container.setPadding(dp(context, 16), dp(context, 13), dp(context, 16), dp(context, 13));
+        // 与可编辑表单项共用同一套左右基线与上下内边距。
+        container.setPadding(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical));
         container.setBackground(null);
 
         OfflineFormNode node = item.getNode();
@@ -529,7 +533,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             if (hasTitle) {
-                valueParams.topMargin = dp(context, 3);
+                valueParams.topMargin = context.getResources()
+                        .getDimensionPixelSize(R.dimen.offline_form_item_label_gap);
             }
             column.addView(valueView, valueParams);
         }
@@ -849,18 +854,17 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    private class PageCardViewHolder extends RecyclerView.ViewHolder {
+    private class PageViewHolder extends RecyclerView.ViewHolder {
         private final LinearLayout contentLayout;
 
-        PageCardViewHolder(View itemView) {
+        PageViewHolder(View itemView) {
             super(itemView);
-            CardView cardView = (CardView) ((LinearLayout) itemView).getChildAt(0);
-            contentLayout = (LinearLayout) cardView.getChildAt(0);
+            contentLayout = (LinearLayout) itemView;
         }
 
         void bind(List<OfflineFormDisplayItem> pageItems) {
-            contentLayout.removeAllViews();
-            renderChildrenContent(contentLayout, pageItems);
+            // 分页下整页只有一个表单组：表单项顺序排列；是否加分隔线由 PAGED_ITEM_DIVIDERS 统一切换。
+            renderChildrenContent(contentLayout, pageItems, PAGED_ITEM_DIVIDERS);
         }
     }
 
@@ -907,23 +911,33 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        renderChildrenContent(childrenLayout, childItems);
+        renderChildrenContent(childrenLayout, childItems, !pagedMode);
     }
 
-    /** 行与行之间的发丝分隔线（左右内缩 16dp）。 */
+    /** 行与行之间的发丝分隔线；分页布局与平铺布局各自使用自己的左右内缩。 */
     private void addRowDivider(LinearLayout parent) {
         Context context = parent.getContext();
         View divider = new View(context);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 1));
-        params.leftMargin = dp(context, 16);
-        params.rightMargin = dp(context, 16);
+        int inset = pagedMode ? PAGED_ITEM_DIVIDER_INSET_DP : CARD_ITEM_DIVIDER_INSET_DP;
+        if (inset > 0) {
+            params.leftMargin = dp(context, inset);
+            params.rightMargin = dp(context, inset);
+        }
         divider.setLayoutParams(params);
         divider.setBackgroundResource(R.drawable.offline_form_row_divider);
         parent.addView(divider);
     }
 
-    private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
+    /**
+     * 逐行渲染一组展示项。
+     *
+     * @param showDividers 是否在行与行之间画发丝分隔线。分页布局开启时由
+     *                     {@link #PAGED_ITEM_DIVIDERS} 决定，平铺布局始终保留卡片内的行分隔线。
+     */
+    private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems,
+                                       boolean showDividers) {
         childrenLayout.removeAllViews();
         if (childItems.isEmpty() || collapsedGroupNodes.contains(findParentNode(childItems))) {
             return;
@@ -932,7 +946,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         boolean first = true;
         for (int i = 0; i < childItems.size(); i++) {
             OfflineFormDisplayItem child = childItems.get(i);
-            if (!first) {
+            if (!first && showDividers) {
                 addRowDivider(childrenLayout);
             }
             first = false;

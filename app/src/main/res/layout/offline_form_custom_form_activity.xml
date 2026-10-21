@@ -62,6 +62,14 @@
 
     </LinearLayout>
 
+    <!-- 步骤 Tab 下方发丝线（分页布局且有多个步骤时显示，用于分隔 Tab 与页头） -->
+    <View
+        android:id="@+id/divider_step_bar_footer"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line"
+        android:visibility="gone" />
+
     <!-- 分页指示器（仅逐组分页布局、且当前页为分组时显示） -->
     <LinearLayout
         android:id="@+id/layout_page_indicator"
@@ -269,6 +277,14 @@
 
     </LinearLayout>
 
+    <!-- 分页布局下内容整页铺白，用一条发丝线与顶部筛选行分隔（平铺布局内容区为灰色页面底，无需此线） -->
+    <View
+        android:id="@+id/divider_filter_footer"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line"
+        android:visibility="gone" />
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll_form"
         android:layout_width="match_parent"
@@ -304,8 +320,7 @@
         android:id="@+id/layout_item_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:elevation="4dp"
+        android:background="@drawable/offline_form_nav_bg"
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingStart="12dp"

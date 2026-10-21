@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      离线填报表单项尺寸标定（分页布局按此执行；平铺布局沿用同一套字段行标准）。
+
+      表单项 = 字段名（标签行）+ 字段表单组件（控件），二者上下排列。
+      默认最小高度 = 上下内边距 12 + 标签行 18 + 标签间距 8 + 控件 46 + 上下内边距 12 = 96。
+    -->
+    <dimen name="offline_form_item_min_height">96dp</dimen>
+    <dimen name="offline_form_item_padding_horizontal">16dp</dimen>
+    <dimen name="offline_form_item_padding_vertical">12dp</dimen>
+    <dimen name="offline_form_item_label_gap">8dp</dimen>
+    <dimen name="offline_form_field_min_height">46dp</dimen>
+</resources>

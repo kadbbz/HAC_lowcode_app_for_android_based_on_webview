@@ -71,8 +71,13 @@ public class ListViewHolder extends BaseViewHolder {
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        root.setPadding(dp(parent.getContext(), 16), dp(parent.getContext(), 13),
-                dp(parent.getContext(), 16), dp(parent.getContext(), 13));
+        root.setPadding(
+                parent.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                parent.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical),
+                parent.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                parent.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical));
+        root.setMinimumHeight(
+                parent.getResources().getDimensionPixelSize(R.dimen.offline_form_item_min_height));
         return root;
     }
 
@@ -129,7 +134,8 @@ public class ListViewHolder extends BaseViewHolder {
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleParams.bottomMargin = dp(itemView.getContext(), 9);
+        titleParams.bottomMargin =
+                itemView.getResources().getDimensionPixelSize(R.dimen.offline_form_item_label_gap);
         rootLayout.addView(titleRow, titleParams);
 
         rootLayout.addView(rowsLayout, new LinearLayout.LayoutParams(
