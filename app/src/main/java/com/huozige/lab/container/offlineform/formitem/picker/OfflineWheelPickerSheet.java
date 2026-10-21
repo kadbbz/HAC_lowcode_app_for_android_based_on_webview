@@ -62,8 +62,11 @@ public final class OfflineWheelPickerSheet {
     /** 滚轮可见条目数，取奇数以保证中间行严格居中；实际行数由固定的抽屉高度决定。 */
     private static final int VISIBLE_ITEMS = 13;
 
-    /** 行间距（dp），让相邻选项之间留出呼吸感。 */
-    private static final float LINE_SPACING_DP = 4f;
+    /** 滚轮文字大小（sp）。 */
+    private static final float WHEEL_TEXT_SIZE_SP = 22f;
+
+    /** 行间距（dp）：在文字行高之外额外增加的间距，让滚轮条目更高、留白更足。 */
+    private static final float LINE_SPACING_DP = 10f;
 
     /** 抽屉高度占视窗高度的比例。 */
     private static final float SHEET_HEIGHT_RATIO = 0.45f;
@@ -462,7 +465,7 @@ public final class OfflineWheelPickerSheet {
         wheel.setVisibleItems(VISIBLE_ITEMS);
         wheel.setCurved(true);
         wheel.setCurvedArcDirection(WheelView.CURVED_ARC_DIRECTION_CENTER);
-        wheel.setTextSize(20f, true);
+        wheel.setTextSize(WHEEL_TEXT_SIZE_SP, true);
         wheel.setLineSpacing(LINE_SPACING_DP, true);
         wheel.setTextAlign(WheelView.TEXT_ALIGN_CENTER);
         wheel.setNormalItemTextColor(ContextCompat.getColor(context, R.color.offline_form_muted));
