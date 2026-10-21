@@ -24,6 +24,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
 import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
@@ -45,6 +46,7 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 public class ImageViewHolder extends BaseViewHolder {
     private static final int VIEW_TYPE_IMAGE = 0;
     private static final int VIEW_TYPE_ADD = 1;
+    private static final int VIEW_TYPE_PROCESSING = 2;
 
     /** 宫格间距（dp）。 */
     private static final int GRID_SPACING_DP = 8;
@@ -80,8 +82,8 @@ public class ImageViewHolder extends BaseViewHolder {
                 ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
             @Override
             public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                // 「添加」瓦片不参与拖拽排序。
-                if (viewHolder.getItemViewType() == VIEW_TYPE_ADD) {
+                // 只有已上传图片参与拖拽排序，「添加」/「处理中」瓦片不可拖。
+                if (viewHolder.getItemViewType() != VIEW_TYPE_IMAGE) {
                     return makeMovementFlags(0, 0);
                 }
                 return super.getMovementFlags(recyclerView, viewHolder);
@@ -226,28 +228,59 @@ public class ImageViewHolder extends BaseViewHolder {
         if (!(itemView.getContext() instanceof ImageCaptureHost) || imageItem == null) {
             return;
         }
-        ((ImageCaptureHost) itemView.getContext()).captureImage(imageItem, this::addImages);
+        ((ImageCaptureHost) itemView.getContext()).captureImage(imageItem, createAttachmentCallback(imageItem));
     }
 
     private void pickImages() {
         if (!(itemView.getContext() instanceof ImageCaptureHost) || imageItem == null) {
             return;
         }
-        ((ImageCaptureHost) itemView.getContext()).uploadImage(imageItem, this::addImages);
+        ((ImageCaptureHost) itemView.getContext()).uploadImage(imageItem, createAttachmentCallback(imageItem));
     }
 
-    private void addImages(List<AttachmentFormItemValue> images) {
-        if (images == null || images.isEmpty() || imageItem == null) {
-            return;
-        }
-        for (AttachmentFormItemValue image : images) {
-            imageItem.addImage(image);
-        }
-        imageItem.clearError();
-        renderImages();
-        updateErrorState();
-        // 新增图片的落盘由宿主（拍照 / 相册回调）统一 persistRecord，此处只刷新更新时间与界面。
-        notifyFieldChanged();
+    /**
+     * 附件回调：拍照/相册返回后的处理开始/取消/完成都回写到字段模型上，网格据此显示或移除
+     * 「处理中」占位；完成时把图片加入目标字段（即使当前 ViewHolder 已被复用也不会丢图）。
+     */
+    private AttachmentCallback createAttachmentCallback(final ImageFormItem targetItem) {
+        return new AttachmentCallback() {
+            @Override
+            public void onAttachmentsSelected(List<AttachmentFormItemValue> attachments) {
+                targetItem.setProcessing(false);
+                if (attachments == null || attachments.isEmpty()) {
+                    if (targetItem == imageItem) {
+                        renderImages();
+                    }
+                    return;
+                }
+                for (AttachmentFormItemValue image : attachments) {
+                    targetItem.addImage(image);
+                }
+                targetItem.clearError();
+                if (targetItem == imageItem) {
+                    renderImages();
+                    updateErrorState();
+                }
+                // 新增图片的落盘由宿主统一 persistRecord，此处只刷新更新时间与界面。
+                notifyFieldChanged();
+            }
+
+            @Override
+            public void onAttachmentsProcessingStarted() {
+                targetItem.setProcessing(true);
+                if (targetItem == imageItem) {
+                    renderImages();
+                }
+            }
+
+            @Override
+            public void onAttachmentsProcessingCancelled() {
+                targetItem.setProcessing(false);
+                if (targetItem == imageItem) {
+                    renderImages();
+                }
+            }
+        };
     }
 
     /** 二次确认后删除：先删本地文件，再从模型移除并刷新列表。 */
@@ -321,7 +354,10 @@ public class ImageViewHolder extends BaseViewHolder {
 
         @Override
         public int getItemViewType(int position) {
-            return position < imageCount() ? VIEW_TYPE_IMAGE : VIEW_TYPE_ADD;
+            if (position < imageCount()) {
+                return VIEW_TYPE_IMAGE;
+            }
+            return isProcessing() ? VIEW_TYPE_PROCESSING : VIEW_TYPE_ADD;
         }
 
         @Override
@@ -329,7 +365,12 @@ public class ImageViewHolder extends BaseViewHolder {
             if (imageItem == null || imageItem.getImages() == null) {
                 return 0;
             }
-            return imageItem.getImages().size() + (canAddImage() ? 1 : 0);
+            int count = imageItem.getImages().size();
+            if (isProcessing()) {
+                // 处理中：用占位替换「添加」瓦片，避免并发拍摄。
+                return count + 1;
+            }
+            return count + (canAddImage() ? 1 : 0);
         }
 
         @NonNull
@@ -338,6 +379,9 @@ public class ImageViewHolder extends BaseViewHolder {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             if (viewType == VIEW_TYPE_ADD) {
                 return new AddTileViewHolder(inflater.inflate(R.layout.custom_form_item_image_add_tile, parent, false));
+            }
+            if (viewType == VIEW_TYPE_PROCESSING) {
+                return new ProcessingTileViewHolder(inflater.inflate(R.layout.custom_form_item_image_processing_tile, parent, false));
             }
             return new ImageTileViewHolder(inflater.inflate(R.layout.custom_form_item_image_tile, parent, false));
         }
@@ -413,6 +457,18 @@ public class ImageViewHolder extends BaseViewHolder {
                     confirmDeleteImage(current);
                 }
             });
+        }
+    }
+
+    private boolean isProcessing() {
+        return imageItem != null && imageItem.isProcessing();
+    }
+
+    /** 处理中占位瓦片：后台水印 / 压缩期间显示，处理完成后由回调替换为缩略图。 */
+    private class ProcessingTileViewHolder extends RecyclerView.ViewHolder {
+        ProcessingTileViewHolder(@NonNull View itemView) {
+            super(itemView);
+            itemView.setContentDescription(itemView.getContext().getString(R.string.offline_image_processing));
         }
     }
 

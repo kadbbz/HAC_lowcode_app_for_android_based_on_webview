@@ -108,6 +108,7 @@
     <string name="offline_image_hint_capture_max">最多 %1$d 张 · 拍照添加</string>
     <string name="offline_image_hint_sort">长按拖动排序 · 点击图片查看大图</string>
     <string name="offline_image_hint_max_reached">已达上限，删除后可继续添加</string>
+    <string name="offline_image_processing">处理中…</string>
     <string name="offline_image_source_title">添加照片</string>
     <string name="offline_image_source_gallery">从相册选择</string>
     <string name="offline_button_add_image">添加</string>

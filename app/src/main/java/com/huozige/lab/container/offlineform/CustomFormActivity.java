@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -81,6 +82,7 @@ import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
+import com.huozige.lab.container.utilities.DeviceUtility;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -89,6 +91,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
@@ -163,6 +167,12 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private ActivityResultLauncher<Intent> _signatureCaptureLauncher;
     private ImageFormItem _pendingImageItem;
     private AttachmentCallback _pendingImageCallback;
+    // 系统相机：输出到应用缓存目录，返回后在后台线程加水印 / 压缩。
+    private ActivityResultLauncher<Intent> _systemCameraLauncher;
+    private File _pendingSystemCameraFile;
+    private ArrayList<String> _pendingSystemCameraWatermarkLines;
+    // 图片水印 / 压缩为 CPU 重活，统一放到单线程后台执行，避免快门后主线程卡顿。
+    private final ExecutorService _imageProcessExecutor = Executors.newSingleThreadExecutor();
     private FileFormItem _pendingFileItem;
     private AttachmentCallback _pendingFileCallback;
     private SignatureFormItem _pendingSignatureItem;
@@ -198,6 +208,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         setupRecyclerView();
         setupQuickActions();
         registerImageCaptureLauncher();
+        registerSystemCameraLauncher();
         registerImageUploadLauncher();
         registerImagePreviewLauncher();
         registerFileUploadLauncher();
@@ -220,6 +231,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     protected void onDestroy() {
         _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
         _autoSaveHandler.removeCallbacks(_clearHighlightRunnable);
+        _imageProcessExecutor.shutdownNow();
         super.onDestroy();
     }
 
@@ -1534,11 +1546,147 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     public void captureImage(ImageFormItem item, AttachmentCallback callback) {
         _pendingImageItem = item;
         _pendingImageCallback = callback;
+        if (item == null || !launchSystemCamera(item)) {
+            launchBuiltInCamera(item);
+        }
+    }
+
+    /** 优先调用系统相机：拍摄、预览与快门全部交给厂商相机 App 处理，打开与出片速度最快。 */
+    private boolean launchSystemCamera(ImageFormItem item) {
+        if (item == null) {
+            return false;
+        }
+        Intent probeIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (probeIntent.resolveActivity(getPackageManager()) == null) {
+            return false;
+        }
+        File outputFile = createSystemCameraOutputFile();
+        if (outputFile == null) {
+            return false;
+        }
+        Uri outputUri = DeviceUtility.pathToUri(outputFile.getAbsolutePath());
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputUri);
+        cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        _pendingSystemCameraFile = outputFile;
+        _pendingSystemCameraWatermarkLines = OfflineImageFileHelper.buildWatermarkLines(item);
+        try {
+            _systemCameraLauncher.launch(cameraIntent);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            clearSystemCameraPending();
+            return false;
+        }
+    }
+
+    /** 设备没有可用的系统相机 App 时的回退：沿用应用内自绘相机页（带水印与确认页）。 */
+    private void launchBuiltInCamera(ImageFormItem item) {
+        if (item == null) {
+            clearPendingImageCapture();
+            return;
+        }
         Intent cameraIntent = new Intent(this, CameraViewActivity.class);
         cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
         cameraIntent.putStringArrayListExtra(CameraViewActivity.EXTRA_WATERMARK_LINES, OfflineImageFileHelper.buildWatermarkLines(item));
         cameraIntent.putExtra(CameraViewActivity.EXTRA_CONFIRM_PHOTO, true);
         _imageCaptureLauncher.launch(cameraIntent);
+    }
+
+    private void registerSystemCameraLauncher() {
+        _systemCameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            File outputFile = _pendingSystemCameraFile;
+            boolean success = result.getResultCode() == RESULT_OK
+                    && outputFile != null && outputFile.exists() && outputFile.length() > 0;
+            if (!success) {
+                if (result.getResultCode() == RESULT_OK && outputFile != null) {
+                    // 相机返回成功但输出文件无效：明确提示，避免用户误以为照片已添加。
+                    Toast.makeText(this, R.string.offline_toast_image_file_missing, Toast.LENGTH_SHORT).show();
+                }
+                if (_pendingImageCallback != null) {
+                    _pendingImageCallback.onAttachmentsProcessingCancelled();
+                }
+                clearSystemCameraPending();
+                clearPendingImageCapture();
+                return;
+            }
+            startSystemCameraProcessing(outputFile);
+        });
+    }
+
+    /**
+     * 系统相机返回后：先在网格显示「处理中」占位，再在后台线程完成 EXIF 旋转 / 水印 / 压缩，
+     * 最后回主线程把图片加入表单并落盘。
+     */
+    private void startSystemCameraProcessing(File outputFile) {
+        final ImageFormItem item = _pendingImageItem;
+        final AttachmentCallback callback = _pendingImageCallback;
+        final ArrayList<String> watermarkLines = _pendingSystemCameraWatermarkLines;
+        if (item == null || callback == null) {
+            clearSystemCameraPending();
+            clearPendingImageCapture();
+            return;
+        }
+        final OfflineFormRecord draft;
+        try {
+            draft = ensureRecordForAttachment();
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onAttachmentsProcessingCancelled();
+            Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+            clearSystemCameraPending();
+            clearPendingImageCapture();
+            return;
+        }
+        final String patternId = draft.getPatternId();
+        final Context appContext = getApplicationContext();
+        final Uri sourceUri = Uri.fromFile(outputFile);
+        callback.onAttachmentsProcessingStarted();
+        _imageProcessExecutor.execute(() -> {
+            try {
+                AttachmentFormItemValue image = OfflineImageFileHelper.saveCameraImage(
+                        appContext, patternId, item, sourceUri, watermarkLines);
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    item.setProcessing(false);
+                    callback.onAttachmentsSelected(Collections.singletonList(image));
+                    persistRecord();
+                    clearSystemCameraPending();
+                    clearPendingImageCapture();
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    item.setProcessing(false);
+                    callback.onAttachmentsProcessingCancelled();
+                    Toast.makeText(this, getString(R.string.offline_toast_image_save_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+                    clearSystemCameraPending();
+                    clearPendingImageCapture();
+                });
+            }
+        });
+    }
+
+    private File createSystemCameraOutputFile() {
+        File dir = new File(getCacheDir(), "camera");
+        if (!dir.exists() && !dir.mkdirs()) {
+            return null;
+        }
+        return new File(dir, "capture_" + System.currentTimeMillis() + ".jpg");
+    }
+
+    private void clearSystemCameraPending() {
+        File file = _pendingSystemCameraFile;
+        _pendingSystemCameraFile = null;
+        _pendingSystemCameraWatermarkLines = null;
+        if (file != null && file.exists()) {
+            file.delete();
+        }
     }
 
     @Override
