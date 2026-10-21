@@ -132,14 +132,15 @@ public class PickerViewHolder extends BaseViewHolder {
 
     @Override
     public void updateErrorState() {
+        int valueColor = itemView.getContext().getColor(R.color.offline_form_ink);
         if (pickerItem != null && pickerItem.getErrorMessage() != null) {
             tvError.setVisibility(View.VISIBLE);
             tvError.setText(pickerItem.getErrorMessage());
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_error);
+            valueColor = itemView.getContext().getColor(R.color.offline_form_danger);
         } else {
             tvError.setVisibility(View.GONE);
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_normal);
         }
+        tvValue.setTextColor(valueColor);
     }
 
 }
