@@ -106,12 +106,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="30dp"
                 android:layout_marginStart="10dp"
-                android:background="@drawable/offline_form_toc_button_bg"
+                android:background="@drawable/offline_form_ghost_button_bg"
                 android:gravity="center"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/offline_button_group_directory"
-                android:textColor="@color/offline_form_brand_deep"
+                android:textColor="@color/offline_form_ink"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -210,14 +210,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="34dp"
                 android:layout_marginStart="10dp"
-                android:background="@drawable/offline_form_toc_button_bg"
+                android:background="@drawable/offline_form_ghost_button_bg"
                 android:drawableStart="@drawable/ic_offline_search"
                 android:drawablePadding="5dp"
+                android:drawableTint="@color/offline_form_ink"
                 android:gravity="center"
                 android:paddingStart="10dp"
                 android:paddingEnd="12dp"
                 android:text="@string/offline_filter_search"
-                android:textColor="@color/offline_form_brand_deep"
+                android:textColor="@color/offline_form_ink"
                 android:textSize="12.5sp"
                 android:textStyle="bold" />
 
@@ -228,10 +229,10 @@
             android:layout_width="0dp"
             android:layout_height="38dp"
             android:layout_weight="1"
-            android:background="@drawable/offline_form_search_field_bg"
+            android:background="@drawable/custom_form_bg_edittext_normal"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="11dp"
+            android:paddingStart="12dp"
             android:paddingEnd="6dp"
             android:visibility="gone">
 
@@ -261,7 +262,8 @@
                 android:background="@drawable/offline_form_search_clear_bg"
                 android:contentDescription="@string/offline_button_clear_search"
                 android:padding="5dp"
-                android:src="@drawable/ic_offline_search_clear" />
+                android:src="@drawable/ic_offline_search_clear"
+                android:tint="@color/offline_form_sec" />
 
         </LinearLayout>
 

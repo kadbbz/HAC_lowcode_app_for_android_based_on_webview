@@ -37,7 +37,7 @@
     <color name="offline_form_document_item_stroke">#DCE5EC</color>
     <color name="offline_form_document_item_pressed">#EAF6FD</color>
     <color name="offline_form_card_warning_stroke">#E6A700</color>
-    <color name="offline_form_search_clear_bg">#DDEBF6</color>
-    <color name="offline_form_search_clear_bg_pressed">#C7DCEB</color>
+    <color name="offline_form_search_clear_bg">#DCE5EC</color>
+    <color name="offline_form_search_clear_bg_pressed">#C9D6E2</color>
 
 </resources>
