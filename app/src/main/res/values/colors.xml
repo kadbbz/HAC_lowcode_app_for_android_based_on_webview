@@ -41,4 +41,14 @@
     <color name="offline_form_search_clear_bg">#DCE5EC</color>
     <color name="offline_form_search_clear_bg_pressed">#C9D6E2</color>
 
+    <!-- 离线填报自绘开关：轨道 + 内嵌拨手（轨道尺寸即控件尺寸，拨手不会溢出） -->
+    <color name="offline_switch_track_on">#00A1E9</color>
+    <color name="offline_switch_track_on_pressed">#0089C7</color>
+    <color name="offline_switch_track_off">#D6DEE6</color>
+    <color name="offline_switch_track_off_pressed">#C5D0DA</color>
+    <!-- 禁用态：品牌色 / 轨道色整体淡化到 40%，拨手保持白色（参考 antd-mobile 禁用态） -->
+    <color name="offline_switch_track_on_disabled">#99D9F6</color>
+    <color name="offline_switch_track_off_disabled">#EFF2F5</color>
+    <color name="offline_switch_thumb">#FFFFFFFF</color>
+
 </resources>

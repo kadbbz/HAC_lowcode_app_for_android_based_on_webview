@@ -15,8 +15,11 @@ import com.huozige.lab.container.R;
  * 是否放得下按「标签自然宽度 ≤ 行宽 × {@code offline_form_field_inline_label_max_ratio}」且
  * 「标签宽 + 水平间距 + 控件最小可用宽度 ≤ 行宽」判定。</p>
  *
- * <p>子 View 约定（必须且只能有两个）：第 1 个为标签组，第 2 个为控件；
- * 控件的 {@code layout_width="match_parent"} 表示左右排列时撑满剩余宽度，
+ * <p>子 View 约定：第 1 个为标签组，第 2 个为控件；第 3 个（可选）为标题行右侧的元信息
+ * （当前用于「字段更新时间」）。元信息存在时固定按「标题行（标签在左、元信息在右）+ 控件下一行」
+ * 排列，不再左右排列，避免元信息与控件抢同一行的右侧空间。</p>
+ *
+ * <p>控件的 {@code layout_width="match_parent"} 表示左右排列时撑满剩余宽度，
  * {@code wrap_content} 表示按自身宽度靠右对齐（开关用这种方式）。标签在左右排列时垂直居中。</p>
  */
 public class ResponsiveFieldRow extends ViewGroup {
@@ -88,6 +91,25 @@ public class ResponsiveFieldRow extends ViewGroup {
 
         int available = Math.max(0, widthSize - getPaddingLeft() - getPaddingRight());
 
+        // 第 3 个子 View（可选）是标题行右侧的元信息（如「更新于：刚刚」）：
+        // 存在时固定「标题行（标签左 + 元信息右）+ 控件下一行」，避免与开关抢右侧空间。
+        View meta = getChildCount() > 2 ? getChildAt(2) : null;
+        boolean showMeta = meta != null && meta.getVisibility() != View.GONE;
+        if (showMeta) {
+            measureMeta(meta, available);
+            int labelAvailable = Math.max(0, available - meta.getMeasuredWidth() - horizontalGap);
+            measureAtMost(label, labelAvailable);
+            measureControlStacked(control, available);
+            inline = false;
+            int firstLineHeight = Math.max(label.getMeasuredHeight(), meta.getMeasuredHeight());
+            int desiredHeight = Math.max(firstLineHeight + verticalGap + control.getMeasuredHeight(),
+                    stackedMinHeight);
+            setMeasuredDimension(
+                    resolveSize(widthSize, widthMeasureSpec),
+                    resolveSize(desiredHeight + getPaddingTop() + getPaddingBottom(), heightMeasureSpec));
+            return;
+        }
+
         // 1) 先按自然宽度测量标签，判断左右排列是否放得下。
         measureNatural(label);
         int labelNaturalWidth = label.getMeasuredWidth();
@@ -126,6 +148,12 @@ public class ResponsiveFieldRow extends ViewGroup {
         if (label == null || control == null) {
             return;
         }
+        View meta = getChildCount() > 2 ? getChildAt(2) : null;
+        boolean showMeta = meta != null && meta.getVisibility() != View.GONE;
+        if (showMeta) {
+            layoutWithMeta(label, control, meta, l, t, r, b);
+            return;
+        }
         int contentHeight = b - t - getPaddingTop() - getPaddingBottom();
 
         if (inline) {
@@ -152,11 +180,50 @@ public class ResponsiveFieldRow extends ViewGroup {
         }
     }
 
+    /**
+     * 标题行 = 标签（左）+ 元信息（右），二者垂直居中；控件换到下一行（match_parent 占整宽，否则靠左）。
+     */
+    private void layoutWithMeta(View label, View control, View meta, int l, int t, int r, int b) {
+        int left = getPaddingLeft();
+        int right = r - l - getPaddingRight();
+        int top = getPaddingTop();
+        int available = Math.max(0, right - left);
+        int firstLineHeight = Math.max(label.getMeasuredHeight(), meta.getMeasuredHeight());
+
+        int labelHeight = label.getMeasuredHeight();
+        int labelTop = top + Math.max(0, (firstLineHeight - labelHeight) / 2);
+        label.layout(left, labelTop, left + label.getMeasuredWidth(), labelTop + labelHeight);
+
+        int metaWidth = meta.getMeasuredWidth();
+        int metaHeight = meta.getMeasuredHeight();
+        int metaLeft = right - metaWidth;
+        int metaTop = top + Math.max(0, (firstLineHeight - metaHeight) / 2);
+        meta.layout(metaLeft, metaTop, metaLeft + metaWidth, metaTop + metaHeight);
+
+        int controlTop = top + firstLineHeight + verticalGap;
+        boolean fill = control.getLayoutParams() != null
+                && control.getLayoutParams().width == LayoutParams.MATCH_PARENT;
+        int controlWidth = fill ? available : control.getMeasuredWidth();
+        control.layout(left, controlTop, left + controlWidth, controlTop + control.getMeasuredHeight());
+    }
+
     /** 按内容自然尺寸测量（不受父级宽度限制）。 */
     private void measureNatural(View child) {
         int widthSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         int heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         child.measure(widthSpec, heightSpec);
+    }
+
+    /** 以 AT_MOST 约束测量（标题行内的标签 / 元信息）。 */
+    private void measureAtMost(View child, int maxWidth) {
+        int widthSpec = MeasureSpec.makeMeasureSpec(Math.max(0, maxWidth), MeasureSpec.AT_MOST);
+        int heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        child.measure(widthSpec, heightSpec);
+    }
+
+    /** 标题行右侧的元信息按自身宽度优先测量，空间不足时换行而不是撑出父布局。 */
+    private void measureMeta(View meta, int available) {
+        measureAtMost(meta, available);
     }
 
     /** 上下排列时标签占满一行。 */
@@ -168,7 +235,7 @@ public class ResponsiveFieldRow extends ViewGroup {
 
     /** 左右排列时的控件：match_parent 撑满剩余宽度，否则按自身宽度（靠右对齐）。 */
     private void measureControlInline(View control, int remaining) {
-        int heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        int heightSpec = makeControlHeightSpec(control);
         boolean fill = control.getLayoutParams() != null
                 && control.getLayoutParams().width == LayoutParams.MATCH_PARENT;
         int widthSpec = fill
@@ -179,13 +246,28 @@ public class ResponsiveFieldRow extends ViewGroup {
 
     /** 上下排列时的控件：match_parent 占整宽，否则按自身宽度。 */
     private void measureControlStacked(View control, int available) {
-        int heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        int heightSpec = makeControlHeightSpec(control);
         boolean fill = control.getLayoutParams() != null
                 && control.getLayoutParams().width == LayoutParams.MATCH_PARENT;
         int widthSpec = fill
                 ? MeasureSpec.makeMeasureSpec(available, MeasureSpec.EXACTLY)
                 : MeasureSpec.makeMeasureSpec(available, MeasureSpec.AT_MOST);
         control.measure(widthSpec, heightSpec);
+    }
+
+    /**
+     * 控件高度的测量约束：尊重控件在布局里声明的固定高度（开关控件行声明了 46dp）。
+     *
+     * <p>不能用 UNSPECIFIED 测量：那会让控件行按子 View 的自然高度收缩（自绘开关只有 30dp 高），
+     * 表单项的 98dp 最小高度多出来的空间会全部堆到控件下方，导致开关看起来贴着字段名、
+     * 上下留白不对称。按声明高度测量后，开关在 46dp 控件行里垂直居中，上下留白一致。</p>
+     */
+    private int makeControlHeightSpec(View control) {
+        LayoutParams params = control.getLayoutParams();
+        if (params != null && params.height >= 0) {
+            return MeasureSpec.makeMeasureSpec(params.height, MeasureSpec.EXACTLY);
+        }
+        return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
     }
 
     @Override

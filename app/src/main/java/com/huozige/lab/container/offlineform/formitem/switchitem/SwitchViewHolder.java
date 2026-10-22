@@ -5,8 +5,6 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.SwitchCompat;
-
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormConfirmHelper;
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
@@ -19,7 +17,7 @@ public class SwitchViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvError;
     private final TextView tvRequired;
-    private final SwitchCompat switchView;
+    private final OfflineSwitchView switchView;
     private final CheckBox checkBoxView;
 
     private SwitchFormItem switchItem;
@@ -118,7 +116,7 @@ public class SwitchViewHolder extends BaseViewHolder {
         boolean locked = isLocked();
         switchView.setEnabled(!locked);
         checkBoxView.setEnabled(!locked);
-        switchView.setAlpha(locked ? 0.6f : 1f);
+        // 开关的禁用态由 OfflineSwitchView 自己按淡化色绘制；复选框沿用整体降透明度。
         checkBoxView.setAlpha(locked ? 0.6f : 1f);
     }
 }

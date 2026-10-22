@@ -50,16 +50,13 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- 系统默认开关偏小，按 1.25 倍绘制放大（PDA 场景更醒目）；marginStart 预留放大后向左溢出的空间，gravity 保证放大前后垂直居中不被裁剪 -->
-            <androidx.appcompat.widget.SwitchCompat
+            <!-- 自绘开关：轨道尺寸即控件尺寸、拨手完全内嵌，居左/居右都不会因放大绘制被父布局裁剪；
+                 右缘按光学基线内缩，与日期图标字形、复选框方框的视觉右缘对齐 -->
+            <com.huozige.lab.container.offlineform.formitem.switchitem.OfflineSwitchView
                 android:id="@+id/switch_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:gravity="center_vertical"
-                android:minHeight="44dp"
-                android:scaleX="1.25"
-                android:scaleY="1.25" />
+                android:layout_marginEnd="@dimen/offline_form_field_switch_end_inset" />
 
             <CheckBox
                 android:id="@+id/checkbox_view"

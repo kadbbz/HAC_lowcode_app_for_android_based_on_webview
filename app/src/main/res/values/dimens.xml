@@ -36,6 +36,21 @@
     <dimen name="offline_form_field_inline_min_height">46dp</dimen>
     <dimen name="offline_form_field_stacked_min_height">74dp</dimen>
     <dimen name="offline_form_control_min_width_switch">64dp</dimen>
+
+    <!--
+      自绘开关尺寸：轨道宽高即控件宽高，拨手（26dp）完全内嵌在 30dp 高的轨道里，
+      左右各留 2dp；因此控件本身不会像系统 SwitchCompat 放大绘制那样溢出父容器被裁剪。
+    -->
+    <dimen name="offline_form_switch_width">52dp</dimen>
+    <dimen name="offline_form_switch_height">30dp</dimen>
+    <dimen name="offline_form_switch_thumb_size">26dp</dimen>
+    <dimen name="offline_form_switch_thumb_inset">2dp</dimen>
+    <!--
+      自绘开关右缘的光学内缩：日期/时钟图标的字形、复选框方框在各自 View 内部都有透明留白，
+      这几类右侧控件的视觉右缘统一落在内容右缘内约 8dp 处。开关轨道右缘也内缩同一距离，
+      与它们对齐；上下排列（控件居左）时左缘自然与字段名/输入框左缘对齐。
+    -->
+    <dimen name="offline_form_field_switch_end_inset">8dp</dimen>
     <!-- 左右排列时标签最多占行宽的比例，超过即视为放不下、退回上下排列。 -->
     <item name="offline_form_field_inline_label_max_ratio" type="fraction">40%</item>
 </resources>

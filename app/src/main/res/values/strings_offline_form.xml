@@ -142,7 +142,12 @@
     <string name="offline_signature_resign">重新签名</string>
     <string name="offline_signature_resign_title">重新签名？</string>
     <string name="offline_signature_resign_message">%1$s 已有签名记录，重新签名会覆盖原签名，是否继续？</string>
-    <string name="offline_text_field_update_time">更新时间：%1$s</string>
+    <!-- 字段更新时间：展示在字段名同一行右侧（组件右上角），时间使用相对智能时间。 -->
+    <string name="offline_text_field_update_time">更新于：%1$s</string>
+    <string name="offline_text_update_time_just_now">刚刚</string>
+    <string name="offline_text_update_time_minutes_ago">%1$d分钟前</string>
+    <string name="offline_text_update_time_hours_ago">%1$d小时前</string>
+    <string name="offline_text_update_time_yesterday">昨天 %1$s</string>
     <string name="offline_text_progress_total">总填报项：%1$d</string>
     <string name="offline_text_progress_filled">已填报项：%1$d</string>
     <string name="offline_text_progress_rate">完成率：%1$s</string>
