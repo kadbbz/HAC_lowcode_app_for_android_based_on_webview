@@ -16,23 +16,23 @@ import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.util.ODateUtils;
+import com.huozige.lab.container.offlineform.util.OfflineSmartTime;
 import com.huozige.lab.container.offlineform.util.Utils;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 /**
- * 签名单人卡片与进度条的公共渲染逻辑：表单卡片（单人）与人员签名抽屉（多人）共用同一套样式。
+ * 签名抽屉人员行与签名进度条的公共渲染逻辑。
+ *
+ * <p>人员行与表单字段同样的通栏排列：左侧姓名 + 状态 / 更新时间（智能时间），
+ * 右侧签名预览（已签显示签名图，未签显示「去签名」占位）；点击预览区域签名 / 重签，
+ * 不再单独放操作按钮。</p>
  */
 final class SignatureUi {
 
     interface OnSignRequested {
         void onSignRequested(String userName);
     }
-
-    private static final String TIME_PATTERN = "yyyy-MM-dd HH:mm";
 
     private SignatureUi() {
     }
@@ -61,39 +61,35 @@ final class SignatureUi {
 
     static View createUserCard(Context context, SignatureFormItem signatureItem, String userName,
                                OnSignRequested listener) {
-        View card = LayoutInflater.from(context)
+        View row = LayoutInflater.from(context)
                 .inflate(R.layout.custom_form_item_signature_user_card, null, false);
-        int gap = Math.round(10 * context.getResources().getDisplayMetrics().density);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = gap;
-        card.setLayoutParams(params);
-        bindUserCard(card, context, signatureItem, userName, listener);
-        return card;
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        bindUserCard(row, context, signatureItem, userName, listener);
+        return row;
     }
 
     static void bindUserCard(View card, Context context, SignatureFormItem signatureItem, String userName,
                              OnSignRequested listener) {
-        ImageView stateView = card.findViewById(R.id.signature_user_state);
         TextView nameView = card.findViewById(R.id.signature_user_name);
         TextView statusView = card.findViewById(R.id.signature_user_status);
         TextView timeView = card.findViewById(R.id.signature_user_time);
         FrameLayout previewView = card.findViewById(R.id.signature_user_preview);
         ImageView imageView = card.findViewById(R.id.signature_user_image);
-        LinearLayout placeholderView = card.findViewById(R.id.signature_user_placeholder);
-        TextView actionView = card.findViewById(R.id.signature_user_action);
+        View placeholderView = card.findViewById(R.id.signature_user_placeholder);
 
         SignatureFormItemValue signature = signatureItem.getSignature(userName);
         boolean signed = signature != null;
         nameView.setText(userName);
 
         if (signed) {
-            stateView.setImageResource(R.drawable.ic_offline_signed_badge);
             statusView.setText(R.string.offline_text_signature_set);
             statusView.setTextColor(context.getColor(R.color.offline_form_ok));
             if (signature.getUpdateTime() != null) {
                 timeView.setVisibility(View.VISIBLE);
-                timeView.setText(formatTime(signature.getUpdateTime()));
+                timeView.setText(context.getString(R.string.offline_text_field_update_time,
+                        OfflineSmartTime.format(context,
+                                ODateUtils.toUnixMillis(signature.getUpdateTime()))));
             } else {
                 timeView.setVisibility(View.GONE);
             }
@@ -101,11 +97,7 @@ final class SignatureUi {
             imageView.setVisibility(View.VISIBLE);
             placeholderView.setVisibility(View.GONE);
             bindSignatureImage(context, signatureItem, signature.getFileName(), imageView);
-            actionView.setBackgroundResource(R.drawable.offline_signature_button_secondary_bg);
-            actionView.setTextColor(context.getColor(R.color.offline_form_ink));
-            actionView.setText(R.string.offline_signature_resign);
         } else {
-            stateView.setImageResource(R.drawable.ic_offline_pending_badge);
             statusView.setText(R.string.offline_signature_state_pending);
             statusView.setTextColor(context.getColor(R.color.offline_form_muted));
             timeView.setVisibility(View.GONE);
@@ -113,9 +105,6 @@ final class SignatureUi {
             imageView.setVisibility(View.GONE);
             imageView.setImageDrawable(null);
             placeholderView.setVisibility(View.VISIBLE);
-            actionView.setBackgroundResource(R.drawable.offline_signature_button_primary_bg);
-            actionView.setTextColor(context.getColor(android.R.color.white));
-            actionView.setText(R.string.offline_signature_go_sign);
         }
 
         View.OnClickListener signClickListener = v -> {
@@ -123,10 +112,13 @@ final class SignatureUi {
                 listener.onSignRequested(userName);
             }
         };
+        // 操作入口就是右侧预览区：未签 → 去签名；已签 → 重新签名（二次确认在 ViewHolder 中处理）。
         previewView.setOnClickListener(signClickListener);
-        actionView.setOnClickListener(signClickListener);
-        card.setContentDescription(context.getString(
-                R.string.offline_cd_signature_user_status, userName, statusView.getText()));
+        previewView.setContentDescription(context.getString(
+                R.string.offline_cd_signature_user_status,
+                userName,
+                statusView.getText(),
+                context.getString(signed ? R.string.offline_signature_resign : R.string.offline_signature_go_sign)));
     }
 
     private static void bindSignatureImage(Context context, SignatureFormItem signatureItem,
@@ -142,13 +134,5 @@ final class SignatureUi {
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .dontAnimate()
                 .into(imageView);
-    }
-
-    static String formatTime(Double oDate) {
-        if (oDate == null) {
-            return "";
-        }
-        return new SimpleDateFormat(TIME_PATTERN, Locale.CHINA)
-                .format(new Date(ODateUtils.toUnixMillis(oDate)));
     }
 }

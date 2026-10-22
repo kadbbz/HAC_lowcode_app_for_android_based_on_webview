@@ -131,13 +131,11 @@
     <string name="offline_text_signature_set">已签名</string>
     <string name="offline_text_signature_not_set">未签名</string>
     <string name="offline_text_signature_progress">已签名 %1$d/%2$d</string>
-    <string name="offline_signature_field_summary">%1$d / %2$d 已签名</string>
-    <string name="offline_signature_field_subtitle_pending">%1$d 人待签 · 点击查看签名</string>
-    <string name="offline_signature_field_subtitle_done">全部已签名 · 点击查看签名</string>
-    <string name="offline_signature_header_count">已签 %1$d · 待签 %2$d</string>
+    <!-- 签名组件第 1 行：待签 / 已签人数 -->
+    <string name="offline_signature_pending_signed_count">%1$d 人待签 · %2$d 人已签</string>
     <string name="offline_signature_state_pending">待签名</string>
-    <string name="offline_signature_sign_hint">点击进行手写签名</string>
-    <string name="offline_signature_sheet_count">%1$d / %2$d 已签名</string>
+    <!-- 签名抽屉标题行右侧：已签 / 总人数 -->
+    <string name="offline_signature_sheet_ratio">%1$d/%2$d</string>
     <string name="offline_signature_go_sign">去签名</string>
     <string name="offline_signature_resign">重新签名</string>
     <string name="offline_signature_resign_title">重新签名？</string>
@@ -202,7 +200,8 @@
     <string name="offline_cd_delete_file">删除文件</string>
     <string name="offline_cd_delete_image">删除图片</string>
     <string name="offline_cd_signature">签名</string>
-    <string name="offline_cd_signature_user_status">%1$s，%2$s，点击签名</string>
+    <string name="offline_cd_signature_user_status">%1$s，%2$s，点击%3$s</string>
+    <string name="offline_cd_signature_field">签名，%1$d 人待签，%2$d 人已签，点击查看签名</string>
     <string name="offline_cd_close">关闭</string>
     <string name="offline_button_sign">签名</string>
     <string name="offline_button_clear_signature">清除签名</string>

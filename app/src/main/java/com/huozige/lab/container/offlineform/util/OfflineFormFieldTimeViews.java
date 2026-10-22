@@ -14,11 +14,7 @@ import android.widget.TextView;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.formitem.ResponsiveFieldRow;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -38,17 +34,11 @@ import java.util.WeakHashMap;
  */
 public final class OfflineFormFieldTimeViews {
 
-    private static final long MINUTE_MS = 60_000L;
-    private static final long HOUR_MS = 60 * MINUTE_MS;
     // 相对时间文案会随分钟变化，前台页面定时刷新即可；间隔取 30 秒，跨分钟时最多滞后半分钟。
     private static final long REFRESH_INTERVAL_MS = 30_000L;
     // 更新时间与字段名之间的最小间距。
     private static final int TIME_MARGIN_START_DP = 8;
     private static final int TIME_TEXT_SIZE_SP = 12;
-
-    private static final String PATTERN_HOUR_MINUTE = "HH:mm";
-    private static final String PATTERN_SAME_YEAR = "MM-dd HH:mm";
-    private static final String PATTERN_OTHER_YEAR = "yyyy-MM-dd HH:mm";
 
     // 当前挂在界面上的更新时间视图 → 该字段更新时间的 Unix 毫秒值，用于定时刷新相对时间。
     private static final Map<TextView, Long> ACTIVE_TIME_VIEWS = new WeakHashMap<>();
@@ -228,56 +218,7 @@ public final class OfflineFormFieldTimeViews {
     private static String buildText(Context context, long unixMillis, long nowMillis) {
         return context.getString(
                 R.string.offline_text_field_update_time,
-                formatSmartTime(context, unixMillis, nowMillis));
-    }
-
-    /**
-     * 智能时间：刚刚 / N分钟前 / N小时前 / 昨天 HH:mm / MM-dd HH:mm / yyyy-MM-dd HH:mm。
-     * 当天按相对时间展示；跨天用「昨天」，更早用日期。
-     */
-    private static String formatSmartTime(Context context, long unixMillis, long nowMillis) {
-        Calendar now = Calendar.getInstance();
-        now.setTimeInMillis(nowMillis);
-        Calendar time = Calendar.getInstance();
-        time.setTimeInMillis(unixMillis);
-
-        long diff = nowMillis - unixMillis;
-        // 轻微的未来时间（时钟误差）按「刚刚」处理，避免出现负数时间。
-        if (diff < 0 && diff > -MINUTE_MS) {
-            return context.getString(R.string.offline_text_update_time_just_now);
-        }
-        if (diff >= 0 && isSameDay(now, time)) {
-            if (diff < MINUTE_MS) {
-                return context.getString(R.string.offline_text_update_time_just_now);
-            }
-            if (diff < HOUR_MS) {
-                return context.getString(R.string.offline_text_update_time_minutes_ago, diff / MINUTE_MS);
-            }
-            return context.getString(R.string.offline_text_update_time_hours_ago, diff / HOUR_MS);
-        }
-        if (isYesterday(now, time)) {
-            return context.getString(R.string.offline_text_update_time_yesterday,
-                    formatDate(time.getTime(), PATTERN_HOUR_MINUTE));
-        }
-        if (time.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
-            return formatDate(time.getTime(), PATTERN_SAME_YEAR);
-        }
-        return formatDate(time.getTime(), PATTERN_OTHER_YEAR);
-    }
-
-    private static boolean isSameDay(Calendar first, Calendar second) {
-        return first.get(Calendar.YEAR) == second.get(Calendar.YEAR)
-                && first.get(Calendar.DAY_OF_YEAR) == second.get(Calendar.DAY_OF_YEAR);
-    }
-
-    private static boolean isYesterday(Calendar now, Calendar time) {
-        Calendar yesterday = (Calendar) now.clone();
-        yesterday.add(Calendar.DAY_OF_YEAR, -1);
-        return isSameDay(yesterday, time);
-    }
-
-    private static String formatDate(Date date, String pattern) {
-        return new SimpleDateFormat(pattern, Locale.CHINA).format(date);
+                OfflineSmartTime.format(context, unixMillis, nowMillis));
     }
 
     private static void scheduleRefresh() {

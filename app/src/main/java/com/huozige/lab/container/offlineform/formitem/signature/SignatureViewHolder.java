@@ -15,27 +15,21 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.Base
 
 import java.util.List;
 
-import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
-
 /**
- * 签名列表项：整块卡片包裹。
+ * 签名项：不套卡片，与普通字段一样直接平铺。
  *
  * <ul>
- *     <li>单签名人：直接展示该人员的签名卡片（状态、签名图、去签名 / 重新签名）；</li>
- *     <li>多签名人：标题右侧显示已签 / 待签数量，卡片内展示摘要与签名进度条，
- *     点击卡片从底部弹出「人员签名」抽屉，逐人签名。</li>
+ *     <li>第 1 行：待签 / 已签人数（同时作为可点击提示，右侧箭头）；</li>
+ *     <li>第 2 行：签名进度条；</li>
+ *     <li>整块点击从底部弹出「人员签名」抽屉，单签名人与多签名人行为一致。</li>
  * </ul>
  */
 public class SignatureViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvRequired;
-    private final TextView tvCount;
-    private final LinearLayout summaryLayout;
     private final TextView summaryTitle;
-    private final TextView summarySubtitle;
     private final LinearLayout progressLayout;
-    private final LinearLayout singleContainer;
-    private final View cardContainer;
+    private final TextView emptyView;
     private final TextView tvError;
 
     private SignatureFormItem signatureItem;
@@ -45,14 +39,11 @@ public class SignatureViewHolder extends BaseViewHolder {
         super(itemView);
         tvTitle = itemView.findViewById(R.id.tv_title);
         tvRequired = itemView.findViewById(R.id.tv_required);
-        tvCount = itemView.findViewById(R.id.tv_signature_count);
-        summaryLayout = itemView.findViewById(R.id.signature_summary);
         summaryTitle = itemView.findViewById(R.id.signature_summary_title);
-        summarySubtitle = itemView.findViewById(R.id.signature_summary_subtitle);
         progressLayout = itemView.findViewById(R.id.layout_signature_progress);
-        singleContainer = itemView.findViewById(R.id.signature_single_container);
-        cardContainer = itemView.findViewById(R.id.signature_card);
+        emptyView = itemView.findViewById(R.id.signature_empty);
         tvError = itemView.findViewById(R.id.tv_error);
+        itemView.setOnClickListener(v -> showSheet());
         itemView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(@NonNull View v) {
@@ -90,70 +81,35 @@ public class SignatureViewHolder extends BaseViewHolder {
     }
 
     private void render() {
-        singleContainer.removeAllViews();
-        cardContainer.setOnClickListener(null);
-        if (signatureItem == null || signatureItem.getUsers() == null || signatureItem.getUsers().isEmpty()) {
-            tvCount.setVisibility(View.GONE);
-            summaryLayout.setVisibility(View.GONE);
+        List<String> users = signatureItem == null ? null : signatureItem.getUsers();
+        if (users == null || users.isEmpty()) {
+            summaryTitle.setVisibility(View.GONE);
             progressLayout.setVisibility(View.GONE);
-            singleContainer.setVisibility(View.VISIBLE);
-            singleContainer.addView(createEmptyView());
+            emptyView.setVisibility(View.VISIBLE);
+            itemView.setContentDescription(null);
             return;
         }
 
-        List<String> users = signatureItem.getUsers();
         int total = users.size();
-        int signed = signatureItem.getSignedCount();
+        int signed = Math.max(0, Math.min(signatureItem.getSignedCount(), total));
+        int pending = total - signed;
 
-        if (total == 1) {
-            // 单签名人：不展示摘要与进度，直接把该人员的签名卡片嵌在表单卡片里。
-            tvCount.setVisibility(View.GONE);
-            summaryLayout.setVisibility(View.GONE);
-            progressLayout.setVisibility(View.GONE);
-            singleContainer.setVisibility(View.VISIBLE);
-            View userCard = SignatureUi.createUserCard(
-                    itemView.getContext(), signatureItem, users.get(0), this::requestSign);
-            // 去掉卡片自身背景与内边距，让内容融入外层表单卡片，避免卡中卡。
-            if (userCard.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                ((LinearLayout.LayoutParams) userCard.getLayoutParams()).topMargin = 0;
-            }
-            userCard.setBackground(null);
-            userCard.setPadding(0, dp(itemView.getContext(), 10), 0, 0);
-            singleContainer.addView(userCard);
-            return;
-        }
-
-        int pending = Math.max(0, total - signed);
-        singleContainer.setVisibility(View.GONE);
-        tvCount.setVisibility(View.VISIBLE);
-        tvCount.setText(itemView.getContext()
-                .getString(R.string.offline_signature_header_count, signed, pending));
-
-        summaryLayout.setVisibility(View.VISIBLE);
+        summaryTitle.setVisibility(View.VISIBLE);
         summaryTitle.setText(itemView.getContext()
-                .getString(R.string.offline_signature_field_summary, signed, total));
-        summarySubtitle.setText(pending > 0
-                ? itemView.getContext().getString(R.string.offline_signature_field_subtitle_pending, pending)
-                : itemView.getContext().getString(R.string.offline_signature_field_subtitle_done));
-        summaryLayout.setOnClickListener(v -> showSheet());
-        // 整张签名卡片都可点击，符合「点击签名卡片弹出抽屉」的预期。
-        cardContainer.setOnClickListener(v -> showSheet());
-
+                .getString(R.string.offline_signature_pending_signed_count, pending, signed));
+        emptyView.setVisibility(View.GONE);
         SignatureUi.renderProgress(progressLayout, signed, total);
-    }
-
-    private View createEmptyView() {
-        TextView emptyView = new TextView(itemView.getContext());
-        emptyView.setText(R.string.offline_text_no_signature_users);
-        emptyView.setTextColor(itemView.getContext().getColor(R.color.offline_form_muted));
-        emptyView.setTextSize(12f);
-        emptyView.setGravity(android.view.Gravity.CENTER);
-        emptyView.setPadding(0, dp(itemView.getContext(), 16), 0, dp(itemView.getContext(), 16));
-        return emptyView;
+        itemView.setContentDescription(itemView.getContext()
+                .getString(R.string.offline_cd_signature_field, pending, signed));
     }
 
     private void showSheet() {
-        if (signatureItem == null || signatureItem.getUsers() == null || signatureItem.getUsers().size() < 2) {
+        List<String> users = signatureItem == null ? null : signatureItem.getUsers();
+        if (users == null || users.isEmpty()) {
+            return;
+        }
+        if (signatureSheet != null) {
+            signatureSheet.refresh();
             return;
         }
         signatureSheet = SignatureSheet.show(

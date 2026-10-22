@@ -15,8 +15,9 @@ import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureF
 import java.util.List;
 
 /**
- * 多签名人时的「人员签名」底部抽屉：标题 + 已签计数 + 进度条 + 每人签名卡片列表。
+ * 「人员签名」底部抽屉：标题行（左标题 / 右 n/m）+ 通栏签名人列表。
  *
+ * <p>列表与表单字段同样式：直接通栏、行与行之间用 1dp 分隔线分隔，不再显示进度条。</p>
  * <p>签名完成回来后调用 {@link #refresh()} 原地刷新，不关闭抽屉。</p>
  */
 public final class SignatureSheet {
@@ -30,7 +31,6 @@ public final class SignatureSheet {
     private final SignatureUi.OnSignRequested listener;
     private final TextView titleView;
     private final TextView countView;
-    private final LinearLayout progressLayout;
     private final LinearLayout listLayout;
     private final View scrollView;
 
@@ -41,10 +41,8 @@ public final class SignatureSheet {
         content = LayoutInflater.from(context).inflate(R.layout.offline_signature_sheet, null);
         titleView = content.findViewById(R.id.signature_sheet_title);
         countView = content.findViewById(R.id.signature_sheet_count);
-        progressLayout = content.findViewById(R.id.signature_sheet_progress);
         listLayout = content.findViewById(R.id.signature_sheet_list);
         scrollView = content.findViewById(R.id.signature_sheet_scroll);
-        content.findViewById(R.id.signature_sheet_close).setOnClickListener(v -> dialog.dismiss());
     }
 
     public static SignatureSheet show(Context context, SignatureFormItem signatureItem,
@@ -55,7 +53,7 @@ public final class SignatureSheet {
         return sheet;
     }
 
-    /** 已签状态变化后原地刷新标题计数、进度条与人员列表。 */
+    /** 已签状态变化后原地刷新标题计数与人员列表。 */
     public void refresh() {
         render();
     }
@@ -70,19 +68,31 @@ public final class SignatureSheet {
         titleView.setText(signatureItem.getTitle());
         List<String> users = signatureItem.getUsers();
         int total = users == null ? 0 : users.size();
-        int signed = signatureItem.getSignedCount();
+        int signed = Math.max(0, Math.min(signatureItem.getSignedCount(), total));
         countView.setText(countView.getContext()
-                .getString(R.string.offline_signature_sheet_count, signed, total));
-        SignatureUi.renderProgress(progressLayout, signed, total);
+                .getString(R.string.offline_signature_sheet_ratio, signed, total));
 
         listLayout.removeAllViews();
         if (users == null) {
             return;
         }
-        for (String userName : users) {
+        for (int i = 0; i < users.size(); i++) {
+            if (i > 0) {
+                listLayout.addView(createDivider());
+            }
             listLayout.addView(SignatureUi.createUserCard(
-                    listLayout.getContext(), signatureItem, userName, listener));
+                    listLayout.getContext(), signatureItem, users.get(i), listener));
         }
+    }
+
+    /** 与表单字段列表一致的通栏分隔线。 */
+    private View createDivider() {
+        View divider = new View(listLayout.getContext());
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Math.max(1, Math.round(listLayout.getResources().getDisplayMetrics().density))));
+        divider.setBackgroundResource(R.drawable.offline_form_row_divider);
+        return divider;
     }
 
     /**
