@@ -20,8 +20,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/offline_form_muted"
-            android:textSize="12.5sp" />
+            android:textColor="@color/offline_form_sec"
+            android:textSize="@dimen/offline_form_field_label_text_size" />
 
         <TextView
             android:id="@+id/tv_required"
@@ -30,7 +30,7 @@
             android:layout_marginStart="3dp"
             android:text="*"
             android:textColor="@color/offline_form_danger"
-            android:textSize="12.5sp"
+            android:textSize="@dimen/offline_form_field_label_text_size"
             android:textStyle="bold"
             android:visibility="gone" />
 
@@ -49,7 +49,7 @@
         android:paddingBottom="12dp"
         android:textColor="@color/offline_form_ink"
         android:textColorHint="@color/offline_form_muted"
-        android:textSize="15sp" />
+        android:textSize="@dimen/offline_form_field_value_text_size" />
 
     <TextView
         android:id="@+id/tv_error"

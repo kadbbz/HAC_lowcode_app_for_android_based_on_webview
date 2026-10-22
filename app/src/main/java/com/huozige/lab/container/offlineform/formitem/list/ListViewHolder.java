@@ -86,15 +86,17 @@ public class ListViewHolder extends BaseViewHolder {
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        titleView.setTextSize(12.5f);
-        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_muted));
+        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                itemView.getResources().getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
+        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_sec));
         titleRow.addView(titleView, new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1));
 
         requiredView.setText("*");
-        requiredView.setTextSize(12.5f);
+        requiredView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                itemView.getResources().getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
         requiredView.setTextColor(itemView.getContext().getColor(R.color.offline_form_danger));
         requiredView.setTypeface(null, Typeface.BOLD);
         requiredView.setVisibility(View.GONE);
@@ -310,7 +312,8 @@ public class ListViewHolder extends BaseViewHolder {
 
         TextView rowTitle = new TextView(itemView.getContext());
         rowTitle.setText(resolveRowTitle(index));
-        rowTitle.setTextSize(13.5f);
+        rowTitle.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                itemView.getResources().getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
         rowTitle.setTypeface(null, Typeface.BOLD);
         rowTitle.setTextColor(itemView.getContext().getColor(R.color.offline_form_ink));
         rowTitle.setSingleLine(true);

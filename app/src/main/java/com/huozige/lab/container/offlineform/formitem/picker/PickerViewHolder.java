@@ -1,6 +1,7 @@
 package com.huozige.lab.container.offlineform.formitem.picker;
 
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
@@ -18,6 +19,7 @@ public class PickerViewHolder extends BaseViewHolder {
     private final PickerMode pickerMode;
     private final TextView tvTitle;
     private final TextView tvValue;
+    private final ImageView ivValueIcon;
     private final TextView tvError;
     private final TextView tvRequired;
 
@@ -28,9 +30,18 @@ public class PickerViewHolder extends BaseViewHolder {
         this.pickerMode = pickerMode;
         tvTitle = itemView.findViewById(R.id.tv_title);
         tvValue = itemView.findViewById(R.id.tv_value);
+        ivValueIcon = itemView.findViewById(R.id.iv_value_icon);
         tvError = itemView.findViewById(R.id.tv_error);
         tvRequired = itemView.findViewById(R.id.tv_required);
+        applyModeIcon();
         setupListeners();
+    }
+
+    /** 取值行右侧图标：日期用日历（calendar_month_24）、时间用时钟（Material Symbols 官方图标）。 */
+    private void applyModeIcon() {
+        ivValueIcon.setImageResource(pickerMode == PickerMode.DATE
+                ? R.drawable.calendar_month_24
+                : R.drawable.ic_offline_clock);
     }
 
     private void setupListeners() {

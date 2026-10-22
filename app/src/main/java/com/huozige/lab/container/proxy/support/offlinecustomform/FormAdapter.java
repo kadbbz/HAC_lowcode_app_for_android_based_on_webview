@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -452,7 +453,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         TextView titleView = new TextView(context);
         titleView.setTextColor(context.getColor(R.color.offline_form_ink));
-        titleView.setTextSize(13.5f);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
         titleView.setText(item.getNode().getTitle());
@@ -516,8 +518,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (hasTitle) {
             TextView labelView = new TextView(context);
             labelView.setText(title);
-            labelView.setTextColor(context.getColor(R.color.offline_form_muted));
-            labelView.setTextSize(12.5f);
+            labelView.setTextColor(context.getColor(R.color.offline_form_sec));
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                    .getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
             column.addView(labelView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -527,7 +530,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             TextView valueView = new TextView(context);
             valueView.setText(content);
             valueView.setTextColor(context.getColor(R.color.offline_form_ink));
-            valueView.setTextSize(15);
+            valueView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                    .getDimensionPixelSize(R.dimen.offline_form_field_value_text_size));
             valueView.setLineSpacing(dp(context, 2), 1f);
             LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,

@@ -4,13 +4,29 @@
       离线填报表单项尺寸标定（分页布局按此执行；平铺布局沿用同一套字段行标准）。
 
       表单项 = 字段名（标签行）+ 字段表单组件（控件），二者上下排列。
-      默认最小高度 = 上下内边距 12 + 标签行 18 + 标签间距 8 + 控件 46 + 上下内边距 12 = 96。
+      默认最小高度 = 上下内边距 12 + 标签行 20（15sp）+ 标签间距 8 + 控件 46 + 上下内边距 12 = 98。
     -->
-    <dimen name="offline_form_item_min_height">96dp</dimen>
+    <dimen name="offline_form_item_min_height">98dp</dimen>
     <dimen name="offline_form_item_padding_horizontal">16dp</dimen>
     <dimen name="offline_form_item_padding_vertical">12dp</dimen>
     <dimen name="offline_form_item_label_gap">8dp</dimen>
     <dimen name="offline_form_field_min_height">46dp</dimen>
+
+    <!--
+      表单项字号：对齐 antd-mobile 垂直表单（label 15px / 输入取值 17px / 选项 15px），PDA 场景下更清晰。
+    -->
+    <dimen name="offline_form_field_label_text_size">15sp</dimen>
+    <dimen name="offline_form_field_value_text_size">17sp</dimen>
+    <dimen name="offline_form_field_option_text_size">15sp</dimen>
+    <!-- 取值行右侧图标与文字的间距 -->
+    <dimen name="offline_form_field_icon_gap">8dp</dimen>
+    <!--
+      右侧控件的"光学右对齐"微调：
+      日历/时钟图标的字形在 viewport 内有约 3dp 空白，开关轨道 / 复选框方框在各自 View 内也有内边距，
+      这里按视觉右缘统一（以开关轨道右缘为基准线），让 icon、开关、复选框看起来在同一条右对齐线上。
+    -->
+    <dimen name="offline_form_field_icon_end_inset">5dp</dimen>
+    <dimen name="offline_form_field_checkbox_end_inset">1dp</dimen>
 
     <!--
       标签 + 控件「左右排列」的全局规则（当前仅开关组件启用 auto）：
@@ -18,7 +34,7 @@
     -->
     <dimen name="offline_form_field_inline_gap">12dp</dimen>
     <dimen name="offline_form_field_inline_min_height">46dp</dimen>
-    <dimen name="offline_form_field_stacked_min_height">72dp</dimen>
+    <dimen name="offline_form_field_stacked_min_height">74dp</dimen>
     <dimen name="offline_form_control_min_width_switch">64dp</dimen>
     <!-- 左右排列时标签最多占行宽的比例，超过即视为放不下、退回上下排列。 -->
     <item name="offline_form_field_inline_label_max_ratio" type="fraction">40%</item>

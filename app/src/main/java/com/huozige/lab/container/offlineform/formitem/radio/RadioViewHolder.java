@@ -134,6 +134,8 @@ public class RadioViewHolder extends BaseViewHolder {
     private RadioButton createDefaultRadioButton(String label, String value) {
         RadioButton radioButton = new RadioButton(itemView.getContext());
         radioButton.setText(label);
+        radioButton.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                itemView.getResources().getDimensionPixelSize(R.dimen.offline_form_field_option_text_size));
         radioButton.setTag(value);
         radioButton.setId(View.generateViewId());
         radioButton.setGravity(Gravity.CENTER_VERTICAL);
