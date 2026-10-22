@@ -39,19 +39,20 @@
 
     </LinearLayout>
 
+    <!-- 无卡片、无边框：空值显示水印，有值显示值；右侧箭头与日期/时间图标同一视觉右缘 -->
     <TextView
         android:id="@+id/tv_value"
         android:layout_width="match_parent"
         android:layout_height="@dimen/offline_form_field_min_height"
-        android:background="@drawable/custom_form_bg_edittext_normal"
+        android:background="@null"
         android:clickable="true"
         android:drawableEnd="@drawable/ic_offline_chevron"
-        android:drawablePadding="6dp"
+        android:drawablePadding="@dimen/offline_form_field_icon_gap"
         android:focusable="true"
         android:gravity="center_vertical"
         android:hint="@string/offline_hint_select"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="2dp"
         android:textColor="@color/offline_form_ink"
         android:textColorHint="@color/offline_form_muted"
         android:textSize="@dimen/offline_form_field_value_text_size" />

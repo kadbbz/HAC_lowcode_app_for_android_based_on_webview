@@ -66,7 +66,6 @@
     <string name="offline_dialog_delete_record_message">删除后将移除该条历史填报记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_delete_draft_records_message">将删除当前表单下所有草稿记录，删除后不可恢复。是否继续？</string>
     <string name="offline_dialog_delete_exported_records_message">将删除当前表单下所有已导出记录，删除后不可恢复。是否继续？</string>
-    <string name="offline_dialog_select_title">选择%1$s</string>
     <string name="offline_dialog_manual_download_title">正在下载手册</string>
     <string name="offline_chooser_open_file">打开文件</string>
     <string name="offline_toast_delete_success">删除成功</string>
@@ -193,6 +192,8 @@
     <string name="offline_error_file_size">文件超过大小限制</string>
     <string name="offline_error_image_read_failed">无法读取图片</string>
     <string name="offline_hint_select">请选择</string>
+    <string name="offline_hint_input">请输入</string>
+    <string name="offline_hint_password">请输入密码</string>
     <string name="offline_hint_pick_date">请选择日期</string>
     <string name="offline_hint_pick_time">请选择时间</string>
     <string name="offline_form_field_title_placeholder">标题</string>

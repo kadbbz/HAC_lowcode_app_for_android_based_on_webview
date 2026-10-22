@@ -22,8 +22,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -151,6 +153,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private boolean _syncingSearchInput;
     // 渲染重入保护：任何监听器触发的嵌套 renderCurrentStep 直接忽略，避免无限递归。
     private boolean _renderingStep;
+    // 手指是否正按在屏幕上：只把「用户主动滑动」当作移开焦点，忽略键盘弹出导致的自适应滚动。
+    private boolean _userTouchInProgress;
     private int _filterMode = FILTER_ALL;
     private int _filterModeBeforeSearch = FILTER_ALL;
     private String _searchKeyword = "";
@@ -506,6 +510,22 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     }
 
     private void setupListeners() {
+        // 滑动表单时立即退出输入状态：避免输入框在滚动后仍保留光标 / 键盘。
+        // 仅在手指正在屏幕上（真实滑动）时清理；键盘弹出后系统把输入框顶上来的自适应滚动不清焦点。
+        _formScrollView.setOnScrollChangeListener(
+                (NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                    if (_userTouchInProgress) {
+                        clearInputFocus();
+                    }
+                });
+        _recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                if (newState != RecyclerView.SCROLL_STATE_IDLE && _userTouchInProgress) {
+                    clearInputFocus();
+                }
+            }
+        });
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
         _searchFilterButton.setOnClickListener(v -> enterSearchMode());
@@ -688,6 +708,75 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (manager != null) {
             manager.hideSoftInputFromWindow(_searchInput.getWindowToken(), 0);
         }
+    }
+
+    /**
+     * 退出输入状态：清除当前焦点并收起键盘。
+     *
+     * <p>用于「移开焦点」场景（点击输入框以外区域、滑动表单），避免输入框滚出屏幕后仍保留光标与键盘。</p>
+     */
+    private void clearInputFocus() {
+        View focused = getCurrentFocus();
+        if (focused == null) {
+            return;
+        }
+        focused.clearFocus();
+        InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (manager != null) {
+            manager.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            _userTouchInProgress = true;
+            View focused = getCurrentFocus();
+            // 点击「当前字段整块」（含字段名所在行）以外的区域时，才取消输入状态；
+            // 点字段名或字段内边距不会结束输入。
+            if (focused instanceof EditText
+                    && !isTouchInsideView(resolveInputTouchArea(focused), event)) {
+                clearInputFocus();
+            }
+        }
+        try {
+            return super.dispatchTouchEvent(event);
+        } finally {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                // 触摸结束（包括点击后键盘弹出的窗口自适应），不再把随后的滚动当成用户滑动。
+                _userTouchInProgress = false;
+            }
+        }
+    }
+
+    /**
+     * 输入框的焦点判定区域：向上找到包含字段名（tv_title）的表单项根布局，
+     * 使「字段名所在行 + 控件 + 错误文案」整块都属于保留焦点的范围。
+     */
+    private View resolveInputTouchArea(View input) {
+        ViewParent parent = input.getParent();
+        while (parent instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) parent;
+            if (group.findViewById(R.id.tv_title) != null) {
+                return group;
+            }
+            parent = group.getParent();
+        }
+        return input;
+    }
+
+    /** 触点是否落在某个 View 的可视范围内（屏幕坐标）。 */
+    private boolean isTouchInsideView(View view, MotionEvent event) {
+        if (!view.isShown()) {
+            return false;
+        }
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        float x = event.getRawX();
+        float y = event.getRawY();
+        return x >= location[0] && x < location[0] + view.getWidth()
+                && y >= location[1] && y < location[1] + view.getHeight();
     }
 
     private void setFilterModeSelection(int filterMode) {

@@ -13,7 +13,7 @@ import android.provider.Settings;
  * <p>每跨过一项触发一次短促振动，产生「咔哒」的手感。为避免快速惯性滚动时高频振动把马达
  * 打成蜂鸣，按 {@link #MIN_INTERVAL_MS} 做节流；同时遵循系统「触感反馈」开关，用户关闭后不再振动。
  */
-final class WheelHaptics {
+public final class WheelHaptics {
 
     /** 两次振动的最小间隔，快速滑行时把最高频率压到约 20 次/秒。 */
     private static final long MIN_INTERVAL_MS = 50;
@@ -27,7 +27,7 @@ final class WheelHaptics {
 
     private long lastTickAt = Long.MIN_VALUE / 2;
 
-    WheelHaptics(Context context) {
+    public WheelHaptics(Context context) {
         vibrator = context.getSystemService(Vibrator.class);
         boolean supported = vibrator != null && vibrator.hasVibrator() && isSystemHapticFeedbackEnabled(context);
         enabled = supported;
@@ -41,7 +41,7 @@ final class WheelHaptics {
     }
 
     /** 跨过一项时调用；节流窗口内的调用会被丢弃。 */
-    void tick() {
+    public void tick() {
         if (!enabled) {
             return;
         }
