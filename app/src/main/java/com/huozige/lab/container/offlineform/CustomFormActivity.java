@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -43,6 +44,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -155,6 +158,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private boolean _renderingStep;
     // 手指是否正按在屏幕上：只把「用户主动滑动」当作移开焦点，忽略键盘弹出导致的自适应滚动。
     private boolean _userTouchInProgress;
+    // 软键盘当前是否可见：用户手动收起键盘时同步清除输入焦点。
+    private boolean _imeVisible;
     private int _filterMode = FILTER_ALL;
     private int _filterModeBeforeSearch = FILTER_ALL;
     private String _searchKeyword = "";
@@ -222,6 +227,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         registerSignatureCaptureLauncher();
         loadFormDataFromJson();
         setupListeners();
+        registerImeVisibilityListener();
         registerBackHandler();
         restoreUiState(savedInstanceState);
     }
@@ -708,6 +714,64 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (manager != null) {
             manager.hideSoftInputFromWindow(_searchInput.getWindowToken(), 0);
         }
+    }
+
+    /**
+     * 监听软键盘显隐：用户手动收起键盘（返回键 / 收起按钮等）时同步移除输入焦点，
+     * 避免键盘已关闭但输入框仍保留光标。
+     */
+    private void registerImeVisibilityListener() {
+        View decorView = getWindow().getDecorView();
+        ViewCompat.setOnApplyWindowInsetsListener(decorView, (view, insets) -> {
+            boolean imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+            if (_imeVisible && !imeVisible) {
+                // 键盘刚收起：下一帧清理焦点，避免在 insets 分发过程中触发新的布局请求。
+                view.post(this::clearInputFocus);
+            }
+            _imeVisible = imeVisible;
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(decorView);
+    }
+
+    /** 在内容区按字段 id 找到对应 itemView（bind 时打上了 offline_field_id_tag 标记）。 */
+    private View findFieldItemView(String fieldId) {
+        if (fieldId == null || fieldId.isEmpty() || _recyclerView == null) {
+            return null;
+        }
+        return findFieldItemView(_recyclerView, fieldId);
+    }
+
+    private View findFieldItemView(View view, String fieldId) {
+        Object tag = view.getTag(R.id.offline_field_id_tag);
+        if (fieldId.equals(tag)) {
+            return view;
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findFieldItemView(group.getChildAt(i), fieldId);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 滚动到指定字段并播放高亮；找不到视图时退化为按 id 高亮（等待下一次绑定生效）。 */
+    private void scrollToAndHighlightField(String fieldId) {
+        View fieldView = findFieldItemView(fieldId);
+        if (fieldView == null) {
+            startFieldHighlight(Collections.singletonList(fieldId));
+            return;
+        }
+        Rect rect = new Rect();
+        fieldView.getDrawingRect(rect);
+        _formScrollView.offsetDescendantRectToMyCoords(fieldView, rect);
+        int targetScrollY = Math.max(0, rect.top - dp(this, 12));
+        _formScrollView.smoothScrollTo(0, targetScrollY);
+        playHighlight(fieldView);
     }
 
     /**
@@ -1597,7 +1661,15 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             }
         }
         _adapter.expandAllGroups();
-        scrollToFirstError();
+        String firstInvalidFieldId = result.getInvalidFields().isEmpty()
+                ? null : result.getInvalidFields().get(0).getId();
+        if (firstInvalidFieldId != null) {
+            final String fieldId = firstInvalidFieldId;
+            // 等展开 / 翻页后的布局完成，再滚到具体失败字段并高亮。
+            _formScrollView.postDelayed(() -> scrollToAndHighlightField(fieldId), 80);
+        } else {
+            scrollToFirstError();
+        }
     }
 
     /** 附件落盘前确保记录存在（只创建记录，不推导状态；附件添加完成后由 persistRecord 统一推导）。 */
@@ -2016,7 +2088,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         String fieldId = findFirstRequiredUnsatisfiedFieldId(targetRootNode);
         if (fieldId != null) {
-            startFieldHighlight(Collections.singletonList(fieldId));
+            final String targetFieldId = fieldId;
+            _formScrollView.postDelayed(() -> scrollToAndHighlightField(targetFieldId), 80);
         }
     }
 

@@ -762,6 +762,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private void bindFieldViewHolder(BaseViewHolder holder, OfflineFormDisplayItem item, int position) {
         // 行内边距由字段布局自身统一控制（16dp / 13dp）；嵌套层级由分组引导线表达，不再按 depth 缩进。
         BaseFormItem formItem = item.getFormItem();
+        // 打上字段 id 标记：保存校验失败时据此在视图树里定位字段并滚动高亮。
+        holder.itemView.setTag(R.id.offline_field_id_tag, formItem.getId());
         String originalTitle = formItem.getTitle();
         String displayTitle = item.getFieldDisplayTitle();
         if ((originalTitle == null || originalTitle.isEmpty()) && displayTitle != null && !displayTitle.isEmpty()) {
