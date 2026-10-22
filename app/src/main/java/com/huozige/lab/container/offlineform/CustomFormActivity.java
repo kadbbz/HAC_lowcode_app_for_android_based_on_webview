@@ -17,6 +17,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -1981,6 +1982,9 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private View createDirectoryRow(BottomSheetDialog dialog, int pageIndex) {
         OfflineFormPage page = _pages.get(pageIndex);
         boolean current = pageIndex == _currentPageIndex;
+        // 分组目录与顶部页头同一套字阶：序号 13sp、组名 15sp、状态徽标 12sp。
+        int metaTextSize = getResources().getDimensionPixelSize(R.dimen.offline_form_chrome_meta_text_size);
+        int chromeTextSize = getResources().getDimensionPixelSize(R.dimen.offline_form_chrome_text_size);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1995,7 +1999,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         TextView numberView = new TextView(this);
         numberView.setText(String.format(Locale.CHINA, "%02d", pageIndex + 1));
-        numberView.setTextSize(12);
+        numberView.setTextSize(TypedValue.COMPLEX_UNIT_PX, metaTextSize);
         numberView.setTypeface(null, android.graphics.Typeface.BOLD);
         numberView.setTextColor(getColor(current ? R.color.huozige_blue : R.color.offline_form_muted));
         numberView.setGravity(Gravity.END);
@@ -2003,7 +2007,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         TextView nameView = new TextView(this);
         nameView.setText(directoryPageName(page));
-        nameView.setTextSize(14);
+        nameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, chromeTextSize);
         nameView.setTypeface(null, android.graphics.Typeface.BOLD);
         nameView.setTextColor(getColor(R.color.offline_form_ink));
         nameView.setSingleLine(true);
@@ -2015,7 +2019,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
 
         int status = pageStatus(page);
         TextView statusView = new TextView(this);
-        statusView.setTextSize(11);
+        statusView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         statusView.setTypeface(null, android.graphics.Typeface.BOLD);
         statusView.setPadding(dp(this, 8), dp(this, 3), dp(this, 8), dp(this, 3));
         GradientDrawable statusBg = new GradientDrawable();

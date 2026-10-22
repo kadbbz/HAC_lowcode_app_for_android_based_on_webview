@@ -18,6 +18,16 @@
     <dimen name="offline_form_field_label_text_size">15sp</dimen>
     <dimen name="offline_form_field_value_text_size">17sp</dimen>
     <dimen name="offline_form_field_option_text_size">15sp</dimen>
+
+    <!--
+      分页布局顶部 chrome（步骤 Tab / 分组标题 / 筛选行）字号：与表单项同一套字阶。
+      标题 17sp（与取值文本一致）、正文 15sp（与字段名一致）、辅助 13sp。
+    -->
+    <dimen name="offline_form_tab_text_size">16sp</dimen>
+    <dimen name="offline_form_group_title_text_size">17sp</dimen>
+    <dimen name="offline_form_group_nested_title_text_size">16sp</dimen>
+    <dimen name="offline_form_chrome_text_size">15sp</dimen>
+    <dimen name="offline_form_chrome_meta_text_size">13sp</dimen>
     <!-- 取值行右侧图标与文字的间距 -->
     <dimen name="offline_form_field_icon_gap">8dp</dimen>
     <!--

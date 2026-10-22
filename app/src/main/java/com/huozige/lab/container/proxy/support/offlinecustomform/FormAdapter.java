@@ -435,7 +435,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return container;
     }
 
-    private void bindGroupHeader(View itemView, OfflineFormDisplayItem item) {
+    private void bindGroupHeader(View itemView, OfflineFormDisplayItem item, boolean topLevelGroup) {
         Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
@@ -453,8 +453,11 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         TextView titleView = new TextView(context);
         titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+        // 分组标题与顶部页头同一套字阶：顶层分组 17sp、嵌套分组 16sp（均加粗）。
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
-                .getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
+                .getDimensionPixelSize(topLevelGroup
+                        ? R.dimen.offline_form_group_title_text_size
+                        : R.dimen.offline_form_group_nested_title_text_size));
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
         titleView.setText(item.getNode().getTitle());
@@ -470,8 +473,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 dp(context, 28)));
     }
 
-    private TriangleToggleView bindGroupHeader(View itemView, OfflineFormDisplayItem item, View.OnClickListener clickListener) {
-        bindGroupHeader(itemView, item);
+    private TriangleToggleView bindGroupHeader(View itemView, OfflineFormDisplayItem item,
+                                               boolean topLevelGroup, View.OnClickListener clickListener) {
+        bindGroupHeader(itemView, item, topLevelGroup);
         TriangleToggleView toggleView = (TriangleToggleView) ((LinearLayout) itemView).getChildAt(2);
         itemView.setOnClickListener(clickListener);
         return toggleView;
@@ -883,11 +887,12 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         void bind(OfflineFormDisplayItem rootItem, List<OfflineFormDisplayItem> groupItems) {
             contentLayout.removeAllViews();
-            addGroupBlock(contentLayout, rootItem, groupItems);
+            addGroupBlock(contentLayout, rootItem, groupItems, true);
         }
     }
 
-    private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem, List<OfflineFormDisplayItem> childItems) {
+    private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem,
+                               List<OfflineFormDisplayItem> childItems, boolean topLevelGroup) {
         Context context = parentLayout.getContext();
         LinearLayout groupBlock = new LinearLayout(context);
         groupBlock.setOrientation(LinearLayout.VERTICAL);
@@ -900,7 +905,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         childrenLayout.setBackgroundResource(R.drawable.offline_form_guide_bg);
         childrenLayout.setPadding(dp(context, 13), 0, 0, 0);
 
-        TriangleToggleView toggleView = bindGroupHeader(header, groupItem, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
+        TriangleToggleView toggleView = bindGroupHeader(header, groupItem, topLevelGroup, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
         toggleView.setCollapsed(collapsedGroupNodes.contains(groupItem.getNode()));
         groupBlock.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -956,7 +961,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             first = false;
             if (child.isGroup()) {
                 List<OfflineFormDisplayItem> nestedChildren = collectDirectChildItems(childItems, i);
-                addGroupBlock(childrenLayout, child, nestedChildren);
+                addGroupBlock(childrenLayout, child, nestedChildren, false);
                 i += nestedChildren.size();
             } else if (child.isText()) {
                 View staticText = createStaticTextView(childrenLayout);
