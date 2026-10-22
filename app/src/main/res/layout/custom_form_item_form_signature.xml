@@ -56,15 +56,6 @@
         android:textColor="@color/offline_form_ink"
         android:textSize="@dimen/offline_form_field_value_text_size" />
 
-    <!-- 第 2 行：签名进度条 -->
-    <LinearLayout
-        android:id="@+id/layout_signature_progress"
-        android:layout_width="match_parent"
-        android:layout_height="4dp"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/offline_signature_progress_track"
-        android:orientation="horizontal" />
-
     <TextView
         android:id="@+id/signature_empty"
         android:layout_width="match_parent"

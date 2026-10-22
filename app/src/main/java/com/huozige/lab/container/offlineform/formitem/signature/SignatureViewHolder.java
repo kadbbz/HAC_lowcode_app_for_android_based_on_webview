@@ -1,7 +1,6 @@
 package com.huozige.lab.container.offlineform.formitem.signature;
 
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,7 +27,6 @@ public class SignatureViewHolder extends BaseViewHolder {
     private final TextView tvTitle;
     private final TextView tvRequired;
     private final TextView summaryTitle;
-    private final LinearLayout progressLayout;
     private final TextView emptyView;
     private final TextView tvError;
 
@@ -40,7 +38,6 @@ public class SignatureViewHolder extends BaseViewHolder {
         tvTitle = itemView.findViewById(R.id.tv_title);
         tvRequired = itemView.findViewById(R.id.tv_required);
         summaryTitle = itemView.findViewById(R.id.signature_summary_title);
-        progressLayout = itemView.findViewById(R.id.layout_signature_progress);
         emptyView = itemView.findViewById(R.id.signature_empty);
         tvError = itemView.findViewById(R.id.tv_error);
         itemView.setOnClickListener(v -> showSheet());
@@ -84,7 +81,6 @@ public class SignatureViewHolder extends BaseViewHolder {
         List<String> users = signatureItem == null ? null : signatureItem.getUsers();
         if (users == null || users.isEmpty()) {
             summaryTitle.setVisibility(View.GONE);
-            progressLayout.setVisibility(View.GONE);
             emptyView.setVisibility(View.VISIBLE);
             itemView.setContentDescription(null);
             return;
@@ -98,7 +94,6 @@ public class SignatureViewHolder extends BaseViewHolder {
         summaryTitle.setText(itemView.getContext()
                 .getString(R.string.offline_signature_pending_signed_count, pending, signed));
         emptyView.setVisibility(View.GONE);
-        SignatureUi.renderProgress(progressLayout, signed, total);
         itemView.setContentDescription(itemView.getContext()
                 .getString(R.string.offline_cd_signature_field, pending, signed));
     }
@@ -108,7 +103,8 @@ public class SignatureViewHolder extends BaseViewHolder {
         if (users == null || users.isEmpty()) {
             return;
         }
-        if (signatureSheet != null) {
+        // 抽屉可能已被用户下滑 / 点遮罩关闭：只有仍显示时才复用，否则重新弹出。
+        if (signatureSheet != null && signatureSheet.isShowing()) {
             signatureSheet.refresh();
             return;
         }

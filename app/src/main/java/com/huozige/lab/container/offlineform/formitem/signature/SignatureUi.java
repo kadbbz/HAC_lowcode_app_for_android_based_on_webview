@@ -37,28 +37,6 @@ final class SignatureUi {
     private SignatureUi() {
     }
 
-    /** 进度条：按已签 / 总数分配权重，填充色为成功绿。 */
-    static void renderProgress(LinearLayout progressLayout, int signed, int total) {
-        if (progressLayout == null) {
-            return;
-        }
-        progressLayout.removeAllViews();
-        if (total <= 0) {
-            progressLayout.setVisibility(View.GONE);
-            return;
-        }
-        int safeSigned = Math.max(0, Math.min(signed, total));
-        View fill = new View(progressLayout.getContext());
-        fill.setBackgroundResource(R.drawable.offline_signature_progress_fill);
-        progressLayout.addView(fill, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, safeSigned));
-
-        View rest = new View(progressLayout.getContext());
-        progressLayout.addView(rest, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, total - safeSigned));
-        progressLayout.setVisibility(View.VISIBLE);
-    }
-
     static View createUserCard(Context context, SignatureFormItem signatureItem, String userName,
                                OnSignRequested listener) {
         View row = LayoutInflater.from(context)

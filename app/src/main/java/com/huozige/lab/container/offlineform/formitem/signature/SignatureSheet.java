@@ -64,6 +64,11 @@ public final class SignatureSheet {
         }
     }
 
+    /** 抽屉是否仍在显示：被用户下滑 / 点遮罩关闭后再次点击签名组件应重新弹出。 */
+    public boolean isShowing() {
+        return dialog.isShowing();
+    }
+
     private void render() {
         titleView.setText(signatureItem.getTitle());
         List<String> users = signatureItem.getUsers();
