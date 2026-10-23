@@ -84,7 +84,6 @@
     <string name="offline_menu_fill_record">填报</string>
     <string name="offline_menu_project_detail">详情</string>
     <string name="offline_text_no_records">暂无离线填报记录</string>
-    <string name="offline_text_reach_bottom">到底了</string>
     <string name="offline_text_unknown_record_time">未知填报时间</string>
     <string name="offline_text_record_page_info">第 %1$d / %2$d 页</string>
     <string name="offline_text_default_step">步骤%1$d</string>
