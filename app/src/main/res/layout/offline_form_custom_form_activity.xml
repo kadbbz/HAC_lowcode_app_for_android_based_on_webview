@@ -214,10 +214,14 @@
 
             </RadioGroup>
 
+            <!--
+                搜索按钮与分段筛选轨道同高（34dp 项 + 上下 2dp 内衬 = 38dp），
+                圆角沿用 ghost 按钮背景的 10dp，与页脚「上一项 / 下一项」一致。
+            -->
             <TextView
                 android:id="@+id/button_search_filter"
                 android:layout_width="wrap_content"
-                android:layout_height="34dp"
+                android:layout_height="38dp"
                 android:layout_marginStart="10dp"
                 android:background="@drawable/offline_form_ghost_button_bg"
                 android:drawableStart="@drawable/ic_offline_search"
@@ -233,6 +237,7 @@
 
         </LinearLayout>
 
+        <!-- 搜索态：标准控件样式的输入框（38dp 高、10dp 圆角），与筛选行其他组件同规格 -->
         <LinearLayout
             android:id="@+id/layout_search_input"
             android:layout_width="0dp"
@@ -242,7 +247,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
-            android:paddingEnd="6dp"
+            android:paddingEnd="12dp"
             android:visibility="gone">
 
             <EditText
@@ -259,22 +264,31 @@
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingStart="0dp"
-                android:paddingEnd="4dp"
+                android:paddingEnd="0dp"
                 android:textColor="@color/offline_form_ink"
                 android:textColorHint="@color/offline_form_muted"
                 android:textSize="@dimen/offline_form_chrome_text_size" />
 
-            <ImageView
-                android:id="@+id/button_clear_search"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:background="@drawable/offline_form_search_clear_bg"
-                android:contentDescription="@string/offline_button_clear_search"
-                android:padding="5dp"
-                android:src="@drawable/ic_offline_search_clear"
-                android:tint="@color/offline_form_sec" />
-
         </LinearLayout>
+
+        <!-- 原输入框内的「×」移到输入框右侧，文案改为「取消」；仅搜索态显示 -->
+        <TextView
+            android:id="@+id/button_cancel_search"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginStart="10dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/offline_button_cancel"
+            android:textColor="@color/huozige_blue"
+            android:textSize="@dimen/offline_form_chrome_text_size"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
     </LinearLayout>
 

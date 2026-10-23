@@ -144,7 +144,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private View _filterFooterDivider;
     private EditText _searchInput;
     private TextView _searchFilterButton;
-    private ImageView _clearSearchButton;
+    private TextView _cancelSearchButton;
     private RadioGroup _segFilter;
     private FormAdapter _adapter;
     private Intent _intent;
@@ -309,7 +309,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _filterFooterDivider = findViewById(R.id.divider_filter_footer);
         _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
-        _clearSearchButton = findViewById(R.id.button_clear_search);
+        _cancelSearchButton = findViewById(R.id.button_cancel_search);
         _segFilter = findViewById(R.id.seg_filter);
         setupBottomHintHeight();
     }
@@ -535,7 +535,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
         _searchFilterButton.setOnClickListener(v -> enterSearchMode());
-        _clearSearchButton.setOnClickListener(v -> exitSearchMode(true));
+        _cancelSearchButton.setOnClickListener(v -> exitSearchMode(true));
         _searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -1209,11 +1209,15 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    /** 渲染筛选行：搜索态整行换成输入框，非搜索态显示分段筛选（Step 级，两种布局一致）。 */
+    /**
+     * 渲染筛选行：搜索态显示「输入框 + 取消」，非搜索态显示分段筛选（Step 级，两种布局一致）。
+     * 输入框、取消按钮与分段筛选轨道同为 38dp 高、10dp 圆角，切换时行高不跳动。
+     */
     private void renderFilterControls() {
         boolean searching = _filterMode == FILTER_SEARCH;
         _filterSegmentLayout.setVisibility(searching ? View.GONE : View.VISIBLE);
         _searchInputLayout.setVisibility(searching ? View.VISIBLE : View.GONE);
+        _cancelSearchButton.setVisibility(searching ? View.VISIBLE : View.GONE);
         syncSearchInputText();
         if (!searching) {
             setFilterModeSelection(_filterMode);

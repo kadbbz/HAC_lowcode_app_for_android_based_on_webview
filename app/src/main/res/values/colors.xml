@@ -38,8 +38,6 @@
     <color name="offline_form_document_item_stroke">#DCE5EC</color>
     <color name="offline_form_document_item_pressed">#EAF6FD</color>
     <color name="offline_form_card_warning_stroke">#E6A700</color>
-    <color name="offline_form_search_clear_bg">#DCE5EC</color>
-    <color name="offline_form_search_clear_bg_pressed">#C9D6E2</color>
 
     <!-- 离线填报自绘开关：轨道 + 内嵌拨手（轨道尺寸即控件尺寸，拨手不会溢出） -->
     <color name="offline_switch_track_on">#00A1E9</color>
