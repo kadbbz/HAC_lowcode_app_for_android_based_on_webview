@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -125,6 +126,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private static final long FIELD_HIGHLIGHT_MS = 1000;
     // 筛选行展开 / 收起动画时长（只由页标题右侧筛选按钮控制）。
     private static final long FILTER_BAR_ANIM_DURATION_MS = 180;
+    // 翻页动效：旧页卡片整页滑出屏幕，切换数据后新页从另一侧整页滑入（不做淡入淡出）。
+    private static final long PAGE_SWITCH_OUT_DURATION_MS = 140;
+    private static final long PAGE_SWITCH_IN_DURATION_MS = 200;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -164,6 +168,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private boolean _syncingSearchInput;
     // 渲染重入保护：任何监听器触发的嵌套 renderCurrentStep 直接忽略，避免无限递归。
     private boolean _renderingStep;
+    // 翻页动效进行中：期间忽略翻页按钮并禁用它们，避免连续点击叠加动画。
+    private boolean _pageSwitching;
     // 手指是否正按在屏幕上：只把「用户主动滑动」当作移开焦点，忽略键盘弹出导致的自适应滚动。
     private boolean _userTouchInProgress;
     // 软键盘当前是否可见：用户手动收起键盘时同步清除输入焦点。
@@ -256,6 +262,11 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     protected void onDestroy() {
         _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
         _autoSaveHandler.removeCallbacks(_clearHighlightRunnable);
+        // 先清动画标记：ViewPropertyAnimator 取消时会触发结束回调，避免它继续做翻页换页。
+        _pageSwitching = false;
+        if (_formScrollView != null) {
+            _formScrollView.animate().cancel();
+        }
         _imageProcessExecutor.shutdownNow();
         super.onDestroy();
     }
@@ -944,6 +955,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     private void renderCurrentStepInternal() {
+        // 切 Step / 切筛选等非翻页导航触发的重渲染，先终止翻页动效，避免残留位移或旧页内容回填。
+        cancelPageSwitchAnimation();
         if (!_formLoaded) {
             _adapter.setDisplayItems(new ArrayList<>());
             _stepTabLayout.setVisibility(View.GONE);
@@ -1279,18 +1292,93 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     private void navigatePage(int direction) {
-        if (!isPagedLayout() || _pages.isEmpty()) {
+        if (!isPagedLayout() || _pages.isEmpty() || _pageSwitching) {
             return;
         }
         int target = _currentPageIndex + direction;
         if (target < 0 || target >= _pages.size()) {
             return;
         }
-        _currentPageIndex = target;
+        animateToPage(target, direction);
+    }
+
+    /**
+     * 翻页动效：旧页卡片整页向翻页方向的反方向滑出屏幕，切换数据后新页从另一侧整页滑入。
+     *
+     * <p>只平移中间的滚动卡片本身，Header / 页头 / 底部操作栏保持不动，形成「表单卡片翻页」的观感，
+     * 让用户明确感知到自己切了页，而不是同一屏内容悄悄换了数据。按需求不做淡入淡出。</p>
+     */
+    private void animateToPage(int targetPageIndex, int direction) {
+        View card = _formScrollView;
+        // 动画被系统关闭（开发者选项 / 无障碍）或卡片尚未布局时，退化为直接切换。
+        if (card == null || card.getWidth() <= 0 || !ValueAnimator.areAnimatorsEnabled()) {
+            applyPageChange(targetPageIndex);
+            return;
+        }
+
+        _pageSwitching = true;
+        updateItemNavigationButtons();
+        // 卡片左右各留了 12dp 外边距：按「完全滑出父容器边界」计算位移，避免卡片在屏幕边缘残留一截。
+        int leftOffset = card.getLeft();
+        View parent = (View) card.getParent();
+        int parentWidth = parent != null && parent.getWidth() > 0 ? parent.getWidth() : leftOffset + card.getWidth();
+        float offLeft = leftOffset + card.getWidth() + 1;
+        float offRight = parentWidth - leftOffset + 1;
+        float outTranslation = direction > 0 ? -offLeft : offRight;
+        float inTranslation = direction > 0 ? offRight : -offLeft;
+
+        card.animate()
+                .translationX(outTranslation)
+                .setDuration(PAGE_SWITCH_OUT_DURATION_MS)
+                .setInterpolator(new AccelerateInterpolator())
+                .withEndAction(() -> {
+                    // 动画可能已被取消（切 Step / 切筛选 / 页面销毁）：取消回调也会进入这里，此时不能再换页。
+                    if (!_pageSwitching) {
+                        card.setTranslationX(0f);
+                        return;
+                    }
+                    // 旧页已完全滑出屏幕外，此时换数据不会被看到。
+                    applyPageChange(targetPageIndex);
+                    card.setTranslationX(inTranslation);
+                    card.animate()
+                            .translationX(0f)
+                            .setDuration(PAGE_SWITCH_IN_DURATION_MS)
+                            .setInterpolator(new DecelerateInterpolator())
+                            .withEndAction(() -> {
+                                if (!_pageSwitching) {
+                                    card.setTranslationX(0f);
+                                    return;
+                                }
+                                _pageSwitching = false;
+                                card.setTranslationX(0f);
+                                updateItemNavigationButtons();
+                            })
+                            .start();
+                })
+                .start();
+    }
+
+    /** 真正切到目标页并重渲染内容（翻页动效的中间步骤，此时卡片不可见）。 */
+    private void applyPageChange(int targetPageIndex) {
+        _currentPageIndex = targetPageIndex;
         // 刷新进度节点取值的快照，避免翻页后进度文本停留在上一页的数据。
         _adapter.setProgressContext(_definition, collectAllFormData());
         renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
         resetScroll();
+    }
+
+    /** 立刻终止翻页动效并恢复卡片原位（用于切换 Step、筛选等会重渲染内容的入口）。 */
+    private void cancelPageSwitchAnimation() {
+        boolean wasSwitching = _pageSwitching;
+        // 先置位再 cancel：ViewPropertyAnimator 取消时会触发结束回调，避免它把旧页数据回填到新页面。
+        _pageSwitching = false;
+        if (_formScrollView != null) {
+            _formScrollView.animate().cancel();
+            _formScrollView.setTranslationX(0f);
+        }
+        if (wasSwitching) {
+            updateItemNavigationButtons();
+        }
     }
 
     private int findPageIndexForRoot(OfflineFormNode rootNode) {
@@ -1643,6 +1731,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
      * 平铺布局在只有一个顶级项时禁用（没有可跳转的目标）。
      */
     private void updateItemNavigationButtons() {
+        if (_pageSwitching) {
+            // 翻页动效进行中：两侧按钮都禁用，避免连续点击叠加动画导致数据错乱。
+            _previousItemButton.setEnabled(false);
+            _nextItemButton.setEnabled(false);
+            _previousItemButton.setAlpha(0.4f);
+            _nextItemButton.setAlpha(0.4f);
+            return;
+        }
         boolean paged = isPagedLayout();
         boolean flatHasMultipleItems = _adapter != null && _adapter.getItemCount() > 1;
         boolean previousEnabled = paged ? _currentPageIndex > 0 : flatHasMultipleItems;
