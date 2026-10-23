@@ -148,7 +148,6 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private ImageButton _nextItemButton;
     // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
     private TextView _savePageButton;
-    private TextView _bottomHintTextView;
     private View _stepFooterDivider;
     private View _filterFooterDivider;
     private EditText _searchInput;
@@ -318,14 +317,12 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _savePageButton = findViewById(R.id.button_save_page);
-        _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
         _stepFooterDivider = findViewById(R.id.divider_step_bar_footer);
         _filterFooterDivider = findViewById(R.id.divider_filter_footer);
         _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
         _cancelSearchButton = findViewById(R.id.button_cancel_search);
         _segFilter = findViewById(R.id.seg_filter);
-        setupBottomHintHeight();
     }
 
     private void setupRecyclerView() {
@@ -380,13 +377,6 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 }
             }
         });
-    }
-
-    private void setupBottomHintHeight() {
-        int height = (int) (getResources().getDisplayMetrics().heightPixels * 0.35f);
-        ViewGroup.LayoutParams params = _bottomHintTextView.getLayoutParams();
-        params.height = height;
-        _bottomHintTextView.setLayoutParams(params);
     }
 
     private void registerImageCaptureLauncher() {
@@ -1616,18 +1606,36 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /**
-     * 底部操作栏显隐：保存按钮常驻，因此表单加载完成后整条栏始终可见
-     * （不再因为只有一项 / 一页而隐藏，否则「保存」会一起消失）。
+     * 底部操作栏显隐：仅当当前 Step 包含组表单（顶级 group 节点）时显示「分页器 + 保存」。
+     * <p>纯文本 / 散项 Step 不提供分页与保存入口，避免在没有分组的只读页面上出现无意义的底部操作栏。</p>
      */
     private void updateItemNavigationVisibility() {
         if (_itemNavigationLayout == null) {
             return;
         }
-        boolean visible = _formLoaded;
+        boolean visible = _formLoaded && currentStepHasGroupForm();
         _itemNavigationLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
         updateItemNavigationButtons();
         // 分页布局下悬浮按钮已隐藏，无需为其预留导航栏高度。
         updateQuickActionsInset(visible && !isPagedLayout());
+    }
+
+    /** 当前 Step 是否包含组表单（定义里的顶级 group 节点）。 */
+    private boolean currentStepHasGroupForm() {
+        if (_definition == null || _definition.getSteps() == null
+                || _currentStepIndex < 0 || _currentStepIndex >= _definition.getSteps().size()) {
+            return false;
+        }
+        OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
+        if (step == null || step.getItems() == null) {
+            return false;
+        }
+        for (OfflineFormNode node : step.getItems()) {
+            if (node != null && OfflineFormNode.TYPE_GROUP.equals(node.getNodeType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -330,10 +330,11 @@
                 android:clipToPadding="false"
                 android:padding="4dp" />
 
+            <!-- 表单到底提示：只保留一行紧凑的高度，避免表单末尾留下大片空白 -->
             <TextView
                 android:id="@+id/text_form_bottom_hint"
                 android:layout_width="match_parent"
-                android:layout_height="160dp"
+                android:layout_height="48dp"
                 android:gravity="center"
                 android:text="@string/offline_text_reach_bottom"
                 android:textColor="@color/gray"

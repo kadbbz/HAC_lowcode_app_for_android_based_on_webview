@@ -230,6 +230,8 @@
     <string name="offline_cd_header_home">应用首页</string>
     <string name="offline_cd_header_back">返回</string>
     <string name="offline_status_online">在线</string>
+    <string name="offline_status_wifi">无线网络</string>
+    <string name="offline_status_cellular">蜂窝网络</string>
     <string name="offline_status_offline">离线</string>
     <string name="offline_title_export_list">选择导出表单</string>
     <string name="offline_toast_nothing_to_save">当前页没有需要保存的内容</string>

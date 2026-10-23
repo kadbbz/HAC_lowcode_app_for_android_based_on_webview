@@ -127,6 +127,28 @@ public abstract class OfflineModuleActivity extends BaseActivity {
         }
 
         setupNetworkStatusTag();
+        // tag 宽度随「无线网络 / 蜂窝网络 / 离线」变化，标题左右内边距按 tag 实际宽度收敛，保证标题居中且不压住 tag。
+        _headerTitleView.post(this::refreshHeaderTitlePadding);
+    }
+
+    /**
+     * 按右侧网络状态 tag 的实际宽度重设标题左右内边距。
+     * <p>标题在 Header 中水平居中：左右内边距取「基础值」与「tag 宽度 + 右外边距 + 间距」的较大者，
+     * 避免「无线网络 / 蜂窝网络」这类较长文案把标题压住。</p>
+     */
+    private void refreshHeaderTitlePadding() {
+        if (_headerTitleView == null) {
+            return;
+        }
+        int basePadding = getResources().getDimensionPixelSize(R.dimen.offline_form_header_title_padding);
+        int padding = basePadding;
+        if (_networkStatusView != null) {
+            int tagWidth = _networkStatusView.getMeasuredWidth();
+            int marginEnd = getResources().getDimensionPixelSize(R.dimen.offline_form_header_status_margin_end);
+            int gap = getResources().getDimensionPixelSize(R.dimen.offline_form_header_status_gap);
+            padding = Math.max(padding, tagWidth + marginEnd + gap);
+        }
+        _headerTitleView.setPadding(padding, 0, padding, 0);
     }
 
     /** 初始化 Header 右侧的网络状态 tag，并注册网络变化监听让其实时刷新。 */
@@ -151,18 +173,17 @@ public abstract class OfflineModuleActivity extends BaseActivity {
         ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                runOnUiThread(() -> onNetworkEvent(true));
+                runOnUiThread(() -> onNetworkEvent(resolveActiveNetworkCapabilities()));
             }
 
             @Override
             public void onLost(@NonNull Network network) {
-                runOnUiThread(() -> onNetworkEvent(false));
+                runOnUiThread(() -> onNetworkEvent(null));
             }
 
             @Override
             public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
-                runOnUiThread(() -> onNetworkEvent(
-                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)));
+                runOnUiThread(() -> onNetworkEvent(networkCapabilities));
             }
         };
 
@@ -186,53 +207,64 @@ public abstract class OfflineModuleActivity extends BaseActivity {
     }
 
     private void updateNetworkStatus() {
-        applyNetworkStatus(isNetworkOnline());
+        applyNetworkStatus(resolveActiveNetworkCapabilities());
     }
 
-    /** 刷新 Header 右侧状态 tag 的文案与底色（在线主题色 / 离线橙色）。 */
-    private void applyNetworkStatus(boolean online) {
+    /** 取默认网络的 NetworkCapabilities；无可用默认网络或读取失败时返回 null。 */
+    private NetworkCapabilities resolveActiveNetworkCapabilities() {
+        try {
+            if (_connectivityManager == null) {
+                _connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            }
+            if (_connectivityManager == null) {
+                return null;
+            }
+            Network activeNetwork = _connectivityManager.getActiveNetwork();
+            return activeNetwork == null ? null : _connectivityManager.getNetworkCapabilities(activeNetwork);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 刷新 Header 右侧状态 tag：在线时按网络类型显示「无线网络」（Wi-Fi）/「蜂窝网络」（蜂窝），
+     * 其它在线传输类型统一显示「在线」；离线（无可用默认网络）显示橙色「离线」。
+     *
+     * <p>在线判定只要求 {@code NET_CAPABILITY_INTERNET}，不要求 {@code NET_CAPABILITY_VALIDATED}
+     * （公网校验在企业内网 / PDA 专网环境常为 false，会导致在线误判为离线）。</p>
+     */
+    private void applyNetworkStatus(NetworkCapabilities capabilities) {
         if (_networkStatusView == null) {
             return;
         }
-        _networkStatusView.setText(online ? R.string.offline_status_online : R.string.offline_status_offline);
+        boolean online = capabilities != null
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        int textRes;
+        if (!online) {
+            textRes = R.string.offline_status_offline;
+        } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            textRes = R.string.offline_status_wifi;
+        } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+            textRes = R.string.offline_status_cellular;
+        } else {
+            textRes = R.string.offline_status_online;
+        }
+        _networkStatusView.setText(textRes);
         _networkStatusView.setBackgroundTintList(ColorStateList.valueOf(getColor(
                 online ? R.color.offline_form_status_online : R.color.offline_form_status_offline)));
+        // tag 文案变化会改变宽度：下一帧重新计算标题内边距。
+        _networkStatusView.post(this::refreshHeaderTitlePadding);
     }
 
     /**
      * 网络回调里先按事件直接更新一次（避免查询时机与系统状态更新错位），
      * 再延迟复核一次兜底。
      */
-    private void onNetworkEvent(boolean online) {
-        applyNetworkStatus(online);
+    private void onNetworkEvent(NetworkCapabilities capabilities) {
+        applyNetworkStatus(capabilities);
         if (_networkStatusView != null) {
             _networkStatusView.removeCallbacks(_networkStatusRecheck);
             _networkStatusView.postDelayed(_networkStatusRecheck, NETWORK_STATUS_RECHECK_DELAY_MS);
-        }
-    }
-
-    /**
-     * 手机当前是否在线：存在默认网络，且该网络声明具备 INTERNET 能力。
-     *
-     * <p>不要求 {@code NET_CAPABILITY_VALIDATED}（它依赖访问公网校验服务器，企业内网 / PDA 专网环境下常为 false），
-     * 否则内网在线时也会误判为离线。</p>
-     */
-    private boolean isNetworkOnline() {
-        try {
-            if (_connectivityManager == null) {
-                _connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            }
-            if (_connectivityManager == null) {
-                return false;
-            }
-            Network activeNetwork = _connectivityManager.getActiveNetwork();
-            if (activeNetwork == null) {
-                return false;
-            }
-            NetworkCapabilities capabilities = _connectivityManager.getNetworkCapabilities(activeNetwork);
-            return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        } catch (Exception e) {
-            return false;
         }
     }
 

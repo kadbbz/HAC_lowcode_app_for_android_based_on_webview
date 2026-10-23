@@ -79,4 +79,7 @@
     <dimen name="offline_form_header_title_text_size">18sp</dimen>
     <!-- 左侧图标按钮的外间距：让图标与屏幕边缘之间留一点呼吸空间 -->
     <dimen name="offline_form_header_left_margin">4dp</dimen>
+    <!-- 右侧网络状态 tag 的右外边距，以及标题与 tag 之间保留的最小间距 -->
+    <dimen name="offline_form_header_status_margin_end">12dp</dimen>
+    <dimen name="offline_form_header_status_gap">8dp</dimen>
 </resources>
