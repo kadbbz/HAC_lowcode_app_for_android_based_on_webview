@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 分页表单区域（白色面板）背景：整体铺白 + 四周 12dp 圆角，配合 scroll_form 的 clipToOutline 裁切内容。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/white" />
+    <corners android:radius="@dimen/offline_form_content_corner_radius" />
+</shape>

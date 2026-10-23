@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -29,6 +30,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -124,6 +126,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final long AUTO_SAVE_DELAY_MS = 600;
     // 字段高亮闪光的持续时间（“仅未填”筛选与“跳转首个未填必填项”共用）。
     private static final long FIELD_HIGHLIGHT_MS = 1000;
+    // 筛选行展开 / 收起动画时长（只由页标题右侧筛选按钮控制）。
+    private static final long FILTER_BAR_ANIM_DURATION_MS = 180;
 
     private RecyclerView _recyclerView;
     private NestedScrollView _formScrollView;
@@ -133,10 +137,16 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private LinearLayout _itemNavigationLayout;
     private LinearLayout _filterSegmentLayout;
     private LinearLayout _searchInputLayout;
+    private LinearLayout _filterBarLayout;
+    // 筛选行默认收起，展开 / 收起只由页标题右侧的筛选按钮控制（不再联动滚动）。
+    private boolean _filterBarUserExpanded;
+    // 筛选行当前是否处于收起状态（用于同步按钮选中态与发丝线）。
+    private boolean _filterBarHidden;
+    private ValueAnimator _filterBarAnimator;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
-    private View _pageProgressFill;
     private TextView _groupDirectoryButton;
+    private ImageView _filterToggleButton;
     private TextView _previousItemButton;
     private TextView _nextItemButton;
     private TextView _bottomHintTextView;
@@ -297,10 +307,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _itemNavigationLayout = findViewById(R.id.layout_item_navigation);
         _filterSegmentLayout = findViewById(R.id.layout_filter_segment);
         _searchInputLayout = findViewById(R.id.layout_search_input);
+        _filterBarLayout = findViewById(R.id.layout_filter_bar);
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
-        _pageProgressFill = findViewById(R.id.view_page_progress_fill);
         _groupDirectoryButton = findViewById(R.id.button_group_directory);
+        _filterToggleButton = findViewById(R.id.button_filter_toggle);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
@@ -559,6 +570,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             return false;
         });
         _groupDirectoryButton.setOnClickListener(v -> showGroupDirectory());
+        _filterToggleButton.setOnClickListener(v -> toggleFilterBar());
         _segFilter.setOnCheckedChangeListener((group, checkedId) -> onFilterSegmentChanged(checkedId));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -641,7 +653,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    /** 复位筛选到「全部」，同时退出搜索态（清空关键词、收起键盘）。 */
+    /** 复位筛选到「全部」，同时退出搜索态（清空关键词、收起键盘）并展开筛选行。 */
     private void resetFilterMode() {
         _filterMode = FILTER_ALL;
         _filterModeBeforeSearch = FILTER_ALL;
@@ -649,6 +661,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         hideSoftKeyboard();
         _searchInput.clearFocus();
         setFilterModeSelection(FILTER_ALL);
+        // 校验定位 / 快捷跳转等程序化复位时，筛选行回到默认收起状态。
+        resetFilterBarToDefault();
     }
 
     /**
@@ -941,6 +955,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
             _pageIndicatorLayout.setVisibility(View.GONE);
+            updateFilterBarVisibility(false);
             if (_quickActions != null) {
                 _quickActions.setVisibility(View.GONE);
             }
@@ -1032,6 +1047,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _adapter.setDisplayItems(items);
         applyContentSurface(paged);
         renderPageIndicator();
+        updateFilterBarVisibility(false);
         updateItemNavigationVisibility();
     }
 
@@ -1044,16 +1060,26 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
      */
     private void applyContentSurface(boolean paged) {
         if (_formScrollView != null) {
-            _formScrollView.setBackgroundColor(getColor(
-                    paged ? R.color.white : R.color.offline_form_page_bg));
+            if (paged) {
+                // 分页下滚动区是一块四周带圆角的白色面板（配合 clipToOutline 裁切内容）。
+                _formScrollView.setBackgroundResource(R.drawable.offline_form_content_bg);
+            } else {
+                _formScrollView.setBackgroundColor(getColor(R.color.offline_form_page_bg));
+            }
         }
         if (_recyclerView != null) {
             int inset = dp(this, 4);
             int padding = paged ? 0 : inset;
             _recyclerView.setPadding(padding, padding, padding, padding);
         }
+        updateFilterFooterDividerVisibility();
+    }
+
+    /** 筛选行下方的发丝线跟随筛选行一起收起：仅分页布局且筛选行展开时显示。 */
+    private void updateFilterFooterDividerVisibility() {
         if (_filterFooterDivider != null) {
-            _filterFooterDivider.setVisibility(paged ? View.VISIBLE : View.GONE);
+            _filterFooterDivider.setVisibility(
+                    isPagedLayout() && !_filterBarHidden ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1069,9 +1095,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _pageNameTextView.setText(currentPageTitle());
         // 组序号与「目录」合并：按钮上直接显示页次，点击打开分组目录。
         _groupDirectoryButton.setText(getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size()));
-        LinearLayout.LayoutParams progressParams = (LinearLayout.LayoutParams) _pageProgressFill.getLayoutParams();
-        progressParams.weight = (float) (_currentPageIndex + 1) / _pages.size();
-        _pageProgressFill.setLayoutParams(progressParams);
     }
 
     private String currentPageTitle() {
@@ -1105,6 +1128,147 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private void resetScroll() {
         _recyclerView.scrollToPosition(0);
         _formScrollView.scrollTo(0, 0);
+        // 切页 / 切 Step / 跳转后回到页首：筛选行回到默认收起状态，避免新页面沿用上一页的展开 / 收起。
+        resetFilterBarToDefault();
+    }
+
+    /** 筛选按钮：展开 / 收起筛选行（唯一控制入口）。 */
+    private void toggleFilterBar() {
+        _filterBarUserExpanded = !_filterBarUserExpanded;
+        updateFilterBarVisibility(true);
+    }
+
+    /**
+     * 计算并应用筛选行 / 筛选按钮的可见性。
+     *
+     * <p>分页分组页且当前页有表单项时，页标题右侧展示筛选按钮，筛选行默认收起、点按钮展开；
+     * 没有表单项的页面两者都不展示。搜索态下筛选行（输入框）始终保留，方便取消。平铺布局没有
+     * 页标题入口，筛选行沿用常显。</p>
+     */
+    private void updateFilterBarVisibility(boolean animate) {
+        if (_filterBarLayout == null) {
+            return;
+        }
+        boolean paged = isPagedLayout();
+        boolean searching = _filterMode == FILTER_SEARCH;
+        boolean hasFormItems = currentContentHasFormItems();
+        boolean indicatorVisible = _pageIndicatorLayout != null
+                && _pageIndicatorLayout.getVisibility() == View.VISIBLE;
+
+        boolean collapsed;
+        if (searching) {
+            collapsed = false;
+        } else if (!hasFormItems) {
+            collapsed = true;
+        } else if (paged) {
+            collapsed = !_filterBarUserExpanded;
+        } else {
+            collapsed = false;
+        }
+
+        if (_filterToggleButton != null) {
+            boolean showToggle = paged && indicatorVisible && hasFormItems && !searching;
+            _filterToggleButton.setVisibility(showToggle ? View.VISIBLE : View.GONE);
+            _filterToggleButton.setImageTintList(ColorStateList.valueOf(getColor(
+                    collapsed ? R.color.offline_form_ink : R.color.huozige_blue)));
+        }
+
+        setFilterBarCollapsed(collapsed, animate);
+    }
+
+    /** 当前页（分页）或当前 step（平铺）是否包含表单项；纯文本节点页面不展示筛选入口。 */
+    private boolean currentContentHasFormItems() {
+        List<OfflineFormDisplayItem> items = null;
+        if (isPagedLayout()) {
+            if (!_pages.isEmpty() && _currentPageIndex >= 0 && _currentPageIndex < _pages.size()) {
+                items = _pages.get(_currentPageIndex).getItems();
+            }
+        } else if (_definition != null && _definition.getSteps() != null
+                && _currentStepIndex >= 0 && _currentStepIndex < _definition.getSteps().size()) {
+            items = buildCurrentStepDisplayItems(_definition.getSteps().get(_currentStepIndex));
+        }
+        if (items == null) {
+            return false;
+        }
+        for (OfflineFormDisplayItem item : items) {
+            if (item.isField()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 切页 / 切 Step / 回到页首：筛选行回到默认收起状态。 */
+    private void resetFilterBarToDefault() {
+        _filterBarUserExpanded = false;
+        updateFilterBarVisibility(false);
+    }
+
+    /** 应用筛选行收起 / 展开（可带动画），并联动下方发丝线。 */
+    private void setFilterBarCollapsed(boolean collapsed, boolean animate) {
+        final LinearLayout bar = _filterBarLayout;
+        if (bar == null) {
+            return;
+        }
+        boolean applied = collapsed
+                ? (_filterBarHidden && bar.getVisibility() == View.GONE)
+                : (!_filterBarHidden && bar.getVisibility() == View.VISIBLE
+                        && bar.getLayoutParams().height == ViewGroup.LayoutParams.WRAP_CONTENT);
+        if (applied) {
+            return;
+        }
+        if (_filterBarAnimator != null) {
+            _filterBarAnimator.cancel();
+            _filterBarAnimator = null;
+        }
+        _filterBarHidden = collapsed;
+        updateFilterFooterDividerVisibility();
+
+        if (!animate) {
+            bar.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+            ViewGroup.LayoutParams params = bar.getLayoutParams();
+            params.height = collapsed ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
+            bar.setLayoutParams(params);
+            return;
+        }
+
+        bar.setVisibility(View.VISIBLE);
+        final int startHeight = Math.max(0, bar.getHeight());
+        final int endHeight;
+        if (collapsed) {
+            endHeight = 0;
+        } else {
+            // 收起时高度被压成 0：先按未受限高度量出展开后的高度，再从 0 动画展开。
+            bar.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            bar.measure(View.MeasureSpec.makeMeasureSpec(
+                            getResources().getDisplayMetrics().widthPixels, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            endHeight = bar.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams startParams = bar.getLayoutParams();
+        startParams.height = startHeight;
+        bar.setLayoutParams(startParams);
+
+        ValueAnimator animator = ValueAnimator.ofInt(startHeight, endHeight);
+        animator.setDuration(FILTER_BAR_ANIM_DURATION_MS);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            ViewGroup.LayoutParams params = bar.getLayoutParams();
+            params.height = (int) animation.getAnimatedValue();
+            bar.setLayoutParams(params);
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                ViewGroup.LayoutParams params = bar.getLayoutParams();
+                params.height = collapsed ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
+                bar.setLayoutParams(params);
+                bar.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+                _filterBarAnimator = null;
+            }
+        });
+        _filterBarAnimator = animator;
+        animator.start();
     }
 
     /** 底部导航按布局分流：平铺为滚动跳转，分页为页内翻页。 */
