@@ -83,6 +83,7 @@ import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureF
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
 import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimes;
+import com.huozige.lab.container.offlineform.util.OfflineFormSheetHeight;
 import com.huozige.lab.container.offlineform.util.Utils;
 import com.huozige.lab.container.proxy.support.capture.CameraViewActivity;
 import com.huozige.lab.container.proxy.support.offlinecustomform.FormAdapter;
@@ -134,7 +135,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private LinearLayout _searchInputLayout;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
-    private TextView _pageCountTextView;
     private View _pageProgressFill;
     private TextView _groupDirectoryButton;
     private TextView _previousItemButton;
@@ -299,7 +299,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _searchInputLayout = findViewById(R.id.layout_search_input);
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
-        _pageCountTextView = findViewById(R.id.text_page_count);
         _pageProgressFill = findViewById(R.id.view_page_progress_fill);
         _groupDirectoryButton = findViewById(R.id.button_group_directory);
         _previousItemButton = findViewById(R.id.button_previous_item);
@@ -1068,7 +1067,8 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
         _pageIndicatorLayout.setVisibility(View.VISIBLE);
         _pageNameTextView.setText(currentPageTitle());
-        _pageCountTextView.setText(getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size()));
+        // 组序号与「目录」合并：按钮上直接显示页次，点击打开分组目录。
+        _groupDirectoryButton.setText(getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size()));
         LinearLayout.LayoutParams progressParams = (LinearLayout.LayoutParams) _pageProgressFill.getLayoutParams();
         progressParams.weight = (float) (_currentPageIndex + 1) / _pages.size();
         _pageProgressFill.setLayoutParams(progressParams);
@@ -2120,68 +2120,83 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View content = LayoutInflater.from(this).inflate(R.layout.offline_form_group_directory_sheet, null);
         TextView titleView = content.findViewById(R.id.group_directory_title);
-        TextView subtitleView = content.findViewById(R.id.group_directory_subtitle);
+        TextView summaryView = content.findViewById(R.id.group_directory_summary);
         LinearLayout list = content.findViewById(R.id.group_directory_list);
+        View scrollView = content.findViewById(R.id.group_directory_scroll);
 
         titleView.setText(R.string.offline_dialog_group_directory_title);
 
         int done = 0;
-        int doing = 0;
         for (OfflineFormPage page : _pages) {
-            int status = pageStatus(page);
-            if (status == PAGE_STATUS_DONE) {
+            if (pageStatus(page) == PAGE_STATUS_DONE) {
                 done++;
-            } else if (status == PAGE_STATUS_DOING) {
-                doing++;
             }
         }
-        subtitleView.setText(getString(R.string.offline_group_directory_summary, _pages.size(), done, doing));
+        summaryView.setText(getString(R.string.offline_group_directory_done_ratio, done, _pages.size()));
 
         for (int i = 0; i < _pages.size(); i++) {
+            if (i > 0) {
+                list.addView(createDirectoryDivider());
+            }
             list.addView(createDirectoryRow(dialog, i));
         }
 
-        dialog.setContentView(content);
-        dialog.show();
+        // 与签名抽屉共用同一套量高策略：内容短时自然高度，超出视窗上限后列表内部滚动。
+        OfflineFormSheetHeight.showWithMeasuredHeight(this, dialog, content, scrollView);
+    }
+
+    /** 与签名抽屉列表一致：行与行之间 1dp 发丝分隔线。 */
+    private View createDirectoryDivider() {
+        View divider = new View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Math.max(1, Math.round(getResources().getDisplayMetrics().density))));
+        divider.setBackgroundResource(R.drawable.offline_form_row_divider);
+        return divider;
     }
 
     private View createDirectoryRow(BottomSheetDialog dialog, int pageIndex) {
         OfflineFormPage page = _pages.get(pageIndex);
         boolean current = pageIndex == _currentPageIndex;
-        // 分组目录与顶部页头同一套字阶：序号 13sp、组名 15sp、状态徽标 12sp。
+        // 与签名抽屉的人员行同一套样式：通栏行（左右 16dp、上下 12dp），左侧组名 + 序号，右侧状态徽标。
         int metaTextSize = getResources().getDimensionPixelSize(R.dimen.offline_form_chrome_meta_text_size);
-        int chromeTextSize = getResources().getDimensionPixelSize(R.dimen.offline_form_chrome_text_size);
+        int nameTextSize = getResources().getDimensionPixelSize(R.dimen.offline_form_group_nested_title_text_size);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(this, 10), dp(this, 11), dp(this, 10), dp(this, 11));
+        row.setPadding(dp(this, 16), dp(this, 12), dp(this, 16), dp(this, 12));
         if (current) {
-            GradientDrawable bg = new GradientDrawable();
-            bg.setColor(getColor(R.color.offline_form_brand_tint));
-            bg.setCornerRadius(dp(this, 10));
-            row.setBackground(bg);
+            // 当前页整行浅品牌底（通栏、无圆角），与抽屉的通栏列表语言一致。
+            row.setBackgroundColor(getColor(R.color.offline_form_brand_tint));
+        }
+        TypedValue ripple = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)) {
+            row.setForeground(getDrawable(ripple.resourceId));
         }
 
-        TextView numberView = new TextView(this);
-        numberView.setText(String.format(Locale.CHINA, "%02d", pageIndex + 1));
-        numberView.setTextSize(TypedValue.COMPLEX_UNIT_PX, metaTextSize);
-        numberView.setTypeface(null, android.graphics.Typeface.BOLD);
-        numberView.setTextColor(getColor(current ? R.color.huozige_blue : R.color.offline_form_muted));
-        numberView.setGravity(Gravity.END);
-        row.addView(numberView, new LinearLayout.LayoutParams(dp(this, 26), ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout textColumn = new LinearLayout(this);
+        textColumn.setOrientation(LinearLayout.VERTICAL);
+        row.addView(textColumn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         TextView nameView = new TextView(this);
         nameView.setText(directoryPageName(page));
-        nameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, chromeTextSize);
+        nameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameTextSize);
         nameView.setTypeface(null, android.graphics.Typeface.BOLD);
         nameView.setTextColor(getColor(R.color.offline_form_ink));
         nameView.setSingleLine(true);
         nameView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
-        nameParams.leftMargin = dp(this, 12);
-        nameParams.rightMargin = dp(this, 8);
-        row.addView(nameView, nameParams);
+        textColumn.addView(nameView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView metaView = new TextView(this);
+        metaView.setText(getString(R.string.offline_group_directory_row_meta, pageIndex + 1));
+        metaView.setTextSize(TypedValue.COMPLEX_UNIT_PX, metaTextSize);
+        metaView.setTextColor(getColor(R.color.offline_form_muted));
+        LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        metaParams.topMargin = dp(this, 3);
+        textColumn.addView(metaView, metaParams);
 
         int status = pageStatus(page);
         TextView statusView = new TextView(this);
@@ -2204,8 +2219,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             statusBg.setColor(0xFFEEF1F4);
         }
         statusView.setBackground(statusBg);
-        row.addView(statusView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        statusParams.leftMargin = dp(this, 8);
+        row.addView(statusView, statusParams);
 
         row.setOnClickListener(v -> {
             dialog.dismiss();

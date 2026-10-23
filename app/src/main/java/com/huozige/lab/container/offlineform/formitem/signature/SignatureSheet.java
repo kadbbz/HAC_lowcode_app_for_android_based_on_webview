@@ -4,13 +4,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
+import com.huozige.lab.container.offlineform.util.OfflineFormSheetHeight;
 
 import java.util.List;
 
@@ -21,9 +21,6 @@ import java.util.List;
  * <p>签名完成回来后调用 {@link #refresh()} 原地刷新，不关闭抽屉。</p>
  */
 public final class SignatureSheet {
-
-    /** 抽屉最高占视窗高度比例，超过后列表内部滚动。 */
-    private static final float MAX_HEIGHT_RATIO = 0.78f;
 
     private final BottomSheetDialog dialog;
     private final View content;
@@ -49,7 +46,7 @@ public final class SignatureSheet {
                                       SignatureUi.OnSignRequested listener) {
         SignatureSheet sheet = new SignatureSheet(context, signatureItem, listener);
         sheet.render();
-        sheet.showWithMeasuredHeight(context);
+        OfflineFormSheetHeight.showWithMeasuredHeight(context, sheet.dialog, sheet.content, sheet.scrollView);
         return sheet;
     }
 
@@ -98,37 +95,5 @@ public final class SignatureSheet {
                 Math.max(1, Math.round(listLayout.getResources().getDisplayMetrics().density))));
         divider.setBackgroundResource(R.drawable.offline_form_row_divider);
         return divider;
-    }
-
-    /**
-     * 抽屉高度按内容收敛：先按滚动内容自然高度测量，超过视窗上限才固定到上限并在内部滚动。
-     */
-    private void showWithMeasuredHeight(Context context) {
-        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
-        int maxHeight = Math.round(screenHeight * MAX_HEIGHT_RATIO);
-
-        ViewGroup.LayoutParams scrollParams = scrollView.getLayoutParams();
-        boolean hadWeight = scrollParams instanceof LinearLayout.LayoutParams;
-        if (hadWeight) {
-            ((LinearLayout.LayoutParams) scrollParams).weight = 0;
-        }
-        scrollParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        scrollView.setLayoutParams(scrollParams);
-
-        content.measure(
-                View.MeasureSpec.makeMeasureSpec(screenWidth, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(maxHeight, View.MeasureSpec.AT_MOST));
-        int height = Math.min(content.getMeasuredHeight(), maxHeight);
-
-        if (hadWeight) {
-            ((LinearLayout.LayoutParams) scrollParams).weight = 1;
-        }
-        scrollParams.height = 0;
-        scrollView.setLayoutParams(scrollParams);
-
-        content.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height));
-        dialog.setContentView(content);
-        dialog.show();
     }
 }
