@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  离线填报模块统一定制 Header（各页面通过 <include> 放在布局顶部）：
+
+  左侧 = 模块首页「应用首页」入口 / 子页面「返回」按钮（图标由 OfflineModuleActivity 按页面设置）；
+  中间 = 页面标题，整条 Header 水平居中，超长时省略；
+  右侧 = 网络状态 tag：显示手机当前在线 / 离线，在线用主题色、离线用橙色。
+
+  白底 + 底部 1dp 发丝线，与填报页 Tab / 页脚的发丝线同一色。
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/offline_form_header_height"
+    android:background="@color/white">
+
+    <!-- 左侧图标按钮：所有页面统一左侧留一点外间距，避免图标贴屏幕边缘 -->
+    <ImageButton
+        android:id="@+id/button_header_left"
+        android:layout_width="@dimen/offline_form_header_button_size"
+        android:layout_height="match_parent"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="@dimen/offline_form_header_left_margin"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/offline_cd_header_back"
+        android:padding="@dimen/offline_form_header_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_offline_back_24" />
+
+    <TextView
+        android:id="@+id/text_header_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="@dimen/offline_form_header_title_padding"
+        android:paddingEnd="@dimen/offline_form_header_title_padding"
+        android:textColor="@color/offline_form_ink"
+        android:textSize="@dimen/offline_form_header_title_text_size"
+        android:textStyle="bold"
+        tools:text="离线表单列表" />
+
+    <!--
+        网络状态 tag：药丸形小标签，底色由代码按在线（主题色）/ 离线（橙色）着色，文字白色。
+    -->
+    <TextView
+        android:id="@+id/text_header_network_status"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/offline_form_status_tag_bg"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        tools:text="在线" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:background="@color/offline_form_line" />
+
+</FrameLayout>

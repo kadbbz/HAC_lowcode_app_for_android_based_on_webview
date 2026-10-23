@@ -18,7 +18,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
@@ -33,7 +32,7 @@ import java.util.Locale;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
-public class OfflineProjectRecordActivity extends BaseActivity {
+public class OfflineProjectRecordActivity extends OfflineModuleActivity {
     private static final int MENU_ID_CONFIG_MANAGE = 1;
     private static final int MENU_ID_RAW_CONFIG = 2;
     private static final int MENU_ID_DRAFT_CONTINUE = 1;

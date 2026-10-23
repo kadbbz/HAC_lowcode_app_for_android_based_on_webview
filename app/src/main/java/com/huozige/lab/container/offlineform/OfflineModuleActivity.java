@@ -1,0 +1,245 @@
+package com.huozige.lab.container.offlineform;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.os.Bundle;
+import android.widget.ImageButton;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
+import com.huozige.lab.container.BaseActivity;
+import com.huozige.lab.container.MainActivity;
+import com.huozige.lab.container.R;
+
+/**
+ * 离线填报模块页面的公共基类，负责统一的自绘 Header。
+ *
+ * <p>Header 结构（{@code res/layout/offline_form_header.xml}，各页面布局顶部 include）：</p>
+ * <ul>
+ *     <li>左侧：模块首页（离线表单列表）显示「应用首页」入口，其余子页面显示「返回」按钮；</li>
+ *     <li>中间：页面标题（通过 Activity#setTitle 联动，超长省略）；</li>
+ *     <li>右侧：网络状态 tag——手机当前在线显示主题色「在线」，离线显示橙色「离线」。</li>
+ * </ul>
+ *
+ * <p>由于模块使用 {@code OfflineFormTheme}（NoActionBar），系统 ActionBar 不再显示。</p>
+ */
+public abstract class OfflineModuleActivity extends BaseActivity {
+
+    /** 网络状态变化后的延迟复核间隔：规避回调时机与系统状态更新之间的瞬时错位。 */
+    private static final long NETWORK_STATUS_RECHECK_DELAY_MS = 500;
+
+    private TextView _headerTitleView;
+    private TextView _networkStatusView;
+    // setTitle 可能早于 setContentView 被调用（各页面习惯先 setTitle 再 setContentView），先缓存标题。
+    private CharSequence _pendingTitle;
+    private ConnectivityManager _connectivityManager;
+    private ConnectivityManager.NetworkCallback _networkCallback;
+    private final Runnable _networkStatusRecheck = this::updateNetworkStatus;
+
+    /**
+     * 当前页面是否为离线填报模块首页（离线表单列表）。
+     * <p>首页 Header 左侧显示「应用首页」入口，其余页面显示返回按钮。</p>
+     */
+    protected boolean isOfflineModuleHome() {
+        return false;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // 模块主题已是 NoActionBar，这里兜底：避免从其它主题页面跳转时残留系统 ActionBar。
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+    }
+
+    @Override
+    public void setContentView(int layoutResID) {
+        super.setContentView(layoutResID);
+        bindHeader();
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        super.setTitle(title);
+        _pendingTitle = title;
+        if (_headerTitleView != null) {
+            _headerTitleView.setText(title);
+        }
+    }
+
+    @Override
+    public void setTitle(int titleId) {
+        setTitle(titleId == 0 ? null : getText(titleId));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 页面重新显示时刷新一次网络状态（回调注册失败时也能保持可用）。
+        updateNetworkStatus();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (_networkStatusView != null) {
+            _networkStatusView.removeCallbacks(_networkStatusRecheck);
+        }
+        unregisterNetworkCallback();
+        super.onDestroy();
+    }
+
+    private void bindHeader() {
+        _headerTitleView = findViewById(R.id.text_header_title);
+        ImageButton leftButton = findViewById(R.id.button_header_left);
+        if (_headerTitleView == null || leftButton == null) {
+            // 页面布局未接入统一定制 Header（例如全屏的图片预览 / 签名页），不做任何处理。
+            return;
+        }
+
+        boolean homeEntry = isOfflineModuleHome();
+        if (homeEntry) {
+            // 「应用首页」使用设计提供的 logo 图标：不额外设置 tint，颜色由图标自身（含 drawable 内置 tint）决定，
+            // 便于日后直接替换为彩色 logo 资源。
+            leftButton.setImageResource(R.drawable.home_app_logo_24);
+        } else {
+            leftButton.setImageResource(R.drawable.ic_offline_back_24);
+            leftButton.setImageTintList(ColorStateList.valueOf(getColor(R.color.offline_form_ink)));
+        }
+        leftButton.setContentDescription(getString(homeEntry
+                ? R.string.offline_cd_header_home : R.string.offline_cd_header_back));
+        leftButton.setOnClickListener(v -> {
+            if (homeEntry) {
+                openAppHome();
+            } else {
+                // 走系统返回分发：填报页的返回会先校验 / 落盘再退出，其它页面直接 finish。
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
+
+        if (_pendingTitle != null) {
+            _headerTitleView.setText(_pendingTitle);
+        }
+
+        setupNetworkStatusTag();
+    }
+
+    /** 初始化 Header 右侧的网络状态 tag，并注册网络变化监听让其实时刷新。 */
+    private void setupNetworkStatusTag() {
+        _networkStatusView = findViewById(R.id.text_header_network_status);
+        if (_networkStatusView == null) {
+            return;
+        }
+        updateNetworkStatus();
+        registerNetworkCallback();
+    }
+
+    private void registerNetworkCallback() {
+        if (_networkCallback != null) {
+            return;
+        }
+        _connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (_connectivityManager == null) {
+            return;
+        }
+
+        ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                runOnUiThread(() -> onNetworkEvent(true));
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                runOnUiThread(() -> onNetworkEvent(false));
+            }
+
+            @Override
+            public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
+                runOnUiThread(() -> onNetworkEvent(
+                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)));
+            }
+        };
+
+        try {
+            _connectivityManager.registerDefaultNetworkCallback(callback);
+            _networkCallback = callback;
+        } catch (Exception ignored) {
+            // 注册失败时退化为 onResume 时刷新网络状态。
+        }
+    }
+
+    private void unregisterNetworkCallback() {
+        if (_connectivityManager != null && _networkCallback != null) {
+            try {
+                _connectivityManager.unregisterNetworkCallback(_networkCallback);
+            } catch (Exception ignored) {
+                // 忽略注销失败。
+            }
+        }
+        _networkCallback = null;
+    }
+
+    private void updateNetworkStatus() {
+        applyNetworkStatus(isNetworkOnline());
+    }
+
+    /** 刷新 Header 右侧状态 tag 的文案与底色（在线主题色 / 离线橙色）。 */
+    private void applyNetworkStatus(boolean online) {
+        if (_networkStatusView == null) {
+            return;
+        }
+        _networkStatusView.setText(online ? R.string.offline_status_online : R.string.offline_status_offline);
+        _networkStatusView.setBackgroundTintList(ColorStateList.valueOf(getColor(
+                online ? R.color.offline_form_status_online : R.color.offline_form_status_offline)));
+    }
+
+    /**
+     * 网络回调里先按事件直接更新一次（避免查询时机与系统状态更新错位），
+     * 再延迟复核一次兜底。
+     */
+    private void onNetworkEvent(boolean online) {
+        applyNetworkStatus(online);
+        if (_networkStatusView != null) {
+            _networkStatusView.removeCallbacks(_networkStatusRecheck);
+            _networkStatusView.postDelayed(_networkStatusRecheck, NETWORK_STATUS_RECHECK_DELAY_MS);
+        }
+    }
+
+    /**
+     * 手机当前是否在线：存在默认网络，且该网络声明具备 INTERNET 能力。
+     *
+     * <p>不要求 {@code NET_CAPABILITY_VALIDATED}（它依赖访问公网校验服务器，企业内网 / PDA 专网环境下常为 false），
+     * 否则内网在线时也会误判为离线。</p>
+     */
+    private boolean isNetworkOnline() {
+        try {
+            if (_connectivityManager == null) {
+                _connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            }
+            if (_connectivityManager == null) {
+                return false;
+            }
+            Network activeNetwork = _connectivityManager.getActiveNetwork();
+            if (activeNetwork == null) {
+                return false;
+            }
+            NetworkCapabilities capabilities = _connectivityManager.getNetworkCapabilities(activeNetwork);
+            return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** 回到 APP 首页（浏览器容器页），并关闭当前模块页面。 */
+    private void openAppHome() {
+        startActivity(new Intent(this, MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+        finish();
+    }
+}

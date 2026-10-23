@@ -38,6 +38,9 @@
     <color name="offline_form_document_item_stroke">#DCE5EC</color>
     <color name="offline_form_document_item_pressed">#EAF6FD</color>
     <color name="offline_form_card_warning_stroke">#E6A700</color>
+    <!-- Header 右侧网络状态 tag：在线 = 主题色（品牌蓝），离线 = 橙色 -->
+    <color name="offline_form_status_online">@color/huozige_blue</color>
+    <color name="offline_form_status_offline">#FF8F1F</color>
 
     <!-- 离线填报自绘开关：轨道 + 内嵌拨手（轨道尺寸即控件尺寸，拨手不会溢出） -->
     <color name="offline_switch_track_on">#00A1E9</color>

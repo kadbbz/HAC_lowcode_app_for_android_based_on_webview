@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusCardAdapter;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormExportStatusHelper;
@@ -23,7 +22,7 @@ import com.huozige.lab.container.utilities.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfflinePlusListActivity extends BaseActivity {
+public class OfflinePlusListActivity extends OfflineModuleActivity {
     private OfflinePlusCardAdapter _adapter;
     private List<OfflineFormDefinitionIndexItem> _cardItemList;
     private List<OfflineFormDefinitionIndexItem> _displayedCardItemList;
@@ -33,6 +32,12 @@ public class OfflinePlusListActivity extends BaseActivity {
     private TextView _cmdFilterUnexported;
     private TextView _cmdFilterAll;
     private Button _cmdSort;
+
+    /** 表单列表是离线填报模块首页：Header 左侧显示「应用首页」入口。 */
+    @Override
+    protected boolean isOfflineModuleHome() {
+        return true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

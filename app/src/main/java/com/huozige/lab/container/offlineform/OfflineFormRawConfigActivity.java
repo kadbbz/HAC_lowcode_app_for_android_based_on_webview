@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
@@ -12,7 +11,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
-public class OfflineFormRawConfigActivity extends BaseActivity {
+public class OfflineFormRawConfigActivity extends OfflineModuleActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
 
     @Override

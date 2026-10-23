@@ -142,10 +142,12 @@
         <activity
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
+        <!-- 离线填报模块统一使用 OfflineFormTheme（NoActionBar + 自绘 Header + 白色状态栏） -->
         <activity
             android:name=".offlineform.CustomFormActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflinePlusListActivity"
             android:exported="false"
             android:theme="@style/OfflineFormTheme" />
@@ -153,13 +155,17 @@
             android:exported="false"
             android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflineProjectRecordActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflineFormConfigDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflineFormRawConfigActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.OfflineExportedRecordDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/OfflineFormTheme" />
         <activity android:name=".offlineform.formitem.image.OfflineImagePreviewActivity"
             android:exported="false" />
         <activity

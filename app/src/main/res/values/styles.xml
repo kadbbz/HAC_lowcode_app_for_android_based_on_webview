@@ -8,12 +8,16 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <!-- 离线填报列表使用 MaterialCardView 等 Material 组件，要求主题继承自 Theme.MaterialComponents，
-         否则会在 inflate 卡片时抛出 IllegalArgumentException 并导致页面反复重试布局而无响应。 -->
-    <style name="OfflineFormTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+    <!-- 离线填报模块统一主题：
+         - 使用 MaterialComponents，列表页会 inflate MaterialCardView 等 Material 组件；
+         - NoActionBar：模块页面统一使用自绘 Header（应用首页/返回 + 标题 + 菜单），不再显示系统 ActionBar；
+         - 状态栏跟随白色 Header：白底 + 深色图标，避免深色动作栏颜色压在白色 Header 上方。 -->
+    <style name="OfflineFormTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <!-- 离线填报页步骤 Tab 文字：Material 默认 14sp 偏小，统一到表单字阶（见 offline_form_tab_text_size）。 -->

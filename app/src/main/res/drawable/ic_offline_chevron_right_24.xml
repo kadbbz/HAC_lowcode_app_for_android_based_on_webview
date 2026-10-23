@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Material Symbols Outlined「chevron_right」24dp（viewBox 0 -960 960 960，外层 group translateY=960 归零坐标）。
+  用于填报页底部「下一项 / 下一页」图标按钮，颜色由 ImageButton 的 tint 控制。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <group android:translateY="960">
+        <path
+            android:fillColor="@android:color/black"
+            android:pathData="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+    </group>
+</vector>

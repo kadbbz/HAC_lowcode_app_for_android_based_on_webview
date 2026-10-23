@@ -7,6 +7,9 @@
     android:orientation="vertical"
     android:background="@color/offline_form_page_bg">
 
+    <!-- 统一定制 Header：返回 / 当前 Step 名称 / 网络状态 tag -->
+    <include layout="@layout/offline_form_header" />
+
     <!-- 步骤 Tab -->
     <LinearLayout
         android:id="@+id/layout_step_bar"
@@ -340,40 +343,65 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <!--
+        底部操作栏：左半区 = 「上一项 / 下一项」图标按钮（白底描边），右半区 = 「保存」主按钮。
+        保存是整条栏里唯一的主题色按钮：保存当前页（当前表单组）的填写数据，停留在本页。
+    -->
     <LinearLayout
         android:id="@+id/layout_item_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/offline_form_nav_bg"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="12dp"
         android:paddingTop="8dp"
         android:paddingEnd="12dp"
         android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/button_previous_item"
+        <LinearLayout
+            android:id="@+id/layout_nav_buttons"
             android:layout_width="0dp"
             android:layout_height="46dp"
-            android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/offline_form_ghost_button_bg"
-            android:gravity="center"
-            android:text="@string/offline_button_previous_item"
-            android:textColor="@color/offline_form_ink"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/button_previous_item"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/offline_form_ghost_button_bg"
+                android:contentDescription="@string/offline_button_previous_item"
+                android:padding="11dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_offline_chevron_left_24"
+                android:tint="@color/offline_form_ink" />
+
+            <ImageButton
+                android:id="@+id/button_next_item"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/offline_form_ghost_button_bg"
+                android:contentDescription="@string/offline_button_next_item"
+                android:padding="11dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_offline_chevron_right_24"
+                android:tint="@color/offline_form_ink" />
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/button_next_item"
+            android:id="@+id/button_save_page"
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:background="@drawable/offline_form_primary_button_bg"
             android:gravity="center"
-            android:text="@string/offline_button_next_item"
+            android:text="@string/offline_button_save"
             android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="bold" />

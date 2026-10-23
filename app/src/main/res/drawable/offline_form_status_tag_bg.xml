@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Header 右侧网络状态 tag（药丸形）：底色由代码按在线 / 离线着色，文字固定白色。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/white" />
+    <corners android:radius="11dp" />
+</shape>

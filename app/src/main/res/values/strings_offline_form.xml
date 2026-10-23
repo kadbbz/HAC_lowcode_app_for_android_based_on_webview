@@ -1,5 +1,5 @@
 <resources>
-    <string name="offline_title_project_list">表单列表</string>
+    <string name="offline_title_project_list">离线表单列表</string>
     <string name="offline_title_project_record">填报记录</string>
     <string name="offline_title_record_history">离线待上传记录</string>
     <string name="offline_title_exported_records">已导出记录（只读）</string>
@@ -225,4 +225,12 @@
     <string name="offline_group_directory_done_ratio">已完成 %1$d/%2$d</string>
     <string name="offline_group_directory_row_meta">第 %1$02d 组</string>
     <string name="offline_group_directory_untitled">其他</string>
+
+    <!-- 离线填报模块统一定制 Header：左侧导航 / 右侧网络状态的无障碍描述与页面标题 -->
+    <string name="offline_cd_header_home">应用首页</string>
+    <string name="offline_cd_header_back">返回</string>
+    <string name="offline_status_online">在线</string>
+    <string name="offline_status_offline">离线</string>
+    <string name="offline_title_export_list">选择导出表单</string>
+    <string name="offline_toast_nothing_to_save">当前页没有需要保存的内容</string>
 </resources>

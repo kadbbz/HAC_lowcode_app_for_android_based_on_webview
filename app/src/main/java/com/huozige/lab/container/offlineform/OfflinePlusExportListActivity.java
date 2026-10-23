@@ -13,7 +13,6 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.OfflinePlusExportCardAdapter;
@@ -23,7 +22,7 @@ import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineF
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfflinePlusExportListActivity extends BaseActivity {
+public class OfflinePlusExportListActivity extends OfflineModuleActivity {
     public static final String EXTRA_SELECTED_PATTERN_IDS = "selectedPatternIds";
 
     private OfflinePlusExportCardAdapter _adapter;
@@ -39,7 +38,7 @@ public class OfflinePlusExportListActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("\u9009\u62e9\u5bfc\u51fa\u8868\u5355");
+        setTitle(R.string.offline_title_export_list);
         setContentView(R.layout.offline_form_export_list_activity);
 
         _searchEditText = findViewById(R.id.searchEditText);

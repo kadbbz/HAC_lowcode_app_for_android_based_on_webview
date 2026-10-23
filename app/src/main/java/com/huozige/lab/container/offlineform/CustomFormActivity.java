@@ -22,8 +22,6 @@ import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
@@ -45,7 +44,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
@@ -105,7 +103,7 @@ import java.util.concurrent.Executors;
 
 import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper.dp;
 
-public class CustomFormActivity extends AppCompatActivity implements ImageCaptureHost, FileUploadHost, SignatureCaptureHost {
+public class CustomFormActivity extends OfflineModuleActivity implements ImageCaptureHost, FileUploadHost, SignatureCaptureHost {
     public static final String EXTRA_RECORD_ID = "recordId";
     private static final String STATE_RECORD_ID = "offline_form_record_id";
     private static final String STATE_CURRENT_STEP_INDEX = "offline_form_current_step_index";
@@ -113,7 +111,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private static final String STATE_FILTER_MODE = "offline_form_filter_mode";
     private static final String STATE_FILTER_MODE_BEFORE_SEARCH = "offline_form_filter_mode_before_search";
     private static final String STATE_SEARCH_KEYWORD = "offline_form_search_keyword";
-    private static final int MENU_ID_SAVE_RECORD = 1;
     private static final int FILTER_ALL = 0;
     private static final int FILTER_UNFILLED = 1;
     private static final int FILTER_FILLED = 2;
@@ -147,8 +144,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
     private TextView _pageNameTextView;
     private TextView _groupDirectoryButton;
     private ImageView _filterToggleButton;
-    private TextView _previousItemButton;
-    private TextView _nextItemButton;
+    private ImageButton _previousItemButton;
+    private ImageButton _nextItemButton;
+    // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
+    private TextView _savePageButton;
     private TextView _bottomHintTextView;
     private View _stepFooterDivider;
     private View _filterFooterDivider;
@@ -217,6 +216,10 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         setContentView(R.layout.offline_form_custom_form_activity);
 
         _intent = getIntent();
+
+        // Header 中间展示当前 Step 名称；表单加载完成前先用表单标题兜底，避免出现空白标题。
+        String formTitle = _intent.getStringExtra("title");
+        setTitle(formTitle == null || formTitle.isEmpty() ? getString(R.string.app_name) : formTitle);
 
         // 如果 Activity 因系统原因被重建，优先恢复本次会话刚刚自动保存的草稿。
         if (savedInstanceState != null) {
@@ -314,6 +317,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _filterToggleButton = findViewById(R.id.button_filter_toggle);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
+        _savePageButton = findViewById(R.id.button_save_page);
         _bottomHintTextView = findViewById(R.id.text_form_bottom_hint);
         _stepFooterDivider = findViewById(R.id.divider_step_bar_footer);
         _filterFooterDivider = findViewById(R.id.divider_filter_footer);
@@ -544,6 +548,7 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         });
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
+        _savePageButton.setOnClickListener(v -> onSavePageClick());
         _searchFilterButton.setOnClickListener(v -> enterSearchMode());
         _cancelSearchButton.setOnClickListener(v -> exitSearchMode(true));
         _searchInput.addTextChangedListener(new TextWatcher() {
@@ -866,56 +871,14 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, MENU_ID_SAVE_RECORD, MENU_ID_SAVE_RECORD, R.string.offline_button_save)
-                .setActionView(createSaveActionView())
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == MENU_ID_SAVE_RECORD) {
-            onSaveMenuClick();
-            return true;
-        }
-        if (item.getItemId() == android.R.id.home) {
-            onBackRequested();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private View createSaveActionView() {
-        LinearLayout actionView = new LinearLayout(this);
-        actionView.setOrientation(LinearLayout.HORIZONTAL);
-        actionView.setGravity(Gravity.CENTER);
-        actionView.setPadding(dp(this, 10), 0, dp(this, 12), 0);
-        actionView.setMinimumHeight(dp(this, 48));
-        actionView.setClickable(true);
-        actionView.setOnClickListener(v -> onSaveMenuClick());
-
-        ImageView iconView = new ImageView(this);
-        iconView.setImageResource(R.drawable.ic_offline_save);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(this, 20), dp(this, 20));
-        iconParams.setMargins(0, 0, dp(this, 4), 0);
-        actionView.addView(iconView, iconParams);
-
-        TextView textView = new TextView(this);
-        textView.setText(R.string.offline_button_save);
-        textView.setTextColor(getColor(R.color.white));
-        textView.setTextSize(16);
-        textView.setGravity(Gravity.CENTER);
-        actionView.addView(textView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        return actionView;
-    }
-
-    private void onSaveMenuClick() {
-        if (!_formLoaded) {
+    /**
+     * 底部「保存」：只校验并保存当前页（当前表单组）的填写数据。
+     *
+     * <p>行为约定：当前页校验通过即落盘并提示「保存成功」，停留在本页、不关闭表单；其他页数据保持不动。
+     * 记录的整体状态仍按全表单校验结果推导（见 {@link #persistRecord(boolean)}）。</p>
+     */
+    private void onSavePageClick() {
+        if (!_formLoaded || _definition == null) {
             Toast.makeText(this, R.string.offline_toast_config_missing, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -923,16 +886,59 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
             Toast.makeText(this, R.string.offline_toast_old_record_edit_not_supported, Toast.LENGTH_SHORT).show();
             return;
         }
-        // 提交按钮是唯一"显式校验"入口：校验失败时保留错误信息并停留在表单。
-        OfflineFormValidator.Result result = OfflineFormValidator.evaluate(_definition, true);
+        // 先结束输入态：让正在编辑的文本落值并结算字段更新时间，再做校验。
+        clearInputFocus();
+        // 失焦会触发一次延迟自动保存；先取消，避免它在本页校验失败后把刚显示的错误态清掉。
+        _autoSaveHandler.removeCallbacks(_autoSaveRunnable);
+        OfflineFormValidator.Result result = validateCurrentPage();
         if (!result.isValid()) {
-            showValidationErrors(result);
+            showSaveValidationErrors(result);
             Toast.makeText(this, R.string.offline_toast_check_form_input, Toast.LENGTH_SHORT).show();
             return;
         }
-        persistRecord(true);
+        if (persistRecord() == null) {
+            // 当前页没有任何需要落盘的输入（例如新建表单尚未填写）：不误报保存成功。
+            Toast.makeText(this, R.string.offline_toast_nothing_to_save, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 落盘后重绑一次：清掉上次保存失败遗留的红色错误文案。
+        _adapter.notifyDataSetChanged();
         Toast.makeText(this, R.string.offline_toast_record_saved, Toast.LENGTH_SHORT).show();
-        finish();
+    }
+
+    /** 校验当前页：分页布局为当前表单组所在页，平铺布局为当前 Step。 */
+    private OfflineFormValidator.Result validateCurrentPage() {
+        OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
+        if (isPagedLayout()) {
+            OfflineFormPage currentPage = _pages.isEmpty() ? null : _pages.get(_currentPageIndex);
+            return OfflineFormValidator.evaluatePage(currentPage, _currentStepIndex, true);
+        }
+        return OfflineFormValidator.evaluateStep(step, _currentStepIndex, true);
+    }
+
+    /** 保存校验失败反馈：复位筛选、定位当前页首个失败字段并高亮，让错误立即可见。 */
+    private void showSaveValidationErrors(OfflineFormValidator.Result result) {
+        if (!_formLoaded || _definition == null) {
+            return;
+        }
+        // 筛选 / 搜索可能把失败字段藏起来：先复位到「全部」，保证错误可见。
+        if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
+            resetFilterMode();
+            renderCurrentStep();
+        }
+        if (isPagedLayout() && !result.getInvalidFields().isEmpty()) {
+            int pageIndex = findPageIndexForField(result.getInvalidFields().get(0));
+            if (pageIndex >= 0 && pageIndex != _currentPageIndex) {
+                _currentPageIndex = pageIndex;
+                renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
+            }
+        }
+        _adapter.expandAllGroups();
+        if (result.getInvalidFields().isEmpty()) {
+            return;
+        }
+        final String fieldId = result.getInvalidFields().get(0).getId();
+        _formScrollView.postDelayed(() -> scrollToAndHighlightField(fieldId), 80);
     }
 
     private void renderCurrentStep() {
@@ -972,9 +978,11 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _adapter.setProgressContext(_definition, collectAllFormData());
         preparePages(step);
         renderCurrentPageContent(step);
-        if (step.getTitle() != null && !step.getTitle().isEmpty()) {
-            setTitle(step.getTitle());
-        }
+        // Header 中间始终显示当前 Step 名称；Step 无标题时退回「步骤 N」。
+        String stepTitle = step.getTitle();
+        setTitle(stepTitle == null || stepTitle.isEmpty()
+                ? getString(R.string.offline_text_default_step, _currentStepIndex + 1)
+                : stepTitle);
     }
 
     /** 是否处于逐组分页布局。 */
@@ -1607,30 +1615,30 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         return viewHolder == null ? null : viewHolder.itemView;
     }
 
+    /**
+     * 底部操作栏显隐：保存按钮常驻，因此表单加载完成后整条栏始终可见
+     * （不再因为只有一项 / 一页而隐藏，否则「保存」会一起消失）。
+     */
     private void updateItemNavigationVisibility() {
         if (_itemNavigationLayout == null) {
             return;
         }
-        boolean visible;
-        if (!_formLoaded) {
-            visible = false;
-        } else if (isPagedLayout()) {
-            // 分页布局下当页可能只有一个顶级项，不能再用 adapter 项数判断；按页数决定。
-            visible = _pages.size() > 1;
-        } else {
-            visible = _adapter != null && _adapter.getItemCount() > 1;
-        }
+        boolean visible = _formLoaded;
         _itemNavigationLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
         updateItemNavigationButtons();
         // 分页布局下悬浮按钮已隐藏，无需为其预留导航栏高度。
         updateQuickActionsInset(visible && !isPagedLayout());
     }
 
-    /** 分页布局下按页码边界禁用「上一项 / 下一项」；平铺布局下保持始终可用。 */
+    /**
+     * 「上一项 / 下一项」可用态：分页布局按页码边界；
+     * 平铺布局在只有一个顶级项时禁用（没有可跳转的目标）。
+     */
     private void updateItemNavigationButtons() {
         boolean paged = isPagedLayout();
-        boolean previousEnabled = !paged || _currentPageIndex > 0;
-        boolean nextEnabled = !paged || _currentPageIndex < _pages.size() - 1;
+        boolean flatHasMultipleItems = _adapter != null && _adapter.getItemCount() > 1;
+        boolean previousEnabled = paged ? _currentPageIndex > 0 : flatHasMultipleItems;
+        boolean nextEnabled = paged ? _currentPageIndex < _pages.size() - 1 : flatHasMultipleItems;
         _previousItemButton.setEnabled(previousEnabled);
         _nextItemButton.setEnabled(nextEnabled);
         _previousItemButton.setAlpha(previousEnabled ? 1f : 0.4f);
@@ -1806,38 +1814,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         _lastPersistedSnapshot = OfflineFormFieldTimes.refresh(_editingRecord, _definition, _lastPersistedSnapshot);
         // 离线填报数据按表单定义目录保存，删除表单定义时可直接清理对应文件夹。
         OfflineFormFileHelper.writeRecord(this, _editingRecord);
-    }
-
-    /** 提交按钮的校验失败反馈：回到全部视图、跳转首个失败步骤、展开折叠组并滚动到首个错误。 */
-    private void showValidationErrors(OfflineFormValidator.Result result) {
-        if (_definition == null || _definition.getSteps() == null || _definition.getSteps().isEmpty()) {
-            return;
-        }
-        if (_filterMode != FILTER_ALL || !_searchKeyword.isEmpty()) {
-            resetFilterMode();
-        }
-        if (result.getFirstInvalidStepIndex() >= 0) {
-            _currentStepIndex = Math.min(result.getFirstInvalidStepIndex(), _definition.getSteps().size() - 1);
-        }
-        renderCurrentStep();
-        if (isPagedLayout() && !result.getInvalidFields().isEmpty()) {
-            // 分页下定位到首个失败字段所在页；validator 只给到 step 粒度，这里反查所属页。
-            int pageIndex = findPageIndexForField(result.getInvalidFields().get(0));
-            if (pageIndex >= 0 && pageIndex != _currentPageIndex) {
-                _currentPageIndex = pageIndex;
-                renderCurrentPageContent(_definition.getSteps().get(_currentStepIndex));
-            }
-        }
-        _adapter.expandAllGroups();
-        String firstInvalidFieldId = result.getInvalidFields().isEmpty()
-                ? null : result.getInvalidFields().get(0).getId();
-        if (firstInvalidFieldId != null) {
-            final String fieldId = firstInvalidFieldId;
-            // 等展开 / 翻页后的布局完成，再滚到具体失败字段并高亮。
-            _formScrollView.postDelayed(() -> scrollToAndHighlightField(fieldId), 80);
-        } else {
-            scrollToFirstError();
-        }
     }
 
     /** 附件落盘前确保记录存在（只创建记录，不推导状态；附件添加完成后由 persistRecord 统一推导）。 */
@@ -2258,21 +2234,6 @@ public class CustomFormActivity extends AppCompatActivity implements ImageCaptur
         if (fieldId != null) {
             final String targetFieldId = fieldId;
             _formScrollView.postDelayed(() -> scrollToAndHighlightField(targetFieldId), 80);
-        }
-    }
-
-    private void scrollToFirstError() {
-        if (isPagedLayout()) {
-            // 每页内容有限，直接回到页首即可看到错误。
-            resetScroll();
-            return;
-        }
-        List<BaseFormItem> items = _adapter.getFormItems();
-        for (int i = 0; i < items.size(); i++) {
-            if (items.get(i).getErrorMessage() != null) {
-                _recyclerView.scrollToPosition(i);
-                break;
-            }
         }
     }
 

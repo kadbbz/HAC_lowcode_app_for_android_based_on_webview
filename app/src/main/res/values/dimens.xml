@@ -66,4 +66,17 @@
     <dimen name="offline_form_field_switch_end_inset">8dp</dimen>
     <!-- 左右排列时标签最多占行宽的比例，超过即视为放不下、退回上下排列。 -->
     <item name="offline_form_field_inline_label_max_ratio" type="fraction">40%</item>
+
+    <!--
+      离线填报模块统一定制 Header：
+      白底 48dp + 底部发丝线；左右各一个 48dp 图标按钮，标题在整条 Header 中水平居中，
+      左右各留 56dp（48dp 按钮 + 8dp 间距）避免长标题压到按钮。
+    -->
+    <dimen name="offline_form_header_height">48dp</dimen>
+    <dimen name="offline_form_header_button_size">48dp</dimen>
+    <dimen name="offline_form_header_icon_padding">12dp</dimen>
+    <dimen name="offline_form_header_title_padding">56dp</dimen>
+    <dimen name="offline_form_header_title_text_size">18sp</dimen>
+    <!-- 左侧图标按钮的外间距：让图标与屏幕边缘之间留一点呼吸空间 -->
+    <dimen name="offline_form_header_left_margin">4dp</dimen>
 </resources>
