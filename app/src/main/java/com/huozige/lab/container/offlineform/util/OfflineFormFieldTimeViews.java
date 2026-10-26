@@ -12,7 +12,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.huozige.lab.container.R;
-import com.huozige.lab.container.offlineform.formitem.ResponsiveFieldRow;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -21,9 +20,8 @@ import java.util.WeakHashMap;
 /**
  * 在填报页字段的右上角展示"字段更新时间"。
  *
- * <p>位置：与字段名同一行、靠右、垂直居中；开关这类「标签 + 控件」左右排列的组件，
- * 由 {@link ResponsiveFieldRow} 把更新时间放在标题行右侧，控件顺延到下一行，
- * 避免时间与开关抢同一行空间。</p>
+ * <p>位置：与字段名同一行、靠右、垂直居中；所有字段（含开关）都采用「标签在上、控件在下」的
+ * 统一结构，更新时间固定在字段名所在行的右侧。</p>
  *
  * <p>文案：{@code 更新于：<智能时间>}；智能时间按相对时间展示——刚刚 / N分钟前 / N小时前 /
  * 昨天 HH:mm / MM-dd HH:mm / yyyy-MM-dd HH:mm。相对时间会随当前时间变化，
@@ -113,25 +111,10 @@ public final class OfflineFormFieldTimeViews {
     /**
      * 放到字段名同一行右侧。
      *
-     * @return 是否已完成放置；开关组件的标签行由 {@link ResponsiveFieldRow} 承载时复用其第三子 View 槽位
+     * @return 是否已完成放置
      */
     private static boolean placeInLabelRow(LinearLayout labelRow, LinearLayout root, TextView timeView) {
-        ViewParent labelRowParent = labelRow.getParent();
-        if (labelRowParent instanceof ResponsiveFieldRow) {
-            // 开关组件：ResponsiveFieldRow 的第 3 个子 View 是标题行右侧的元信息；
-            // 它会把控件顺延到下一行，避免更新时间与开关争抢同一行的右侧空间。
-            ResponsiveFieldRow responsiveRow = (ResponsiveFieldRow) labelRowParent;
-            if (timeView.getParent() != responsiveRow) {
-                removeFromParent(timeView);
-                responsiveRow.addView(timeView, new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
-            }
-            timeView.setGravity(Gravity.END);
-            return true;
-        }
-
-        // 普通组件：标签行右侧默认是空位。若行内已有会吃掉剩余宽度的计数文本
+        // 标签行右侧默认是空位。若行内已有会吃掉剩余宽度的计数文本
         // （图片张数 / 签名人数等），时间改用自适应宽度追加在其后；否则时间占满剩余宽度、文字靠右。
         boolean flexible = !hasVisibleWeightedChild(labelRow, timeView);
         LinearLayout.LayoutParams desired = new LinearLayout.LayoutParams(
