@@ -18,6 +18,8 @@
     <string name="offline_button_view_detail">查看详情</string>
     <string name="offline_button_save">保存</string>
     <string name="offline_button_previous_item">上一项</string>
+    <string name="offline_button_previous_group">上一组</string>
+    <string name="offline_button_next_group">下一组</string>
     <string name="offline_button_next_item">下一项</string>
     <string name="offline_button_previous_page">上一页</string>
     <string name="offline_button_next_page">下一页</string>

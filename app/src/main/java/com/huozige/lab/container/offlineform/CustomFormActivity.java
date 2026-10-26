@@ -146,8 +146,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private TextView _pageNameTextView;
     // 底栏标准分页器中间的页码：‹ 第 x / y 组 ›，仅逐组分页布局显示，点页码打开分组目录。
     private TextView _itemPageCountView;
-    private ImageButton _previousItemButton;
-    private ImageButton _nextItemButton;
+    // 底栏左侧「上一项 / 页码 / 下一项」区域：单页分页表单 / 无可导航项时隐藏，保存按钮通栏。
+    private LinearLayout _itemNavigationButtonsLayout;
+    private TextView _previousItemButton;
+    private TextView _nextItemButton;
     // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
     private TextView _savePageButton;
     private View _stepFooterDivider;
@@ -337,6 +339,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
         _itemPageCountView = findViewById(R.id.text_item_page_count);
+        _itemNavigationButtonsLayout = findViewById(R.id.layout_nav_buttons);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _savePageButton = findViewById(R.id.button_save_page);
@@ -2015,11 +2018,83 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             updateQuickActionsInset(false);
             return;
         }
-        boolean visible = _formLoaded && currentStepHasGroupForm();
+        boolean loaded = _formLoaded && _definition != null
+                && _currentStepIndex >= 0 && _currentStepIndex < _definition.getSteps().size();
+        boolean paged = isPagedLayout();
+        // 规则 1：分组器仅在「分页布局且多页」时显示；平铺布局沿用顶级项可导航性。
+        boolean pagerVisible = loaded && (paged ? _pages.size() > 1 : currentFlatItemCount() > 1);
+        // 规则 2：当前页 / 当前 Step 没有可编辑表单项时，保存按钮不显示。
+        boolean saveVisible = loaded && currentContentHasEditableFields();
+        boolean visible = pagerVisible || saveVisible;
         _itemNavigationLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (!visible) {
+            updateQuickActionsInset(false);
+            return;
+        }
+        // 规则 3：两个组件宽度自适应，只有一个时自动通栏（两者都 weight=1）。
+        if (_itemNavigationButtonsLayout != null) {
+            _itemNavigationButtonsLayout.setVisibility(pagerVisible ? View.VISIBLE : View.GONE);
+        }
+        if (_savePageButton != null) {
+            _savePageButton.setVisibility(saveVisible ? View.VISIBLE : View.GONE);
+            LinearLayout.LayoutParams saveParams =
+                    (LinearLayout.LayoutParams) _savePageButton.getLayoutParams();
+            int startMargin = pagerVisible ? dp(this, 8) : 0;
+            if (saveParams.getMarginStart() != startMargin) {
+                saveParams.setMarginStart(startMargin);
+                _savePageButton.setLayoutParams(saveParams);
+            }
+        }
+        updatePagerButtonLabels(pagerVisible && !saveVisible, paged);
         updateItemNavigationButtons();
         // 分页布局下悬浮按钮已隐藏，无需为其预留导航栏高度。
-        updateQuickActionsInset(visible && !isPagedLayout());
+        updateQuickActionsInset(!paged);
+    }
+
+    /** 分组器通栏时左右按钮显示「上一组 / 下一组」文本；与保存并排时只显示箭头图标。 */
+    private void updatePagerButtonLabels(boolean fullWidth, boolean paged) {
+        if (_previousItemButton == null || _nextItemButton == null) {
+            return;
+        }
+        if (!fullWidth) {
+            _previousItemButton.setText("");
+            _nextItemButton.setText("");
+            return;
+        }
+        _previousItemButton.setText(paged
+                ? R.string.offline_button_previous_group : R.string.offline_button_previous_item);
+        _nextItemButton.setText(paged
+                ? R.string.offline_button_next_group : R.string.offline_button_next_item);
+    }
+
+    private int currentFlatItemCount() {
+        return _adapter == null ? 0 : _adapter.getItemCount();
+    }
+
+    /** 当前页（分页）或当前 Step（平铺）是否包含可编辑的表单项（按定义判断，不受筛选影响）。 */
+    private boolean currentContentHasEditableFields() {
+        if (_definition == null || _definition.getSteps() == null
+                || _currentStepIndex < 0 || _currentStepIndex >= _definition.getSteps().size()) {
+            return false;
+        }
+        if (isPagedLayout()) {
+            if (_pages.isEmpty()) {
+                return false;
+            }
+            for (OfflineFormDisplayItem item : _pages.get(_currentPageIndex).getItems()) {
+                if (item.isField()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        for (OfflineFormDisplayItem item : OfflineFormDefinitionFlattener.flattenStep(
+                _definition.getSteps().get(_currentStepIndex))) {
+            if (item.isField()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 当前 Step 是否包含组表单（定义里的顶级 group 节点）。 */
@@ -2046,7 +2121,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
      */
     private void updateItemNavigationButtons() {
         if (_itemPageCountView != null) {
-            boolean paged = isPagedLayout() && !_pages.isEmpty();
+            boolean paged = isPagedLayout() && _pages.size() > 1;
             _itemPageCountView.setVisibility(paged ? View.VISIBLE : View.GONE);
             if (paged) {
                 _itemPageCountView.setText(getString(R.string.offline_page_count,
