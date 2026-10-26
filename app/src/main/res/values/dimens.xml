@@ -31,13 +31,8 @@
     <dimen name="offline_form_chrome_meta_text_size">13sp</dimen>
     <!-- 分页表单区域（白色面板）的圆角，配合四周 12dp 外边距形成浮动面板观感。 -->
     <dimen name="offline_form_content_corner_radius">12dp</dimen>
-    <!-- 取值行右侧图标与文字的间距 -->
+    <!-- 取值行右侧箭头与文字的间距 -->
     <dimen name="offline_form_field_icon_gap">8dp</dimen>
-    <!--
-      取值行右侧图标的光学右对齐微调：
-      日历/时钟图标的字形在 viewport 内有约 3dp 空白，右缘统一内缩，避免图标看起来贴边。
-    -->
-    <dimen name="offline_form_field_icon_end_inset">5dp</dimen>
 
     <!--
       自绘开关尺寸：轨道宽高即控件宽高，拨手（26dp）完全内嵌在 30dp 高的轨道里，

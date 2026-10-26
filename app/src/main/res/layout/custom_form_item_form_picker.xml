@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 日期/时间选择项：字段名在上、选择结果在下；取值行不套边框 / 卡片，右对齐并保留尾部箭头。 -->
+<!-- 日期/时间选择项：字段名在上、选择结果在下；取值行不套边框 / 卡片，右侧箭头与选择框一致。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/picker_container"
     android:layout_width="match_parent"
@@ -40,38 +40,24 @@
 
     </LinearLayout>
 
-    <!-- 取值行：不套边框 / 卡片，水印与取值左对齐，图标固定右侧 -->
-    <LinearLayout
+    <!-- 取值行：不套边框 / 卡片，水印与取值左对齐，右侧箭头与选择框保持一致 -->
+    <TextView
+        android:id="@+id/tv_value"
         android:layout_width="match_parent"
         android:layout_height="@dimen/offline_form_field_min_height"
+        android:background="@null"
+        android:clickable="true"
+        android:drawableEnd="@drawable/ic_offline_chevron"
+        android:drawablePadding="@dimen/offline_form_field_icon_gap"
+        android:ellipsize="end"
+        android:focusable="true"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/tv_value"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:ellipsize="end"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:singleLine="true"
-            android:textColor="@color/offline_form_ink"
-            android:textColorHint="@color/offline_form_muted"
-            android:textSize="@dimen/offline_form_field_value_text_size" />
-
-        <!-- 日期 / 时间图标：默认日历，时间模式在代码里换成时钟 -->
-        <ImageView
-            android:id="@+id/iv_value_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="@dimen/offline_form_field_icon_gap"
-            android:layout_marginEnd="@dimen/offline_form_field_icon_end_inset"
-            android:contentDescription="@null"
-            android:src="@drawable/calendar_month_24" />
-
-    </LinearLayout>
+        android:paddingStart="0dp"
+        android:paddingEnd="2dp"
+        android:singleLine="true"
+        android:textColor="@color/offline_form_ink"
+        android:textColorHint="@color/offline_form_muted"
+        android:textSize="@dimen/offline_form_field_value_text_size" />
 
     <TextView
         android:id="@+id/tv_error"
