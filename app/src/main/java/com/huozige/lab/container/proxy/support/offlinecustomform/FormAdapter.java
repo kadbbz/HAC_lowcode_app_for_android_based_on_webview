@@ -351,7 +351,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return groupItems;
     }
 
-    private void toggleGroup(OfflineFormDisplayItem groupItem, TriangleToggleView toggleView, LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
+    private void toggleGroup(OfflineFormDisplayItem groupItem, View header, LinearLayout childrenLayout,
+                             List<OfflineFormDisplayItem> childItems, boolean topLevelGroup) {
         OfflineFormNode node = groupItem.getNode();
         if (node == null) {
             return;
@@ -363,8 +364,13 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // 折叠：把当前分组及其后代一并标记为折叠。
             collapseGroupWithDescendants(displayItems.indexOf(groupItem));
         }
-        toggleView.setCollapsed(collapsedGroupNodes.contains(node));
-        renderChildrenContent(childrenLayout, childItems, !pagedMode);
+        boolean collapsed = collapsedGroupNodes.contains(node);
+        setGroupHeaderCollapsed(header, collapsed, topLevelGroup);
+        renderChildrenContent(childrenLayout, childItems, topLevelGroup ? !pagedMode : true,
+                topLevelGroup ? null : 0);
+        if (!topLevelGroup) {
+            styleNestedContent(childrenLayout, collapsed);
+        }
     }
 
     /**
@@ -440,8 +446,14 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
-        container.setPadding(dp(context, 16), dp(context, 11), dp(context, 16), dp(context, 11));
         container.setBackground(null);
+
+        if (!topLevelGroup) {
+            bindNestedGroupHeader(container, item);
+            return;
+        }
+
+        container.setPadding(dp(context, 16), dp(context, 11), dp(context, 16), dp(context, 11));
 
         View accentView = new View(context);
         GradientDrawable accentBackground = new GradientDrawable();
@@ -454,11 +466,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         TextView titleView = new TextView(context);
         titleView.setTextColor(context.getColor(R.color.offline_form_ink));
-        // 分组标题与顶部页头同一套字阶：顶层分组 17sp、嵌套分组 16sp（均加粗）。
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
-                .getDimensionPixelSize(topLevelGroup
-                        ? R.dimen.offline_form_group_title_text_size
-                        : R.dimen.offline_form_group_nested_title_text_size));
+                .getDimensionPixelSize(R.dimen.offline_form_group_title_text_size));
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
         titleView.setText(item.getNode().getTitle());
@@ -474,12 +483,81 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 dp(context, 28)));
     }
 
-    private TriangleToggleView bindGroupHeader(View itemView, OfflineFormDisplayItem item,
-                                               boolean topLevelGroup, View.OnClickListener clickListener) {
+    /**
+     * 嵌套分组的手风琴式表头：整行「标题 + 右侧细箭头」，无品牌竖条 / 无层级引导线；
+     * 展开时内容区浅灰底，与参考样式一致。
+     */
+    private void bindNestedGroupHeader(LinearLayout container, OfflineFormDisplayItem item) {
+        Context context = container.getContext();
+        container.setGravity(Gravity.CENTER_VERTICAL);
+        container.setMinimumHeight(dp(context, 56));
+        container.setPadding(dp(context, 16), 0, dp(context, 12), 0);
+
+        // 分组标识：左侧品牌色竖条（与顶层分组一致，仅用作区分，不加粗标题）。
+        View accentView = new View(context);
+        GradientDrawable accentBackground = new GradientDrawable();
+        accentBackground.setColor(context.getColor(R.color.huozige_blue));
+        accentBackground.setCornerRadius(dp(context, 2));
+        accentView.setBackground(accentBackground);
+        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(dp(context, 3), dp(context, 15));
+        accentParams.setMarginEnd(dp(context, 8));
+        container.addView(accentView, accentParams);
+
+        TextView titleView = new TextView(context);
+        titleView.setText(item.getNode().getTitle());
+        titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+        // 与其它表单项的正文同字号（字段值 17sp），仅用常规字重 + 主题色竖条标识分组。
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_field_value_text_size));
+        titleView.setGravity(Gravity.CENTER_VERTICAL);
+        container.addView(titleView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+
+        ImageView chevron = new ImageView(context);
+        chevron.setImageResource(R.drawable.ic_offline_chevron_right_24);
+        chevron.setColorFilter(context.getColor(R.color.offline_form_muted));
+        LinearLayout.LayoutParams chevronParams = new LinearLayout.LayoutParams(dp(context, 24), dp(context, 24));
+        chevronParams.setMarginStart(dp(context, 8));
+        container.addView(chevron, chevronParams);
+    }
+
+    private void setGroupHeaderCollapsed(View header, boolean collapsed, boolean topLevelGroup) {
+        if (!(header instanceof LinearLayout)) {
+            return;
+        }
+        LinearLayout container = (LinearLayout) header;
+        if (topLevelGroup) {
+            View child = container.getChildCount() > 2 ? container.getChildAt(2) : null;
+            if (child instanceof TriangleToggleView) {
+                ((TriangleToggleView) child).setCollapsed(collapsed);
+            }
+            return;
+        }
+        // 嵌套表头结构：[品牌竖条, 标题, 右向箭头]，箭头是最后一个子 View。
+        View child = container.getChildCount() > 2 ? container.getChildAt(container.getChildCount() - 1) : null;
+        if (child != null) {
+            // 右向箭头旋转：折叠 = 向下，展开 = 向上。
+            child.setRotation(collapsed ? 90f : -90f);
+        }
+    }
+
+    private void styleNestedContent(LinearLayout childrenLayout, boolean collapsed) {
+        // 嵌套内容背景与父节点一致（父卡片白底）；展开时顶部画一条左右缩进 16dp 的分隔线
+        // （即「子项标题下方」的分隔线），折叠时整块收掉。
+        if (collapsed) {
+            childrenLayout.setBackground(null);
+            childrenLayout.setPadding(0, 0, 0, 0);
+            return;
+        }
+        childrenLayout.setBackgroundResource(R.drawable.offline_form_nested_top_divider_bg);
+        childrenLayout.setPadding(dp(childrenLayout.getContext(), 16), dp(childrenLayout.getContext(), 5),
+                dp(childrenLayout.getContext(), 16), dp(childrenLayout.getContext(), 10));
+    }
+
+    private View bindGroupHeader(View itemView, OfflineFormDisplayItem item,
+                                 boolean topLevelGroup, View.OnClickListener clickListener) {
         bindGroupHeader(itemView, item, topLevelGroup);
-        TriangleToggleView toggleView = (TriangleToggleView) ((LinearLayout) itemView).getChildAt(2);
         itemView.setOnClickListener(clickListener);
-        return toggleView;
+        return itemView;
     }
 
     private void bindStaticText(View itemView, OfflineFormDisplayItem item) {
@@ -898,42 +976,58 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem,
                                List<OfflineFormDisplayItem> childItems, boolean topLevelGroup) {
         Context context = parentLayout.getContext();
+        boolean collapsed = collapsedGroupNodes.contains(groupItem.getNode());
         LinearLayout groupBlock = new LinearLayout(context);
         groupBlock.setOrientation(LinearLayout.VERTICAL);
 
-        View header = createGroupHeader(groupBlock);
         LinearLayout childrenLayout = new LinearLayout(context);
         childrenLayout.setOrientation(LinearLayout.VERTICAL);
         childrenLayout.setLayoutTransition(createLayoutTransition());
-        // 层级引导线：背景 drawable 在左侧画 1dp 竖线，随子内容高度自动伸缩（不用卡中卡、不用测量依赖的竖条 View）。
-        childrenLayout.setBackgroundResource(R.drawable.offline_form_guide_bg);
-        childrenLayout.setPadding(dp(context, 13), 0, 0, 0);
+        if (topLevelGroup) {
+            // 顶层分组沿用层级引导线。
+            childrenLayout.setBackgroundResource(R.drawable.offline_form_guide_bg);
+            childrenLayout.setPadding(dp(context, 13), 0, 0, 0);
+        } else {
+            styleNestedContent(childrenLayout, collapsed);
+        }
 
-        TriangleToggleView toggleView = bindGroupHeader(header, groupItem, topLevelGroup, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
-        toggleView.setCollapsed(collapsedGroupNodes.contains(groupItem.getNode()));
+        View header = createGroupHeader(groupBlock);
+        bindGroupHeader(header, groupItem, topLevelGroup);
+        setGroupHeaderCollapsed(header, collapsed, topLevelGroup);
+        header.setOnClickListener(v -> toggleGroup(groupItem, header, childrenLayout, childItems, topLevelGroup));
+
         groupBlock.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        LinearLayout.LayoutParams guideParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        guideParams.leftMargin = dp(context, 14);
-        guideParams.bottomMargin = dp(context, 8);
-        groupBlock.addView(childrenLayout, guideParams);
+        if (topLevelGroup) {
+            contentParams.leftMargin = dp(context, 14);
+            contentParams.bottomMargin = dp(context, 8);
+        }
+        groupBlock.addView(childrenLayout, contentParams);
         parentLayout.addView(groupBlock, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        renderChildrenContent(childrenLayout, childItems, !pagedMode);
+        renderChildrenContent(childrenLayout, childItems, topLevelGroup ? !pagedMode : true,
+                topLevelGroup ? null : 0);
     }
 
     /** 行与行之间的发丝分隔线；分页布局与平铺布局各自使用自己的左右内缩。 */
     private void addRowDivider(LinearLayout parent) {
+        addRowDivider(parent, null);
+    }
+
+    private void addRowDivider(LinearLayout parent, Integer insetOverride) {
         Context context = parent.getContext();
         View divider = new View(context);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 1));
-        int inset = pagedMode ? PAGED_ITEM_DIVIDER_INSET_DP : CARD_ITEM_DIVIDER_INSET_DP;
+        int inset = insetOverride != null
+                ? insetOverride
+                : (pagedMode ? PAGED_ITEM_DIVIDER_INSET_DP : CARD_ITEM_DIVIDER_INSET_DP);
         if (inset > 0) {
             params.leftMargin = dp(context, inset);
             params.rightMargin = dp(context, inset);
@@ -951,6 +1045,11 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
      */
     private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems,
                                        boolean showDividers) {
+        renderChildrenContent(childrenLayout, childItems, showDividers, null);
+    }
+
+    private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems,
+                                       boolean showDividers, Integer dividerInsetOverride) {
         childrenLayout.removeAllViews();
         if (childItems.isEmpty() || collapsedGroupNodes.contains(findParentNode(childItems))) {
             return;
@@ -960,7 +1059,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (int i = 0; i < childItems.size(); i++) {
             OfflineFormDisplayItem child = childItems.get(i);
             if (!first && showDividers) {
-                addRowDivider(childrenLayout);
+                addRowDivider(childrenLayout, dividerInsetOverride);
             }
             first = false;
             if (child.isGroup()) {
