@@ -89,6 +89,15 @@
     <string name="offline_hint_step_swipe_left">请向左滑动，查看后续步骤</string>
     <string name="offline_hint_step_swipe_right">请向右滑动，查看前面步骤</string>
     <string name="offline_text_project_meta">项目编号：%1$s</string>
+    <string name="offline_search_results_title">搜索结果</string>
+    <string name="offline_search_results_count">%1$d 个匹配项</string>
+    <string name="offline_search_empty_title">未找到与「%1$s」匹配的字段</string>
+    <string name="offline_search_empty_hint">试试更短的关键词；当前只搜索本步骤内的字段标题。</string>
+    <string name="offline_search_previous">上一条结果</string>
+    <string name="offline_search_next">下一条结果</string>
+    <string name="offline_search_result_unfilled">未填</string>
+    <string name="offline_search_result_type_group">分组</string>
+    <string name="offline_search_result_type_text">说明</string>
     <string name="offline_text_image_count">%1$d 张图片</string>
     <string name="offline_text_file_count">%1$d 个文件</string>
     <string name="offline_text_list_count">%1$d &#x9879;</string>

@@ -425,6 +425,8 @@ public class ListViewHolder extends BaseViewHolder {
         BaseFormItem formItem = node.getField();
         OfflineFormItemHandler handler = OfflineFormItemRegistry.getHandler(formItem.getItemType());
         BaseViewHolder holder = handler.createEditViewHolder(parent);
+        // 打上字段 id tag：搜索结果定位列表模板子字段时，findFieldItemView 会命中首行实例。
+        holder.itemView.setTag(R.id.offline_field_id_tag, formItem.getId());
         holder.itemView.setPadding(dp(itemView.getContext(), depth * 12), dp(itemView.getContext(), 4), 0, dp(itemView.getContext(), 4));
 
         String originalTitle = formItem.getTitle();

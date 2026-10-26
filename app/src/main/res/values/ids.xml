@@ -2,6 +2,8 @@
 <resources>
     <!-- 填报页字段右上角"更新时间"文本的标记 id，用于在 ViewHolder 复用时定位/移除旧的时间文本。 -->
     <item name="offline_field_update_time" type="id" />
-    <!-- 字段 itemView 的标记 id：保存校验失败时用于定位具体字段并滚动/高亮。 -->
+    <!-- 字段 itemView 的标记 id：保存校验失败 / 搜索结果定位时用于定位具体字段并滚动/高亮。 -->
     <item name="offline_field_id_tag" type="id" />
+    <!-- 分组 / 说明文本 itemView 的标记 id：搜索结果定位分组或说明节点时使用。 -->
+    <item name="offline_node_tag" type="id" />
 </resources>

@@ -53,6 +53,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.tabs.TabLayout;
 import com.huozige.lab.container.R;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.huozige.lab.container.offlineform.formitem.AttachmentCallback;
 import com.huozige.lab.container.offlineform.formitem.OfflineFormItemValueHelper;
 import com.huozige.lab.container.offlineform.formitem.file.FileUploadHost;
@@ -68,6 +70,7 @@ import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattene
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
 import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormSearchResult;
 import com.huozige.lab.container.offlineform.model.OfflineFormPage;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
@@ -77,6 +80,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFor
 import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.picker.PickerFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
@@ -150,6 +154,20 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private TextView _searchFilterButton;
     private TextView _cancelSearchButton;
     private RadioGroup _segFilter;
+    // 搜索结果列表：搜索态且关键词非空时替代表单项区域（字段级结果，点击定位高亮）。
+    private LinearLayout _searchResultsLayout;
+    private LinearLayout _searchResultsHeader;
+    private TextView _searchResultsCountView;
+    private RecyclerView _searchResultRecyclerView;
+    private SearchResultAdapter _searchResultAdapter;
+    private LinearLayout _searchEmptyLayout;
+    private TextView _searchEmptyTitleView;
+    private ImageButton _searchPreviousButton;
+    private ImageButton _searchNextButton;
+    private final List<OfflineFormSearchResult> _searchResults = new ArrayList<>();
+    // 点击搜索结果后的“搜索会话”：表单重新显示，工具栏出现 ‹ › 在两个命中项之间切换。
+    private boolean _searchSessionActive;
+    private int _searchResultIndex = -1;
     private FormAdapter _adapter;
     private Intent _intent;
     private boolean _formLoaded;
@@ -228,6 +246,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
 
         initViews();
         setupRecyclerView();
+        setupSearchResults();
         setupQuickActions();
         registerImageCaptureLauncher();
         registerSystemCameraLauncher();
@@ -324,6 +343,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
         _cancelSearchButton = findViewById(R.id.button_cancel_search);
+        _searchPreviousButton = findViewById(R.id.button_search_previous);
+        _searchNextButton = findViewById(R.id.button_search_next);
+        _searchResultsLayout = findViewById(R.id.layout_search_results);
+        _searchResultsHeader = findViewById(R.id.layout_search_results_header);
+        _searchResultsCountView = findViewById(R.id.text_search_results_count);
+        _searchResultRecyclerView = findViewById(R.id.recycler_search_results);
+        _searchEmptyLayout = findViewById(R.id.layout_search_empty);
+        _searchEmptyTitleView = findViewById(R.id.text_search_empty_title);
         _segFilter = findViewById(R.id.seg_filter);
     }
 
@@ -352,6 +379,13 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /** 装配右下角悬浮快捷按钮组：回到顶部、跳转首个未填必填项、折叠所有分组。 */
+    /** 初始化搜索结果列表（搜索态下替代表单项区域）。 */
+    private void setupSearchResults() {
+        _searchResultAdapter = new SearchResultAdapter(this::onSearchResultClicked);
+        _searchResultRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        _searchResultRecyclerView.setAdapter(_searchResultAdapter);
+    }
+
     private void setupQuickActions() {
         ViewGroup content = findViewById(android.R.id.content);
         _quickActions = new OfflineQuickActionView(this);
@@ -543,6 +577,21 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _savePageButton.setOnClickListener(v -> onSavePageClick());
         _searchFilterButton.setOnClickListener(v -> enterSearchMode());
         _cancelSearchButton.setOnClickListener(v -> exitSearchMode(true));
+        _searchPreviousButton.setOnClickListener(v -> moveSearchResult(-1));
+        _searchNextButton.setOnClickListener(v -> moveSearchResult(1));
+        // 会话中点击输入框：回到搜索结果列表，方便继续挑选 / 修改关键词。
+        _searchInput.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN && _searchSessionActive) {
+                _searchSessionActive = false;
+                _searchResultIndex = -1;
+                renderCurrentStep();
+                _searchInput.post(() -> {
+                    _searchInput.requestFocus();
+                    showSoftKeyboard();
+                });
+            }
+            return false;
+        });
         _searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -654,6 +703,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _filterMode = FILTER_ALL;
         _filterModeBeforeSearch = FILTER_ALL;
         _searchKeyword = "";
+        _searchSessionActive = false;
+        _searchResultIndex = -1;
+        _searchResults.clear();
         hideSoftKeyboard();
         _searchInput.clearFocus();
         setFilterModeSelection(FILTER_ALL);
@@ -670,6 +722,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             _filterMode = FILTER_SEARCH;
             _searchKeyword = "";
         }
+        _searchSessionActive = false;
+        _searchResultIndex = -1;
+        _searchResults.clear();
         renderCurrentStep();
         // 输入框刚由 GONE 转 VISIBLE，等一帧再取焦点与键盘，避免弹窗失败。
         _searchInput.post(() -> {
@@ -688,6 +743,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             return;
         }
         _searchKeyword = normalized;
+        _searchSessionActive = false;
+        _searchResultIndex = -1;
         renderCurrentStep();
     }
 
@@ -700,6 +757,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         hideSoftKeyboard();
         _searchInput.clearFocus();
         _searchKeyword = "";
+        _searchSessionActive = false;
+        _searchResultIndex = -1;
+        _searchResults.clear();
         int previousMode = _filterModeBeforeSearch;
         if (previousMode < FILTER_ALL || previousMode > FILTER_FILLED) {
             previousMode = FILTER_ALL;
@@ -969,6 +1029,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
         _adapter.setProgressContext(_definition, collectAllFormData());
         preparePages(step);
+        if (showingSearchResults()) {
+            refreshSearchResults();
+        }
         renderCurrentPageContent(step);
         // Header 中间始终显示当前 Step 名称；Step 无标题时退回「步骤 N」。
         String stepTitle = step.getTitle();
@@ -1012,15 +1075,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             case FILTER_FILLED:
                 return hasRequiredField(page.getRootNode()) && !hasRequiredUnsatisfiedField(page.getRootNode());
             case FILTER_SEARCH:
-                if (_searchKeyword.isEmpty()) {
-                    return true;
-                }
-                for (OfflineFormDisplayItem item : page.getItems()) {
-                    if (matchesSearch(item)) {
-                        return true;
-                    }
-                }
-                return false;
+                // 搜索态改为「结果列表 + 点击定位」，表单内容不再按关键词过滤。
+                return true;
             case FILTER_ALL:
             default:
                 return true;
@@ -1046,7 +1102,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         }
         _adapter.setDisplayItems(items);
         applyContentSurface(paged);
-        renderPageIndicator();
+        boolean searchResults = showingSearchResults();
+        _searchResultsLayout.setVisibility(searchResults ? View.VISIBLE : View.GONE);
+        _formScrollView.setVisibility(searchResults ? View.GONE : View.VISIBLE);
+        if (searchResults) {
+            _pageIndicatorLayout.setVisibility(View.GONE);
+        } else {
+            renderPageIndicator();
+        }
         updateFilterBarVisibility();
         updateItemNavigationVisibility();
     }
@@ -1147,6 +1210,64 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 topPadding,
                 _filterBarLayout.getPaddingEnd(),
                 _filterBarLayout.getPaddingBottom());
+    }
+
+    /** 定位结果；目标视图尚未完成布局时短暂重试（切页 + 重建内容后可能晚一帧才可定位）。 */
+    private void revealSearchResultWithRetry(OfflineFormSearchResult result, int attempt) {
+        // 跳转时收起键盘 / 输入焦点，避免遮挡目标内容。
+        hideSoftKeyboard();
+        _searchInput.clearFocus();
+        boolean found = revealSearchResult(result);
+        if (!found && attempt < 3) {
+            _formScrollView.postDelayed(() -> revealSearchResultWithRetry(result, attempt + 1), 150);
+        }
+    }
+
+    /**
+     * 定位结果：字段高亮字段本身；说明文本闪烁整行；分组定位到页首 / 分组头。
+     *
+     * @return 目标视图是否已找到（分页分组跳页视为已定位）
+     */
+    private boolean revealSearchResult(OfflineFormSearchResult result) {
+        if (result == null) {
+            return true;
+        }
+        if (OfflineFormSearchResult.TYPE_TEXT.equals(result.getType())) {
+            return scrollAndFlashNode(result.getNode());
+        }
+        if (OfflineFormSearchResult.TYPE_GROUP.equals(result.getType())) {
+            if (isPagedLayout()) {
+                _formScrollView.scrollTo(0, 0);
+                if (_pageIndicatorLayout != null && _pageIndicatorLayout.getVisibility() == View.VISIBLE) {
+                    playHighlight(_pageIndicatorLayout);
+                }
+                return true;
+            }
+            return scrollAndFlashNode(result.getNode());
+        }
+        View target = findFieldItemView(result.getTargetFieldId());
+        if (target == null) {
+            return false;
+        }
+        Rect rect = new Rect();
+        target.getDrawingRect(rect);
+        _formScrollView.offsetDescendantRectToMyCoords(target, rect);
+        _formScrollView.smoothScrollTo(0, Math.max(0, rect.top - dp(this, 12)));
+        playHighlight(target);
+        return true;
+    }
+
+    private boolean scrollAndFlashNode(OfflineFormNode node) {
+        View target = findViewByNodeTag(_recyclerView, node);
+        if (target == null) {
+            return false;
+        }
+        Rect rect = new Rect();
+        target.getDrawingRect(rect);
+        _formScrollView.offsetDescendantRectToMyCoords(target, rect);
+        _formScrollView.smoothScrollTo(0, Math.max(0, rect.top - dp(this, 12)));
+        playHighlight(target);
+        return true;
     }
 
     /** 底部导航按布局分流：平铺为滚动跳转，分页为页内翻页。 */
@@ -1319,7 +1440,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 // 仅必填项参与筛选：存在必填项且必填项均已填即视为“已填”。
                 return hasRequiredField(item.getNode()) && !hasRequiredUnsatisfiedField(item.getNode());
             case FILTER_SEARCH:
-                return matchesSearch(item);
+                // 搜索态不再就地过滤表单内容（结果列表由搜索结果构建逻辑生成）。
+                return true;
             case FILTER_ALL:
             default:
                 return true;
@@ -1339,6 +1461,17 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         if (!searching) {
             setFilterModeSelection(_filterMode);
         }
+        boolean showResultNav = searching && _searchSessionActive && _searchResults.size() > 1;
+        _searchPreviousButton.setVisibility(showResultNav ? View.VISIBLE : View.GONE);
+        _searchNextButton.setVisibility(showResultNav ? View.VISIBLE : View.GONE);
+        if (showResultNav) {
+            boolean previousEnabled = _searchResultIndex > 0;
+            boolean nextEnabled = _searchResultIndex >= 0 && _searchResultIndex < _searchResults.size() - 1;
+            _searchPreviousButton.setEnabled(previousEnabled);
+            _searchNextButton.setEnabled(nextEnabled);
+            _searchPreviousButton.setAlpha(previousEnabled ? 1f : 0.35f);
+            _searchNextButton.setAlpha(nextEnabled ? 1f : 0.35f);
+        }
     }
 
     /** 把状态里的关键词回填到输入框（带重入保护，避免输入过程中重置光标）。 */
@@ -1353,43 +1486,336 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _syncingSearchInput = false;
     }
 
-    private boolean matchesSearch(OfflineFormDisplayItem item) {
-        if (_searchKeyword.isEmpty()) {
-            return true;
-        }
-        if (item.isField()) {
-            return containsSearchText(item.getNode()) || containsSearchText(item.getFormItem().getTitle());
-        }
-        return containsSearchText(item.getNode()) || hasSearchText(item.getNode());
+    /** 是否处于「搜索结果列表」视图（搜索态 + 有关键词 + 尚未点击进入会话）。 */
+    private boolean showingSearchResults() {
+        return _formLoaded && _filterMode == FILTER_SEARCH
+                && !_searchKeyword.isEmpty() && !_searchSessionActive;
     }
 
-    private boolean hasSearchText(OfflineFormNode node) {
-        if (node == null || node.getChildren() == null) {
-            return false;
+    /** 重建当前 Step 的搜索结果并刷新列表 / 空态。 */
+    private void refreshSearchResults() {
+        _searchResults.clear();
+        if (showingSearchResults()) {
+            _searchResults.addAll(buildSearchResults(_searchKeyword));
         }
-        for (OfflineFormNode child : node.getChildren()) {
-            if (containsSearchText(child)) {
-                return true;
-            }
-            if (child.getField() != null && containsSearchText(child.getField().getTitle())) {
-                return true;
-            }
-            if (hasSearchText(child)) {
-                return true;
-            }
+        if (_searchResultAdapter != null) {
+            _searchResultAdapter.setResults(_searchResults, _searchKeyword);
         }
-        return false;
+        boolean empty = _searchResults.isEmpty();
+        if (_searchResultsHeader != null) {
+            _searchResultsHeader.setVisibility(empty ? View.GONE : View.VISIBLE);
+        }
+        if (_searchResultsCountView != null) {
+            _searchResultsCountView.setText(getString(R.string.offline_search_results_count, _searchResults.size()));
+        }
+        if (_searchResultRecyclerView != null) {
+            _searchResultRecyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
+        }
+        if (_searchEmptyLayout != null) {
+            _searchEmptyLayout.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        if (empty && _searchEmptyTitleView != null) {
+            _searchEmptyTitleView.setText(getString(R.string.offline_search_empty_title, _searchKeyword));
+        }
     }
 
-    private boolean containsSearchText(OfflineFormNode node) {
-        if (node == null) {
-            return false;
+    /** 构建当前 Step 内命中关键词的字段级结果（含列表字段的模板子字段）。 */
+    private List<OfflineFormSearchResult> buildSearchResults(String keyword) {
+        List<OfflineFormSearchResult> results = new ArrayList<>();
+        if (_definition == null || _definition.getSteps() == null
+                || keyword == null || keyword.isEmpty()
+                || _currentStepIndex < 0 || _currentStepIndex >= _definition.getSteps().size()) {
+            return results;
         }
-        return containsSearchText(node.getTitle()) || containsSearchText(node.getContent());
+        OfflineFormStep step = _definition.getSteps().get(_currentStepIndex);
+        List<OfflineFormPage> pages = isPagedLayout()
+                ? OfflineFormDefinitionFlattener.splitIntoPages(step) : null;
+        Map<String, String> values = collectAllFormData();
+        collectSearchResults(step.getItems(), new ArrayList<>(), null, keyword, pages, values, results, false);
+        return results;
     }
 
-    private boolean containsSearchText(String text) {
-        return text != null && text.toLowerCase(Locale.CHINA).contains(_searchKeyword.toLowerCase(Locale.CHINA));
+    private void collectSearchResults(List<OfflineFormNode> nodes,
+                                      List<String> path,
+                                      ListFormItem listParent,
+                                      String keyword,
+                                      List<OfflineFormPage> pages,
+                                      Map<String, String> values,
+                                      List<OfflineFormSearchResult> results,
+                                      boolean insideListTemplate) {
+        if (nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            if (OfflineFormNode.TYPE_GROUP.equals(node.getNodeType())) {
+                String title = node.getTitle();
+                boolean hasTitle = title != null && !title.isEmpty();
+                // 顶层 / 嵌套分组的标题也参与搜索；列表模板内的分组不作为独立结果。
+                if (!insideListTemplate && hasTitle && matchesSearchKeyword(title, keyword)) {
+                    int pageIndex = pages == null ? -1 : findPageIndexForNodeInPages(node, pages);
+                    results.add(new OfflineFormSearchResult(
+                            OfflineFormSearchResult.TYPE_GROUP,
+                            node,
+                            null,
+                            null,
+                            title,
+                            joinSearchPath(path),
+                            pageLabelFor(pageIndex, pages),
+                            pageIndex,
+                            "",
+                            false,
+                            false));
+                }
+                if (hasTitle) {
+                    path.add(title);
+                }
+                collectSearchResults(node.getChildren(), path, listParent, keyword, pages, values, results,
+                        insideListTemplate);
+                if (hasTitle) {
+                    path.remove(path.size() - 1);
+                }
+            } else if (OfflineFormNode.TYPE_FIELD.equals(node.getNodeType()) && node.getField() != null) {
+                BaseFormItem field = node.getField();
+                String title = resolveFieldTitle(node);
+                if (matchesSearchKeyword(title, keyword)) {
+                    BaseFormItem pageAnchor = listParent != null ? listParent : field;
+                    int pageIndex = pages == null ? -1 : findPageIndexForFieldInPages(pageAnchor, pages);
+                    String parentId = listParent != null ? listParent.getId() : field.getId();
+                    String value = listParent != null
+                            ? formatListItemChildValue(listParent, field.getId(), values)
+                            : formatSearchValue(field, values.get(field.getId()));
+                    results.add(new OfflineFormSearchResult(
+                            OfflineFormSearchResult.TYPE_FIELD,
+                            null,
+                            parentId,
+                            field.getId(),
+                            title,
+                            joinSearchPath(path),
+                            pageLabelFor(pageIndex, pages),
+                            pageIndex,
+                            value,
+                            field.isRequired(),
+                            listParent != null));
+                }
+                if (field instanceof ListFormItem) {
+                    ListFormItem listField = (ListFormItem) field;
+                    List<String> childPath = new ArrayList<>(path);
+                    childPath.add(title);
+                    collectSearchResults(listField.getTemplateNodes(), childPath, listField,
+                            keyword, pages, values, results, true);
+                }
+            } else if (OfflineFormNode.TYPE_TEXT.equals(node.getNodeType()) && !insideListTemplate) {
+                // 说明 / 进度文本节点：标题或内容命中即可定位到该行（无字段高亮，整行闪烁）。
+                boolean matches = matchesSearchKeyword(node.getTitle(), keyword)
+                        || matchesSearchKeyword(node.getContent(), keyword);
+                if (matches) {
+                    int pageIndex = pages == null ? -1 : findPageIndexForNodeInPages(node, pages);
+                    String rawTitle = node.getTitle() == null ? "" : node.getTitle();
+                    String rawContent = node.getContent() == null ? "" : node.getContent();
+                    String title = !rawTitle.isEmpty() ? rawTitle
+                            : (rawContent.isEmpty() ? getString(R.string.offline_search_result_type_text)
+                                    : truncateSearchValue(rawContent));
+                    String value = rawTitle.isEmpty() ? "" : truncateSearchValue(rawContent);
+                    results.add(new OfflineFormSearchResult(
+                            OfflineFormSearchResult.TYPE_TEXT,
+                            node,
+                            null,
+                            null,
+                            title,
+                            joinSearchPath(path),
+                            pageLabelFor(pageIndex, pages),
+                            pageIndex,
+                            value,
+                            false,
+                            false));
+                }
+            }
+        }
+    }
+
+    private String resolveFieldTitle(OfflineFormNode node) {
+        if (node == null || node.getField() == null) {
+            return "";
+        }
+        String title = node.getField().getTitle();
+        if (title != null && !title.isEmpty()) {
+            return title;
+        }
+        return node.getTitle() == null ? "" : node.getTitle();
+    }
+
+    private boolean matchesSearchKeyword(String text, String keyword) {
+        return text != null && keyword != null && !keyword.isEmpty()
+                && text.toLowerCase(Locale.CHINA).contains(keyword.toLowerCase(Locale.CHINA));
+    }
+
+    private String joinSearchPath(List<String> path) {
+        StringBuilder builder = new StringBuilder();
+        for (String segment : path) {
+            if (segment == null || segment.isEmpty()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(" › ");
+            }
+            builder.append(segment);
+        }
+        return builder.toString();
+    }
+
+    private int findPageIndexForFieldInPages(BaseFormItem field, List<OfflineFormPage> pages) {
+        if (field == null || pages == null) {
+            return -1;
+        }
+        for (int i = 0; i < pages.size(); i++) {
+            for (OfflineFormDisplayItem item : pages.get(i).getItems()) {
+                if (item.getFormItem() == field) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findPageIndexForNodeInPages(OfflineFormNode node, List<OfflineFormPage> pages) {
+        if (node == null || pages == null) {
+            return -1;
+        }
+        for (int i = 0; i < pages.size(); i++) {
+            if (pages.get(i).getRootNode() == node) {
+                return i;
+            }
+            for (OfflineFormDisplayItem item : pages.get(i).getItems()) {
+                if (item.getNode() == node) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** 按节点 tag 递归查找分组标题 / 说明文本的 itemView。 */
+    private View findViewByNodeTag(View view, OfflineFormNode node) {
+        if (view == null || node == null) {
+            return null;
+        }
+        Object tag = view.getTag(R.id.offline_node_tag);
+        if (node.equals(tag)) {
+            return view;
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findViewByNodeTag(group.getChildAt(i), node);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String pageLabelFor(int pageIndex, List<OfflineFormPage> pages) {
+        if (pages == null || pageIndex < 0 || pageIndex >= pages.size()) {
+            return "";
+        }
+        return getString(R.string.offline_page_count, pageIndex + 1, pages.size());
+    }
+
+    private String formatSearchValue(BaseFormItem field, String rawValue) {
+        String unfilled = getString(R.string.offline_search_result_unfilled);
+        if (rawValue == null || rawValue.trim().isEmpty()) {
+            return unfilled;
+        }
+        if (field instanceof ImageFormItem) {
+            int count = ImageFormItem.parseImages(rawValue).size();
+            return count == 0 ? unfilled : getString(R.string.offline_text_image_count, count);
+        }
+        if (field instanceof FileFormItem) {
+            int count = FileFormItem.parseAttachments(rawValue).size();
+            return count == 0 ? unfilled : getString(R.string.offline_text_file_count, count);
+        }
+        if (field instanceof SignatureFormItem) {
+            SignatureFormItem signatureItem = (SignatureFormItem) field;
+            int signed = SignatureFormItem.parseAttachments(rawValue).size();
+            return getString(R.string.offline_text_signature_progress,
+                    signed, Math.max(signatureItem.getUsers().size(), signed));
+        }
+        if (field instanceof ListFormItem) {
+            int rows = ListFormItem.parseRows(rawValue).size();
+            return rows == 0 ? unfilled : getString(R.string.offline_text_list_count, rows);
+        }
+        if ("switchItem".equals(field.getItemType())) {
+            return "true".equalsIgnoreCase(rawValue.trim())
+                    ? getString(R.string.offline_switch_on) : unfilled;
+        }
+        return truncateSearchValue(rawValue);
+    }
+
+    /** 列表模板子字段只取第一行的值做摘要（点击定位也定位到第一行实例）。 */
+    private String formatListItemChildValue(ListFormItem listItem, String childFieldId,
+                                            Map<String, String> values) {
+        String unfilled = getString(R.string.offline_search_result_unfilled);
+        if (listItem == null || values == null) {
+            return unfilled;
+        }
+        JSONArray rows = ListFormItem.parseRows(values.get(listItem.getId()));
+        if (rows.isEmpty()) {
+            return unfilled;
+        }
+        JSONObject firstRow = rows.getJSONObject(0);
+        String rawValue = firstRow == null ? null : firstRow.getString(childFieldId);
+        if (rawValue == null || rawValue.trim().isEmpty()) {
+            return unfilled;
+        }
+        return truncateSearchValue(rawValue);
+    }
+
+    private String truncateSearchValue(String rawValue) {
+        String value = rawValue == null ? "" : rawValue.trim();
+        if (value.length() > 24) {
+            return value.substring(0, 24) + "…";
+        }
+        return value;
+    }
+
+    private void onSearchResultClicked(int position) {
+        if (position < 0 || position >= _searchResults.size()) {
+            return;
+        }
+        _searchResultIndex = position;
+        _searchSessionActive = true;
+        jumpToSearchResult(_searchResults.get(position));
+    }
+
+    /** 会话栏 ‹ / ›：在当前 Step 的命中字段之间切换。 */
+    private void moveSearchResult(int delta) {
+        if (!_searchSessionActive || _searchResults.isEmpty()) {
+            return;
+        }
+        int target = _searchResultIndex + delta;
+        if (target < 0 || target >= _searchResults.size()) {
+            return;
+        }
+        _searchResultIndex = target;
+        jumpToSearchResult(_searchResults.get(target));
+    }
+
+    /** 点击结果 / 切换命中项：切到对应页 → 展开分组 → 滚动并高亮目标字段（列表子字段定位到首行实例）。 */
+    private void jumpToSearchResult(OfflineFormSearchResult result) {
+        if (result == null || _definition == null || !_formLoaded) {
+            return;
+        }
+        if (isPagedLayout() && result.getPageIndex() >= 0) {
+            _currentPageIndex = clampPageIndex(result.getPageIndex());
+        }
+        renderCurrentStep();
+        _adapter.expandAllGroups();
+        final String targetFieldId = result.getTargetFieldId();
+        _formScrollView.postDelayed(() -> revealSearchResultWithRetry(result, 0), 120);
     }
 
     /**
@@ -1566,6 +1992,12 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
      */
     private void updateItemNavigationVisibility() {
         if (_itemNavigationLayout == null) {
+            return;
+        }
+        if (showingSearchResults()) {
+            // 搜索结果列表占满内容区时隐藏翻页 / 保存栏，避免误操作。
+            _itemNavigationLayout.setVisibility(View.GONE);
+            updateQuickActionsInset(false);
             return;
         }
         boolean visible = _formLoaded && currentStepHasGroupForm();

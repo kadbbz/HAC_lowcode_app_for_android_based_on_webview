@@ -436,6 +436,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindGroupHeader(View itemView, OfflineFormDisplayItem item, boolean topLevelGroup) {
+        itemView.setTag(R.id.offline_node_tag, item.getNode());
         Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
@@ -482,6 +483,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindStaticText(View itemView, OfflineFormDisplayItem item) {
+        itemView.setTag(R.id.offline_node_tag, item.getNode());
         Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();

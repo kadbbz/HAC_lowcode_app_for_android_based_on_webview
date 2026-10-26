@@ -203,6 +203,33 @@
 
         </LinearLayout>
 
+        <!-- 搜索会话：上一条 / 下一条命中字段（仅点击结果跳转后显示） -->
+        <ImageButton
+            android:id="@+id/button_search_previous"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/offline_form_ghost_button_bg"
+            android:contentDescription="@string/offline_search_previous"
+            android:padding="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_offline_chevron_left_24"
+            android:tint="@color/huozige_blue"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/button_search_next"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/offline_form_ghost_button_bg"
+            android:contentDescription="@string/offline_search_next"
+            android:padding="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_offline_chevron_right_24"
+            android:tint="@color/huozige_blue"
+            android:visibility="gone" />
+
         <!-- 原输入框内的「×」移到输入框右侧，文案改为「取消」；仅搜索态显示 -->
         <TextView
             android:id="@+id/button_cancel_search"
@@ -294,6 +321,110 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/offline_form_line" />
+
+        </LinearLayout>
+
+        <!-- 搜索结果列表：搜索态且关键词非空时替代表单项区域（字段级结果，点击定位高亮） -->
+        <LinearLayout
+            android:id="@+id/layout_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/offline_form_content_bg"
+            android:clipToOutline="true"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/layout_search_results_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="13dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="11dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/offline_search_results_title"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_search_results_count"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:textColor="@color/offline_form_muted"
+                    android:textSize="12.5sp" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/offline_form_line" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_search_results"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false" />
+
+            <!-- 无匹配字段时的空态 -->
+            <LinearLayout
+                android:id="@+id/layout_search_empty"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingStart="34dp"
+                android:paddingEnd="34dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:background="@drawable/offline_form_search_empty_bg"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_offline_search"
+                        android:tint="#AFC0CC" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_search_empty_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:textColor="@color/offline_form_sec"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:text="@string/offline_search_empty_hint"
+                    android:textColor="@color/offline_form_muted"
+                    android:textSize="12.5sp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
