@@ -144,7 +144,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private LinearLayout _contentCardLayout;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
-    private TextView _groupDirectoryButton;
+    // 底栏标准分页器中间的页码：‹ 第 x / y 组 ›，仅逐组分页布局显示，点页码打开分组目录。
+    private TextView _itemPageCountView;
     private ImageButton _previousItemButton;
     private ImageButton _nextItemButton;
     // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
@@ -335,7 +336,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _contentCardLayout = findViewById(R.id.layout_content_card);
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
-        _groupDirectoryButton = findViewById(R.id.button_group_directory);
+        _itemPageCountView = findViewById(R.id.text_item_page_count);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _savePageButton = findViewById(R.id.button_save_page);
@@ -615,7 +616,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             }
             return false;
         });
-        _groupDirectoryButton.setOnClickListener(v -> showGroupDirectory());
+        _itemPageCountView.setOnClickListener(v -> showGroupDirectory());
         _segFilter.setOnCheckedChangeListener((group, checkedId) -> onFilterSegmentChanged(checkedId));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -1165,17 +1166,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     private void renderPageIndicator() {
-        boolean showIndicator = isPagedLayout() && !_pages.isEmpty()
-                // 只有分组页有标题；散项页（连续 text / 裸 field 合并）不展示指示器。
+        boolean paged = isPagedLayout();
+        boolean showIndicator = paged && !_pages.isEmpty()
+                // 只有分组页有标题；散项页（连续 text / 裸 field 合并）不展示卡片内组名。
                 && isGroupPage(_pages.get(_currentPageIndex));
-        if (!showIndicator) {
-            _pageIndicatorLayout.setVisibility(View.GONE);
-            return;
+        _pageIndicatorLayout.setVisibility(showIndicator ? View.VISIBLE : View.GONE);
+        if (showIndicator) {
+            _pageNameTextView.setText(currentPageTitle());
         }
-        _pageIndicatorLayout.setVisibility(View.VISIBLE);
-        _pageNameTextView.setText(currentPageTitle());
-        // 组序号与「目录」合并：按钮上直接显示页次，点击打开分组目录。
-        _groupDirectoryButton.setText(getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size()));
     }
 
     private String currentPageTitle() {
@@ -2047,6 +2045,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
      * 平铺布局在只有一个顶级项时禁用（没有可跳转的目标）。
      */
     private void updateItemNavigationButtons() {
+        if (_itemPageCountView != null) {
+            boolean paged = isPagedLayout() && !_pages.isEmpty();
+            _itemPageCountView.setVisibility(paged ? View.VISIBLE : View.GONE);
+            if (paged) {
+                _itemPageCountView.setText(getString(R.string.offline_page_count,
+                        _currentPageIndex + 1, _pages.size()));
+            }
+        }
         if (_pageSwitching) {
             // 翻页动效进行中：两侧按钮都禁用，避免连续点击叠加动画导致数据错乱。
             _previousItemButton.setEnabled(false);
