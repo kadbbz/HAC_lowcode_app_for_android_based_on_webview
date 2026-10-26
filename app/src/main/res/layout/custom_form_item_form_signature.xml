@@ -45,11 +45,12 @@
 
     </LinearLayout>
 
-    <!-- 第 1 行：待签 / 已签人数，右侧箭头提示可打开抽屉 -->
+    <!-- 第 1 行：待签 / 已签人数，右侧箭头提示可打开抽屉；与其它字段的控件行同高（46dp）并垂直居中，
+         保证「字段名 → 内容」的视觉间距与文本/选择等可交互项一致 -->
     <TextView
         android:id="@+id/signature_summary_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/offline_form_field_min_height"
         android:drawableEnd="@drawable/ic_offline_chevron"
         android:drawablePadding="6dp"
         android:gravity="center_vertical"
@@ -59,8 +60,8 @@
     <TextView
         android:id="@+id/signature_empty"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="4dp"
+        android:layout_height="@dimen/offline_form_field_min_height"
+        android:gravity="center_vertical"
         android:text="@string/offline_text_no_signature_users"
         android:textColor="@color/offline_form_muted"
         android:textSize="@dimen/offline_form_chrome_meta_text_size"
