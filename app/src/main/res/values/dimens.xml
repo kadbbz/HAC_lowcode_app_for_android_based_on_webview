@@ -24,7 +24,7 @@
       页标题 20sp（分页指示器的组名，比组标题大两号）、标题 17sp（与取值文本一致）、正文 15sp（与字段名一致）、辅助 13sp。
     -->
     <dimen name="offline_form_tab_text_size">16sp</dimen>
-    <dimen name="offline_form_page_title_text_size">20sp</dimen>
+    <dimen name="offline_form_page_title_text_size">18sp</dimen>
     <dimen name="offline_form_group_title_text_size">17sp</dimen>
     <dimen name="offline_form_group_nested_title_text_size">16sp</dimen>
     <dimen name="offline_form_chrome_text_size">15sp</dimen>
