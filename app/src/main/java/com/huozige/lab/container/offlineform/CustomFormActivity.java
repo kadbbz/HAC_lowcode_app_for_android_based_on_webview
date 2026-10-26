@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -124,8 +123,6 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private static final long AUTO_SAVE_DELAY_MS = 600;
     // 字段高亮闪光的持续时间（“仅未填”筛选与“跳转首个未填必填项”共用）。
     private static final long FIELD_HIGHLIGHT_MS = 1000;
-    // 筛选行展开 / 收起动画时长（只由页标题右侧筛选按钮控制）。
-    private static final long FILTER_BAR_ANIM_DURATION_MS = 180;
     // 翻页动效：旧页卡片整页滑出屏幕，切换数据后新页从另一侧整页滑入（不做淡入淡出）。
     private static final long PAGE_SWITCH_OUT_DURATION_MS = 140;
     private static final long PAGE_SWITCH_IN_DURATION_MS = 200;
@@ -139,21 +136,16 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private LinearLayout _filterSegmentLayout;
     private LinearLayout _searchInputLayout;
     private LinearLayout _filterBarLayout;
-    // 筛选行默认收起，展开 / 收起只由页标题右侧的筛选按钮控制（不再联动滚动）。
-    private boolean _filterBarUserExpanded;
-    // 筛选行当前是否处于收起状态（用于同步按钮选中态与发丝线）。
-    private boolean _filterBarHidden;
-    private ValueAnimator _filterBarAnimator;
+    // 内容卡片容器：分页布局下是白色圆角面板（顶部含 Group Header），平铺布局下透明承载分组卡片。
+    private LinearLayout _contentCardLayout;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
     private TextView _groupDirectoryButton;
-    private ImageView _filterToggleButton;
     private ImageButton _previousItemButton;
     private ImageButton _nextItemButton;
     // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
     private TextView _savePageButton;
     private View _stepFooterDivider;
-    private View _filterFooterDivider;
     private EditText _searchInput;
     private TextView _searchFilterButton;
     private TextView _cancelSearchButton;
@@ -321,15 +313,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _filterSegmentLayout = findViewById(R.id.layout_filter_segment);
         _searchInputLayout = findViewById(R.id.layout_search_input);
         _filterBarLayout = findViewById(R.id.layout_filter_bar);
+        _contentCardLayout = findViewById(R.id.layout_content_card);
         _pageIndicatorLayout = findViewById(R.id.layout_page_indicator);
         _pageNameTextView = findViewById(R.id.text_page_name);
         _groupDirectoryButton = findViewById(R.id.button_group_directory);
-        _filterToggleButton = findViewById(R.id.button_filter_toggle);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
         _savePageButton = findViewById(R.id.button_save_page);
         _stepFooterDivider = findViewById(R.id.divider_step_bar_footer);
-        _filterFooterDivider = findViewById(R.id.divider_filter_footer);
         _searchInput = findViewById(R.id.edit_search_input);
         _searchFilterButton = findViewById(R.id.button_search_filter);
         _cancelSearchButton = findViewById(R.id.button_cancel_search);
@@ -576,7 +567,6 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             return false;
         });
         _groupDirectoryButton.setOnClickListener(v -> showGroupDirectory());
-        _filterToggleButton.setOnClickListener(v -> toggleFilterBar());
         _segFilter.setOnCheckedChangeListener((group, checkedId) -> onFilterSegmentChanged(checkedId));
         _stepTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -667,8 +657,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         hideSoftKeyboard();
         _searchInput.clearFocus();
         setFilterModeSelection(FILTER_ALL);
-        // 校验定位 / 快捷跳转等程序化复位时，筛选行回到默认收起状态。
-        resetFilterBarToDefault();
+        // 校验定位 / 快捷跳转等程序化复位时，筛选行保持常驻。
     }
 
     /**
@@ -964,7 +953,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             updateStepScrollHints();
             _itemNavigationLayout.setVisibility(View.GONE);
             _pageIndicatorLayout.setVisibility(View.GONE);
-            updateFilterBarVisibility(false);
+            updateFilterBarVisibility();
             if (_quickActions != null) {
                 _quickActions.setVisibility(View.GONE);
             }
@@ -1058,7 +1047,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _adapter.setDisplayItems(items);
         applyContentSurface(paged);
         renderPageIndicator();
-        updateFilterBarVisibility(false);
+        updateFilterBarVisibility();
         updateItemNavigationVisibility();
     }
 
@@ -1070,10 +1059,20 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
      * 平铺布局仍用灰色页面底衬托分组卡片。</p>
      */
     private void applyContentSurface(boolean paged) {
+        if (_contentCardLayout != null) {
+            if (paged) {
+                // 分页下整块内容卡片铺白 + 圆角，Group Header 与字段都在卡片内，由卡片裁切圆角。
+                _contentCardLayout.setBackgroundResource(R.drawable.offline_form_content_bg);
+                _contentCardLayout.setClipToOutline(true);
+            } else {
+                _contentCardLayout.setBackground(null);
+                _contentCardLayout.setClipToOutline(false);
+            }
+        }
         if (_formScrollView != null) {
             if (paged) {
-                // 分页下滚动区是一块四周带圆角的白色面板（配合 clipToOutline 裁切内容）。
-                _formScrollView.setBackgroundResource(R.drawable.offline_form_content_bg);
+                // 白色底由外层内容卡片负责，滚动区本身透明。
+                _formScrollView.setBackground(null);
             } else {
                 _formScrollView.setBackgroundColor(getColor(R.color.offline_form_page_bg));
             }
@@ -1082,15 +1081,6 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             int inset = dp(this, 4);
             int padding = paged ? 0 : inset;
             _recyclerView.setPadding(padding, padding, padding, padding);
-        }
-        updateFilterFooterDividerVisibility();
-    }
-
-    /** 筛选行下方的发丝线跟随筛选行一起收起：仅分页布局且筛选行展开时显示。 */
-    private void updateFilterFooterDividerVisibility() {
-        if (_filterFooterDivider != null) {
-            _filterFooterDivider.setVisibility(
-                    isPagedLayout() && !_filterBarHidden ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1139,147 +1129,24 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private void resetScroll() {
         _recyclerView.scrollToPosition(0);
         _formScrollView.scrollTo(0, 0);
-        // 切页 / 切 Step / 跳转后回到页首：筛选行回到默认收起状态，避免新页面沿用上一页的展开 / 收起。
-        resetFilterBarToDefault();
-    }
-
-    /** 筛选按钮：展开 / 收起筛选行（唯一控制入口）。 */
-    private void toggleFilterBar() {
-        _filterBarUserExpanded = !_filterBarUserExpanded;
-        updateFilterBarVisibility(true);
     }
 
     /**
-     * 计算并应用筛选行 / 筛选按钮的可见性。
-     *
-     * <p>分页分组页且当前页有表单项时，页标题右侧展示筛选按钮，筛选行默认收起、点按钮展开；
-     * 没有表单项的页面两者都不展示。搜索态下筛选行（输入框）始终保留，方便取消。平铺布局没有
-     * 页标题入口，筛选行沿用常显。</p>
+     * 筛选 / 搜索行常驻：分页与平铺布局都固定显示在 Tabs（/页头）与内容卡片之间。
+     * 分页布局下与 Tabs 之间补 9dp 上间距，平铺布局保持原来的紧凑间距。
      */
-    private void updateFilterBarVisibility(boolean animate) {
+    private void updateFilterBarVisibility() {
         if (_filterBarLayout == null) {
             return;
         }
-        boolean paged = isPagedLayout();
-        boolean searching = _filterMode == FILTER_SEARCH;
-        boolean hasFormItems = currentContentHasFormItems();
-        boolean indicatorVisible = _pageIndicatorLayout != null
-                && _pageIndicatorLayout.getVisibility() == View.VISIBLE;
-
-        boolean collapsed;
-        if (searching) {
-            collapsed = false;
-        } else if (!hasFormItems) {
-            collapsed = true;
-        } else if (paged) {
-            collapsed = !_filterBarUserExpanded;
-        } else {
-            collapsed = false;
-        }
-
-        if (_filterToggleButton != null) {
-            boolean showToggle = paged && indicatorVisible && hasFormItems && !searching;
-            _filterToggleButton.setVisibility(showToggle ? View.VISIBLE : View.GONE);
-            _filterToggleButton.setImageTintList(ColorStateList.valueOf(getColor(
-                    collapsed ? R.color.offline_form_ink : R.color.huozige_blue)));
-        }
-
-        setFilterBarCollapsed(collapsed, animate);
-    }
-
-    /** 当前页（分页）或当前 step（平铺）是否包含表单项；纯文本节点页面不展示筛选入口。 */
-    private boolean currentContentHasFormItems() {
-        List<OfflineFormDisplayItem> items = null;
-        if (isPagedLayout()) {
-            if (!_pages.isEmpty() && _currentPageIndex >= 0 && _currentPageIndex < _pages.size()) {
-                items = _pages.get(_currentPageIndex).getItems();
-            }
-        } else if (_definition != null && _definition.getSteps() != null
-                && _currentStepIndex >= 0 && _currentStepIndex < _definition.getSteps().size()) {
-            items = buildCurrentStepDisplayItems(_definition.getSteps().get(_currentStepIndex));
-        }
-        if (items == null) {
-            return false;
-        }
-        for (OfflineFormDisplayItem item : items) {
-            if (item.isField()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** 切页 / 切 Step / 回到页首：筛选行回到默认收起状态。 */
-    private void resetFilterBarToDefault() {
-        _filterBarUserExpanded = false;
-        updateFilterBarVisibility(false);
-    }
-
-    /** 应用筛选行收起 / 展开（可带动画），并联动下方发丝线。 */
-    private void setFilterBarCollapsed(boolean collapsed, boolean animate) {
-        final LinearLayout bar = _filterBarLayout;
-        if (bar == null) {
-            return;
-        }
-        boolean applied = collapsed
-                ? (_filterBarHidden && bar.getVisibility() == View.GONE)
-                : (!_filterBarHidden && bar.getVisibility() == View.VISIBLE
-                        && bar.getLayoutParams().height == ViewGroup.LayoutParams.WRAP_CONTENT);
-        if (applied) {
-            return;
-        }
-        if (_filterBarAnimator != null) {
-            _filterBarAnimator.cancel();
-            _filterBarAnimator = null;
-        }
-        _filterBarHidden = collapsed;
-        updateFilterFooterDividerVisibility();
-
-        if (!animate) {
-            bar.setVisibility(collapsed ? View.GONE : View.VISIBLE);
-            ViewGroup.LayoutParams params = bar.getLayoutParams();
-            params.height = collapsed ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
-            bar.setLayoutParams(params);
-            return;
-        }
-
-        bar.setVisibility(View.VISIBLE);
-        final int startHeight = Math.max(0, bar.getHeight());
-        final int endHeight;
-        if (collapsed) {
-            endHeight = 0;
-        } else {
-            // 收起时高度被压成 0：先按未受限高度量出展开后的高度，再从 0 动画展开。
-            bar.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            bar.measure(View.MeasureSpec.makeMeasureSpec(
-                            getResources().getDisplayMetrics().widthPixels, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            endHeight = bar.getMeasuredHeight();
-        }
-        ViewGroup.LayoutParams startParams = bar.getLayoutParams();
-        startParams.height = startHeight;
-        bar.setLayoutParams(startParams);
-
-        ValueAnimator animator = ValueAnimator.ofInt(startHeight, endHeight);
-        animator.setDuration(FILTER_BAR_ANIM_DURATION_MS);
-        animator.setInterpolator(new DecelerateInterpolator());
-        animator.addUpdateListener(animation -> {
-            ViewGroup.LayoutParams params = bar.getLayoutParams();
-            params.height = (int) animation.getAnimatedValue();
-            bar.setLayoutParams(params);
-        });
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                ViewGroup.LayoutParams params = bar.getLayoutParams();
-                params.height = collapsed ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
-                bar.setLayoutParams(params);
-                bar.setVisibility(collapsed ? View.GONE : View.VISIBLE);
-                _filterBarAnimator = null;
-            }
-        });
-        _filterBarAnimator = animator;
-        animator.start();
+        boolean visible = _formLoaded && _definition != null;
+        _filterBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
+        int topPadding = isPagedLayout() ? dp(this, 9) : 0;
+        _filterBarLayout.setPaddingRelative(
+                _filterBarLayout.getPaddingStart(),
+                topPadding,
+                _filterBarLayout.getPaddingEnd(),
+                _filterBarLayout.getPaddingBottom());
     }
 
     /** 底部导航按布局分流：平铺为滚动跳转，分页为页内翻页。 */
