@@ -797,6 +797,23 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 view.post(this::clearInputFocus);
             }
             _imeVisible = imeVisible;
+            // adjustNothing 下窗口不 resize（底部工作栏不被顶起），这里只把内容卡片的下内边距
+            // 设为键盘高度，让搜索行下方的表单 / 结果区域随键盘收缩，始终可见于键盘上方。
+            if (_contentCardLayout != null) {
+                int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+                // 卡片底部本身已经在窗口底部之上（底部工作栏 + 外边距），直接减键盘整高会多扣出一段空白；
+                // 这里只补「卡片底边到键盘顶边」的差值，让内容正好贴到键盘上方。
+                int[] location = new int[2];
+                _contentCardLayout.getLocationInWindow(location);
+                int cardBottom = location[1] + _contentCardLayout.getHeight();
+                int imeTop = view.getHeight() - imeBottom;
+                int bottomPadding = Math.max(0, cardBottom - imeTop);
+                _contentCardLayout.setPaddingRelative(
+                        _contentCardLayout.getPaddingStart(),
+                        _contentCardLayout.getPaddingTop(),
+                        _contentCardLayout.getPaddingEnd(),
+                        bottomPadding);
+            }
             return insets;
         });
         ViewCompat.requestApplyInsets(decorView);

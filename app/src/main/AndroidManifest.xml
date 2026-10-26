@@ -143,11 +143,13 @@
             android:name=".proxy.support.biometric.BiometricAuthActivity"
             android:exported="false" />
         <!-- 离线填报模块统一使用 OfflineFormTheme（NoActionBar + 自绘 Header + 白色状态栏） -->
+        <!-- adjustNothing：软键盘浮在内容之上，不压缩窗口 / 不顶起底部工作栏 -->
         <activity
             android:name=".offlineform.CustomFormActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize"
             android:exported="false"
-            android:theme="@style/OfflineFormTheme" />
+            android:theme="@style/OfflineFormTheme"
+            android:windowSoftInputMode="adjustNothing" />
         <activity android:name=".offlineform.OfflinePlusListActivity"
             android:exported="false"
             android:theme="@style/OfflineFormTheme" />
