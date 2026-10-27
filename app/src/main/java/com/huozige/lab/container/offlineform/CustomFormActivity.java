@@ -65,6 +65,7 @@ import com.huozige.lab.container.offlineform.formitem.image.OfflineImageFileHelp
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureCallback;
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureCaptureActivity;
 import com.huozige.lab.container.offlineform.formitem.signature.SignatureCaptureHost;
+import com.huozige.lab.container.offlineform.formitem.list.ListItemEditSheet;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
 import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
@@ -1263,6 +1264,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             }
             return scrollAndFlashNode(result.getNode());
         }
+        if (result.isListChild()) {
+            return revealListChildSearchResult(result);
+        }
         View target = findFieldItemView(result.getTargetFieldId());
         if (target == null) {
             return false;
@@ -1273,6 +1277,60 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _formScrollView.smoothScrollTo(0, Math.max(0, rect.top - dp(this, 12)));
         playHighlight(target);
         return true;
+    }
+
+    /**
+     * 列表子字段搜索定位：先滚到父列表字段，再打开首行的编辑抽屉并高亮该子字段。
+     */
+    private boolean revealListChildSearchResult(OfflineFormSearchResult result) {
+        View listFieldView = findFieldItemView(result.getParentFieldId());
+        if (listFieldView == null) {
+            return false;
+        }
+        Rect rect = new Rect();
+        listFieldView.getDrawingRect(rect);
+        _formScrollView.offsetDescendantRectToMyCoords(listFieldView, rect);
+        _formScrollView.smoothScrollTo(0, Math.max(0, rect.top - dp(this, 12)));
+
+        ListFormItem listItem = findListFormItem(result.getParentFieldId());
+        if (listItem == null || listItem.getRowCount() == 0) {
+            playHighlight(listFieldView);
+            return true;
+        }
+        String itemTitle = listItem.getItemTitle();
+        String rowTitle = itemTitle == null || itemTitle.trim().isEmpty()
+                ? getString(R.string.offline_text_list_item_title, 1)
+                : itemTitle + " 1";
+        ListItemEditSheet sheet = ListItemEditSheet.show(this, listItem, 0, rowTitle, null,
+                this::scheduleAutoSave, new ListItemEditSheet.Listener() {
+                    @Override
+                    public void onClosed(int rowIndex, boolean committed) {
+                        if (_adapter != null) {
+                            _adapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    @Override
+                    public void onDeleteConfirmed(int rowIndex) {
+                        if (_adapter != null) {
+                            _adapter.notifyDataSetChanged();
+                        }
+                    }
+                });
+        sheet.highlightField(result.getTargetFieldId());
+        return true;
+    }
+
+    private ListFormItem findListFormItem(String fieldId) {
+        if (_definition == null || fieldId == null) {
+            return null;
+        }
+        for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(_definition)) {
+            if (fieldId.equals(item.getId()) && item instanceof ListFormItem) {
+                return (ListFormItem) item;
+            }
+        }
+        return null;
     }
 
     private boolean scrollAndFlashNode(OfflineFormNode node) {

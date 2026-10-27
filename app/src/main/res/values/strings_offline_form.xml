@@ -111,6 +111,10 @@
     <string name="offline_list_hint_max_reached">已达上限，删除后可继续添加</string>
     <string name="offline_list_hint_min">至少需要 %1$d 项</string>
     <string name="offline_list_toast_max">最多只能添加%1$d项</string>
+    <string name="offline_list_item_sheet_done">完成</string>
+    <string name="offline_list_item_sheet_subtitle">第 %1$d 项 · 共 %2$d 项</string>
+    <string name="offline_list_item_summary_empty">未填写</string>
+    <string name="offline_list_item_status_filled">已填写</string>
     <string name="offline_confirm_delete_list_row_title">删除这项内容？</string>
     <string name="offline_confirm_delete_list_row_message">删除后该项内填写的所有子字段内容都会一并移除，且不可恢复。</string>
     <string name="offline_cd_delete_list_row">删除第 %1$d 项</string>
