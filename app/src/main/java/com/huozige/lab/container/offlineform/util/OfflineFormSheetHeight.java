@@ -34,7 +34,8 @@ public final class OfflineFormSheetHeight {
      * 使用同一时长，保证抽屉底边始终贴着键盘上沿。
      */
     public static void showWithBehaviorSizing(Context context, BottomSheetDialog dialog,
-                                              View content, View scrollView) {
+                                              View content, View scrollView,
+                                              java.util.function.Consumer<Boolean> keyboardSpacingApplier) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         int screenWidth = metrics.widthPixels;
         int screenHeight = metrics.heightPixels;
@@ -69,12 +70,15 @@ public final class OfflineFormSheetHeight {
         View decor = dialog.getWindow().getDecorView();
         ViewCompat.setOnApplyWindowInsetsListener(decor, (view, insets) -> {
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            // 对话框窗口高度通常包含导航 / 手势条区域，而键盘 inset 以内容区为基准；
-            // 仅平移 ime 高度会残留这一段间距，这里把差值一并补上，让抽屉底边贴住键盘上沿。
-            int extraBottom = Math.max(0, decor.getHeight() - screenHeight);
+            // 部分输入法 / 机型下 IME inset 不含底部导航（手势条）区域，抽屉会压在键盘下面；
+            // 键盘可见时把导航栏 inset 一并计入平移量，保证抽屉底边在键盘上沿之上。
+            int navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            if (keyboardSpacingApplier != null) {
+                keyboardSpacingApplier.accept(imeBottom > 0);
+            }
             animateKeyboardShift(decor, content, scrollView, naturalContentHeight,
                     naturalScrollHeight, headerFooterHeight, hardMaxHeight, screenHeight,
-                    imeBottom, extraBottom);
+                    imeBottom, navBottom);
             return insets;
         });
         ViewCompat.requestApplyInsets(decor);
@@ -92,8 +96,11 @@ public final class OfflineFormSheetHeight {
             sKeyboardAnimator = null;
         }
         int keyboardBottom = Math.max(0, imeBottom);
+        // Material BottomSheetDialog 会在键盘态给抽屉补导航栏高度的底部 padding，
+        // 因此平移量要扣掉导航栏 inset，否则抽屉会比键盘顶边高出一截。
+        int navInset = Math.max(0, extraBottom);
         int targetTranslateY = keyboardBottom > 0
-                ? -Math.max(0, keyboardBottom - Math.max(0, extraBottom))
+                ? -Math.max(0, keyboardBottom - navInset)
                 : 0;
         int availableHeight = Math.max(0, screenHeight - keyboardBottom);
         int targetMaxHeight = Math.min(hardMaxHeight,

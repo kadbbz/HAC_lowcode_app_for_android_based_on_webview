@@ -130,7 +130,22 @@ public final class ListItemEditSheet {
         if (sheet.dialog.getWindow() != null) {
             sheet.dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         }
-        OfflineFormSheetHeight.showWithBehaviorSizing(context, sheet.dialog, sheet.content, sheet.scrollView);
+        final View doneButton = sheet.content.findViewById(R.id.list_item_sheet_done);
+        final android.widget.LinearLayout root = (android.widget.LinearLayout) sheet.content;
+        OfflineFormSheetHeight.showWithBehaviorSizing(context, sheet.dialog, sheet.content, sheet.scrollView,
+                keyboardVisible -> {
+                    int bottomPadding = keyboardVisible ? 0 : Math.round(8 * context.getResources().getDisplayMetrics().density);
+                    root.setPadding(root.getPaddingLeft(), root.getPaddingTop(),
+                            root.getPaddingRight(), bottomPadding);
+                    LinearLayout.LayoutParams params =
+                            (LinearLayout.LayoutParams) doneButton.getLayoutParams();
+                    int margin = keyboardVisible ? 0 : Math.round(8 * context.getResources().getDisplayMetrics().density);
+                    if (params.bottomMargin != margin) {
+                        params.bottomMargin = margin;
+                        doneButton.setLayoutParams(params);
+                    }
+                    root.requestLayout();
+                });
         return sheet;
     }
 
