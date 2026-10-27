@@ -68,6 +68,13 @@ public final class OfflineFormSheetHeight {
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
 
         View decor = dialog.getWindow().getDecorView();
+        // 直接给 decorView 设置 translationY 后，绘制会移动但触摸命中仍按原布局坐标，
+        // 导致键盘态下按钮「看得见点不到」；改平移 content 容器，ViewGroup 会正确反算点击坐标。
+        View translationRoot = decor.findViewById(android.R.id.content);
+        if (translationRoot == null) {
+            translationRoot = decor;
+        }
+        final View shiftRoot = translationRoot;
         ViewCompat.setOnApplyWindowInsetsListener(decor, (view, insets) -> {
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
             // 部分输入法 / 机型下 IME inset 不含底部导航（手势条）区域，抽屉会压在键盘下面；
@@ -76,7 +83,7 @@ public final class OfflineFormSheetHeight {
             if (keyboardSpacingApplier != null) {
                 keyboardSpacingApplier.accept(imeBottom > 0);
             }
-            animateKeyboardShift(decor, content, scrollView, naturalContentHeight,
+            animateKeyboardShift(shiftRoot, content, scrollView, naturalContentHeight,
                     naturalScrollHeight, headerFooterHeight, hardMaxHeight, screenHeight,
                     imeBottom, navBottom);
             return insets;
@@ -87,7 +94,7 @@ public final class OfflineFormSheetHeight {
     private static ValueAnimator sKeyboardAnimator;
 
     /** 平移对话框内容并收敛内容高度；时长与系统键盘动画接近，二者一起上下滑动。 */
-    private static void animateKeyboardShift(View decor, View content, View scrollView,
+    private static void animateKeyboardShift(View shiftRoot, View content, View scrollView,
                                              int naturalContentHeight, int naturalScrollHeight,
                                              int headerFooterHeight, int hardMaxHeight,
                                              int screenHeight, int imeBottom, int extraBottom) {
@@ -109,7 +116,7 @@ public final class OfflineFormSheetHeight {
         int targetScrollHeight = Math.max(0,
                 Math.min(naturalScrollHeight, targetContentHeight - headerFooterHeight));
 
-        int startTranslateY = Math.round(decor.getTranslationY());
+        int startTranslateY = Math.round(shiftRoot.getTranslationY());
         int startContentHeight = content.getHeight();
         int startScrollHeight = scrollView.getHeight();
         if (startTranslateY == targetTranslateY && startContentHeight == targetContentHeight
@@ -120,7 +127,7 @@ public final class OfflineFormSheetHeight {
         animator.setDuration(260);
         animator.addUpdateListener(animation -> {
             float fraction = animation.getAnimatedFraction();
-            decor.setTranslationY(startTranslateY
+            shiftRoot.setTranslationY(startTranslateY
                     + (targetTranslateY - startTranslateY) * fraction);
             setHeights(content, scrollView,
                     startContentHeight

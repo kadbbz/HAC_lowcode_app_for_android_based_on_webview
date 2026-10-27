@@ -1,9 +1,12 @@
 package com.huozige.lab.container.offlineform.formitem.list;
 
 import android.animation.Animator;
+import android.app.Activity;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.view.inputmethod.InputMethodManager;
+import android.content.ContextWrapper;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
@@ -20,6 +23,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -100,6 +106,7 @@ public final class ListItemEditSheet {
         deleteButton.setEnabled(canRemove);
         deleteButton.setAlpha(canRemove ? 1f : 0.4f);
         deleteButton.setOnClickListener(v -> confirmDelete());
+        // 先让抽屉按自己的动画退回底部，收起键盘放到 OnDismiss 里做，避免两者同时消失留下空白。
         content.findViewById(R.id.list_item_sheet_cancel).setOnClickListener(v -> dialog.dismiss());
         content.findViewById(R.id.list_item_sheet_done).setOnClickListener(v -> {
             committed = true;
@@ -110,6 +117,8 @@ public final class ListItemEditSheet {
         dialog.setContentView(content);
         dialog.setCanceledOnTouchOutside(true);
         dialog.setOnDismissListener(d -> {
+            // 抽屉关闭后键盘可能还停留，遮住表单底部「保存」；这里兜底收起一次。
+            hideKeyboard();
             if (deleted) {
                 listener.onDeleteConfirmed(rowIndex);
                 return;
@@ -157,6 +166,39 @@ public final class ListItemEditSheet {
 
     public boolean isShowing() {
         return dialog.isShowing();
+    }
+
+    /** 收起输入法：抽屉关闭后键盘若仍停留，会挡住页面底部的保存按钮。 */
+    private void hideKeyboard() {
+        Context context = content.getContext();
+        InputMethodManager imm =
+                (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        View focus = content.findFocus();
+        if (focus != null) {
+            focus.clearFocus();
+        }
+        if (imm != null && dialog.getWindow() != null) {
+            View dialogDecor = dialog.getWindow().getDecorView();
+            imm.hideSoftInputFromWindow(dialogDecor.getWindowToken(), 0);
+        }
+        hideIme(context);
+    }
+
+    /** 从任意 Context 找到 Activity，通过 WindowInsetsController 强制收起 IME（含延迟兜底）。 */
+    public static void hideIme(Context context) {
+        Context base = context;
+        while (base instanceof ContextWrapper && !(base instanceof Activity)) {
+            base = ((ContextWrapper) base).getBaseContext();
+        }
+        if (!(base instanceof Activity)) {
+            return;
+        }
+        Activity activity = (Activity) base;
+        View decor = activity.getWindow().getDecorView();
+        WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(activity.getWindow(), decor);
+        controller.hide(WindowInsetsCompat.Type.ime());
+        decor.postDelayed(() -> controller.hide(WindowInsetsCompat.Type.ime()), 150);
     }
 
     /** 搜索定位列表子字段时：抽屉打开后滚动到该子字段并闪烁。 */
