@@ -128,9 +128,9 @@ public final class ListItemEditSheet {
                 rowTimes, onFieldChanged, listener);
         sheet.renderFields();
         if (sheet.dialog.getWindow() != null) {
-            sheet.dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            sheet.dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         }
-        OfflineFormSheetHeight.showWithMeasuredHeight(context, sheet.dialog, sheet.content, sheet.scrollView);
+        OfflineFormSheetHeight.showWithBehaviorSizing(context, sheet.dialog, sheet.content, sheet.scrollView);
         return sheet;
     }
 
