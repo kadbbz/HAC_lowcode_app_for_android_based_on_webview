@@ -1,0 +1,1371 @@
+package com.huozige.lab.container.proxy;
+
+import static android.app.Activity.RESULT_OK;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Looper;
+import android.webkit.MimeTypeMap;
+import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.huozige.lab.container.R;
+import com.huozige.lab.container.offlineform.OfflinePlusExportListActivity;
+import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
+import com.huozige.lab.container.offlineform.formitem.file.OfflineFileHelper;
+import com.huozige.lab.container.offlineform.formitem.OfflineFormItemType;
+import com.huozige.lab.container.platform.CallbackParams;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
+import com.huozige.lab.container.offlineform.model.OfflineFormRecordStatus;
+import com.huozige.lab.container.offlineform.model.OfflineFormNode;
+import com.huozige.lab.container.offlineform.model.OfflineFormStep;
+import com.huozige.lab.container.offlineform.model.PatternInput;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
+import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineComputedHelper;
+import com.huozige.lab.container.utilities.StringUtils;
+import com.huozige.lab.container.utilities.HACDownloadManager;
+import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinition;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFlattener;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFactory;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionFile;
+import com.huozige.lab.container.offlineform.model.OfflineFormDefinitionIndexItem;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgress;
+import com.huozige.lab.container.offlineform.model.OfflineFormProgressCalculator;
+import com.huozige.lab.container.offlineform.model.formitem.common.BaseFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.file.FileFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.image.ImageFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.list.ListFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
+import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
+import com.huozige.lab.container.offlineform.model.formitem.common.AttachmentFormItemValue;
+import com.huozige.lab.container.offlineform.util.Utils;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class OfflinePlusProxy extends AbstractProxy{
+
+    /** 说明书 PDF 下载：连接超时（毫秒） */
+    private static final int MANUAL_DOWNLOAD_CONNECT_TIMEOUT_MS = 10_000;
+    /** 说明书 PDF 下载：读取超时（毫秒） */
+    private static final int MANUAL_DOWNLOAD_READ_TIMEOUT_MS = 30_000;
+    /** 说明书 PDF 下载：非计量网络下的最大尝试次数（含首次） */
+    private static final int MANUAL_DOWNLOAD_MAX_ATTEMPTS = 3;
+    /** 说明书 PDF 下载：重试退避起始时长（毫秒） */
+    private static final long MANUAL_DOWNLOAD_RETRY_BASE_DELAY_MS = 800;
+    /** 说明书 PDF 下载：重试退避上限（毫秒） */
+    private static final long MANUAL_DOWNLOAD_RETRY_MAX_DELAY_MS = 4_000;
+
+    /**
+     * 离线导出结果会交给插件 JS 按标准 JSON 解析，必须关闭 fastjson 默认的循环引用检测。
+     * 同一字段的多个附件共享同一个 path 数组，开启检测时后续附件会被序列化成
+     * {"$ref":"$.attachments[0].path"}，插件侧无法识别该结构，导致附件定位与回写丢项。
+     */
+    private static final SerializerFeature[] EXPORT_JSON_FEATURES = {
+            SerializerFeature.DisableCircularReferenceDetect
+    };
+
+    private ActivityResultLauncher<Intent> _exportMultipleRecordsLauncher;
+
+    @Override
+    public void onActivityCreated(AppCompatActivity activity) {
+        _exportMultipleRecordsLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                callback(CallbackParams.error("Export canceled."));
+                return;
+            }
+
+            ArrayList<String> projectIds = result.getData().getStringArrayListExtra(OfflinePlusExportListActivity.EXTRA_SELECTED_PATTERN_IDS);
+            if (projectIds == null || projectIds.isEmpty()) {
+                callback(CallbackParams.error("No form selected."));
+                return;
+            }
+
+            exportMultipleRecords(projectIds);
+        });
+    }
+
+    @Override
+    public void beforeActivityPause() {
+        super.beforeActivityPause();
+    }
+
+    @Override
+    public String getName() {
+        return "offlinePlus";
+    }
+
+    /**
+     * H5 直接调用：跳转到离线填报列表页。
+     * <p>
+     * 离线填报是离线场景的核心能力，因此这里不受 {@link com.huozige.lab.container.utilities.DeviceUtility}
+     * 离线模式的页面导航拦截，也不受顶部“离线填报入口”菜单显隐配置的影响。
+     */
+    @JavascriptInterface
+    public void offlinePlusOpenFormList() {
+        writeInfoLog("OfflinePlusOpenFormList");
+
+        runOnUiThread(() -> startActivity(OfflinePlusListActivity.class));
+    }
+
+    @JavascriptInterface
+    public void offlinePlusGetPatternsAsync(String ticket) {
+        writeInfoLog("OfflinePlusGetPatterns");
+        registryCallbackTicket(ticket);
+
+        Context context = this.getWebView().getContext();
+        List<OfflineFormDefinitionIndexItem> definitions = OfflineFormFileHelper.readDefinitions(context);
+        List<String> patternIds = new ArrayList<>();
+        for (OfflineFormDefinitionIndexItem definition : definitions) {
+            patternIds.add(definition.getPatternId());
+        }
+        callback(CallbackParams.success(JSON.toJSONString(patternIds)));
+    }
+
+    @JavascriptInterface
+    public void offlinePlusAddPatternAsync(String input) {
+        writeInfoLog("OfflinePlusAddPattern");
+
+        PatternInput inputObj = JSON.parseObject(input, PatternInput.class);
+
+        registryCallbackTicket(inputObj.ticket);
+
+        Context context = this.getWebView().getContext();
+        try {
+            parseJsonToFile(context, inputObj);
+        } catch (Exception e) {
+            finishAddPattern(null, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_add_pattern_failed, e));
+            return;
+        }
+
+        // 手册 PDF 改由 offlinePlusDownloadManualPdfAsync 单独下载，添加表单时不再阻塞等待手册。
+        finishAddPattern(null, CallbackParams.success("success"), null);
+    }
+
+    /**
+     * 下载并绑定离线表单的说明文档。
+     * <p>
+     * 弱网兜底（见 docs/weak-network-phase1-offline-form-download.md）：
+     * 1. 无网络时快速失败，不进入长等待；
+     * 2. 连接/读取超时 + 瞬时错误重试（退避）；计量网络下不自动重试；
+     * 3. 逐文件独立处理，单个失败不影响已成功的文件；
+     * 4. 下载完整性校验；支持用户取消。
+     */
+    @JavascriptInterface
+    public void offlinePlusDownloadManualPdfAsync(
+            String patternId,
+            String[] manualPdfUrl,
+            String ticket) {
+        writeInfoLog("OfflinePlusDownloadManualPdfAsync");
+        registryCallbackTicket(ticket);
+
+        Context context = this.getWebView().getContext();
+        if (StringUtils.isNullOrBlank(patternId)) {
+            finishManualDownload(null, CallbackParams.error("patternId is empty."), null);
+            return;
+        }
+        if (OfflineFormFileHelper.readDefinition(context, patternId) == null) {
+            finishManualDownload(null, CallbackParams.error("patternId does not exist."), null);
+            return;
+        }
+        if (manualPdfUrl == null || manualPdfUrl.length == 0) {
+            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+            finishManualDownload(null, CallbackParams.success("success"), null);
+            return;
+        }
+
+        // 弱网兜底：无网络直接失败，避免用户干等超时。
+        NetworkProxy networkProxy = NetworkProxy.getInstance();
+        if (networkProxy != null && !networkProxy.isConnected()) {
+            finishManualDownload(null, CallbackParams.error(context.getString(R.string.offline_error_manual_no_network)), null);
+            return;
+        }
+        // 计量网络（流量/热点）下不自动重试，节省流量。
+        boolean metered = networkProxy != null && networkProxy.isMetered();
+
+        String currentUrl = getCurrentUrlOnUiThread();
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        AtomicReference<Thread> workerRef = new AtomicReference<>();
+
+        ProgressDialog progressDialog = showManualDownloadDialog(context);
+
+        Thread worker = new Thread(() -> {
+            try {
+                ManualDownloadOutcome outcome = saveManualDocuments(
+                        context, patternId, manualPdfUrl, currentUrl, progressDialog, cancelled, metered);
+                if (cancelled.get()) {
+                    finishManualDownload(progressDialog, CallbackParams.error(CallbackParams.CANCEL_BY_USER), null);
+                } else if (outcome.hasFailure()) {
+                    finishManualDownload(progressDialog,
+                            CallbackParams.error(context.getString(R.string.offline_error_manual_partial_failed, outcome.getFailedSummary())),
+                            null);
+                } else {
+                    finishManualDownload(progressDialog, CallbackParams.success("success"), null);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                finishManualDownload(progressDialog, CallbackParams.error(CallbackParams.CANCEL_BY_USER), null);
+            } catch (Exception e) {
+                finishManualDownload(progressDialog, CallbackParams.error(e.toString()), context.getString(R.string.offline_error_manual_download_failed, e));
+            }
+        });
+        workerRef.set(worker);
+
+        // 支持取消：用户取消时中断下载线程。
+        runOnUiThread(() -> {
+            if (progressDialog != null) {
+                progressDialog.setCancelable(true);
+                progressDialog.setOnCancelListener(dialog -> {
+                    cancelled.set(true);
+                    Thread t = workerRef.get();
+                    if (t != null) {
+                        t.interrupt();
+                    }
+                });
+            }
+        });
+
+        worker.start();
+    }
+    private String getCurrentUrlOnUiThread() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return this.getWebView().getUrl();
+        }
+
+        AtomicReference<String> urlRef = new AtomicReference<>("");
+        CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            urlRef.set(this.getWebView().getUrl());
+            latch.countDown();
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return urlRef.get();
+    }
+
+    @JavascriptInterface
+    public String offlinePlusGetRecords(String projectId) {
+        writeInfoLog("OfflinePlusGetRecords");
+
+        if (projectId == null || projectId.isEmpty()) {
+            return "";
+        }
+
+        Context context = this.getWebView().getContext();
+        List<OfflineFormRecord> records = filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+        return JSON.toJSONString(records);
+    }
+
+    @JavascriptInterface
+    public void offlinePlusExportRecordsAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusExportRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        if (StringUtils.isNullOrBlank(projectId)) {
+            callback(CallbackParams.error("projectId is empty."));
+            return;
+        }
+
+        // 与批量导出一致：在后台线程读取记录并构建导出 JSON，避免同步占用 WebView 的 JS 线程。
+        new Thread(() -> {
+            try {
+                callback(CallbackParams.success(buildExportRecordsResult(projectId)));
+            } catch (Exception e) {
+                callback(CallbackParams.error(e.toString()));
+            }
+        }).start();
+    }
+
+    @JavascriptInterface
+    public void offlinePlusExportMultipleRecordsAsync(String ticket) {
+        writeInfoLog("OfflinePlusExportMultipleRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        runOnUiThread(() -> {
+            if (_exportMultipleRecordsLauncher == null) {
+                callback(CallbackParams.error("Export launcher is not initialized."));
+                return;
+            }
+
+            _exportMultipleRecordsLauncher.launch(createIntent(OfflinePlusExportListActivity.class));
+        });
+    }
+
+    @JavascriptInterface
+    public String offlinePlusLoadAttachment(String projectId, String localName) {
+        writeInfoLog("OfflinePlusLoadAttachment:" + localName);
+
+        if (StringUtils.isNullOrBlank(projectId) || StringUtils.isNullOrBlank(localName)) {
+            return "";
+        }
+
+        try {
+            File file = Utils.resolveLocalFile(this.getWebView().getContext(), projectId, localName);
+            if (file == null || !file.exists() || !file.isFile()) {
+                return "";
+            }
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Utils.getExtension(localName));
+            if (StringUtils.isNullOrBlank(mimeType)) {
+                mimeType = "application/octet-stream";
+            }
+            // 签名文件本身就是纯签名（白底 + 笔迹），导出时不再叠加姓名水印与免责声明。
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(readAllBytes(file));
+        } catch (Exception e) {
+            writeErrorLog("读取离线附件失败：" + localName + "，详情：" + e);
+            return "";
+        }
+    }
+
+    private String buildExportRecordsResult(String projectId) {
+        Context context = this.getWebView().getContext();
+        List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
+        return JSON.toJSONString(buildExportRecordsResultObject(context, projectId, records), EXPORT_JSON_FEATURES);
+    }
+
+    private String buildExportRecordsResults(List<String> projectIds) {
+        Context context = this.getWebView().getContext();
+        JSONArray results = new JSONArray();
+        if (projectIds == null) {
+            return JSON.toJSONString(results, EXPORT_JSON_FEATURES);
+        }
+
+        for (String projectId : projectIds) {
+            if (StringUtils.isNullOrBlank(projectId)) {
+                continue;
+            }
+            List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
+            results.add(buildExportRecordsResultObject(context, projectId, records));
+        }
+        return JSON.toJSONString(results, EXPORT_JSON_FEATURES);
+    }
+
+    private JSONObject buildExportRecordsResultObject(Context context, String projectId, List<OfflineFormRecord> records) {
+        JSONObject result = new JSONObject();
+        OfflineFormDefinitionFile definitionFile = OfflineFormFileHelper.readDefinition(context, projectId);
+        Map<String, String> attachmentFieldTypes = readAttachmentFieldTypes(definitionFile);
+        normalizeEmptyAttachmentValues(records, attachmentFieldTypes);
+        result.put("projectId", projectId);
+        OfflineFormProgress progress = calculateExportProgress(definitionFile, records);
+        result.put("totalFillItems", progress.getTotalFillItems());
+        result.put("filledFillItems", progress.getFilledFillItems());
+        result.put("completionRate", progress.getCompletionRate());
+        result.put("records", buildExportRecords(records, definitionFile));
+        result.put("attachments", buildExportAttachments(records, definitionFile));
+        result.put("signature", readSignatureDataUrl(context, projectId));
+        return result;
+    }
+
+    private OfflineFormProgress calculateExportProgress(
+            OfflineFormDefinitionFile definitionFile,
+            List<OfflineFormRecord> records) {
+        if (definitionFile == null || definitionFile.getJsonSchema() == null
+                || records == null || records.isEmpty()) {
+            return OfflineFormProgress.empty();
+        }
+        // 导出结果包含多条记录时，进度按每条记录分别统计后汇总，避免只返回最近一条记录的进度。
+        int total = 0;
+        int filled = 0;
+        for (OfflineFormRecord record : records) {
+            OfflineFormProgress recordProgress = OfflineFormProgressCalculator.calculate(
+                    definitionFile.getJsonSchema(), record);
+            total += recordProgress.getTotalFillItems();
+            filled += recordProgress.getFilledFillItems();
+        }
+        double completionRate = total == 0 ? 0d : filled * 100d / total;
+        return new OfflineFormProgress(total, filled, completionRate);
+    }
+
+    /**
+     * 将本地记录中的 key-value 字段转换为导出用的字段对象，附带表单定义中的 ODate 更新时间。
+     * 本地记录文件仍保持 Map<String, String>，避免影响离线填报和历史记录编辑。
+     */
+    private JSONArray buildExportRecords(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
+        JSONArray result = new JSONArray();
+        if (records == null) {
+            return result;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null) {
+                continue;
+            }
+            JSONObject recordJson = new JSONObject();
+            recordJson.put("recordId", record.getRecordId());
+            recordJson.put("patternId", record.getPatternId());
+            recordJson.put("schemaVersion", record.getSchemaVersion());
+            recordJson.put("status", record.getStatus());
+            recordJson.put("createdAt", record.getCreatedAt());
+            recordJson.put("updatedAt", record.getUpdatedAt());
+            recordJson.put("values", buildExportValues(record, definitionFile));
+            result.add(recordJson);
+        }
+        return result;
+    }
+
+    /**
+     * 将记录值转换成导出结构：每个字段/子字段的 updateTime 取自记录的 fieldUpdateTimes
+     * （字段变更时间），而不是表单定义。旧记录没有 fieldUpdateTimes 时不输出该字段的 updateTime。
+     */
+    private JSONObject buildExportValues(OfflineFormRecord record, OfflineFormDefinitionFile definitionFile) {
+        JSONObject result = new JSONObject();
+        Map<String, String> values = record == null ? null : record.getValues();
+        if (values == null || values.isEmpty()) {
+            return result;
+        }
+
+        Map<String, Object> times = record.getFieldUpdateTimes();
+        List<OfflineFormStep> steps = definitionFile == null || definitionFile.getJsonSchema() == null
+                ? null : definitionFile.getJsonSchema().getSteps();
+        if (steps != null) {
+            for (OfflineFormStep step : steps) {
+                if (step != null) {
+                    collectExportValues(result, values, step.getItems(), times);
+                }
+            }
+        }
+
+        // 对定义中不存在的历史字段也保留原始值，避免导出时丢数据。
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            if (!result.containsKey(entry.getKey())) {
+                Object fieldTimes = times == null ? null : times.get(entry.getKey());
+                result.put(entry.getKey(), buildExportFieldValue(entry.getValue(), null, fieldTimes));
+            }
+        }
+        return result;
+    }
+
+    private void collectExportValues(JSONObject target, Map<String, String> values,
+                                     List<OfflineFormNode> nodes, Map<String, Object> times) {
+        if (target == null || values == null || nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                String rawValue = values.get(field.getId());
+                Object fieldTimes = times == null ? null : times.get(field.getId());
+                target.put(field.getId(), buildExportFieldValue(rawValue, field, fieldTimes));
+            }
+            collectExportValues(target, values, node.getChildren(), times);
+        }
+    }
+
+    private JSONObject buildExportFieldValue(String rawValue, BaseFormItem field, Object fieldTimes) {
+        JSONObject valueObject = new JSONObject();
+        if (field instanceof ListFormItem) {
+            valueObject.put("value", buildExportListValue((ListFormItem) field, rawValue, fieldTimes));
+            return valueObject;
+        }
+        valueObject.put("value", rawValue == null ? "" : rawValue);
+        Double updateTime = asTimeDouble(fieldTimes);
+        if (updateTime != null) {
+            valueObject.put("updateTime", updateTime);
+        }
+        return valueObject;
+    }
+
+    private JSONArray buildExportListValue(ListFormItem listItem, String rawValue, Object fieldTimes) {
+        JSONArray result = new JSONArray();
+        JSONArray rows = ListFormItem.parseRows(rawValue);
+        List<?> rowTimes = fieldTimes instanceof List ? (List<?>) fieldTimes : null;
+        for (int i = 0; i < rows.size(); i++) {
+            JSONObject rowValue = rows.getJSONObject(i);
+            if (rowValue == null) {
+                continue;
+            }
+            Map<String, Object> currentRowTimes = rowTimes != null && i < rowTimes.size()
+                    ? asTimeMap(rowTimes.get(i)) : null;
+            JSONObject exportedRow = new JSONObject();
+            collectExportRowValues(exportedRow, rowValue, listItem.getTemplateNodes(), currentRowTimes);
+            for (String fieldId : rowValue.keySet()) {
+                if (!exportedRow.containsKey(fieldId)) {
+                    Object fieldTime = currentRowTimes == null ? null : currentRowTimes.get(fieldId);
+                    exportedRow.put(fieldId, buildExportFieldValue(rowValue.getString(fieldId), null, fieldTime));
+                }
+            }
+            result.add(exportedRow);
+        }
+        return result;
+    }
+
+    private void collectExportRowValues(JSONObject target, JSONObject rowValues,
+                                        List<OfflineFormNode> nodes, Map<String, Object> times) {
+        if (target == null || rowValues == null || nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                Object fieldTimes = times == null ? null : times.get(field.getId());
+                target.put(field.getId(), buildExportFieldValue(rowValues.getString(field.getId()), field, fieldTimes));
+            }
+            collectExportRowValues(target, rowValues, node.getChildren(), times);
+        }
+    }
+
+    private static Double asTimeDouble(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asTimeMap(Object value) {
+        return value instanceof Map ? (Map<String, Object>) value : null;
+    }
+
+    private List<OfflineFormRecord> readSubmittedRecords(Context context, String projectId) {
+        return filterSubmittedRecords(OfflineFormFileHelper.readRecords(context, projectId));
+    }
+
+    private void exportMultipleRecords(List<String> projectIds) {
+        new Thread(() -> {
+            try {
+                callback(CallbackParams.success(buildExportRecordsResults(projectIds)));
+            } catch (Exception e) {
+                callback(CallbackParams.error(e.toString()));
+            }
+        }).start();
+    }
+
+    private void normalizeEmptyAttachmentValues(List<OfflineFormRecord> records, Map<String, String> attachmentFieldTypes) {
+        if (records == null || records.isEmpty() || attachmentFieldTypes.isEmpty()) {
+            return;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            for (String fieldId : attachmentFieldTypes.keySet()) {
+                String value = record.getValues().get(fieldId);
+                if ("[]".equals(value) || "{}".equals(value)) {
+                    record.getValues().put(fieldId, "");
+                }
+            }
+        }
+    }
+
+    private JSONArray buildExportAttachments(List<OfflineFormRecord> records, OfflineFormDefinitionFile definitionFile) {
+        JSONArray attachments = new JSONArray();
+        if (records == null || records.isEmpty()
+                || definitionFile == null
+                || definitionFile.getJsonSchema() == null
+                || definitionFile.getJsonSchema().getSteps() == null) {
+            return attachments;
+        }
+
+        for (OfflineFormRecord record : records) {
+            if (record == null || record.getValues() == null || record.getValues().isEmpty()) {
+                continue;
+            }
+            JSONObject values = new JSONObject();
+            values.putAll(record.getValues());
+            JSONArray rootPath = new JSONArray();
+            rootPath.add(record.getRecordId());
+            for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+                if (step != null) {
+                    collectExportAttachments(attachments, rootPath, step.getItems(), values);
+                }
+            }
+        }
+        return attachments;
+    }
+
+    private void collectExportAttachments(JSONArray attachments, JSONArray pathPrefix, List<OfflineFormNode> nodes, JSONObject values) {
+        if (nodes == null || values == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            BaseFormItem field = node.getField();
+            if (field != null && !StringUtils.isNullOrBlank(field.getId())) {
+                String rawValue = values.getString(field.getId());
+                JSONArray fieldPath = appendPath(pathPrefix, field.getId());
+                if (isAttachmentFieldType(field.getItemType())) {
+                    addAttachments(attachments, fieldPath, field.getId(), field.getItemType(), rawValue);
+                } else if (field instanceof ListFormItem) {
+                    collectListExportAttachments(attachments, fieldPath, (ListFormItem) field, rawValue);
+                }
+            }
+            collectExportAttachments(attachments, pathPrefix, node.getChildren(), values);
+        }
+    }
+
+    private void collectListExportAttachments(JSONArray attachments, JSONArray listPath, ListFormItem listItem, String rawValue) {
+        JSONArray rows = ListFormItem.parseRows(rawValue);
+        for (int i = 0; i < rows.size(); i++) {
+            JSONObject rowValues = rows.getJSONObject(i);
+            if (rowValues == null) {
+                continue;
+            }
+            collectExportAttachments(attachments, appendPath(listPath, i), listItem.getTemplateNodes(), rowValues);
+        }
+    }
+
+    private JSONArray appendPath(JSONArray pathPrefix, Object value) {
+        JSONArray path = new JSONArray();
+        if (pathPrefix != null) {
+            path.addAll(pathPrefix);
+        }
+        path.add(value);
+        return path;
+    }
+
+    private void addAttachments(JSONArray attachments, JSONArray path, String fieldId, String fieldType, String rawValue) {
+        boolean imageField = OfflineFormItemType.IMAGE.getValue().equals(fieldType);
+        boolean signatureField = OfflineFormItemType.SIGNATURE.getValue().equals(fieldType);
+        if (signatureField) {
+            addSignatureAttachments(attachments, path, fieldId, rawValue);
+            return;
+        }
+
+        List<AttachmentFormItemValue> attachmentValues = imageField
+                ? ImageFormItem.parseImages(rawValue) : FileFormItem.parseAttachments(rawValue);
+        for (int i = 0; i < attachmentValues.size(); i++) {
+            AttachmentFormItemValue attachmentValue = attachmentValues.get(i);
+            if (attachmentValue == null) {
+                continue;
+            }
+            String originalName = attachmentValue.getOriginalName();
+            String localName = attachmentValue.getFileName();
+            if (StringUtils.isNullOrBlank(localName) || !imageField && StringUtils.isNullOrBlank(originalName)) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            attachment.put("path", path);
+            attachment.put("type", imageField || signatureField ? "image" : "file");
+            attachment.put("localName", localName);
+            attachment.put("recordId", path == null || path.isEmpty() ? "" : path.getString(0));
+            attachment.put("fieldId", fieldId);
+            if (!StringUtils.isNullOrBlank(originalName)) {
+                attachment.put("originalName", originalName);
+            }
+            attachment.put("fileName", localName);
+            attachments.add(attachment);
+        }
+    }
+
+    private void addSignatureAttachments(JSONArray attachments, JSONArray path, String fieldId, String rawValue) {
+        List<SignatureFormItemValue> signatures = SignatureFormItem.parseSignatures(rawValue, null);
+        for (int i = 0; i < signatures.size(); i++) {
+            SignatureFormItemValue signature = signatures.get(i);
+            if (signature == null || StringUtils.isNullOrBlank(signature.getFileName())) {
+                continue;
+            }
+
+            com.alibaba.fastjson.JSONObject attachment = new com.alibaba.fastjson.JSONObject();
+            // 每张签名使用独立路径，避免上传端按同一路径将多个文件名拼接为 a.png|b.png。
+            attachment.put("path", appendPath(path, i));
+            attachment.put("type", "image");
+            attachment.put("localName", signature.getFileName());
+            attachment.put("recordId", path == null || path.isEmpty() ? "" : path.getString(0));
+            attachment.put("fieldId", fieldId);
+            String userName = signature.getUserName();
+            String originalName = StringUtils.isNullOrBlank(userName) ? "签名" : userName;
+            attachment.put("originalName", originalName + ".png");
+            attachment.put("fileName", signature.getFileName());
+            if (signature.getUpdateTime() != null) {
+                attachment.put("updateTime", signature.getUpdateTime());
+            }
+            attachments.add(attachment);
+        }
+    }
+
+    private Map<String, String> readAttachmentFieldTypes(OfflineFormDefinitionFile definitionFile) {
+        Map<String, String> fieldTypes = new HashMap<>();
+        if (definitionFile == null || definitionFile.getJsonSchema() == null || definitionFile.getJsonSchema().getSteps() == null) {
+            return fieldTypes;
+        }
+
+        for (OfflineFormStep step : definitionFile.getJsonSchema().getSteps()) {
+            if (step != null) {
+                collectAttachmentFieldTypes(step.getItems(), fieldTypes);
+            }
+        }
+        return fieldTypes;
+    }
+
+    private void collectAttachmentFieldTypes(List<OfflineFormNode> nodes, Map<String, String> fieldTypes) {
+        if (nodes == null) {
+            return;
+        }
+        for (OfflineFormNode node : nodes) {
+            if (node == null) {
+                continue;
+            }
+
+            BaseFormItem field = node.getField();
+            if (field != null
+                    && isAttachmentFieldType(field.getItemType())
+                    && !StringUtils.isNullOrBlank(field.getId())) {
+                fieldTypes.put(field.getId(), field.getItemType());
+            }
+            collectAttachmentFieldTypes(node.getChildren(), fieldTypes);
+        }
+    }
+
+    private boolean isAttachmentFieldType(String itemType) {
+        return OfflineFormItemType.IMAGE.getValue().equals(itemType)
+                || OfflineFormItemType.SIGNATURE.getValue().equals(itemType)
+                || OfflineFormItemType.FILE.getValue().equals(itemType);
+    }
+
+    private byte[] readAllBytes(File file) throws IOException {
+        try (FileInputStream input = new FileInputStream(file);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, length);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    @JavascriptInterface
+    public void offlinePlusMarkRecordExportedAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusMarkRecordExportedAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(markRecordsExported(projectId, recordIds)));
+    }
+
+    private String markRecordsExported(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            return "recordIds is empty.";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            String result = markRecordExported(projectId, trimmedRecordId);
+            if (!"success".equals(result)) {
+                errors.add(trimmedRecordId + ": " + result);
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+        return joinLines(errors);
+    }
+
+    private String markRecordExported(String projectId, String recordId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+        if (StringUtils.isNullOrBlank(recordId)) {
+            return "recordId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, recordId);
+        if (record == null) {
+            return "record not found.";
+        }
+        if (record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+            return "record already exported.";
+        }
+        if (record.getStatus() != OfflineFormRecordStatus.SUBMITTED) {
+            return "record is not submitted.";
+        }
+
+        record.setStatus(OfflineFormRecordStatus.EXPORTED);
+        OfflineFormFileHelper.writeRecord(context, record);
+        return "success";
+    }
+
+    @JavascriptInterface
+    public void offlinePlusDeleteReadRecordsAsync(String projectId, String recordIds, String ticket) {
+        writeInfoLog("OfflinePlusDeleteReadRecordsAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteReadRecords(projectId, recordIds)));
+    }
+
+    private String deleteReadRecords(String projectId, String recordIds) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (StringUtils.isNullOrBlank(recordIds)) {
+            OfflineFormFileHelper.deleteRecordsByStatus(context, projectId, OfflineFormRecordStatus.EXPORTED);
+            return "success";
+        }
+
+        List<String> errors = new ArrayList<>();
+        boolean hasRecordId = false;
+        for (String recordId : recordIds.split(",")) {
+            String trimmedRecordId = recordId.trim();
+            if (StringUtils.isNullOrBlank(trimmedRecordId)) {
+                continue;
+            }
+            hasRecordId = true;
+
+            OfflineFormRecord record = OfflineFormFileHelper.readRecord(context, projectId, trimmedRecordId);
+            if (record != null && record.getStatus() == OfflineFormRecordStatus.EXPORTED) {
+                OfflineFormFileHelper.deleteRecord(context, projectId, trimmedRecordId);
+            } else {
+                errors.add(trimmedRecordId + ": record is not read.");
+            }
+        }
+
+        if (!hasRecordId) {
+            return "recordIds is empty.";
+        }
+        if (errors.isEmpty()) {
+            return "success";
+        }
+        return joinLines(errors);
+    }
+
+    @JavascriptInterface
+    public void offlinePlusDeleteProjectAsync(String projectId, String ticket) {
+        writeInfoLog("OfflinePlusDeleteProjectAsync");
+        registryCallbackTicket(ticket);
+
+        callback(CallbackParams.success(deleteProject(projectId)));
+    }
+
+    private String deleteProject(String projectId) {
+        if (StringUtils.isNullOrBlank(projectId)) {
+            return "projectId is empty.";
+        }
+
+        Context context = this.getWebView().getContext();
+        if (!OfflineFormFileHelper.deletePatternDirectory(context, projectId)) {
+            return "delete failed.";
+        }
+
+        OfflineFormFileHelper.removeDefinitionOrder(context, projectId);
+        return "success";
+    }
+
+    private String joinLines(List<String> values) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) {
+            if (result.length() > 0) {
+                result.append("\n");
+            }
+            result.append(value);
+        }
+        return result.toString();
+    }
+
+    private List<OfflineFormRecord> filterSubmittedRecords(List<OfflineFormRecord> records) {
+        List<OfflineFormRecord> submittedRecords = new ArrayList<>();
+        for (OfflineFormRecord record : records) {
+            if (record.getStatus() == OfflineFormRecordStatus.SUBMITTED) {
+                submittedRecords.add(record);
+            }
+        }
+        return submittedRecords;
+    }
+
+    private void parseJsonToFile(Context context, PatternInput input) {
+        OfflineFormDefinition definition = OfflineFormDefinitionFactory.fromPatternInput(input);
+
+        OfflineFormDefinitionIndexItem listItem = updateDefinitionOrder(context, input, definition);
+
+        parseJsonToCustomFormFile(context, input, definition, listItem);
+    }
+
+    private OfflineFormDefinitionIndexItem updateDefinitionOrder(Context context, PatternInput input, OfflineFormDefinition definition) {
+
+        List<OfflineFormDefinitionIndexItem> list = OfflineFormFileHelper.readDefinitions(context);
+        OfflineFormDefinitionFile oldDefinition = OfflineFormFileHelper.readDefinition(context, input.patternId);
+        String theme = oldDefinition == null ? "" : oldDefinition.getComputed().getTheme();
+        List<String> displayColumns = oldDefinition == null ? buildDefaultDisplayColumns(definition) : oldDefinition.getComputed().getDisplayColumns();
+        int recordPageSize = oldDefinition == null ? OfflineComputedInfo.DEFAULT_RECORD_PAGE_SIZE : oldDefinition.getComputed().getRecordPageSize();
+
+        int oldIndex = -1;
+        for (int i = 0; i < list.size(); i++) {
+            OfflineFormDefinitionIndexItem item = list.get(i);
+            if (item.getPatternId().equals(input.patternId)) {
+                oldIndex = i;
+                if (theme.isEmpty()) {
+                    theme = item.getComputed().getTheme();
+                }
+                break;
+            }
+        }
+
+        // 同一个项目编号重复导入时沿用旧主题色；只有新增项目才按导入顺序分配主题色。
+        if (theme.isEmpty()) {
+            theme = OfflineComputedHelper.getThemeColor(list.size());
+        }
+        OfflineComputedInfo computedInfo = new OfflineComputedInfo();
+        computedInfo.setTheme(theme);
+        computedInfo.setDisplayColumns(displayColumns);
+        computedInfo.setRecordPageSize(recordPageSize);
+        OfflineFormDefinitionIndexItem newPattern = new OfflineFormDefinitionIndexItem(input.title, input.description, "", input.patternId, input.schemaVersion, computedInfo);
+        if (oldIndex >= 0) {
+            list.set(oldIndex, newPattern);
+        } else {
+            list.add(newPattern);
+        }
+
+        OfflineFormFileHelper.writeDefinitionOrder(context, list);
+        return newPattern;
+
+    }
+
+    private void parseJsonToCustomFormFile(Context context, PatternInput input, OfflineFormDefinition definition, OfflineFormDefinitionIndexItem listItem) {
+
+        OfflineFormDefinitionFile definitionFile = new OfflineFormDefinitionFile(definition, listItem.getComputed());
+        OfflineFormFileHelper.writeDefinition(context, input.patternId, definitionFile);
+    }
+
+    private ManualDownloadOutcome saveManualDocuments(
+            Context context,
+            String patternId,
+            String[] manualPdfUrls,
+            String currentUrl,
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled,
+            boolean metered) throws IOException, InterruptedException {
+
+        ManualDownloadOutcome outcome = new ManualDownloadOutcome();
+
+        List<String> urls = new ArrayList<>();
+        for (String url : manualPdfUrls) {
+            if (StringUtils.isNotBlank(url)) {
+                urls.add(url.trim());
+            }
+        }
+        if (urls.isEmpty()) {
+            OfflineFormFileHelper.deleteManualPdfFile(context, patternId);
+            return outcome;
+        }
+
+        File manualFilesDir = OfflineFormFileHelper.getManualFilesDir(context, patternId);
+        if (!manualFilesDir.exists() && !manualFilesDir.mkdirs()) {
+            throw new IOException(context.getString(R.string.offline_error_manual_save_failed));
+        }
+
+        // 逐文件独立处理：单个失败不清空已成功的文件，也不影响其它文件。
+        List<String> usedFileNames = new ArrayList<>();
+        Set<String> downloadedNames = new HashSet<>();
+
+        for (int index = 0; index < urls.size(); index++) {
+            if (cancelled.get()) {
+                throw new InterruptedException("cancelled");
+            }
+            String resolvedUrl = resolveManualPdfUrl(urls.get(index), currentUrl);
+            String fallbackName = getFileNameFromUrl(resolvedUrl, index);
+            try {
+                String fileName = downloadSingleManualFile(
+                        context, patternId, resolvedUrl, fallbackName, usedFileNames,
+                        manualFilesDir, progressDialog, cancelled, metered);
+                usedFileNames.add(fileName);
+                downloadedNames.add(fileName);
+                outcome.succeededNames.add(fileName);
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (Exception e) {
+                writeErrorLog("下载离线说明文档失败：" + resolvedUrl + "，详情：" + e);
+                outcome.failures.add(new ManualDownloadFailure(fallbackName, e.getMessage()));
+            }
+        }
+
+        // 仅在本次全部成功时收敛目录，避免下载失败时误删服务器仍需要的旧手册。
+        if (!outcome.hasFailure()) {
+            OfflineFormFileHelper.cleanupManualFilesExcept(context, patternId, downloadedNames);
+        }
+
+        return outcome;
+    }
+
+    /**
+     * 下载单个说明书 PDF，带超时、瞬时错误重试与完整性校验。
+     * 4xx 等不可重试错误直接抛出；计量网络下 maxAttempts 为 1（不重试）。
+     *
+     * @return 最终落盘的文件名
+     */
+    private String downloadSingleManualFile(
+            Context context,
+            String patternId,
+            String resolvedUrl,
+            String fallbackName,
+            List<String> usedFileNames,
+            File manualFilesDir,
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled,
+            boolean metered) throws IOException, InterruptedException {
+
+        int maxAttempts = metered ? 1 : MANUAL_DOWNLOAD_MAX_ATTEMPTS;
+        IOException lastError = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (cancelled.get()) {
+                throw new InterruptedException("cancelled");
+            }
+
+            HttpURLConnection connection = null;
+            File tempFile = null;
+            try {
+                connection = (HttpURLConnection) new URL(resolvedUrl).openConnection();
+                connection.setConnectTimeout(MANUAL_DOWNLOAD_CONNECT_TIMEOUT_MS);
+                connection.setReadTimeout(MANUAL_DOWNLOAD_READ_TIMEOUT_MS);
+                String cookie = CookieManager.getInstance().getCookie(resolvedUrl);
+                if (StringUtils.isNotBlank(cookie)) {
+                    connection.setRequestProperty("Cookie", cookie);
+                }
+                connection.connect();
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode < 200 || responseCode >= 300) {
+                    String message = context.getString(R.string.offline_error_manual_download_failed_with_code, responseCode);
+                    // 4xx 视为永久错误，不重试；其余（5xx、408、429 等）可重试。
+                    boolean retryable = responseCode < 400 || responseCode >= 500;
+                    throw new ManualDownloadException(message, retryable);
+                }
+
+                String fileName = HACDownloadManager.parseContentDisposition(
+                        connection.getHeaderField("Content-Disposition"));
+                if (StringUtils.isNullOrBlank(fileName)) {
+                    fileName = fallbackName;
+                }
+                fileName = makeUniqueFileName(fileName, usedFileNames);
+                File targetFile = OfflineFormFileHelper.getManualFile(context, patternId, fileName);
+                if (targetFile == null) {
+                    throw new ManualDownloadException(context.getString(R.string.offline_error_manual_save_failed), false);
+                }
+                tempFile = new File(manualFilesDir, "." + targetFile.getName() + ".tmp");
+
+                int contentLength = connection.getContentLength();
+                long totalRead = downloadToFile(connection, tempFile, contentLength, progressDialog, cancelled);
+
+                // 完整性校验：长度不符视为截断，按可重试错误处理。
+                if (contentLength > 0 && totalRead != contentLength) {
+                    throw new ManualDownloadException(
+                            "手册文件下载不完整（" + totalRead + "/" + contentLength + "）", true);
+                }
+
+                Files.move(tempFile.toPath(), targetFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                tempFile = null; // 已移走，无需再清理临时文件
+                return targetFile.getName();
+            } catch (ManualDownloadException e) {
+                if (!e.retryable) {
+                    throw e;
+                }
+                lastError = e;
+                retryBackoff(attempt, maxAttempts, cancelled);
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (IOException e) {
+                lastError = e;
+                retryBackoff(attempt, maxAttempts, cancelled);
+            } finally {
+                if (tempFile != null && tempFile.exists() && !tempFile.delete()) {
+                    writeErrorLog("删除离线说明文档临时文件失败：" + tempFile.getAbsolutePath());
+                }
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+        }
+
+        throw lastError != null ? lastError : new IOException("manual download failed");
+    }
+
+    /**
+     * 将响应体写入临时文件，过程中检查取消标记。
+     *
+     * @return 实际写入的字节数
+     */
+    private long downloadToFile(
+            HttpURLConnection connection,
+            File tempFile,
+            int contentLength,
+            ProgressDialog progressDialog,
+            AtomicBoolean cancelled) throws IOException, InterruptedException {
+
+        long totalRead = 0;
+        long startTime = System.currentTimeMillis();
+        updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+
+        try (InputStream input = connection.getInputStream();
+             FileOutputStream output = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                if (cancelled.get()) {
+                    throw new InterruptedException("cancelled");
+                }
+                output.write(buffer, 0, read);
+                totalRead += read;
+                updateManualDownloadProgress(progressDialog, contentLength, totalRead, startTime);
+            }
+        }
+
+        return totalRead;
+    }
+
+    /**
+     * 指数退避 + 抖动；最后一次尝试后不再等待。
+     */
+    private void retryBackoff(int attempt, int maxAttempts, AtomicBoolean cancelled) throws InterruptedException {
+        if (attempt >= maxAttempts || cancelled.get()) {
+            return;
+        }
+        long delay = Math.min(MANUAL_DOWNLOAD_RETRY_MAX_DELAY_MS,
+                MANUAL_DOWNLOAD_RETRY_BASE_DELAY_MS * (1L << (attempt - 1)));
+        // 在 [delay/2, delay] 区间内抖动，避免多个文件同时重试。
+        delay = delay / 2 + (long) (Math.random() * (delay / 2 + 1));
+        Thread.sleep(delay);
+    }
+
+    private String getFileNameFromUrl(String url, int index) {
+        try {
+            String path = new URL(url).getPath();
+            int separatorIndex = path == null ? -1 : path.lastIndexOf('/');
+            String fileName = separatorIndex >= 0 ? path.substring(separatorIndex + 1) : path;
+            fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
+            return StringUtils.isNotBlank(fileName) ? fileName : "document-" + (index + 1) + ".pdf";
+        } catch (Exception ignored) {
+            return "document-" + (index + 1) + ".pdf";
+        }
+    }
+
+    private String makeUniqueFileName(String fileName, List<String> usedFileNames) {
+        String normalized = fileName == null ? "" : fileName.replace('\\', '/');
+        int separatorIndex = normalized.lastIndexOf('/');
+        if (separatorIndex >= 0) {
+            normalized = normalized.substring(separatorIndex + 1);
+        }
+        if (StringUtils.isNullOrBlank(normalized) || ".".equals(normalized) || "..".equals(normalized)) {
+            normalized = "document.pdf";
+        }
+
+        String baseName = normalized;
+        String extension = "";
+        int dotIndex = normalized.lastIndexOf('.');
+        if (dotIndex > 0) {
+            baseName = normalized.substring(0, dotIndex);
+            extension = normalized.substring(dotIndex);
+        }
+        String candidate = normalized;
+        int suffix = 2;
+        while (usedFileNames.contains(candidate)) {
+            candidate = baseName + " (" + suffix++ + ")" + extension;
+        }
+        return candidate;
+    }
+
+    private String resolveManualPdfUrl(String manualPdfUrl, String currentUrl) throws IOException {
+        return StringUtils.isNotBlank(currentUrl)
+                ? new URL(new URL(currentUrl), manualPdfUrl).toString()
+                : new URL(manualPdfUrl).toString();
+    }
+
+    private String readSignatureDataUrl(Context context, String patternId) {
+        File signatureFile = OfflineFormFileHelper.getSignatureFile(context, patternId);
+        if (!signatureFile.exists()) {
+            return "";
+        }
+
+        try (InputStream input = new FileInputStream(signatureFile);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                output.write(buffer, 0, read);
+            }
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
+        } catch (IOException e) {
+            writeErrorLog("读取离线表单签名失败：" + e);
+            return "";
+        }
+    }
+
+    private ProgressDialog showManualDownloadDialog(Context context) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return createManualDownloadDialog(context);
+        }
+
+        AtomicReference<ProgressDialog> dialogRef = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            dialogRef.set(createManualDownloadDialog(context));
+            latch.countDown();
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return dialogRef.get();
+    }
+
+    private ProgressDialog createManualDownloadDialog(Context context) {
+        ProgressDialog progressDialog = new ProgressDialog(context);
+        progressDialog.setTitle(context.getString(R.string.offline_dialog_manual_download_title));
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        return progressDialog;
+    }
+
+    private void updateManualDownloadProgress(ProgressDialog progressDialog, int contentLength, long totalRead, long startTime) {
+        if (progressDialog == null) {
+            return;
+        }
+        runOnUiThread(() -> {
+            long elapsedMillis = Math.max(1, System.currentTimeMillis() - startTime);
+            double speedBytesPerSecond = totalRead * 1000.0 / elapsedMillis;
+            if (contentLength > 0) {
+                progressDialog.setIndeterminate(false);
+                progressDialog.setMax(contentLength);
+                progressDialog.setProgress((int) Math.min(totalRead, contentLength));
+                progressDialog.setProgressNumberFormat(formatBytesAsMb(totalRead) + "/" + formatBytesAsMb(contentLength));
+            } else {
+                progressDialog.setIndeterminate(true);
+            }
+            progressDialog.setMessage(formatBytesAsMb(totalRead) + "，" + formatBytesAsMb(speedBytesPerSecond) + "/s");
+        });
+    }
+
+    private String formatBytesAsMb(double bytes) {
+        return String.format(java.util.Locale.CHINA, "%.2f MB", bytes / 1024.0 / 1024.0);
+    }
+
+    private void finishManualDownload(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        finishAsyncOperation(progressDialog, callbackParams, errorLog);
+    }
+
+    private void finishAddPattern(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        finishAsyncOperation(progressDialog, callbackParams, errorLog);
+    }
+
+    private void finishAsyncOperation(ProgressDialog progressDialog, CallbackParams callbackParams, String errorLog) {
+        runOnUiThread(() -> {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+            if (errorLog != null) {
+                writeErrorLog(errorLog);
+            }
+            callback(callbackParams);
+        });
+    }
+
+    private List<String> buildDefaultDisplayColumns(OfflineFormDefinition definition) {
+        List<String> displayColumns = new ArrayList<>();
+        for (BaseFormItem item : OfflineFormDefinitionFlattener.flattenFields(definition)) {
+            displayColumns.add(item.getId());
+        }
+        return displayColumns;
+    }
+
+    /**
+     * 说明书下载结果：成功的文件名与失败清单。
+     */
+    private static class ManualDownloadOutcome {
+
+        final List<String> succeededNames = new ArrayList<>();
+        final List<ManualDownloadFailure> failures = new ArrayList<>();
+
+        boolean hasFailure() {
+            return !failures.isEmpty();
+        }
+
+        String getFailedSummary() {
+            List<String> names = new ArrayList<>();
+            for (ManualDownloadFailure failure : failures) {
+                names.add(failure.name);
+            }
+            return String.join("、", names);
+        }
+    }
+
+    /**
+     * 单个说明书下载失败的信息。
+     */
+    private static class ManualDownloadFailure {
+
+        final String name;
+        final String reason;
+
+        ManualDownloadFailure(String name, String reason) {
+            this.name = name;
+            this.reason = reason;
+        }
+    }
+
+    /**
+     * 说明书下载异常。retryable 标记是否属于可重试的瞬时错误。
+     */
+    private static class ManualDownloadException extends IOException {
+
+        final boolean retryable;
+
+        ManualDownloadException(String message, boolean retryable) {
+            super(message);
+            this.retryable = retryable;
+        }
+    }
+}

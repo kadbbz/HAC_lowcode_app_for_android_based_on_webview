@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 填报页字段底部"更新时间"文本的标记 id，用于在 ViewHolder 复用时定位/移除旧的时间行。 -->
+    <item name="offline_field_update_time" type="id" />
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置页Preference右侧的扫码按钮，只负责显示按钮，点击逻辑在ScanEditTextPreference中绑定。 -->
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cmdPreferenceScan"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/ui_title_scanner_activity"
+    android:padding="8dp"
+    android:src="@drawable/ic_scan_code" />
