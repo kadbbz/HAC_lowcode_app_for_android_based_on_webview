@@ -299,7 +299,14 @@ public class OfflinePlusProxy extends AbstractProxy{
             return;
         }
 
-        callback(CallbackParams.success(buildExportRecordsResult(projectId)));
+        // 与批量导出一致：在后台线程读取记录并构建导出 JSON，避免同步占用 WebView 的 JS 线程。
+        new Thread(() -> {
+            try {
+                callback(CallbackParams.success(buildExportRecordsResult(projectId)));
+            } catch (Exception e) {
+                callback(CallbackParams.error(e.toString()));
+            }
+        }).start();
     }
 
     @JavascriptInterface
