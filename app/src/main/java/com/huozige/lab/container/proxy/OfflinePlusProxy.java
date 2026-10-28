@@ -13,6 +13,7 @@ import android.webkit.JavascriptInterface;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.OfflinePlusExportListActivity;
 import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
@@ -84,6 +85,15 @@ public class OfflinePlusProxy extends AbstractProxy{
     private static final long MANUAL_DOWNLOAD_RETRY_BASE_DELAY_MS = 800;
     /** 说明书 PDF 下载：重试退避上限（毫秒） */
     private static final long MANUAL_DOWNLOAD_RETRY_MAX_DELAY_MS = 4_000;
+
+    /**
+     * 离线导出结果会交给插件 JS 按标准 JSON 解析，必须关闭 fastjson 默认的循环引用检测。
+     * 同一字段的多个附件共享同一个 path 数组，开启检测时后续附件会被序列化成
+     * {"$ref":"$.attachments[0].path"}，插件侧无法识别该结构，导致附件定位与回写丢项。
+     */
+    private static final SerializerFeature[] EXPORT_JSON_FEATURES = {
+            SerializerFeature.DisableCircularReferenceDetect
+    };
 
     private ActivityResultLauncher<Intent> _exportMultipleRecordsLauncher;
 
@@ -335,14 +345,14 @@ public class OfflinePlusProxy extends AbstractProxy{
     private String buildExportRecordsResult(String projectId) {
         Context context = this.getWebView().getContext();
         List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
-        return buildExportRecordsResultObject(context, projectId, records).toJSONString();
+        return JSON.toJSONString(buildExportRecordsResultObject(context, projectId, records), EXPORT_JSON_FEATURES);
     }
 
     private String buildExportRecordsResults(List<String> projectIds) {
         Context context = this.getWebView().getContext();
         JSONArray results = new JSONArray();
         if (projectIds == null) {
-            return results.toJSONString();
+            return JSON.toJSONString(results, EXPORT_JSON_FEATURES);
         }
 
         for (String projectId : projectIds) {
@@ -352,7 +362,7 @@ public class OfflinePlusProxy extends AbstractProxy{
             List<OfflineFormRecord> records = readSubmittedRecords(context, projectId);
             results.add(buildExportRecordsResultObject(context, projectId, records));
         }
-        return results.toJSONString();
+        return JSON.toJSONString(results, EXPORT_JSON_FEATURES);
     }
 
     private JSONObject buildExportRecordsResultObject(Context context, String projectId, List<OfflineFormRecord> records) {
