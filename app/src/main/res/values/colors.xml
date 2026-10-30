@@ -24,6 +24,8 @@
     <color name="offline_form_danger_pressed">#C93A3F</color>
     <color name="offline_form_ok">#12A150</color>
     <color name="offline_form_group_bg">#EAF6FD</color>
+    <!-- 嵌套子分组左侧标识：主题色 45% 淡化版，用于与根分组的实心品牌色竖条区分层级 -->
+    <color name="offline_form_group_accent_nested">#8CD5F5</color>
     <color name="offline_form_text_bg">#FFFFFFFF</color>
     <color name="offline_form_text_title">#2F3A45</color>
     <color name="offline_form_text_content">#5F6368</color>

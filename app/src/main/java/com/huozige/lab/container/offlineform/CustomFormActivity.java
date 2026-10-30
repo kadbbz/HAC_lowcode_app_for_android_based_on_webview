@@ -141,11 +141,12 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private LinearLayout _filterSegmentLayout;
     private LinearLayout _searchInputLayout;
     private LinearLayout _filterBarLayout;
-    // 内容卡片容器：分页布局下是白色圆角面板（顶部含 Group Header），平铺布局下透明承载分组卡片。
+    // 内容卡片容器：分页布局下是白色圆角面板（顶部含 Group Header）；
+    // 平铺布局下透明，内部每张卡片（根分组 / 连续散项）自带白底与圆角。
     private LinearLayout _contentCardLayout;
     private LinearLayout _pageIndicatorLayout;
     private TextView _pageNameTextView;
-    // 底栏标准分页器中间的页码：‹ 第 x / y 组 ›，仅逐组分页布局显示，点页码打开分组目录。
+    // 底栏标准分页器中间的页码：分页布局为「第 x / y 组」，平铺布局为「第 x / y 项」。
     private TextView _itemPageCountView;
     // 底栏左侧「上一项 / 页码 / 下一项」区域：单页分页表单 / 无可导航项时隐藏，保存按钮通栏。
     private LinearLayout _itemNavigationButtonsLayout;
@@ -198,6 +199,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private int _currentStepIndex;
     // 逐组分页布局下的当前页下标（仅对当前 step 有意义）。
     private int _currentPageIndex;
+    // 平铺布局下当前可见的卡片下标（根分组卡片 / 连续散项卡片）：底栏分页器显示「第 x / y 项」并按边界置灰。
+    private int _flatCardIndex;
     // 当前 step 的页集合；flat 布局下始终为空。
     private List<OfflineFormPage> _pages = new ArrayList<>();
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
@@ -568,6 +571,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                     if (_userTouchInProgress) {
                         clearInputFocus();
                     }
+                    // 平铺布局的底栏分页器跟随滚动，显示当前顶级项并同步边界按钮。
+                    if (!isPagedLayout()) {
+                        updateFlatPagerState();
+                    }
                 });
         _recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -630,8 +637,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 }
                 persistRecord();
                 _currentStepIndex = tab.getPosition();
-                // 切到新步骤时回到该步骤的第一页；分页与步骤切换互相独立。
+                // 切到新步骤时回到该步骤的第一页 / 第一张卡片；分页与步骤切换互相独立。
                 _currentPageIndex = 0;
+                _flatCardIndex = 0;
                 resetFilterMode();
                 renderCurrentStep();
                 resetScroll();
@@ -1036,6 +1044,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             _itemNavigationLayout.setVisibility(View.GONE);
             _pageIndicatorLayout.setVisibility(View.GONE);
             updateFilterBarVisibility();
+            // 加载失败 / 记录缺失时也按当前布局铺内容表面，避免平铺布局停留在 XML 默认的灰色页面底。
+            applyContentSurface(isPagedLayout());
             if (_quickActions != null) {
                 _quickActions.setVisibility(View.GONE);
             }
@@ -1123,6 +1133,11 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             items = buildCurrentStepDisplayItems(step);
         }
         _adapter.setDisplayItems(items);
+        if (!paged) {
+            // 筛选 / 重渲染后卡片数量可能变化，收敛到合法范围。
+            _flatCardIndex = Math.max(0, Math.min(_flatCardIndex,
+                    Math.max(0, _adapter.getItemCount() - 1)));
+        }
         applyContentSurface(paged);
         boolean searchResults = showingSearchResults();
         _searchResultsLayout.setVisibility(searchResults ? View.VISIBLE : View.GONE);
@@ -1137,11 +1152,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /**
-     * 内容区底色与留白随布局切换。
+     * 内容区底色随布局切换（两种布局的内容元素样式规则一致，差异只在内容表面）。
      *
-     * <p>分页布局下整页只有一个表单组，内容直接铺在白色页面上（不再套卡片、不再画行分隔线），
-     * 因此去掉 RecyclerView 的四周留白、并把滚动区域铺白，避免页脚露出灰色底；
-     * 平铺布局仍用灰色页面底衬托分组卡片。</p>
+     * <p>分页布局：内容卡片是白色 12dp 圆角面板，当前页的 Group Header 与字段都在面板内。
+     * 平铺布局：内容卡片透明，其内部把每个根分组 / 连续散项分别包成与分页同款的白色圆角卡片。</p>
      */
     private void applyContentSurface(boolean paged) {
         if (_contentCardLayout != null) {
@@ -1150,22 +1164,19 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 _contentCardLayout.setBackgroundResource(R.drawable.offline_form_content_bg);
                 _contentCardLayout.setClipToOutline(true);
             } else {
+                // 平铺下内容卡片只作为卡片列表的容器，透明；圆角与白底由每张卡片自己提供。
                 _contentCardLayout.setBackground(null);
                 _contentCardLayout.setClipToOutline(false);
             }
         }
         if (_formScrollView != null) {
-            if (paged) {
-                // 白色底由外层内容卡片负责，滚动区本身透明。
-                _formScrollView.setBackground(null);
-            } else {
-                _formScrollView.setBackgroundColor(getColor(R.color.offline_form_page_bg));
-            }
+            // 两种布局都靠外层铺底：分页铺白卡、平铺铺浅灰页面底，滚动区本身透明。
+            _formScrollView.setBackground(null);
         }
-        if (_recyclerView != null) {
-            int inset = dp(this, 4);
-            int padding = paged ? 0 : inset;
-            _recyclerView.setPadding(padding, padding, padding, padding);
+        if (_searchResultsLayout != null) {
+            // 搜索结果面板两种布局一致：白色 12dp 圆角卡片（分页在内容面板内，平铺在内容区 12dp 外边距内）。
+            _searchResultsLayout.setBackgroundResource(R.drawable.offline_form_content_bg);
+            _searchResultsLayout.setClipToOutline(true);
         }
     }
 
@@ -1214,8 +1225,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /**
-     * 筛选 / 搜索行常驻：分页与平铺布局都固定显示在 Tabs（/页头）与内容卡片之间。
-     * 分页布局下与 Tabs 之间补 9dp 上间距，平铺布局保持原来的紧凑间距。
+     * 筛选 / 搜索行常驻：分页与平铺布局都固定显示在 Tabs（/页头）与内容卡片之间，
+     * 与上方 Tabs 的间距统一为 9dp，保证两种布局的筛选行位置一致。
      */
     private void updateFilterBarVisibility() {
         if (_filterBarLayout == null) {
@@ -1223,7 +1234,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         }
         boolean visible = _formLoaded && _definition != null;
         _filterBarLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
-        int topPadding = isPagedLayout() ? dp(this, 9) : 0;
+        int topPadding = dp(this, 9);
         _filterBarLayout.setPaddingRelative(
                 _filterBarLayout.getPaddingStart(),
                 topPadding,
@@ -1351,7 +1362,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         if (isPagedLayout()) {
             navigatePage(direction);
         } else {
-            navigateRootItem(direction);
+            navigateFlatCard(direction);
         }
     }
 
@@ -2012,21 +2023,23 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         return null;
     }
 
-    private void navigateRootItem(int direction) {
-        int targetPosition = findRootItemPosition(direction);
+    /** 平铺布局：滚动到上一张 / 下一张卡片（根分组卡片或连续散项卡片）。 */
+    private void navigateFlatCard(int direction) {
+        int targetPosition = findFlatCardPosition(direction);
         if (targetPosition < 0) {
             return;
         }
-        scrollToRootItem(targetPosition);
+        scrollToFlatCard(targetPosition);
     }
 
-    private int findRootItemPosition(int direction) {
+    /** 按滚动位置找下一张卡片的适配器下标：返回卡片顶部越过滚动锚点的一张。 */
+    private int findFlatCardPosition(int direction) {
         int itemCount = _adapter.getItemCount();
         int anchorY = getCurrentContentScrollY() + dp(this, direction > 0 ? 16 : -16);
         int start = direction > 0 ? 0 : itemCount - 1;
         int end = direction > 0 ? itemCount : -1;
         for (int i = start; i != end; i += direction > 0 ? 1 : -1) {
-            View itemView = getRootItemView(i);
+            View itemView = getFlatCardView(i);
             if (itemView != null && (direction > 0 ? itemView.getTop() > anchorY : itemView.getTop() < anchorY)) {
                 return i;
             }
@@ -2038,14 +2051,18 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         return _formScrollView.getScrollY() - _recyclerView.getTop();
     }
 
-    private void scrollToRootItem(int position) {
-        scrollToRootItem(position, true);
+    private void scrollToFlatCard(int position) {
+        scrollToFlatCard(position, true);
     }
 
-    private void scrollToRootItem(int position, boolean highlight) {
+    /** 平铺布局：把指定卡片滚到视野顶部（highlight = 是否整张卡片闪光）。 */
+
+    private void scrollToFlatCard(int position, boolean highlight) {
+        _flatCardIndex = Math.max(0, position);
+        updateItemNavigationButtons();
         _recyclerView.scrollToPosition(position);
         _recyclerView.postDelayed(() -> {
-            View itemView = getRootItemView(position);
+            View itemView = getFlatCardView(position);
             if (itemView == null) {
                 return;
             }
@@ -2057,14 +2074,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         }, 80);
     }
 
-    private View getRootItemView(int position) {
+    private View getFlatCardView(int position) {
         RecyclerView.ViewHolder viewHolder = _recyclerView.findViewHolderForAdapterPosition(position);
         return viewHolder == null ? null : viewHolder.itemView;
     }
 
     /**
-     * 底部操作栏显隐：仅当当前 Step 包含组表单（顶级 group 节点）时显示「分页器 + 保存」。
-     * <p>纯文本 / 散项 Step 不提供分页与保存入口，避免在没有分组的只读页面上出现无意义的底部操作栏。</p>
+     * 底部操作栏显隐：平铺布局以卡片数决定分页器、分页布局以页数决定；保存按钮按当前内容是否含可编辑字段决定。
+     * <p>纯文本 / 单张散项卡片 Step 没有可分页的卡片，也不含可编辑字段时整条底栏隐藏。</p>
      */
     private void updateItemNavigationVisibility() {
         if (_itemNavigationLayout == null) {
@@ -2079,8 +2096,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         boolean loaded = _formLoaded && _definition != null
                 && _currentStepIndex >= 0 && _currentStepIndex < _definition.getSteps().size();
         boolean paged = isPagedLayout();
-        // 规则 1：分组器仅在「分页布局且多页」时显示；平铺布局沿用顶级项可导航性。
-        boolean pagerVisible = loaded && (paged ? _pages.size() > 1 : currentFlatItemCount() > 1);
+        // 规则 1：分组器在分页布局多页时显示；平铺布局按卡片数（分组卡片 / 连续散项卡片）决定。
+        boolean pagerVisible = loaded && (paged ? _pages.size() > 1 : currentFlatCardCount() > 1);
         // 规则 2：当前页 / 当前 Step 没有可编辑表单项时，保存按钮不显示。
         boolean saveVisible = loaded && currentContentHasEditableFields();
         boolean visible = pagerVisible || saveVisible;
@@ -2109,7 +2126,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         updateQuickActionsInset(!paged);
     }
 
-    /** 分组器通栏时左右按钮显示「上一组 / 下一组」文本；与保存并排时只显示箭头图标。 */
+    /** 分页器通栏时左右按钮显示「上一组 / 上一项」「下一组 / 下一项」文本；与保存并排时只显示箭头图标。 */
     private void updatePagerButtonLabels(boolean fullWidth, boolean paged) {
         if (_previousItemButton == null || _nextItemButton == null) {
             return;
@@ -2125,7 +2142,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 ? R.string.offline_button_next_group : R.string.offline_button_next_item);
     }
 
-    private int currentFlatItemCount() {
+    /** 平铺布局当前卡片数量（根分组卡片 + 连续散项卡片）。 */
+    private int currentFlatCardCount() {
         return _adapter == null ? 0 : _adapter.getItemCount();
     }
 
@@ -2174,16 +2192,22 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /**
-     * 「上一项 / 下一项」可用态：分页布局按页码边界；
-     * 平铺布局在只有一个顶级项时禁用（没有可跳转的目标）。
+     * 底栏分页器可用态：分页布局按页码边界；平铺布局按当前可见卡片的上下边界。
+     * 平铺布局与分页布局共用同一套分页器样式，中间显示「第 x / y 项」。
      */
     private void updateItemNavigationButtons() {
+        boolean paged = isPagedLayout();
+        int flatItemCount = currentFlatCardCount();
         if (_itemPageCountView != null) {
-            boolean paged = isPagedLayout() && _pages.size() > 1;
-            _itemPageCountView.setVisibility(paged ? View.VISIBLE : View.GONE);
-            if (paged) {
-                _itemPageCountView.setText(getString(R.string.offline_page_count,
-                        _currentPageIndex + 1, _pages.size()));
+            boolean showCount = paged ? _pages.size() > 1 : flatItemCount > 1;
+            _itemPageCountView.setVisibility(showCount ? View.VISIBLE : View.GONE);
+            // 平铺布局的计数只表示当前位置，不提供分组目录入口。
+            _itemPageCountView.setClickable(paged);
+            if (showCount) {
+                _itemPageCountView.setText(paged
+                        ? getString(R.string.offline_page_count, _currentPageIndex + 1, _pages.size())
+                        : getString(R.string.offline_item_count,
+                                Math.min(_flatCardIndex, flatItemCount - 1) + 1, flatItemCount));
             }
         }
         if (_pageSwitching) {
@@ -2194,14 +2218,47 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             _nextItemButton.setAlpha(0.4f);
             return;
         }
-        boolean paged = isPagedLayout();
-        boolean flatHasMultipleItems = _adapter != null && _adapter.getItemCount() > 1;
-        boolean previousEnabled = paged ? _currentPageIndex > 0 : flatHasMultipleItems;
-        boolean nextEnabled = paged ? _currentPageIndex < _pages.size() - 1 : flatHasMultipleItems;
+        boolean previousEnabled = paged
+                ? _currentPageIndex > 0
+                : flatItemCount > 1 && _flatCardIndex > 0;
+        boolean nextEnabled = paged
+                ? _currentPageIndex < _pages.size() - 1
+                : flatItemCount > 1 && _flatCardIndex < flatItemCount - 1;
         _previousItemButton.setEnabled(previousEnabled);
         _nextItemButton.setEnabled(nextEnabled);
         _previousItemButton.setAlpha(previousEnabled ? 1f : 0.4f);
         _nextItemButton.setAlpha(nextEnabled ? 1f : 0.4f);
+    }
+
+    /** 平铺布局：按滚动位置更新当前卡片下标，变化时才刷新底栏分页器。 */
+    private void updateFlatPagerState() {
+        int index = findVisibleFlatCardIndex();
+        if (index == _flatCardIndex) {
+            return;
+        }
+        _flatCardIndex = index;
+        updateItemNavigationButtons();
+    }
+
+    /** 取当前滚动位置对应的卡片下标；尚未完成布局时沿用上次取值。 */
+    private int findVisibleFlatCardIndex() {
+        int itemCount = currentFlatCardCount();
+        if (itemCount == 0) {
+            return 0;
+        }
+        // 与 navigateFlatCard 同一套滚动基准：RecyclerView 在 NestedScrollView 内整体展开，
+        // 不能依赖 findFirstVisibleItemPosition，需按项在内容里的顶部位置判断。
+        int anchorY = getCurrentContentScrollY() + dp(this, 8);
+        for (int i = 0; i < itemCount; i++) {
+            View itemView = getFlatCardView(i);
+            if (itemView == null || itemView.getHeight() <= 0) {
+                continue;
+            }
+            if (itemView.getTop() + itemView.getHeight() > anchorY) {
+                return i;
+            }
+        }
+        return Math.max(0, Math.min(_flatCardIndex, itemCount - 1));
     }
 
     /**
@@ -2239,10 +2296,9 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _updatingTabs = true;
         boolean showTabs = _definition.getSteps().size() > 1;
         _stepTabLayout.setVisibility(showTabs ? View.VISIBLE : View.GONE);
-        // 分页布局下 Tab 与页头同处白色区域，用一条发丝线分隔；平铺布局保持原样。
+        // Tab 下方发丝线：分页与平铺布局一致（白色 Tab 与筛选行之间用一条发丝线分隔）。
         if (_stepFooterDivider != null) {
-            _stepFooterDivider.setVisibility(
-                    showTabs && isPagedLayout() ? View.VISIBLE : View.GONE);
+            _stepFooterDivider.setVisibility(showTabs ? View.VISIBLE : View.GONE);
         }
         _stepTabLayout.removeAllTabs();
         for (int i = 0; i < _definition.getSteps().size(); i++) {
@@ -2783,10 +2839,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         if (isPagedLayout()) {
             resetScroll();
         } else {
-            int position = _adapter.getRootPositionForNode(targetRootNode);
+            int position = _adapter.getFlatCardPositionForNode(targetRootNode);
             if (position >= 0) {
                 // 目标字段由本方法统一高亮，这里不再对整条顶级项闪光。
-                scrollToRootItem(position, false);
+                scrollToFlatCard(position, false);
             }
         }
         String fieldId = findFirstRequiredUnsatisfiedFieldId(targetRootNode);

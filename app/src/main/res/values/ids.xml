@@ -6,4 +6,6 @@
     <item name="offline_field_id_tag" type="id" />
     <!-- 分组 / 说明文本 itemView 的标记 id：搜索结果定位分组或说明节点时使用。 -->
     <item name="offline_node_tag" type="id" />
+    <!-- 平铺布局顶层分组表头下方发丝线的标记 id：分组折叠 / 展开时同步显隐。 -->
+    <item name="offline_group_header_divider_tag" type="id" />
 </resources>

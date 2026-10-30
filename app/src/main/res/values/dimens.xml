@@ -29,6 +29,20 @@
     <dimen name="offline_form_group_nested_title_text_size">16sp</dimen>
     <dimen name="offline_form_chrome_text_size">15sp</dimen>
     <dimen name="offline_form_chrome_meta_text_size">13sp</dimen>
+    <!--
+      分组标题行令牌：分页布局的 Group Header、平铺布局的顶层分组折叠行、嵌套分组折叠行共用一套基础规格。
+      分页 Group Header：18sp 加粗单行标题 + 行高 56dp + 左侧品牌色竖条（根分组标识），下方通栏 1dp 发丝线；
+      平铺顶层分组折叠行：行高 56dp + 品牌色竖条 + 右侧 24dp 折叠箭头；
+      嵌套分组折叠行：行高 56dp + 淡化主题色竖条（区分层级）+ 右侧 24dp 折叠箭头。
+    -->
+    <dimen name="offline_form_group_header_padding_horizontal">16dp</dimen>
+    <dimen name="offline_form_group_header_padding_end">12dp</dimen>
+    <dimen name="offline_form_group_header_min_height">56dp</dimen>
+    <dimen name="offline_form_group_toggle_size">24dp</dimen>
+    <dimen name="offline_form_group_toggle_gap">8dp</dimen>
+    <dimen name="offline_form_group_accent_width">3dp</dimen>
+    <dimen name="offline_form_group_accent_height">15dp</dimen>
+    <dimen name="offline_form_group_accent_gap">8dp</dimen>
     <!-- 分页表单区域（白色面板）的圆角，配合四周 12dp 外边距形成浮动面板观感。 -->
     <dimen name="offline_form_content_corner_radius">12dp</dimen>
     <!-- 取值行右侧箭头与文字的间距 -->

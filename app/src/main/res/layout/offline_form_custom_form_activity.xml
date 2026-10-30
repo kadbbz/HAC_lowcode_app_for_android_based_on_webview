@@ -67,7 +67,10 @@
 
     </LinearLayout>
 
-    <!-- 步骤 Tab 下方发丝线（分页布局且有多个步骤时显示，用于分隔 Tab 与页头） -->
+    <!--
+        步骤 Tab 下方发丝线：分页与平铺布局一致 —— 有多个步骤时显示，
+        用于分隔白色 Tab 与下方的筛选 / 搜索行。
+    -->
     <View
         android:id="@+id/divider_step_bar_footer"
         android:layout_width="match_parent"
@@ -77,7 +80,7 @@
 
     <!--
         筛选行（Step 级）：非搜索态为分段筛选 + 搜索按钮；搜索态整行替换为输入框。
-        分页与平铺布局都常驻这一行；分页布局下与 Tabs 之间的 9dp 上间距由代码按布局设置。
+        分页与平铺布局都常驻这一行；两种布局下与上方 Tabs 之间的 9dp 上间距由代码统一设置。
     -->
     <LinearLayout
         android:id="@+id/layout_filter_bar"
@@ -252,8 +255,9 @@
     </LinearLayout>
 
     <!--
-        内容卡片：分页布局下是白色圆角面板，顶部包含 Group Header（组标题 + 页次 / 分组目录，见 layout_page_indicator）；
-        平铺布局下透明承载分组卡片。四周 12dp 外边距让内容与页面底色、上下 chrome 分开。
+        内容区容器：分页布局下是白色 12dp 圆角面板，顶部包含 Group Header（组名 + 下方发丝线，见 layout_page_indicator）；
+        平铺布局下透明，只作为卡片列表容器 —— 每张卡片（根分组 / 连续散项）由 FormAdapter 渲染为与分页内容卡片
+        同款的白底 12dp 圆角卡片，卡片之间留 12dp 间距。两种布局共用 12dp 外边距与「分组头、行分隔线、字段行」样式规则。
     -->
     <LinearLayout
         android:id="@+id/layout_content_card"
@@ -269,7 +273,8 @@
 
         <!--
             Group Header（仅逐组分页布局、且当前页为分组时显示）。
-            页标题行 38dp 高（与右侧分组按钮同高），上下各留 10dp；下方发丝线与字段区分隔。
+            与平铺布局的顶层分组折叠行共用同一套规格：行高 56dp、左侧品牌色竖条（根分组标识）、
+            18sp 加粗单行组名；下方发丝线与字段区分隔。分页分组不可折叠，因此没有右侧折叠箭头。
         -->
         <LinearLayout
             android:id="@+id/layout_page_indicator"
@@ -282,11 +287,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
+                android:minHeight="@dimen/offline_form_group_header_min_height"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="10dp">
+                android:paddingStart="@dimen/offline_form_group_header_padding_horizontal"
+                android:paddingEnd="@dimen/offline_form_group_header_padding_horizontal">
+
+                <!-- 根分组标识：与平铺布局顶层分组折叠行同一规格（品牌色实心竖条） -->
+                <View
+                    android:layout_width="@dimen/offline_form_group_accent_width"
+                    android:layout_height="@dimen/offline_form_group_accent_height"
+                    android:layout_marginEnd="@dimen/offline_form_group_accent_gap"
+                    android:background="@drawable/offline_form_group_accent"
+                    android:importantForAccessibility="no" />
 
                 <TextView
                     android:id="@+id/text_page_name"
@@ -428,8 +440,7 @@
                     android:id="@+id/recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:padding="4dp" />
+                    android:clipToPadding="false" />
 
             </LinearLayout>
 
