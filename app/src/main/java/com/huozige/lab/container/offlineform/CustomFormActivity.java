@@ -128,6 +128,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private static final long AUTO_SAVE_DELAY_MS = 600;
     // 字段高亮闪光的持续时间（“仅未填”筛选与“跳转首个未填必填项”共用）。
     private static final long FIELD_HIGHLIGHT_MS = 1000;
+    // 平铺布局「上一项 / 下一项」程序化滚动后，恢复「按滚动位置反算当前卡片」逻辑的等待时长。
+    private static final long FLAT_PAGER_SCROLL_SETTLE_MS = 600;
     // 翻页动效：旧页卡片整页滑出屏幕，切换数据后新页从另一侧整页滑入（不做淡入淡出）。
     private static final long PAGE_SWITCH_OUT_DURATION_MS = 140;
     private static final long PAGE_SWITCH_IN_DURATION_MS = 200;
@@ -199,8 +201,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private int _currentStepIndex;
     // 逐组分页布局下的当前页下标（仅对当前 step 有意义）。
     private int _currentPageIndex;
-    // 平铺布局下当前可见的卡片下标（根分组卡片 / 连续散项卡片）：底栏分页器显示「第 x / y 项」并按边界置灰。
+    // 平铺布局下当前的卡片下标（根分组卡片 / 连续散项卡片）：底栏分页器显示「第 x / y 项」并按边界置灰。
     private int _flatCardIndex;
+    // 平铺布局分页器程序化滚动进行中：此期间保持逻辑下标，避免内容不足一屏或已到内容底部时被滚动位置反算回退。
+    private boolean _flatPagerScrolling;
     // 当前 step 的页集合；flat 布局下始终为空。
     private List<OfflineFormPage> _pages = new ArrayList<>();
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
@@ -894,6 +898,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN) {
             _userTouchInProgress = true;
+            // 用户重新触摸（含打断程序化滚动）后，恢复按滚动位置反算当前卡片。
+            _flatPagerScrolling = false;
             View focused = getCurrentFocus();
             // 点击「当前字段整块」（含字段名所在行）以外的区域时，才取消输入状态；
             // 点字段名或字段内边距不会结束输入。
@@ -1133,6 +1139,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             items = buildCurrentStepDisplayItems(step);
         }
         _adapter.setDisplayItems(items);
+        _flatPagerScrolling = false;
         if (!paged) {
             // 筛选 / 重渲染后卡片数量可能变化，收敛到合法范围。
             _flatCardIndex = Math.max(0, Math.min(_flatCardIndex,
@@ -2023,28 +2030,20 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         return null;
     }
 
-    /** 平铺布局：滚动到上一张 / 下一张卡片（根分组卡片或连续散项卡片）。 */
+    /**
+     * 平铺布局：切到上一张 / 下一张卡片（根分组卡片或连续散项卡片）。
+     *
+     * <p>按 {@link #_flatCardIndex} 的逻辑下标步进，而不是扫描滚动位置：
+     * 折叠后内容可能不足一屏、或目标卡片已到内容底部而无法滚到视野顶部，
+     * 扫描方式会反复返回同一张卡片，导致连续点击「下一项」卡住。</p>
+     */
     private void navigateFlatCard(int direction) {
-        int targetPosition = findFlatCardPosition(direction);
-        if (targetPosition < 0) {
+        int itemCount = currentFlatCardCount();
+        int targetPosition = _flatCardIndex + direction;
+        if (targetPosition < 0 || targetPosition >= itemCount) {
             return;
         }
         scrollToFlatCard(targetPosition);
-    }
-
-    /** 按滚动位置找下一张卡片的适配器下标：返回卡片顶部越过滚动锚点的一张。 */
-    private int findFlatCardPosition(int direction) {
-        int itemCount = _adapter.getItemCount();
-        int anchorY = getCurrentContentScrollY() + dp(this, direction > 0 ? 16 : -16);
-        int start = direction > 0 ? 0 : itemCount - 1;
-        int end = direction > 0 ? itemCount : -1;
-        for (int i = start; i != end; i += direction > 0 ? 1 : -1) {
-            View itemView = getFlatCardView(i);
-            if (itemView != null && (direction > 0 ? itemView.getTop() > anchorY : itemView.getTop() < anchorY)) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private int getCurrentContentScrollY() {
@@ -2056,14 +2055,18 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /** 平铺布局：把指定卡片滚到视野顶部（highlight = 是否整张卡片闪光）。 */
-
     private void scrollToFlatCard(int position, boolean highlight) {
         _flatCardIndex = Math.max(0, position);
         updateItemNavigationButtons();
         _recyclerView.scrollToPosition(position);
+        // 程序化滚动窗口内不按滚动位置反算下标：目标卡片可能因内容不足一屏 / 已到内容底部而无法滚到顶部，
+        // 反算会把下标回退到上一张，表现为连续点「下一项」停在第二项。
+        _flatPagerScrolling = true;
+        _formScrollView.postDelayed(() -> _flatPagerScrolling = false, FLAT_PAGER_SCROLL_SETTLE_MS);
         _recyclerView.postDelayed(() -> {
             View itemView = getFlatCardView(position);
             if (itemView == null) {
+                _flatPagerScrolling = false;
                 return;
             }
             int scrollY = Math.max(0, _recyclerView.getTop() + itemView.getTop() - dp(this, 8));
@@ -2230,8 +2233,11 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _nextItemButton.setAlpha(nextEnabled ? 1f : 0.4f);
     }
 
-    /** 平铺布局：按滚动位置更新当前卡片下标，变化时才刷新底栏分页器。 */
+    /** 平铺布局：用户滚动后按滚动位置同步当前卡片下标（程序化翻卡片期间不反算）。 */
     private void updateFlatPagerState() {
+        if (_flatPagerScrolling) {
+            return;
+        }
         int index = findVisibleFlatCardIndex();
         if (index == _flatCardIndex) {
             return;
@@ -2246,8 +2252,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         if (itemCount == 0) {
             return 0;
         }
-        // 与 navigateFlatCard 同一套滚动基准：RecyclerView 在 NestedScrollView 内整体展开，
-        // 不能依赖 findFirstVisibleItemPosition，需按项在内容里的顶部位置判断。
+        // RecyclerView 在 NestedScrollView 内整体展开，不能依赖 findFirstVisibleItemPosition，
+        // 需按卡片在内容里的顶部位置判断当前可见卡片。
         int anchorY = getCurrentContentScrollY() + dp(this, 8);
         for (int i = 0; i < itemCount; i++) {
             View itemView = getFlatCardView(i);
