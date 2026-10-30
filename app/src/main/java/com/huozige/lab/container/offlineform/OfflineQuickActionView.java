@@ -17,9 +17,9 @@ import com.huozige.lab.container.R;
 /**
  * 填报页边缘的悬浮快捷按钮组。
  *
- * <p>主按钮放在一个“把手”容器里：朝向屏幕内侧的一侧全圆角、朝向屏边的一侧为方角并直接连到边框。
+ * <p>主按钮放在一个“把手”容器里：吸附屏边时朝向屏幕内侧的一侧全圆角、朝向屏边的一侧为方角并直接连到边框；
  * 收起时把手只露圆角那一小段（半圆贴边），点击后整组移入屏内完整显示并向上弹出其它圆形按钮；
- * 2 秒无操作会自动收回。整组可拖动，松手后自动吸附到左右边缘。</p>
+ * 2 秒无操作会自动收回。整组可拖动，一旦拖动脱离边缘则把手切换为完整圆形，松手吸附回左右边缘后再切回“一边圆一边方”。</p>
  */
 public class OfflineQuickActionView extends FrameLayout {
 
@@ -186,6 +186,8 @@ public class OfflineQuickActionView extends FrameLayout {
                 float deltaY = event.getRawY() - downRawY;
                 if (!dragging && (Math.abs(deltaX) > touchSlop || Math.abs(deltaY) > touchSlop)) {
                     dragging = true;
+                    // 拖动脱离边缘期间把手显示为完整圆形；松手吸附到边缘后（动画结束）再切回贴边形状。
+                    applyHandleShape(true);
                 }
                 if (dragging) {
                     setX(startX + deltaX);
@@ -269,9 +271,18 @@ public class OfflineQuickActionView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-    /** 松手后吸附到左右两侧边缘，并把纵向范围限制在可视区内。 */
+    /** 松手后吸附到左右两侧边缘，并把纵向范围限制在可视区内；到位后再切回“一边圆一边方”的贴边形状。 */
     private void snapToEdge() {
-        moveToDockPosition(expanded, true);
+        View parent = (View) getParent();
+        if (parent == null || parent.getWidth() == 0) {
+            return;
+        }
+        updateDockSide();
+        float targetX = targetX(expanded);
+        float targetY = clampY(getY());
+        animate().x(targetX).y(targetY).setDuration(180)
+                .withEndAction(() -> applyHandleShape(false))
+                .start();
     }
 
     /**
@@ -286,7 +297,7 @@ public class OfflineQuickActionView extends FrameLayout {
             return;
         }
         updateDockSide();
-        applyHandleOrientation();
+        applyHandleShape(false);
         float targetX = targetX(fullyVisible);
         float targetY = clampY(getY());
         if (animate) {
@@ -305,14 +316,39 @@ public class OfflineQuickActionView extends FrameLayout {
         dockedLeft = (getX() + getWidth() / 2f) < parent.getWidth() / 2f;
     }
 
-    /** 依据吸附方向，把把手的圆角面朝向屏内、方角面朝向屏边，并让主按钮/子按钮贴向圆角一侧。 */
-    private void applyHandleOrientation() {
+    /**
+     * 切换把手的两种形态：
+     * <ul>
+     *     <li>{@code circular=false}：贴边形态，依据吸附方向让圆角面朝向屏内、方角面朝向屏边；</li>
+     *     <li>{@code circular=true}：自由悬浮形态，显示为完整圆形把手（拖动脱离边缘期间）。</li>
+     * </ul>
+     */
+    private void applyHandleShape(boolean circular) {
         if (handleContainer == null) {
             return;
         }
-        handleContainer.setBackgroundResource(dockedLeft
-                ? R.drawable.offline_quick_handle_bg_left
-                : R.drawable.offline_quick_handle_bg_right);
+        handleContainer.setBackgroundResource(circular
+                ? R.drawable.offline_quick_handle_bg_circle
+                : (dockedLeft
+                        ? R.drawable.offline_quick_handle_bg_left
+                        : R.drawable.offline_quick_handle_bg_right));
+        if (circular) {
+            // 圆形把手：主按钮/子按钮在把手内水平居中。
+            FrameLayout.LayoutParams circleToggleParams =
+                    (FrameLayout.LayoutParams) toggleButton.getLayoutParams();
+            circleToggleParams.gravity = Gravity.CENTER;
+            circleToggleParams.leftMargin = 0;
+            circleToggleParams.rightMargin = 0;
+            toggleButton.setLayoutParams(circleToggleParams);
+
+            FrameLayout.LayoutParams circleContainerParams =
+                    (FrameLayout.LayoutParams) actionContainer.getLayoutParams();
+            circleContainerParams.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+            circleContainerParams.leftMargin = 0;
+            circleContainerParams.rightMargin = 0;
+            actionContainer.setLayoutParams(circleContainerParams);
+            return;
+        }
 
         FrameLayout.LayoutParams toggleParams = (FrameLayout.LayoutParams) toggleButton.getLayoutParams();
         toggleParams.gravity = (dockedLeft ? Gravity.END : Gravity.START) | Gravity.CENTER_VERTICAL;
