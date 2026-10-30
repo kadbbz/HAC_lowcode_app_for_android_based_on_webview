@@ -271,6 +271,53 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
+    /** 平铺布局卡片总数（根分组卡片 + 连续散项卡片）。 */
+    public int getFlatCardCount() {
+        return flatCards.size();
+    }
+
+    /** 指定平铺卡片是否为根分组卡片（散项卡片无分组标题）。 */
+    public boolean isFlatGroupCard(int position) {
+        return position >= 0 && position < flatCards.size() && flatCards.get(position).isGroupCard();
+    }
+
+    /** 指定平铺分组卡片的组名；非分组卡片或无标题时返回空串。 */
+    public String getFlatGroupCardTitle(int position) {
+        if (!isFlatGroupCard(position)) {
+            return "";
+        }
+        OfflineFormNode node = flatCards.get(position).groupItem.getNode();
+        String title = node == null ? null : node.getTitle();
+        return title == null ? "" : title;
+    }
+
+    /** 指定平铺分组卡片是否处于折叠态。 */
+    public boolean isFlatGroupCardCollapsed(int position) {
+        if (!isFlatGroupCard(position)) {
+            return false;
+        }
+        OfflineFormNode node = flatCards.get(position).groupItem.getNode();
+        return node != null && collapsedGroupNodes.contains(node);
+    }
+
+    /** 切换指定平铺分组卡片的折叠态（供粘滞标题行点击使用）。 */
+    public void toggleFlatGroupCard(int position) {
+        if (!isFlatGroupCard(position)) {
+            return;
+        }
+        OfflineFormDisplayItem groupItem = flatCards.get(position).groupItem;
+        OfflineFormNode node = groupItem.getNode();
+        if (node == null) {
+            return;
+        }
+        if (collapsedGroupNodes.contains(node)) {
+            collapsedGroupNodes.remove(node);
+        } else {
+            collapseGroupWithDescendants(displayItems.indexOf(groupItem));
+        }
+        notifyDataSetChanged();
+    }
+
     /** 返回指定根级节点所在的平铺卡片下标；未找到返回 -1。 */
     public int getFlatCardPositionForNode(OfflineFormNode node) {
         if (node == null) {

@@ -425,26 +425,77 @@
 
         </LinearLayout>
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/scroll_form"
+        <!--
+            滚动区容器：平铺布局下在滚动区顶部叠加一条「当前分组标题行」粘滞条，
+            长表单滚动时始终能看清当前所在分组；分页布局隐藏该粘滞条。
+        -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <LinearLayout
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/scroll_form"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="match_parent">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycler_view"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false" />
+                    android:orientation="vertical">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false" />
+
+                </LinearLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- 平铺布局：当前分组标题行粘滞条（分组头滚出视野后显示，样式与卡片内分组折叠行一致） -->
+            <LinearLayout
+                android:id="@+id/layout_flat_sticky_header"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/offline_form_sticky_header_height"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/offline_form_group_header_padding_horizontal"
+                android:paddingEnd="@dimen/offline_form_group_header_padding_horizontal"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="@dimen/offline_form_group_accent_width"
+                    android:layout_height="@dimen/offline_form_group_accent_height"
+                    android:layout_marginEnd="@dimen/offline_form_group_accent_gap"
+                    android:background="@drawable/offline_form_group_accent"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/text_flat_sticky_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="@dimen/offline_form_page_title_text_size"
+                    android:textStyle="bold" />
+
+                <!-- 折叠箭头：与卡片内分组头一致，点击粘滞条可折叠 / 展开当前分组 -->
+                <ImageView
+                    android:id="@+id/image_flat_sticky_toggle"
+                    android:layout_width="@dimen/offline_form_group_toggle_size"
+                    android:layout_height="@dimen/offline_form_group_toggle_size"
+                    android:layout_marginStart="@dimen/offline_form_group_toggle_gap"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_offline_chevron_right_24"
+                    android:tint="@color/offline_form_muted" />
 
             </LinearLayout>
 
-        </androidx.core.widget.NestedScrollView>
+        </FrameLayout>
 
     </LinearLayout>
 

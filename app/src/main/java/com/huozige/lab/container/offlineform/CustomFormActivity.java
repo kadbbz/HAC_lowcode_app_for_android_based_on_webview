@@ -87,6 +87,7 @@ import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormIte
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItem;
 import com.huozige.lab.container.offlineform.model.formitem.signature.SignatureFormItemValue;
 import com.huozige.lab.container.offlineform.model.formitem.text.TextFormItem;
+import com.huozige.lab.container.offlineform.util.FlatStickyHeaderDrawable;
 import com.huozige.lab.container.offlineform.util.OfflineFormFieldTimes;
 import com.huozige.lab.container.offlineform.util.OfflineFormSheetHeight;
 import com.huozige.lab.container.offlineform.util.Utils;
@@ -205,6 +206,14 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private int _flatCardIndex;
     // 平铺布局分页器程序化滚动进行中：此期间保持逻辑下标，避免内容不足一屏或已到内容底部时被滚动位置反算回退。
     private boolean _flatPagerScrolling;
+    // 平铺布局：当前分组标题行粘滞条（长表单滚动时标示当前所在分组，点击可折叠 / 展开该分组）。
+    private LinearLayout _flatStickyHeaderLayout;
+    private TextView _flatStickyTitleView;
+    private ImageView _flatStickyToggleView;
+    // 粘滞条当前对应的平铺卡片下标；-1 表示未显示。
+    private int _flatStickyCardPosition = -1;
+    // 粘滞条背景：底部圆角 / 分隔线随离场进度逐步过渡。
+    private FlatStickyHeaderDrawable _flatStickyBackground;
     // 当前 step 的页集合；flat 布局下始终为空。
     private List<OfflineFormPage> _pages = new ArrayList<>();
     private ActivityResultLauncher<Intent> _imageCaptureLauncher;
@@ -336,6 +345,11 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private void initViews() {
         _recyclerView = findViewById(R.id.recycler_view);
         _formScrollView = findViewById(R.id.scroll_form);
+        _flatStickyHeaderLayout = findViewById(R.id.layout_flat_sticky_header);
+        _flatStickyTitleView = findViewById(R.id.text_flat_sticky_title);
+        _flatStickyToggleView = findViewById(R.id.image_flat_sticky_toggle);
+        _flatStickyBackground = new FlatStickyHeaderDrawable(this);
+        _flatStickyHeaderLayout.setBackground(_flatStickyBackground);
         _stepTabLayout = findViewById(R.id.tab_steps);
         _stepScrollLeftHint = findViewById(R.id.hint_step_scroll_left);
         _stepScrollRightHint = findViewById(R.id.hint_step_scroll_right);
@@ -388,6 +402,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 System.currentTimeMillis() < _highlightUntil ? new ArrayList<>(_highlightFieldIds) : null);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
         _recyclerView.setAdapter(_adapter);
+        // 卡片折叠 / 展开、筛选重渲染等会改变内容布局，布局变化后刷新粘滞条（滚动监听不会触发）。
+        _recyclerView.addOnLayoutChangeListener(
+                (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                        updateFlatStickyHeader());
     }
 
     /** 装配右下角悬浮快捷按钮组：回到顶部、跳转首个未填必填项、折叠所有分组。 */
@@ -575,9 +593,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                     if (_userTouchInProgress) {
                         clearInputFocus();
                     }
-                    // 平铺布局的底栏分页器跟随滚动，显示当前顶级项并同步边界按钮。
+                    // 平铺布局的底栏分页器与分组标题粘滞条跟随滚动。
                     if (!isPagedLayout()) {
                         updateFlatPagerState();
+                        updateFlatStickyHeader();
                     }
                 });
         _recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -588,6 +607,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
                 }
             }
         });
+        _flatStickyHeaderLayout.setOnClickListener(v -> onFlatStickyHeaderClick());
         _previousItemButton.setOnClickListener(v -> navigateItem(-1));
         _nextItemButton.setOnClickListener(v -> navigateItem(1));
         _savePageButton.setOnClickListener(v -> onSavePageClick());
@@ -1156,6 +1176,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         }
         updateFilterBarVisibility();
         updateItemNavigationVisibility();
+        _formScrollView.post(this::updateFlatStickyHeader);
     }
 
     /**
@@ -2265,6 +2286,99 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             }
         }
         return Math.max(0, Math.min(_flatCardIndex, itemCount - 1));
+    }
+
+    /**
+     * 平铺布局：更新滚动区顶部的「当前分组标题行」粘滞条。
+     *
+     * <p>粘滞条就是卡片内分组头的复制（同样的竖条 / 字号 / 折叠箭头，点击可折叠展开当前分组）：
+     * 分组头滚出视野顶部后把标题行钉在滚动区顶部，直到**该分组卡片自身的尾部**到达粘滞位置时才上推离场；
+     * 当前视口顶部为散项卡片时不显示（散项卡片没有分组标题）；分页布局不显示。</p>
+     */
+    private void updateFlatStickyHeader() {
+        if (_flatStickyHeaderLayout == null) {
+            return;
+        }
+        if (isPagedLayout() || !_formLoaded || _definition == null
+                || _formScrollView == null || _formScrollView.getVisibility() != View.VISIBLE
+                || _adapter == null || _adapter.getFlatCardCount() == 0) {
+            hideFlatStickyHeader();
+            return;
+        }
+        int stickyHeight = getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_sticky_header_height);
+        int scrollY = getCurrentContentScrollY();
+        int cardCount = _adapter.getFlatCardCount();
+        int coveringCard = -1;
+        View coveringView = null;
+        for (int i = 0; i < cardCount; i++) {
+            View cardView = getFlatCardView(i);
+            if (cardView == null) {
+                continue;
+            }
+            if (cardView.getBottom() > scrollY) {
+                coveringCard = i;
+                coveringView = cardView;
+                break;
+            }
+        }
+        // 分组卡片覆盖视口顶部、且组头（含卡片顶部）已到达滚动区顶部时开始粘滞：
+        // 此时真实组头正好与粘滞条重合并被其覆盖，标题不会先被裁掉一截再突然出现。
+        if (coveringCard < 0 || coveringView == null
+                || !_adapter.isFlatGroupCard(coveringCard)
+                || _adapter.isFlatGroupCardCollapsed(coveringCard)
+                || coveringView.getTop() > scrollY) {
+            hideFlatStickyHeader();
+            return;
+        }
+        _flatStickyCardPosition = coveringCard;
+        _flatStickyTitleView.setText(_adapter.getFlatGroupCardTitle(coveringCard));
+        _flatStickyToggleView.setRotation(
+                _adapter.isFlatGroupCardCollapsed(coveringCard) ? 90f : -90f);
+        _flatStickyHeaderLayout.setVisibility(View.VISIBLE);
+        // 由「该分组卡片自身的尾部」推动离场：卡片底边进入粘滞条高度范围时，粘滞条随卡片尾部一起上移；
+        // 底部圆角与底部发丝线随上推距离逐步过渡（而不是瞬间切换背景），与卡片尾部圆角无缝衔接。
+        int pushOffset = Math.min(0, coveringView.getBottom() - scrollY - stickyHeight);
+        float detachProgress = pushOffset < 0
+                ? Math.min(1f, -pushOffset / _flatStickyBackground.getMaxBottomCornerRadius())
+                : 0f;
+        _flatStickyBackground.setDetachProgress(detachProgress);
+        _flatStickyHeaderLayout.setTranslationY(pushOffset);
+    }
+
+    private void hideFlatStickyHeader() {
+        _flatStickyCardPosition = -1;
+        _flatStickyBackground.setDetachProgress(0f);
+        if (_flatStickyHeaderLayout.getVisibility() != View.GONE) {
+            _flatStickyHeaderLayout.setVisibility(View.GONE);
+        }
+        _flatStickyHeaderLayout.setTranslationY(0f);
+    }
+
+    /**
+     * 点击粘滞标题行：折叠 / 展开当前分组（与点击卡片内分组头同一交互），
+     * 之后按新的卡片高度重新计算粘滞状态。
+     */
+    private void onFlatStickyHeaderClick() {
+        if (_adapter == null || _flatStickyCardPosition < 0) {
+            return;
+        }
+        final int cardPosition = _flatStickyCardPosition;
+        boolean collapsing = !_adapter.isFlatGroupCardCollapsed(cardPosition);
+        _adapter.toggleFlatGroupCard(cardPosition);
+        updateItemNavigationButtons();
+        // 从粘滞条折叠分组时，折叠会移走视口上方的一整段内容，滚动位置可能骤跳；
+        // 折叠完成后把该分组卡片顶部对齐到滚动区顶部，让用户看到刚折叠的分组头与后续内容。
+        _formScrollView.postDelayed(() -> {
+            updateFlatStickyHeader();
+            if (!collapsing) {
+                return;
+            }
+            View cardView = getFlatCardView(cardPosition);
+            if (cardView != null) {
+                _formScrollView.scrollTo(0, Math.max(0, _recyclerView.getTop() + cardView.getTop()));
+            }
+        }, 50);
     }
 
     /**
