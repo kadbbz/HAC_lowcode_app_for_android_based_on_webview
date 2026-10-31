@@ -43,8 +43,6 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
     private List<OfflineFormDefinitionIndexItem> _cardItems;
     private Context _context;
     private OnProjectDeletedListener _onProjectDeletedListener;
-    // 排序模式：允许外部拖拽调整列表顺序，点击卡片不触发跳转。
-    private boolean _sortMode;
 
     public OfflinePlusCardAdapter(List<OfflineFormDefinitionIndexItem> cardItems, Context context) {
         this(cardItems, context, null);
@@ -94,16 +92,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         boolean unfinished = OfflineFormExportStatusHelper.hasUnfinishedWorkingRecord(_context, item);
         applyCardStroke(holder, unfinished);
         setContentPaddingStart(holder, dp(_context, CONTENT_PADDING_DP));
-
-
-        // 排序时点击不进入填报，避免拖拽过程中误打开项目填报页。
-        holder.itemView.setOnClickListener(v -> {
-            if (_sortMode) {
-                return;
-            }
-
-            openLatestRecord(item);
-        });
+        holder.itemView.setOnClickListener(v -> openLatestRecord(item));
     }
 
     @Override
@@ -111,13 +100,12 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
         return _cardItems.size();
     }
 
+    /**
+     * 直接持有调用方传入的列表实例（拖拽排序 {@link #moveItem} 会就地修改它），
+     * 不要在这里改成拷贝，否则 Activity 侧的顺序回填会与适配器脱节。
+     */
     public void updateData(List<OfflineFormDefinitionIndexItem> newItems) {
         _cardItems = newItems;
-        notifyDataSetChanged();
-    }
-
-    public void setSortMode(boolean sortMode) {
-        _sortMode = sortMode;
         notifyDataSetChanged();
     }
 
@@ -179,7 +167,7 @@ public class OfflinePlusCardAdapter extends RecyclerView.Adapter<OfflinePlusCard
                             ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
-        if (showDelete && !_sortMode) {
+        if (showDelete) {
             addDeleteAction(holder.dynamicCardLayout, item);
         }
     }
