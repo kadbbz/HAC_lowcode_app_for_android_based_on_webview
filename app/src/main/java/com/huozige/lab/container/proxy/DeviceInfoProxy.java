@@ -11,6 +11,8 @@ import com.huozige.lab.container.utilities.DeviceUtility;
  * 1.10.0
  * device.getSecureId()：获取当前设备的唯一标识
  * device.getDeviceInfo()：获取当前设备基础信息
+ * 1.23.6
+ * device.getDeviceInfo()：返回值新增cpu（型号、核心数）和memory（总量，单位MB）字段
  */
 public class DeviceInfoProxy extends AbstractProxy {
 
@@ -49,6 +51,16 @@ public class DeviceInfoProxy extends AbstractProxy {
         deviceInfo.put("packageName", DeviceUtility.getPackageName());
         deviceInfo.put("appVersionName", DeviceUtility.getPackageVersionName());
         deviceInfo.put("webViewVersionName", DeviceUtility.getWebViewVersionName());
+
+        JSONObject cpuInfo = new JSONObject();
+        cpuInfo.put("model", DeviceUtility.getCpuModel());
+        cpuInfo.put("cores", DeviceUtility.getCpuCoreCount());
+        deviceInfo.put("cpu", cpuInfo);
+
+        JSONObject memoryInfo = new JSONObject();
+        memoryInfo.put("totalMb", DeviceUtility.getTotalMemoryMb());
+        deviceInfo.put("memory", memoryInfo);
+
         return deviceInfo.toJSONString();
     }
 
