@@ -57,6 +57,11 @@
     <string name="ui_label_settings_lae">启用诊断日志</string>
     <string name="ui_label_settings_BCC">跳过WebView兼容性检查</string>
     <string name="ui_label_camera_photo">拍摄照片</string>
+    <string name="ui_title_image_source">选择图片来源</string>
+    <string name="ui_subtitle_image_source">请选择一种方式添加图片</string>
+    <string name="ui_desc_camera_capture">使用相机拍摄一张新照片</string>
+    <string name="ui_desc_choose_image">从设备文件中选择图片</string>
+    <string name="ui_button_choose_file">选择文件</string>
     <string name="ui_label_camera_video">拍摄视频</string>
     <string name="ui_label_camera_switch">切换摄像头</string>
     <string name="ui_message_setting_save">你确认要保存和应用应用配置吗？</string>
