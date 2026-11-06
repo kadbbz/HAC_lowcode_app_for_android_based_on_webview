@@ -136,6 +136,8 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private static final long PAGE_SWITCH_IN_DURATION_MS = 200;
 
     private RecyclerView _recyclerView;
+    // 表单视图容器（滚动区 + 平铺布局粘滞条）：与搜索结果卡片交替占用内容区，不可同时可见。
+    private FrameLayout _formContainerLayout;
     private NestedScrollView _formScrollView;
     private TabLayout _stepTabLayout;
     private ImageView _stepScrollLeftHint;
@@ -344,6 +346,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
 
     private void initViews() {
         _recyclerView = findViewById(R.id.recycler_view);
+        _formContainerLayout = findViewById(R.id.layout_form_container);
         _formScrollView = findViewById(R.id.scroll_form);
         _flatStickyHeaderLayout = findViewById(R.id.layout_flat_sticky_header);
         _flatStickyTitleView = findViewById(R.id.text_flat_sticky_title);
@@ -1167,7 +1170,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         }
         applyContentSurface(paged);
         boolean searchResults = showingSearchResults();
+        // 结果卡片与表单容器同为 weight=1 的兄弟节点：展示结果时必须整块隐藏表单容器，
+        // 只隐藏内部滚动区会让空容器继续占掉一半高度，结果区域看起来就像固定了高度。
         _searchResultsLayout.setVisibility(searchResults ? View.VISIBLE : View.GONE);
+        _formContainerLayout.setVisibility(searchResults ? View.GONE : View.VISIBLE);
         _formScrollView.setVisibility(searchResults ? View.GONE : View.VISIBLE);
         if (searchResults) {
             _pageIndicatorLayout.setVisibility(View.GONE);

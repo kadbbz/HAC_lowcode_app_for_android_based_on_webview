@@ -428,8 +428,10 @@
         <!--
             滚动区容器：平铺布局下在滚动区顶部叠加一条「当前分组标题行」粘滞条，
             长表单滚动时始终能看清当前所在分组；分页布局隐藏该粘滞条。
+            展示搜索结果时整块容器隐藏，让结果卡片独占内容区（否则两者同为 weight=1，结果只占半屏）。
         -->
         <FrameLayout
+            android:id="@+id/layout_form_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
