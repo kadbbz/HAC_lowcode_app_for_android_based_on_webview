@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  人员签名抽屉：标题行（左标题 / 右 n/m）+ 通栏签名人列表（与表单字段同样式，分隔线分隔）。
+  不再显示进度条；高度在代码中按内容收敛，超出上限后列表内部滚动。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/offline_sheet_handle_bg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/offline_form_item_padding_horizontal"
+        android:paddingTop="2dp"
+        android:paddingEnd="@dimen/offline_form_item_padding_horizontal"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:id="@+id/signature_sheet_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/offline_form_ink"
+            android:textSize="@dimen/offline_form_group_title_text_size"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/signature_sheet_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:textColor="@color/huozige_blue"
+            android:textSize="@dimen/offline_form_chrome_text_size"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/signature_sheet_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:id="@+id/signature_sheet_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="4dp" />
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

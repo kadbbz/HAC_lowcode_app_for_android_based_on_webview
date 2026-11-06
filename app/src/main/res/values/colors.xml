@@ -6,5 +6,52 @@
     <color name="colorPrimary">#ff555555</color>
     <color name="colorPrimaryDark">#66000000</color>
     <color name="colorAccent">#ff00a1e9</color>
+    <color name="gray">#808080</color>
+    <color name="red">#CE2013</color>
+    <color name="black">#000000</color>
+    <color name="offline_form_page_bg">#EEF2F6</color>
+    <!-- 分页布局视觉标准 v1 令牌 -->
+    <color name="offline_form_ink">#1F2A33</color>
+    <color name="offline_form_sec">#5F6B76</color>
+    <color name="offline_form_muted">#93A1AC</color>
+    <color name="offline_form_brand_deep">#0B6E9B</color>
+    <color name="offline_form_brand_tint">#EAF6FD</color>
+    <color name="offline_form_brand_tint_2">#F3F9FD</color>
+    <color name="offline_form_line">#EDF1F5</color>
+    <color name="offline_form_line_strong">#DCE5EC</color>
+    <color name="offline_form_field_fill">#F7F9FB</color>
+    <color name="offline_form_danger">#E5484D</color>
+    <color name="offline_form_danger_pressed">#C93A3F</color>
+    <color name="offline_form_ok">#12A150</color>
+    <color name="offline_form_group_bg">#EAF6FD</color>
+    <!-- 嵌套子分组左侧标识：主题色 45% 淡化版，用于与根分组的实心品牌色竖条区分层级 -->
+    <color name="offline_form_group_accent_nested">#8CD5F5</color>
+    <color name="offline_form_text_bg">#FFFFFFFF</color>
+    <color name="offline_form_text_title">#2F3A45</color>
+    <color name="offline_form_text_content">#5F6368</color>
+    <color name="offline_form_progress_bg">#EAF6FD</color>
+    <color name="offline_form_progress_divider">#B9DDEC</color>
+    <color name="offline_form_progress_label">#60717D</color>
+    <color name="offline_form_progress_value">#1677A9</color>
+    <color name="offline_form_progress_value_highlight">#0087C7</color>
+    <color name="offline_form_document_list_bg">#F4F7FA</color>
+    <color name="offline_form_document_name">#263746</color>
+    <color name="offline_form_document_meta">#7A8A96</color>
+    <color name="offline_form_document_item_stroke">#DCE5EC</color>
+    <color name="offline_form_document_item_pressed">#EAF6FD</color>
+    <color name="offline_form_card_warning_stroke">#E6A700</color>
+    <!-- Header 右侧网络状态 tag：在线 = 主题色（品牌蓝），离线 = 橙色 -->
+    <color name="offline_form_status_online">@color/huozige_blue</color>
+    <color name="offline_form_status_offline">#FF8F1F</color>
+
+    <!-- 离线填报自绘开关：轨道 + 内嵌拨手（轨道尺寸即控件尺寸，拨手不会溢出） -->
+    <color name="offline_switch_track_on">#00A1E9</color>
+    <color name="offline_switch_track_on_pressed">#0089C7</color>
+    <color name="offline_switch_track_off">#D6DEE6</color>
+    <color name="offline_switch_track_off_pressed">#C5D0DA</color>
+    <!-- 禁用态：品牌色 / 轨道色整体淡化到 40%，拨手保持白色（参考 antd-mobile 禁用态） -->
+    <color name="offline_switch_track_on_disabled">#99D9F6</color>
+    <color name="offline_switch_track_off_disabled">#EFF2F5</color>
+    <color name="offline_switch_thumb">#FFFFFFFF</color>
 
 </resources>

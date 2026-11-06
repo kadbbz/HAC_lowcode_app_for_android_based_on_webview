@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 吸附在右侧时使用：左侧全圆角，右侧方角（直接连到屏边）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/white" />
+    <corners
+        android:topLeftRadius="100dp"
+        android:bottomLeftRadius="100dp"
+        android:topRightRadius="0dp"
+        android:bottomRightRadius="0dp" />
+    <stroke
+        android:width="1dp"
+        android:color="#E0E6EB" />
+</shape>

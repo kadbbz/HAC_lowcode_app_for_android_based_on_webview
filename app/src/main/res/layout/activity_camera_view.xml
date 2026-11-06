@@ -3,17 +3,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
-    android:background="#FF444444"
+    android:background="#FF000000"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Camera -->
     <com.otaliastudios.cameraview.CameraView
         android:id="@+id/camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="88dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:keepScreenOn="true"
         app:cameraSnapshotMaxHeight="1000"
         app:cameraSnapshotMaxWidth="1000"
@@ -27,54 +24,115 @@
         app:cameraFacing="back"
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
-        app:cameraGesturePinch="zoom" >
+        app:cameraGesturePinch="zoom" />
 
-    </com.otaliastudios.cameraview.CameraView>
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/closeCamera"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="96dp"
-        android:layout_gravity="bottom|start">
+        android:layout_height="40dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/camera_overlay_button_bg"
+        android:gravity="center"
+        android:minWidth="72dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="@string/offline_button_back"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+
+    <FrameLayout
+        android:id="@+id/cameraControls"
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_gravity="bottom"
+        android:background="#B3000000"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp">
+
+        <ImageButton
+            android:id="@+id/capturePicture"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_gravity="center"
+            android:background="@drawable/camera_capture_button_bg"
+            android:contentDescription="@string/ui_label_camera_photo"
+            android:padding="20dp"
+            android:tint="#FF333333"
+            app:srcCompat="@drawable/ic_photo" />
+
+        <ImageButton
+            android:id="@+id/captureVideo"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_gravity="center"
+            android:background="@drawable/camera_capture_button_bg"
+            android:contentDescription="@string/ui_label_camera_video"
+            android:padding="20dp"
+            android:tint="#FF333333"
+            app:srcCompat="@drawable/ic_video" />
 
         <ImageButton
             android:id="@+id/toggleCamera"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_margin="16dp"
-            android:background="@drawable/background"
-            android:elevation="3dp"
-            app:srcCompat="@drawable/ic_switch"
-            android:contentDescription="@string/ui_label_camera_switch" />
-    </LinearLayout>
+            android:layout_gravity="center_vertical|end"
+            android:background="@drawable/camera_overlay_button_bg"
+            android:contentDescription="@string/ui_label_camera_switch"
+            android:padding="14dp"
+            app:srcCompat="@drawable/ic_switch" />
 
-    <!-- Controls -->
-    <LinearLayout
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/photoConfirmOverlay"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:padding="16dp"
-        android:orientation="horizontal"
-        android:background="@color/colorPrimary"
-        android:weightSum="2">
+        android:layout_height="match_parent"
+        android:background="#FF000000"
+        android:visibility="gone">
 
-        <ImageButton
-            android:id="@+id/capturePicture"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:srcCompat="@drawable/ic_photo"
-            android:contentDescription="@string/ui_label_camera_photo" />
+        <ImageView
+            android:id="@+id/photoConfirmPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
 
-        <ImageButton
-            android:id="@+id/captureVideo"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:srcCompat="@drawable/ic_video"
-            android:contentDescription="@string/ui_label_camera_video" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:layout_gravity="bottom"
+            android:background="#B3000000"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/retakePhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/camera_overlay_button_bg"
+                android:gravity="center"
+                android:text="@string/offline_button_retake"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/usePhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:background="@drawable/camera_overlay_button_bg"
+                android:gravity="center"
+                android:text="@string/offline_button_use_photo"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

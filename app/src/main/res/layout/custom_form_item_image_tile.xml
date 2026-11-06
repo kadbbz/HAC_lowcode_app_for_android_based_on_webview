@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 已上传图片瓦片：图片区 1:1 + 下沿整条删除条（PDA 大热区）。 -->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.huozige.lab.container.offlineform.formitem.image.SquareFrameLayout
+            android:id="@+id/image_preview_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/image_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/image_error_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/offline_image_error_bg"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/offline_text_image_load_failed"
+                android:textColor="@color/offline_form_text_content"
+                android:textSize="11sp"
+                android:visibility="gone" />
+
+        </com.huozige.lab.container.offlineform.formitem.image.SquareFrameLayout>
+
+        <LinearLayout
+            android:id="@+id/image_delete_bar"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:background="@drawable/offline_image_delete_bar_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_offline_delete_small" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="@string/offline_button_delete"
+                android:textColor="@color/white"
+                android:textSize="11.5sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

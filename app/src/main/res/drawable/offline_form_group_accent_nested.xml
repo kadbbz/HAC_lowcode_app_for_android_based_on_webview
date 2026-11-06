@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    嵌套子分组左侧标识：主题色 45% 淡化版竖条（3×15dp，圆角 2dp），与根分组的实心品牌色竖条区分层级。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/offline_form_group_accent_nested" />
+    <corners android:radius="2dp" />
+</shape>

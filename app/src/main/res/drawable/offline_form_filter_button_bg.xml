@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  筛选按钮背景：中性灰描边（muted outline），不使用主题色。
+  默认 1dp 浅灰描边；选中（筛选条件不是「全部」）改用中性灰描边提示；
+  按下态用浅灰填充。圆角 10dp 与左侧搜索框一致。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape>
+            <solid android:color="@color/white" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/offline_form_muted" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/offline_form_field_fill" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/offline_form_muted" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/white" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/offline_form_line_strong" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</selector>

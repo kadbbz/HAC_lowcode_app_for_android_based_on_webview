@@ -1,12 +1,14 @@
 package com.huozige.lab.container.utilities;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
@@ -18,9 +20,11 @@ import androidx.core.content.FileProvider;
 import com.elvishew.xlog.XLog;
 import com.huozige.lab.container.HACApplication;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -123,6 +127,82 @@ public class DeviceUtility {
             return pinfo.versionName;
         }
 
+    }
+
+    /**
+     * 读取CPU型号（尽力而为）。
+     * Android 12起优先读取Build.SOC_MODEL；旧版本从/proc/cpuinfo的Hardware字段读取；
+     * 均不可用时退回Build.HARDWARE或Build.BOARD。
+     *
+     * @return CPU型号；无法识别时返回空字符串
+     */
+    public static String getCpuModel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            String socModel = Build.SOC_MODEL;
+            if (!Build.UNKNOWN.equals(socModel)) {
+                String socManufacturer = Build.SOC_MANUFACTURER;
+                return Build.UNKNOWN.equals(socManufacturer) ? socModel : socManufacturer + " " + socModel;
+            }
+        }
+
+        String cpuInfoHardware = readCpuInfoHardware();
+        if (!cpuInfoHardware.isEmpty()) {
+            return cpuInfoHardware;
+        }
+
+        if (!Build.HARDWARE.isEmpty() && !Build.UNKNOWN.equals(Build.HARDWARE)) {
+            return Build.HARDWARE;
+        }
+
+        return Build.BOARD;
+    }
+
+    /**
+     * 读取CPU逻辑核心数
+     *
+     * @return 核心数
+     */
+    public static int getCpuCoreCount() {
+        return Runtime.getRuntime().availableProcessors();
+    }
+
+    /**
+     * 读取设备内存总量（含系统占用部分）
+     *
+     * @return 内存总量，单位MB；读取失败时返回0
+     */
+    public static long getTotalMemoryMb() {
+        ActivityManager activityManager = (ActivityManager) HACApplication.getInstance().getSystemService(Context.ACTIVITY_SERVICE);
+        if (activityManager == null) {
+            return 0;
+        }
+
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(memoryInfo);
+        return memoryInfo.totalMem / (1024 * 1024);
+    }
+
+    /**
+     * 从/proc/cpuinfo中读取Hardware字段，形如“Qualcomm Technologies, Inc SM6375”
+     *
+     * @return Hardware字段的值；读取失败或不存在时返回空字符串
+     */
+    private static String readCpuInfoHardware() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("/proc/cpuinfo"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Hardware")) {
+                    int separatorIndex = line.indexOf(':');
+                    if (separatorIndex >= 0) {
+                        return line.substring(separatorIndex + 1).trim();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            XLog.w("读取/proc/cpuinfo失败，无法获取CPU型号。\r\n%s", e);
+        }
+
+        return "";
     }
 
     /**

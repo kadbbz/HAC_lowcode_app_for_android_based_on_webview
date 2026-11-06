@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="@color/offline_form_brand_tint_2" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <item
+        android:width="3dp"
+        android:gravity="start">
+        <shape>
+            <solid android:color="@color/huozige_blue" />
+        </shape>
+    </item>
+</layer-list>

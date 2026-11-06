@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 嵌套分组展开内容区的顶部发丝线：左右各缩进 16dp，作为「子项标题下方」的分隔线。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:left="16dp"
+        android:right="16dp"
+        android:top="0dp"
+        android:gravity="top">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/offline_form_line" />
+            <size android:height="1dp" />
+        </shape>
+    </item>
+</layer-list>
