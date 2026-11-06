@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 分页 footer（上一项 / 下一项）：白底 + 顶部 1dp 发丝线，线与表单分隔线同色，替代原来的 elevation 阴影。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+    <item
+        android:height="1dp"
+        android:gravity="top">
+        <shape>
+            <solid android:color="@color/offline_form_line" />
+        </shape>
+    </item>
+</layer-list>

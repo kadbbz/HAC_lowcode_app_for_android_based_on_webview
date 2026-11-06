@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  表单列表筛选抽屉：单选（全部 / 已导出 / 未导出），点选后立即生效并关闭。
+  样式与其它离线填报抽屉一致：拖拽条 + 标题 + 发丝线 + 通栏选项行；
+  选中项用右侧对勾 + 品牌蓝文字标识，行高 56dp 便于 PDA 触控。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/offline_sheet_handle_bg" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="10dp"
+        android:text="@string/offline_title_filter"
+        android:textColor="@color/offline_form_ink"
+        android:textSize="@dimen/offline_form_chrome_text_size"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line" />
+
+    <RadioGroup
+        android:id="@+id/filter_option_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/filter_option_all"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:button="@null"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/offline_filter_all"
+            android:textColor="@color/offline_form_filter_option_text"
+            android:textSize="@dimen/offline_form_chrome_text_size" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/offline_form_line" />
+
+        <RadioButton
+            android:id="@+id/filter_option_exported"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:button="@null"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/offline_filter_exported"
+            android:textColor="@color/offline_form_filter_option_text"
+            android:textSize="@dimen/offline_form_chrome_text_size" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@color/offline_form_line" />
+
+        <RadioButton
+            android:id="@+id/filter_option_unexported"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackground"
+            android:button="@null"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/offline_filter_unexported"
+            android:textColor="@color/offline_form_filter_option_text"
+            android:textSize="@dimen/offline_form_chrome_text_size" />
+
+    </RadioGroup>
+
+</LinearLayout>

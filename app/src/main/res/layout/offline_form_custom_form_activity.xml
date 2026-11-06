@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/offline_form_page_bg">
+
+    <!-- 统一定制 Header：返回 / 当前 Step 名称 / 网络状态 tag -->
+    <include layout="@layout/offline_form_header" />
+
+    <!-- 步骤 Tab -->
+    <LinearLayout
+        android:id="@+id/layout_step_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                app:tabIndicatorColor="@color/huozige_blue"
+                app:tabMode="scrollable"
+                app:tabSelectedTextColor="@color/huozige_blue"
+                app:tabTextAppearance="@style/OfflineFormTabTextAppearance"
+                app:tabTextColor="@color/offline_form_muted" />
+
+            <ImageView
+                android:id="@+id/hint_step_scroll_left"
+                android:layout_width="36dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="@null"
+                android:elevation="2dp"
+                android:importantForAccessibility="no"
+                android:padding="4dp"
+                android:src="@drawable/ic_offline_step_arrow_left"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/hint_step_scroll_right"
+                android:layout_width="36dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="@null"
+                android:elevation="2dp"
+                android:importantForAccessibility="no"
+                android:padding="4dp"
+                android:src="@drawable/ic_offline_step_arrow_right"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!--
+        步骤 Tab 下方发丝线：分页与平铺布局一致 —— 有多个步骤时显示，
+        用于分隔白色 Tab 与下方的筛选 / 搜索行。
+    -->
+    <View
+        android:id="@+id/divider_step_bar_footer"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/offline_form_line"
+        android:visibility="gone" />
+
+    <!--
+        筛选行（Step 级）：非搜索态为分段筛选 + 搜索按钮；搜索态整行替换为输入框。
+        分页与平铺布局都常驻这一行；两种布局下与上方 Tabs 之间的 9dp 上间距由代码统一设置。
+    -->
+    <LinearLayout
+        android:id="@+id/layout_filter_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="9dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/layout_filter_segment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <RadioGroup
+                android:id="@+id/seg_filter"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/offline_form_seg_track"
+                android:orientation="horizontal"
+                android:padding="2dp">
+
+                <RadioButton
+                    android:id="@+id/filter_all"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/offline_form_seg_bg"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="@string/offline_filter_all"
+                    android:textColor="@color/offline_form_seg_text"
+                    android:textSize="@dimen/offline_form_chrome_text_size" />
+
+                <RadioButton
+                    android:id="@+id/filter_unfilled"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/offline_form_seg_bg"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="@string/offline_filter_unfilled"
+                    android:textColor="@color/offline_form_seg_text"
+                    android:textSize="@dimen/offline_form_chrome_text_size" />
+
+                <RadioButton
+                    android:id="@+id/filter_filled"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/offline_form_seg_bg"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="@string/offline_filter_filled"
+                    android:textColor="@color/offline_form_seg_text"
+                    android:textSize="@dimen/offline_form_chrome_text_size" />
+
+            </RadioGroup>
+
+            <!--
+                搜索按钮与分段筛选轨道同高（34dp 项 + 上下 2dp 内衬 = 38dp），
+                圆角沿用 ghost 按钮背景的 10dp，与页脚「上一项 / 下一项」一致。
+            -->
+            <TextView
+                android:id="@+id/button_search_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/offline_form_ghost_button_bg"
+                android:drawableStart="@drawable/ic_offline_search"
+                android:drawablePadding="5dp"
+                android:drawableTint="@color/offline_form_ink"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="12dp"
+                android:text="@string/offline_filter_search"
+                android:textColor="@color/offline_form_ink"
+                android:textSize="@dimen/offline_form_chrome_text_size"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- 搜索态：标准控件样式的输入框（38dp 高、10dp 圆角），与筛选行其他组件同规格 -->
+        <LinearLayout
+            android:id="@+id/layout_search_input"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:background="@drawable/custom_form_bg_edittext_normal"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/edit_search_input"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:gravity="center_vertical"
+                android:hint="@string/offline_hint_field_search"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:includeFontPadding="false"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:textColor="@color/offline_form_ink"
+                android:textColorHint="@color/offline_form_muted"
+                android:textSize="@dimen/offline_form_chrome_text_size" />
+
+        </LinearLayout>
+
+        <!-- 搜索会话：上一条 / 下一条命中字段（仅点击结果跳转后显示） -->
+        <ImageButton
+            android:id="@+id/button_search_previous"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/offline_form_ghost_button_bg"
+            android:contentDescription="@string/offline_search_previous"
+            android:padding="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_offline_chevron_left_24"
+            android:tint="@color/huozige_blue"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/button_search_next"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/offline_form_ghost_button_bg"
+            android:contentDescription="@string/offline_search_next"
+            android:padding="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_offline_chevron_right_24"
+            android:tint="@color/huozige_blue"
+            android:visibility="gone" />
+
+        <!-- 原输入框内的「×」移到输入框右侧，文案改为「取消」；仅搜索态显示 -->
+        <TextView
+            android:id="@+id/button_cancel_search"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginStart="10dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/offline_button_cancel"
+            android:textColor="@color/huozige_blue"
+            android:textSize="@dimen/offline_form_chrome_text_size"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!--
+        内容区容器：分页布局下是白色 12dp 圆角面板，顶部包含 Group Header（组名 + 下方发丝线，见 layout_page_indicator）；
+        平铺布局下透明，只作为卡片列表容器 —— 每张卡片（根分组 / 连续散项）由 FormAdapter 渲染为与分页内容卡片
+        同款的白底 12dp 圆角卡片，卡片之间留 12dp 间距。两种布局共用 12dp 外边距与「分组头、行分隔线、字段行」样式规则。
+    -->
+    <LinearLayout
+        android:id="@+id/layout_content_card"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_weight="1"
+        android:clipToOutline="true"
+        android:orientation="vertical">
+
+        <!--
+            Group Header（仅逐组分页布局、且当前页为分组时显示）。
+            与平铺布局的顶层分组折叠行共用同一套规格：行高 56dp、左侧品牌色竖条（根分组标识）、
+            18sp 加粗单行组名；下方发丝线与字段区分隔。分页分组不可折叠，因此没有右侧折叠箭头。
+        -->
+        <LinearLayout
+            android:id="@+id/layout_page_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/offline_form_group_header_min_height"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/offline_form_group_header_padding_horizontal"
+                android:paddingEnd="@dimen/offline_form_group_header_padding_horizontal">
+
+                <!-- 根分组标识：与平铺布局顶层分组折叠行同一规格（品牌色实心竖条） -->
+                <View
+                    android:layout_width="@dimen/offline_form_group_accent_width"
+                    android:layout_height="@dimen/offline_form_group_accent_height"
+                    android:layout_marginEnd="@dimen/offline_form_group_accent_gap"
+                    android:background="@drawable/offline_form_group_accent"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/text_page_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="@dimen/offline_form_page_title_text_size"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <View
+                android:id="@+id/divider_page_indicator_footer"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/offline_form_line" />
+
+        </LinearLayout>
+
+        <!-- 搜索结果列表：搜索态且关键词非空时替代表单项区域（字段级结果，点击定位高亮） -->
+        <LinearLayout
+            android:id="@+id/layout_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/offline_form_content_bg"
+            android:clipToOutline="true"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/layout_search_results_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="13dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="11dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/offline_search_results_title"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_search_results_count"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:textColor="@color/offline_form_muted"
+                    android:textSize="12.5sp" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/offline_form_line" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_search_results"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false" />
+
+            <!-- 无匹配字段时的空态 -->
+            <LinearLayout
+                android:id="@+id/layout_search_empty"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingStart="34dp"
+                android:paddingEnd="34dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:background="@drawable/offline_form_search_empty_bg"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_offline_search"
+                        android:tint="#AFC0CC" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_search_empty_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:textColor="@color/offline_form_sec"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:text="@string/offline_search_empty_hint"
+                    android:textColor="@color/offline_form_muted"
+                    android:textSize="12.5sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!--
+            滚动区容器：平铺布局下在滚动区顶部叠加一条「当前分组标题行」粘滞条，
+            长表单滚动时始终能看清当前所在分组；分页布局隐藏该粘滞条。
+            展示搜索结果时整块容器隐藏，让结果卡片独占内容区（否则两者同为 weight=1，结果只占半屏）。
+        -->
+        <FrameLayout
+            android:id="@+id/layout_form_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/scroll_form"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false" />
+
+                </LinearLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- 平铺布局：当前分组标题行粘滞条（分组头滚出视野后显示，样式与卡片内分组折叠行一致） -->
+            <LinearLayout
+                android:id="@+id/layout_flat_sticky_header"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/offline_form_sticky_header_height"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/offline_form_group_header_padding_horizontal"
+                android:paddingEnd="@dimen/offline_form_group_header_padding_horizontal"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="@dimen/offline_form_group_accent_width"
+                    android:layout_height="@dimen/offline_form_group_accent_height"
+                    android:layout_marginEnd="@dimen/offline_form_group_accent_gap"
+                    android:background="@drawable/offline_form_group_accent"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/text_flat_sticky_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textColor="@color/offline_form_ink"
+                    android:textSize="@dimen/offline_form_page_title_text_size"
+                    android:textStyle="bold" />
+
+                <!-- 折叠箭头：与卡片内分组头一致，点击粘滞条可折叠 / 展开当前分组 -->
+                <ImageView
+                    android:id="@+id/image_flat_sticky_toggle"
+                    android:layout_width="@dimen/offline_form_group_toggle_size"
+                    android:layout_height="@dimen/offline_form_group_toggle_size"
+                    android:layout_marginStart="@dimen/offline_form_group_toggle_gap"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_offline_chevron_right_24"
+                    android:tint="@color/offline_form_muted" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!--
+        底部操作栏：左半区 = 「上一项 / 下一项」图标按钮（白底描边），右半区 = 「保存」主按钮。
+        保存是整条栏里唯一的主题色按钮：保存当前页（当前表单组）的填写数据，停留在本页。
+    -->
+    <LinearLayout
+        android:id="@+id/layout_item_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/offline_form_nav_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/layout_nav_buttons"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/button_previous_item"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/offline_form_ghost_button_bg"
+                android:contentDescription="@string/offline_button_previous_item"
+                android:drawableStart="@drawable/ic_offline_chevron_left_24"
+                android:drawablePadding="4dp"
+                android:drawableTint="@color/offline_form_ink"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/offline_form_ink"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- 标准分页器：上一项 / 第 x / y 组 / 下一项（页码仅分页布局显示） -->
+            <TextView
+                android:id="@+id/text_item_page_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:gravity="center"
+                android:minWidth="86dp"
+                android:textColor="@color/huozige_blue"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="第 1 / 3 组" />
+
+            <TextView
+                android:id="@+id/button_next_item"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/offline_form_ghost_button_bg"
+                android:contentDescription="@string/offline_button_next_item"
+                android:drawableEnd="@drawable/ic_offline_chevron_right_24"
+                android:drawablePadding="4dp"
+                android:drawableTint="@color/offline_form_ink"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="10dp"
+                android:textColor="@color/offline_form_ink"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/button_save_page"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/offline_form_primary_button_bg"
+            android:gravity="center"
+            android:text="@string/offline_button_save"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</LinearLayout>
