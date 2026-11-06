@@ -1,6 +1,5 @@
 package com.huozige.lab.container.offlineform.formitem.select;
 
-import android.app.AlertDialog;
 import android.view.View;
 import android.widget.TextView;
 
@@ -11,6 +10,7 @@ import com.huozige.lab.container.offlineform.model.formitem.common.FormItemConfi
 import com.huozige.lab.container.offlineform.model.formitem.select.SelectFormItem;
 import com.huozige.lab.container.proxy.support.offlinecustomform.viewholder.BaseViewHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,9 +61,9 @@ public class SelectViewHolder extends BaseViewHolder {
             return;
         }
 
-        String[] items = new String[options.size()];
-        for (int i = 0; i < options.size(); i++) {
-            items[i] = options.get(i).getDisplayText();
+        List<String> labels = new ArrayList<>();
+        for (SelectFormItem.Option option : options) {
+            labels.add(option.getDisplayText());
         }
 
         int selectedIndex = -1;
@@ -75,14 +75,14 @@ public class SelectViewHolder extends BaseViewHolder {
             }
         }
 
-        new AlertDialog.Builder(itemView.getContext())
-                .setTitle(itemView.getContext().getString(R.string.offline_dialog_select_title, selectItem.getTitle()))
-                .setSingleChoiceItems(items, selectedIndex, (dialog, which) -> {
-                    SelectFormItem.Option selected = options.get(which);
-                    dialog.dismiss();
-                    requestSelection(selected);
-                })
-                .show();
+        // 底部抽屉滚轮选择；点「确定」才提交，取消 / 下滑关闭视为未选择。
+        OfflineSelectWheelSheet.show(itemView.getContext(), selectItem.getTitle(), labels, selectedIndex,
+                position -> {
+                    if (position < 0 || position >= options.size()) {
+                        return;
+                    }
+                    requestSelection(options.get(position));
+                });
     }
 
     /**
@@ -153,19 +153,22 @@ public class SelectViewHolder extends BaseViewHolder {
             tvValue.setHint("");
         } else {
             tvValue.setText("");
-            tvValue.setHint(selectItem.getHint());
+            // 配置未传水印时给一个兜底水印，避免字段看起来是空的。
+            String hint = selectItem.getHint();
+            tvValue.setHint(hint == null || hint.trim().isEmpty()
+                    ? itemView.getContext().getString(R.string.offline_hint_select)
+                    : hint);
         }
     }
 
     @Override
     public void updateErrorState() {
+        // 选择框不再套卡片/边框，错误态只用下方的红色错误文案表达（与其它字段一致）。
         if (selectItem != null && selectItem.getErrorMessage() != null) {
             tvError.setVisibility(View.VISIBLE);
             tvError.setText(selectItem.getErrorMessage());
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_error);
         } else {
             tvError.setVisibility(View.GONE);
-            tvValue.setBackgroundResource(R.drawable.custom_form_bg_edittext_normal);
         }
     }
 }

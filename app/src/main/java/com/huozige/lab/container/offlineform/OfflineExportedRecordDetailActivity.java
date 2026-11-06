@@ -6,12 +6,11 @@ import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineFormRecord;
 import com.huozige.lab.container.proxy.support.offlinecustomform.helper.OfflineFormFileHelper;
 
-public class OfflineExportedRecordDetailActivity extends BaseActivity {
+public class OfflineExportedRecordDetailActivity extends OfflineModuleActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
     public static final String EXTRA_RECORD_ID = "recordId";
 

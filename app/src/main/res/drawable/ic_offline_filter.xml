@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  筛选图标：三条由长到短的横线（filter_list），与搜索、箭头等图标同一套细描边语言。
+  描边默认次要文字色，使用处通常再用 android:tint 覆盖（列表页按筛选态在中性色之间切换）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M3,5.4L19,5.4"
+        android:strokeColor="@color/offline_form_sec"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.8" />
+    <path
+        android:pathData="M5.4,11L16.6,11"
+        android:strokeColor="@color/offline_form_sec"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.8" />
+    <path
+        android:pathData="M8.2,16.6L13.8,16.6"
+        android:strokeColor="@color/offline_form_sec"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.8" />
+</vector>

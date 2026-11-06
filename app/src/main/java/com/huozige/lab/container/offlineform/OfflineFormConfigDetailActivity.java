@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.huozige.lab.container.BaseActivity;
 import com.huozige.lab.container.R;
 import com.huozige.lab.container.offlineform.model.OfflineComputedInfo;
 import com.huozige.lab.container.offlineform.model.OfflineFormDisplayItem;
@@ -32,7 +31,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfflineFormConfigDetailActivity extends BaseActivity {
+public class OfflineFormConfigDetailActivity extends OfflineModuleActivity {
     public static final String EXTRA_PATTERN_ID = "patternId";
     private static final Integer[] RECORD_PAGE_SIZE_OPTIONS = new Integer[]{1, 10, 20, 50, 100};
 

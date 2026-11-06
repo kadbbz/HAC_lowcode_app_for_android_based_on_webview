@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 日期/时间选择项：字段名在上、选择结果在下；取值行不套边框 / 卡片，右侧箭头与选择框一致。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/picker_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
+    android:minHeight="@dimen/offline_form_item_min_height"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="@dimen/offline_form_item_padding_horizontal"
+    android:paddingTop="@dimen/offline_form_item_padding_vertical"
+    android:paddingEnd="@dimen/offline_form_item_padding_horizontal"
+    android:paddingBottom="@dimen/offline_form_item_padding_vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="@dimen/offline_form_item_label_gap"
         android:orientation="horizontal">
 
         <TextView
@@ -19,38 +24,47 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/offline_form_field_title_placeholder"
-            android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textColor="@color/offline_form_sec"
+            android:textSize="@dimen/offline_form_field_label_text_size" />
 
         <TextView
             android:id="@+id/tv_required"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
             android:text="*"
-            android:textColor="@color/red"
-            android:textSize="16sp"
+            android:textColor="@color/offline_form_danger"
+            android:textSize="@dimen/offline_form_field_label_text_size"
+            android:textStyle="bold"
             android:visibility="gone" />
 
     </LinearLayout>
 
+    <!-- 取值行：不套边框 / 卡片，水印与取值左对齐，右侧箭头与选择框保持一致 -->
     <TextView
         android:id="@+id/tv_value"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/custom_form_bg_edittext_normal"
+        android:layout_height="@dimen/offline_form_field_min_height"
+        android:background="@null"
         android:clickable="true"
+        android:drawableEnd="@drawable/ic_offline_chevron"
+        android:drawablePadding="@dimen/offline_form_field_icon_gap"
+        android:ellipsize="end"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textSize="14sp" />
+        android:paddingStart="0dp"
+        android:paddingEnd="2dp"
+        android:singleLine="true"
+        android:textColor="@color/offline_form_ink"
+        android:textColorHint="@color/offline_form_muted"
+        android:textSize="@dimen/offline_form_field_value_text_size" />
 
     <TextView
         android:id="@+id/tv_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="4dp"
-        android:textColor="@color/red"
+        android:paddingTop="6dp"
+        android:textColor="@color/offline_form_danger"
         android:textSize="12sp"
         android:visibility="gone" />
 

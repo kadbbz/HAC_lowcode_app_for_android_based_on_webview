@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="14dp"
+    android:height="14dp"
+    android:viewportWidth="14"
+    android:viewportHeight="14">
+    <!-- 放大镜：细描边圆 + 圆头手柄，与清除叉、目录按钮同一套线宽语言 -->
+    <path
+        android:pathData="M6,1.6a4.4,4.4 0 1,0 0,8.8a4.4,4.4 0 1,0 0,-8.8"
+        android:strokeColor="@color/offline_form_brand_deep"
+        android:strokeWidth="1.7" />
+    <path
+        android:pathData="M9.4,9.4L12.3,12.3"
+        android:strokeColor="@color/offline_form_brand_deep"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.7" />
+</vector>

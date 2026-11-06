@@ -70,6 +70,26 @@ public final class OfflineImageFileHelper {
     }
 
     /**
+     * 系统相机拍摄后的落盘：在后台线程按表单配置完成 EXIF 旋转、水印与压缩。
+     *
+     * <p>与自绘相机页不同，这里不回写系统相册，直接生成离线附件文件（app files 目录），
+     * 供系统相机路径在后台完成处理。</p>
+     */
+    public static AttachmentFormItemValue saveCameraImage(Context context, String patternId, ImageFormItem item,
+                                                          Uri sourceUri, List<String> watermarkLines) throws Exception {
+        if (watermarkLines == null || watermarkLines.isEmpty()) {
+            return saveImage(context, patternId, item, sourceUri);
+        }
+        ImageCompressionOptions options = item.getCompression() == null
+                ? new ImageCompressionOptions() : item.getCompression();
+        File outputFile = createOutputFile(context, patternId, "jpg");
+        writeWatermarkToFile(context, sourceUri, outputFile, watermarkLines, options);
+        AttachmentFormItemValue value = new AttachmentFormItemValue();
+        value.setFileName(outputFile.getName());
+        return value;
+    }
+
+    /**
      * 保存签名板导出的位图。签名字段与图片字段共用附件目录和水印规则，但保留 PNG 格式，
      * 避免签名透明/细线在 JPEG 重编码中失真。
      */

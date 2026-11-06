@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图片来源抽屉：仅当表单允许图片上传（allowImageUpload = true）时弹出。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/offline_sheet_handle_bg" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="10dp"
+        android:text="@string/offline_image_source_title"
+        android:textColor="@color/offline_form_ink"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/image_source_camera"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_photo"
+        android:drawablePadding="12dp"
+        android:drawableTint="@color/offline_form_brand_deep"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/offline_button_capture_image"
+        android:textColor="@color/offline_form_ink"
+        android:textSize="15sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:background="@color/offline_form_line" />
+
+    <TextView
+        android:id="@+id/image_source_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_upload_image"
+        android:drawablePadding="12dp"
+        android:drawableTint="@color/offline_form_brand_deep"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/offline_image_source_gallery"
+        android:textColor="@color/offline_form_ink"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/image_source_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/offline_form_page_bg"
+        android:gravity="center"
+        android:text="@string/offline_button_cancel"
+        android:textColor="@color/offline_form_sec"
+        android:textSize="15sp" />
+
+</LinearLayout>

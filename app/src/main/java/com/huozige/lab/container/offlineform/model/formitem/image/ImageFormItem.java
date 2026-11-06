@@ -21,6 +21,11 @@ public class ImageFormItem extends BaseFormItem {
     private ImageWatermarkOptions watermark = new ImageWatermarkOptions();
     private List<AttachmentFormItemValue> images = new ArrayList<>();
     private String patternId = "";
+    /**
+     * 临时状态：系统相机拍摄返回后正在后台加水印 / 压缩，供图片网格展示「处理中」占位。
+     * 仅进程内使用，不参与 JSON 序列化。
+     */
+    private boolean processing;
 
     public ImageFormItem(String itemType, String id, String title, String hint, boolean required) {
         super(itemType, id, title, hint, required);

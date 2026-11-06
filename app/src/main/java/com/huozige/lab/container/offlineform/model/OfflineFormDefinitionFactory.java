@@ -7,14 +7,15 @@ import java.util.List;
 
 public class OfflineFormDefinitionFactory {
     public static OfflineFormDefinition fromPatternInput(PatternInput input) {
-        return new OfflineFormDefinition(
-                input.patternId,
-                input.schemaVersion,
-                input.title,
-                input.description,
-                input.cardStyle,
-                buildSteps(input.steps)
-        );
+        OfflineFormDefinition definition = new OfflineFormDefinition();
+        definition.setPatternId(input.patternId);
+        definition.setSchemaVersion(input.schemaVersion);
+        definition.setTitle(input.title);
+        definition.setDescription(input.description);
+        definition.setCardStyle(input.cardStyle);
+        definition.setSteps(buildSteps(input.steps));
+        definition.setLayoutMode(OfflineFormDefinition.normalizeLayoutMode(input.layoutMode));
+        return definition;
     }
 
     private static List<OfflineFormStep> buildSteps(List<PatternStepInput> steps) {

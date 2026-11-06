@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      离线填报表单项尺寸标定（分页布局按此执行；平铺布局沿用同一套字段行标准）。
+
+      表单项 = 字段名（标签行）+ 字段表单组件（控件），二者上下排列。
+      默认最小高度 = 上下内边距 12 + 标签行 20（15sp）+ 标签间距 8 + 控件 46 + 上下内边距 12 = 98。
+    -->
+    <dimen name="offline_form_item_min_height">98dp</dimen>
+    <dimen name="offline_form_item_padding_horizontal">16dp</dimen>
+    <dimen name="offline_form_item_padding_vertical">12dp</dimen>
+    <dimen name="offline_form_item_label_gap">8dp</dimen>
+    <dimen name="offline_form_field_min_height">46dp</dimen>
+
+    <!--
+      表单项字号：对齐 antd-mobile 垂直表单（label 15px / 输入取值 17px / 选项 15px），PDA 场景下更清晰。
+    -->
+    <dimen name="offline_form_field_label_text_size">15sp</dimen>
+    <dimen name="offline_form_field_value_text_size">17sp</dimen>
+    <dimen name="offline_form_field_option_text_size">15sp</dimen>
+
+    <!--
+      分页布局顶部 chrome（步骤 Tab / 分组标题 / 筛选行）字号：与表单项同一套字阶。
+      页标题 20sp（分页指示器的组名，比组标题大两号）、标题 17sp（与取值文本一致）、正文 15sp（与字段名一致）、辅助 13sp。
+    -->
+    <dimen name="offline_form_tab_text_size">16sp</dimen>
+    <dimen name="offline_form_page_title_text_size">18sp</dimen>
+    <dimen name="offline_form_group_title_text_size">17sp</dimen>
+    <dimen name="offline_form_group_nested_title_text_size">16sp</dimen>
+    <dimen name="offline_form_chrome_text_size">15sp</dimen>
+    <dimen name="offline_form_chrome_meta_text_size">13sp</dimen>
+    <!--
+      分组标题行令牌：分页布局的 Group Header、平铺布局的顶层分组折叠行、嵌套分组折叠行共用一套基础规格。
+      分页 Group Header：18sp 加粗单行标题 + 行高 56dp + 左侧品牌色竖条（根分组标识），下方通栏 1dp 发丝线；
+      平铺顶层分组折叠行：行高 56dp + 品牌色竖条 + 右侧 24dp 折叠箭头；
+      嵌套分组折叠行：行高 56dp + 淡化主题色竖条（区分层级）+ 右侧 24dp 折叠箭头。
+    -->
+    <dimen name="offline_form_group_header_padding_horizontal">16dp</dimen>
+    <dimen name="offline_form_group_header_padding_end">12dp</dimen>
+    <dimen name="offline_form_group_header_min_height">56dp</dimen>
+    <!-- 平铺粘滞条高度 = 组头 56dp + 组头下 1dp 分隔线（与真实组头完全重合，避免出现双线） -->
+    <dimen name="offline_form_sticky_header_height">57dp</dimen>
+    <dimen name="offline_form_group_toggle_size">24dp</dimen>
+    <dimen name="offline_form_group_toggle_gap">8dp</dimen>
+    <dimen name="offline_form_group_accent_width">3dp</dimen>
+    <dimen name="offline_form_group_accent_height">15dp</dimen>
+    <dimen name="offline_form_group_accent_gap">8dp</dimen>
+    <!-- 分页表单区域（白色面板）的圆角，配合四周 12dp 外边距形成浮动面板观感。 -->
+    <dimen name="offline_form_content_corner_radius">12dp</dimen>
+    <!-- 取值行右侧箭头与文字的间距 -->
+    <dimen name="offline_form_field_icon_gap">8dp</dimen>
+
+    <!--
+      自绘开关尺寸：轨道宽高即控件宽高，拨手（26dp）完全内嵌在 30dp 高的轨道里，
+      左右各留 2dp；因此控件本身不会像系统 SwitchCompat 放大绘制那样溢出父容器被裁剪。
+    -->
+    <dimen name="offline_form_switch_width">52dp</dimen>
+    <dimen name="offline_form_switch_height">30dp</dimen>
+    <dimen name="offline_form_switch_thumb_size">26dp</dimen>
+    <dimen name="offline_form_switch_thumb_inset">2dp</dimen>
+
+    <!--
+      离线填报模块统一定制 Header：
+      白底 48dp + 底部发丝线；左右各一个 48dp 图标按钮，标题在整条 Header 中水平居中，
+      左右各留 56dp（48dp 按钮 + 8dp 间距）避免长标题压到按钮。
+    -->
+    <dimen name="offline_form_header_height">48dp</dimen>
+    <dimen name="offline_form_header_button_size">48dp</dimen>
+    <dimen name="offline_form_header_icon_padding">12dp</dimen>
+    <dimen name="offline_form_header_title_padding">56dp</dimen>
+    <dimen name="offline_form_header_title_text_size">18sp</dimen>
+    <!-- 左侧图标按钮的外间距：让图标与屏幕边缘之间留一点呼吸空间 -->
+    <dimen name="offline_form_header_left_margin">4dp</dimen>
+    <!-- 右侧网络状态 tag 的右外边距，以及标题与 tag 之间保留的最小间距 -->
+    <dimen name="offline_form_header_status_margin_end">12dp</dimen>
+    <dimen name="offline_form_header_status_gap">8dp</dimen>
+</resources>

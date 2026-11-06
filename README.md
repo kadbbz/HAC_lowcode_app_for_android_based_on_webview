@@ -20,6 +20,7 @@ HAC是[活字格低代码开发平台](https://www.grapecity.com.cn/solutions/hu
 * 提供读写蓝牙BLE设备的能力
 * 提供下载和预览PDF文件的能力
 * 提供获取设备唯一标识（SSAID）的能力
+* 提供读取设备基础信息（品牌、型号、Android版本、APP版本、WebView版本、CPU型号与核心数、内存总量）的能力
 * 支持离线模式（锁定返回键等页面导航操作）
 * 适配活字格[“PDA交互命令”（插件）](https://marketplace.grapecity.com.cn/ApplicationDetails?productID=SP2209070004) 
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 筛选抽屉选项文字：选中为主题色，其余为正文色。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:color="@color/huozige_blue"
+        android:state_checked="true" />
+    <item android:color="@color/offline_form_ink" />
+</selector>

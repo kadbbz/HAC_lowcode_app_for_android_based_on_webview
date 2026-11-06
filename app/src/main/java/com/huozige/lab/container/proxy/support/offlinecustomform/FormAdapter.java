@@ -2,11 +2,10 @@ package com.huozige.lab.container.proxy.support.offlinecustomform;
 
 import android.animation.LayoutTransition;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.huozige.lab.container.R;
@@ -46,16 +44,53 @@ import static com.huozige.lab.container.offlineform.util.OfflineFormUiUnitHelper
 
 public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_ROOT_GROUP = 10003;
+    private static final int VIEW_TYPE_PAGE = 10004;
+    private static final int VIEW_TYPE_SCATTER_CARD = 10005;
+    /** 行分隔线高度：分页布局与平铺布局统一为 1dp 发丝线。 */
+    private static final int ROW_DIVIDER_HEIGHT_DP = 1;
+    /** 平铺布局卡片之间的垂直间距，与分页布局内容卡片的外边距一致。 */
+    private static final int CARD_VERTICAL_GAP_DP = 12;
 
+    // 逐组分页布局：每页只有一个表单组。
+    private boolean pagedMode;
     private List<OfflineFormDisplayItem> displayItems = new ArrayList<>();
     private List<OfflineFormDisplayItem> rootItems = new ArrayList<>();
+    // 平铺布局的卡片分段：根分组各自一张卡片，连续的非分组根级节点合并为一张散项卡片。
+    private final List<FlatCard> flatCards = new ArrayList<>();
+
+    /**
+     * 平铺布局的一张卡片：根分组卡片，或连续散项合并成的卡片（与分页布局的页面切分规则一致）。
+     */
+    private static final class FlatCard {
+        private final OfflineFormDisplayItem groupItem;
+        private final int groupRootPosition;
+        private final List<OfflineFormDisplayItem> scatterItems;
+
+        private FlatCard(OfflineFormDisplayItem groupItem, int groupRootPosition,
+                         List<OfflineFormDisplayItem> scatterItems) {
+            this.groupItem = groupItem;
+            this.groupRootPosition = groupRootPosition;
+            this.scatterItems = scatterItems;
+        }
+
+        static FlatCard group(OfflineFormDisplayItem groupItem, int groupRootPosition) {
+            return new FlatCard(groupItem, groupRootPosition, null);
+        }
+
+        static FlatCard scatter(List<OfflineFormDisplayItem> scatterItems) {
+            return new FlatCard(null, -1, scatterItems);
+        }
+
+        boolean isGroupCard() {
+            return groupItem != null;
+        }
+    }
     // 折叠状态按分组节点（对象身份）保存，跨重渲染保留；使用 identity set 以规避 OfflineFormNode 的值相等语义。
     private final Set<OfflineFormNode> collapsedGroupNodes =
             Collections.newSetFromMap(new IdentityHashMap<OfflineFormNode, Boolean>());
     // 已按其“默认折叠”配置初始化过的分组节点，保证默认值只应用一次、之后尊重用户操作。
     private final Set<OfflineFormNode> defaultCollapseInitialized =
             Collections.newSetFromMap(new IdentityHashMap<OfflineFormNode, Boolean>());
-    private Map<Integer, OfflineFormItemHandler> handlersByViewType = new HashMap<>();
     private OfflineFormDefinition definition;
     private Map<String, String> formValues = new HashMap<>();
     private OnDocumentClickListener documentClickListener;
@@ -152,11 +187,17 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         documentFileNames = fileNames == null ? new ArrayList<>() : new ArrayList<>(fileNames);
     }
 
+    /** 切换逐组分页渲染：每页只有一个表单组，内容直接平铺在页面上（无卡片）。 */
+    public void setPagedMode(boolean paged) {
+        this.pagedMode = paged;
+    }
+
     public void setDisplayItems(List<OfflineFormDisplayItem> items) {
         displayItems = new ArrayList<>(items);
         // 不再清空折叠状态：用户折叠结果跨重渲染保留；仅首次为每个分组应用一次“默认折叠”。
         initializeCollapseState();
         rebuildRootItems();
+        rebuildFlatCards();
         notifyDataSetChanged();
     }
 
@@ -173,54 +214,45 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == VIEW_TYPE_ROOT_GROUP) {
-            return new RootGroupViewHolder(createRootGroupContainer(parent));
+        if (viewType == VIEW_TYPE_PAGE) {
+            return new PageViewHolder(createPageContainer(parent));
         }
-        if (viewType == OfflineFormDisplayItem.VIEW_TYPE_TEXT) {
-            return new StaticTextViewHolder(createTextContainer(parent));
+        if (viewType == VIEW_TYPE_ROOT_GROUP || viewType == VIEW_TYPE_SCATTER_CARD) {
+            return new FlatCardViewHolder(createFlatCardContainer(parent));
         }
-
-        OfflineFormItemHandler handler = handlersByViewType.get(viewType);
-        if (handler == null) {
-            throw new IllegalArgumentException("Unknown view type: " + viewType);
-        }
-        return handler.createEditViewHolder(parent);
+        throw new IllegalArgumentException("Unknown view type: " + viewType);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        OfflineFormDisplayItem item = rootItems.get(position);
-        if (holder instanceof RootGroupViewHolder) {
-            ((RootGroupViewHolder) holder).bind(item, collectGroupItems(position));
+        if (pagedMode) {
+            ((PageViewHolder) holder).bind(displayItems);
             return;
         }
-        if (holder instanceof StaticTextViewHolder) {
-            ((StaticTextViewHolder) holder).bind(item);
-            return;
-        }
-        if (holder instanceof BaseViewHolder) {
-            bindFieldViewHolder((BaseViewHolder) holder, item, position);
+        FlatCard card = flatCards.get(position);
+        applyFlatCardSpacing(holder.itemView, position);
+        FlatCardViewHolder cardHolder = (FlatCardViewHolder) holder;
+        if (card.isGroupCard()) {
+            cardHolder.bindGroupCard(card.groupItem, collectGroupItems(card.groupRootPosition));
+        } else {
+            cardHolder.bindScatterCard(card.scatterItems);
         }
     }
 
     @Override
     public int getItemCount() {
-        return rootItems.size();
+        if (pagedMode) {
+            return displayItems.isEmpty() ? 0 : 1;
+        }
+        return flatCards.size();
     }
 
     @Override
     public int getItemViewType(int position) {
-        OfflineFormDisplayItem item = rootItems.get(position);
-        if (item.isGroup()) {
-            return VIEW_TYPE_ROOT_GROUP;
+        if (pagedMode) {
+            return VIEW_TYPE_PAGE;
         }
-        if (item.isText()) {
-            return OfflineFormDisplayItem.VIEW_TYPE_TEXT;
-        }
-        OfflineFormItemHandler handler = OfflineFormItemRegistry.getHandler(item.getFormItem().getItemType());
-        int viewType = handler.getViewType();
-        handlersByViewType.put(viewType, handler);
-        return viewType;
+        return flatCards.get(position).isGroupCard() ? VIEW_TYPE_ROOT_GROUP : VIEW_TYPE_SCATTER_CARD;
     }
 
     /** 展开所有折叠的 group，便于展示校验错误。 */
@@ -239,14 +271,70 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
-    /** 返回指定节点对应的顶级项（depth=0）在 rootItems 中的位置；未找到返回 -1。 */
-    public int getRootPositionForNode(OfflineFormNode node) {
+    /** 平铺布局卡片总数（根分组卡片 + 连续散项卡片）。 */
+    public int getFlatCardCount() {
+        return flatCards.size();
+    }
+
+    /** 指定平铺卡片是否为根分组卡片（散项卡片无分组标题）。 */
+    public boolean isFlatGroupCard(int position) {
+        return position >= 0 && position < flatCards.size() && flatCards.get(position).isGroupCard();
+    }
+
+    /** 指定平铺分组卡片的组名；非分组卡片或无标题时返回空串。 */
+    public String getFlatGroupCardTitle(int position) {
+        if (!isFlatGroupCard(position)) {
+            return "";
+        }
+        OfflineFormNode node = flatCards.get(position).groupItem.getNode();
+        String title = node == null ? null : node.getTitle();
+        return title == null ? "" : title;
+    }
+
+    /** 指定平铺分组卡片是否处于折叠态。 */
+    public boolean isFlatGroupCardCollapsed(int position) {
+        if (!isFlatGroupCard(position)) {
+            return false;
+        }
+        OfflineFormNode node = flatCards.get(position).groupItem.getNode();
+        return node != null && collapsedGroupNodes.contains(node);
+    }
+
+    /** 切换指定平铺分组卡片的折叠态（供粘滞标题行点击使用）。 */
+    public void toggleFlatGroupCard(int position) {
+        if (!isFlatGroupCard(position)) {
+            return;
+        }
+        OfflineFormDisplayItem groupItem = flatCards.get(position).groupItem;
+        OfflineFormNode node = groupItem.getNode();
+        if (node == null) {
+            return;
+        }
+        if (collapsedGroupNodes.contains(node)) {
+            collapsedGroupNodes.remove(node);
+        } else {
+            collapseGroupWithDescendants(displayItems.indexOf(groupItem));
+        }
+        notifyDataSetChanged();
+    }
+
+    /** 返回指定根级节点所在的平铺卡片下标；未找到返回 -1。 */
+    public int getFlatCardPositionForNode(OfflineFormNode node) {
         if (node == null) {
             return -1;
         }
-        for (int i = 0; i < rootItems.size(); i++) {
-            if (rootItems.get(i).getNode() == node) {
-                return i;
+        for (int i = 0; i < flatCards.size(); i++) {
+            FlatCard card = flatCards.get(i);
+            if (card.isGroupCard()) {
+                if (card.groupItem.getNode() == node) {
+                    return i;
+                }
+                continue;
+            }
+            for (OfflineFormDisplayItem item : card.scatterItems) {
+                if (item.getNode() == node) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -301,6 +389,33 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    /**
+     * 平铺布局的卡片分段：根分组各自一张卡片；连续的非分组根级节点（散项文本 / 裸字段）
+     * 合并为一张散项卡片，与分页布局的页面切分规则一致。
+     */
+    private void rebuildFlatCards() {
+        flatCards.clear();
+        List<OfflineFormDisplayItem> scatterItems = new ArrayList<>();
+        for (int i = 0; i < rootItems.size(); i++) {
+            OfflineFormDisplayItem item = rootItems.get(i);
+            if (item.isGroup()) {
+                flushScatterCard(scatterItems);
+                flatCards.add(FlatCard.group(item, i));
+            } else {
+                scatterItems.add(item);
+            }
+        }
+        flushScatterCard(scatterItems);
+    }
+
+    private void flushScatterCard(List<OfflineFormDisplayItem> scatterItems) {
+        if (scatterItems.isEmpty()) {
+            return;
+        }
+        flatCards.add(FlatCard.scatter(new ArrayList<>(scatterItems)));
+        scatterItems.clear();
+    }
+
     private List<OfflineFormDisplayItem> collectGroupItems(int rootPosition) {
         OfflineFormDisplayItem rootItem = rootItems.get(rootPosition);
         if (!rootItem.isGroup()) {
@@ -319,7 +434,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return groupItems;
     }
 
-    private void toggleGroup(OfflineFormDisplayItem groupItem, TriangleToggleView toggleView, LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
+    private void toggleGroup(OfflineFormDisplayItem groupItem, View header, LinearLayout childrenLayout,
+                             List<OfflineFormDisplayItem> childItems, boolean topLevelGroup) {
         OfflineFormNode node = groupItem.getNode();
         if (node == null) {
             return;
@@ -331,45 +447,59 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // 折叠：把当前分组及其后代一并标记为折叠。
             collapseGroupWithDescendants(displayItems.indexOf(groupItem));
         }
-        toggleView.setCollapsed(collapsedGroupNodes.contains(node));
+        boolean collapsed = collapsedGroupNodes.contains(node);
+        setGroupHeaderCollapsed(header, collapsed);
         renderChildrenContent(childrenLayout, childItems);
+        if (!topLevelGroup) {
+            styleNestedContent(childrenLayout, collapsed);
+        } else {
+            // 组头下分隔线随展开状态显隐：折叠 / 空分组时隐藏，避免与外层根级分隔线叠成双线。
+            setGroupHeaderDividerVisible(header, !collapsed && !childItems.isEmpty());
+        }
     }
 
-    private View createRootGroupContainer(ViewGroup parent) {
-        LinearLayout outer = new LinearLayout(parent.getContext());
-        outer.setLayoutParams(new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        outer.setOrientation(LinearLayout.VERTICAL);
-        outer.setPadding(dp(parent.getContext(), 8), dp(parent.getContext(), 6), dp(parent.getContext(), 8), dp(parent.getContext(), 6));
-
-        CardView cardView = new CardView(parent.getContext());
-        cardView.setCardBackgroundColor(parent.getContext().getColor(R.color.white));
-        cardView.setRadius(dp(parent.getContext(), 8));
-        cardView.setCardElevation(dp(parent.getContext(), 1));
-        cardView.setUseCompatPadding(true);
-
-        LinearLayout content = new LinearLayout(parent.getContext());
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(0, 0, 0, dp(parent.getContext(), 6));
-        content.setLayoutTransition(createLayoutTransition());
-        cardView.addView(content, new CardView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        outer.addView(cardView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        return outer;
-    }
-
-    private View createTextContainer(ViewGroup parent) {
-        LinearLayout container = new LinearLayout(parent.getContext());
+    /**
+     * 分页模式下的页面容器：整页就是当前表单组的全部内容。
+     *
+     * <p>一页只有一个表单组，容器本身就是页面，不再套白色圆角卡片；内容按表单项顺序直接排列，
+     * 表单项之间的间距由表单项自身的上下内边距控制，项与项之间统一画 1dp 通栏发丝线。</p>
+     */
+    private View createPageContainer(ViewGroup parent) {
+        Context context = parent.getContext();
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
         container.setLayoutParams(new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(dp(parent.getContext(), 16), dp(parent.getContext(), 8), dp(parent.getContext(), 16), dp(parent.getContext(), 8));
+        // 页面底色：与页面顶部 Tab / 指示器 / 筛选行一致，形成整页白色表单。
+        container.setBackgroundColor(context.getColor(R.color.white));
         return container;
+    }
+
+    /**
+     * 平铺布局的卡片容器：白色 + 12dp 圆角，与分页布局的内容卡片同款。
+     * 卡片内容（分组头 + 字段行 / 散项行）由 {@link FlatCardViewHolder} 绑定。
+     */
+    private View createFlatCardContainer(ViewGroup parent) {
+        Context context = parent.getContext();
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setLayoutParams(new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        card.setBackgroundResource(R.drawable.offline_form_content_bg);
+        card.setClipToOutline(true);
+        return card;
+    }
+
+    /** 平铺布局卡片间距：首张卡片由外层内容区 12dp 外边距提供上间距，其余卡片之间留 12dp。 */
+    private void applyFlatCardSpacing(View cardView, int position) {
+        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) cardView.getLayoutParams();
+        int topMargin = position == 0 ? 0 : dp(cardView.getContext(), CARD_VERTICAL_GAP_DP);
+        if (params.topMargin != topMargin) {
+            params.topMargin = topMargin;
+            cardView.setLayoutParams(params);
+        }
     }
 
     private View createGroupHeader(ViewGroup parent) {
@@ -385,82 +515,218 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return container;
     }
 
-    private void bindGroupHeader(View itemView, OfflineFormDisplayItem item) {
+    /**
+     * 分组折叠行左侧的品牌色竖条：根分组用实心品牌色，嵌套子分组用淡化版，
+     * 两者行高/字号之外的「标识」差异用于区分层级。
+     */
+    private void addGroupAccentBar(LinearLayout container, boolean topLevelGroup) {
+        Context context = container.getContext();
+        View accentView = new View(context);
+        accentView.setBackgroundResource(topLevelGroup
+                ? R.drawable.offline_form_group_accent
+                : R.drawable.offline_form_group_accent_nested);
+        accentView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_accent_width),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_accent_height));
+        accentParams.setMarginEnd(context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_group_accent_gap));
+        container.addView(accentView, accentParams);
+    }
+
+    /** 分组折叠行右侧的折叠箭头（平铺顶层分组与嵌套分组共用）。 */
+    private void addGroupToggleChevron(LinearLayout container) {
+        Context context = container.getContext();
+        ImageView chevron = new ImageView(context);
+        chevron.setImageResource(R.drawable.ic_offline_chevron_right_24);
+        chevron.setColorFilter(context.getColor(R.color.offline_form_muted));
+        LinearLayout.LayoutParams chevronParams = new LinearLayout.LayoutParams(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_toggle_size),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_toggle_size));
+        chevronParams.setMarginStart(context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_group_toggle_gap));
+        container.addView(chevron, chevronParams);
+    }
+
+    private void bindGroupHeader(View itemView, OfflineFormDisplayItem item, boolean topLevelGroup) {
+        itemView.setTag(R.id.offline_node_tag, item.getNode());
+        Context context = itemView.getContext();
         LinearLayout container = (LinearLayout) itemView;
         container.removeAllViews();
-        int startPadding = dp(itemView.getContext(), 14 + Math.max(0, item.getDepth() - 1) * 16);
-        container.setPadding(startPadding, dp(itemView.getContext(), item.getDepth() == 0 ? 12 : 8), dp(itemView.getContext(), 14), dp(itemView.getContext(), item.getDepth() == 0 ? 10 : 6));
-        container.setBackground(item.getDepth() == 0 ? createRoundedBackground(itemView, R.color.white, 6) : null);
+        container.setBackground(null);
 
-        View accentView = new View(itemView.getContext());
-        GradientDrawable accentBackground = new GradientDrawable();
-        accentBackground.setColor(itemView.getContext().getColor(R.color.huozige_blue));
-        accentBackground.setCornerRadius(dp(itemView.getContext(), 2));
-        accentView.setBackground(accentBackground);
-        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(dp(itemView.getContext(), 4), dp(itemView.getContext(), 18));
-        accentParams.setMargins(0, 0, dp(itemView.getContext(), 8), 0);
-        container.addView(accentView, accentParams);
+        if (!topLevelGroup) {
+            bindNestedGroupHeader(container, item);
+            return;
+        }
 
-        TextView titleView = new TextView(itemView.getContext());
-        titleView.setTextColor(itemView.getContext().getColor(R.color.huozige_blue));
-        titleView.setTextSize(15);
+        // 平铺布局的顶层分组折叠行与嵌套分组同一套手风琴样式：行高 56dp、左侧根分组实心品牌色竖条、右侧折叠箭头；
+        // 标题保持 18sp 加粗单行，下方由独立发丝线与组内字段分隔。
+        container.setMinimumHeight(context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_group_header_min_height));
+        container.setPadding(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_horizontal),
+                0,
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_end),
+                0);
+        addGroupAccentBar(container, true);
+
+        TextView titleView = new TextView(context);
+        titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_page_title_text_size));
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
         titleView.setText(item.getNode().getTitle());
         container.addView(titleView, new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1));
 
-        TriangleToggleView toggleView = new TriangleToggleView(itemView.getContext());
-        toggleView.setCollapsed(collapsedGroupNodes.contains(item.getNode()));
-        container.addView(toggleView, new LinearLayout.LayoutParams(
-                dp(itemView.getContext(), 28),
-                dp(itemView.getContext(), 28)));
+        addGroupToggleChevron(container);
     }
 
-    private TriangleToggleView bindGroupHeader(View itemView, OfflineFormDisplayItem item, View.OnClickListener clickListener) {
-        bindGroupHeader(itemView, item);
-        TriangleToggleView toggleView = (TriangleToggleView) ((LinearLayout) itemView).getChildAt(2);
-        itemView.setOnClickListener(clickListener);
-        return toggleView;
-    }
+    /**
+     * 嵌套子分组的手风琴式表头：整行「淡化主题色竖条 + 标题 + 右侧细箭头」；
+     * 与顶层分组折叠行共用行高与箭头规格，用「淡化标识 + 常规字重」与根分组区分层级。
+     */
+    private void bindNestedGroupHeader(LinearLayout container, OfflineFormDisplayItem item) {
+        Context context = container.getContext();
+        container.setGravity(Gravity.CENTER_VERTICAL);
+        container.setMinimumHeight(context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_group_header_min_height));
+        container.setPadding(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_horizontal),
+                0,
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_end),
+                0);
+        addGroupAccentBar(container, false);
 
-    private void bindStaticText(View itemView, OfflineFormDisplayItem item) {
-        LinearLayout container = (LinearLayout) itemView;
-        container.removeAllViews();
-        int startPadding = dp(itemView.getContext(), 14 + Math.max(0, item.getDepth() - 1) * 16);
-        container.setPadding(startPadding, dp(itemView.getContext(), 8), dp(itemView.getContext(), 14), dp(itemView.getContext(), 10));
-        container.setBackground(createRoundedBackground(itemView, R.color.offline_form_text_bg, 6));
-
-        TextView titleView = new TextView(itemView.getContext());
-        titleView.setTextColor(itemView.getContext().getColor(R.color.offline_form_text_title));
-        titleView.setTextSize(13);
-        titleView.setTypeface(null, Typeface.BOLD);
+        TextView titleView = new TextView(context);
         titleView.setText(item.getNode().getTitle());
+        titleView.setTextColor(context.getColor(R.color.offline_form_ink));
+        // 与其它表单项的正文同字号（字段值 17sp），仅用常规字重 + 主题色竖条标识分组。
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                .getDimensionPixelSize(R.dimen.offline_form_field_value_text_size));
+        titleView.setGravity(Gravity.CENTER_VERTICAL);
+        container.addView(titleView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
 
-        container.addView(titleView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        addGroupToggleChevron(container);
+    }
 
-        OfflineFormNode node = item.getNode();
-        String textMode = node.getTextMode();
-        if (textMode == null || textMode.isEmpty() || OfflineFormNode.TEXT_MODE_TEXT.equals(textMode)) {
-            addTextContent(container, node.getContent());
-        } else if (OfflineFormNode.TEXT_MODE_PROGRESS.equals(textMode)) {
-            addProgressContent(container, itemView.getContext(), node.getProgressDisplay());
-        } else if (OfflineFormNode.TEXT_MODE_DOCUMENT.equals(textMode)) {
-            addDocumentContent(container, item);
-        } else {
-            // 未知模式按普通文本处理，保证旧版本或新增模式不会让节点内容消失。
-            addTextContent(container, node.getContent());
+    /** 表头折叠态：顶层分组与嵌套分组共用右侧箭头，折叠 = 向下、展开 = 向上。 */
+    private void setGroupHeaderCollapsed(View header, boolean collapsed) {
+        if (!(header instanceof LinearLayout)) {
+            return;
+        }
+        // 表头结构：[... , 右向箭头]，箭头始终是最后一个子 View。
+        LinearLayout container = (LinearLayout) header;
+        View child = container.getChildCount() == 0
+                ? null
+                : container.getChildAt(container.getChildCount() - 1);
+        if (child != null) {
+            child.setRotation(collapsed ? 90f : -90f);
         }
     }
 
-    private void addTextContent(LinearLayout container, String content) {
-        TextView contentView = createTextValueView(container.getContext());
-        contentView.setText(content == null ? "" : content);
-        container.addView(contentView, new LinearLayout.LayoutParams(
+    /** 顶层分组表头下方通栏发丝线的显隐（与分页布局 Group Header 下的 divider 同款）。 */
+    private void setGroupHeaderDividerVisible(View header, boolean visible) {
+        Object tag = header.getTag(R.id.offline_group_header_divider_tag);
+        if (tag instanceof View) {
+            ((View) tag).setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void styleNestedContent(LinearLayout childrenLayout, boolean collapsed) {
+        // 嵌套内容背景与父节点一致（父卡片白底）；展开时顶部画一条左右缩进 16dp 的分隔线
+        // （即「子项标题下方」的分隔线），折叠时整块收掉。
+        if (collapsed) {
+            childrenLayout.setBackground(null);
+            childrenLayout.setPadding(0, 0, 0, 0);
+            return;
+        }
+        childrenLayout.setBackgroundResource(R.drawable.offline_form_nested_top_divider_bg);
+        childrenLayout.setPadding(dp(childrenLayout.getContext(), 16), dp(childrenLayout.getContext(), 5),
+                dp(childrenLayout.getContext(), 16), dp(childrenLayout.getContext(), 10));
+    }
+
+    private View bindGroupHeader(View itemView, OfflineFormDisplayItem item,
+                                 boolean topLevelGroup, View.OnClickListener clickListener) {
+        bindGroupHeader(itemView, item, topLevelGroup);
+        itemView.setOnClickListener(clickListener);
+        return itemView;
+    }
+
+    private void bindStaticText(View itemView, OfflineFormDisplayItem item) {
+        itemView.setTag(R.id.offline_node_tag, item.getNode());
+        Context context = itemView.getContext();
+        LinearLayout container = (LinearLayout) itemView;
+        container.removeAllViews();
+        // 与可编辑表单项共用同一套左右基线与上下内边距。
+        container.setPadding(
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_horizontal),
+                context.getResources().getDimensionPixelSize(R.dimen.offline_form_item_padding_vertical));
+        container.setBackground(null);
+
+        OfflineFormNode node = item.getNode();
+        String textMode = node.getTextMode();
+        if (OfflineFormNode.TEXT_MODE_PROGRESS.equals(textMode)) {
+            addProgressContent(container, context, node.getProgressDisplay());
+        } else if (OfflineFormNode.TEXT_MODE_DOCUMENT.equals(textMode)) {
+            addDocumentContent(container, item);
+        } else {
+            // 普通文本（含未知模式）渲染为「只读字段」，保证内容不会消失。
+            addReadOnlyRow(container, node);
+        }
+    }
+
+    /** 普通文本行：只读字段样式——标签在上（灰）、值在下（深），与可编辑字段同构。 */
+    private void addReadOnlyRow(LinearLayout container, OfflineFormNode node) {
+        Context context = container.getContext();
+        String title = node.getTitle();
+        String content = node.getContent() == null ? "" : node.getContent();
+        boolean hasTitle = title != null && !title.isEmpty();
+
+        if (!hasTitle && content.isEmpty()) {
+            return;
+        }
+
+        LinearLayout column = new LinearLayout(context);
+        column.setOrientation(LinearLayout.VERTICAL);
+
+        if (hasTitle) {
+            TextView labelView = new TextView(context);
+            labelView.setText(title);
+            labelView.setTextColor(context.getColor(R.color.offline_form_sec));
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                    .getDimensionPixelSize(R.dimen.offline_form_field_label_text_size));
+            column.addView(labelView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        if (!content.isEmpty()) {
+            TextView valueView = new TextView(context);
+            valueView.setText(content);
+            valueView.setTextColor(context.getColor(R.color.offline_form_ink));
+            valueView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
+                    .getDimensionPixelSize(R.dimen.offline_form_field_value_text_size));
+            valueView.setLineSpacing(dp(context, 2), 1f);
+            LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (hasTitle) {
+                valueParams.topMargin = context.getResources()
+                        .getDimensionPixelSize(R.dimen.offline_form_item_label_gap);
+            }
+            column.addView(valueView, valueParams);
+        }
+
+        container.addView(column, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
     }
@@ -549,7 +815,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             nameView.setTextSize(14);
             nameView.setTypeface(null, Typeface.BOLD);
             nameView.setSingleLine(true);
-            nameView.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
+            nameView.setEllipsize(TextUtils.TruncateAt.MIDDLE);
 
             TextView actionView = new TextView(context);
             actionView.setText(R.string.offline_document_preview_hint);
@@ -673,9 +939,10 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void bindFieldViewHolder(BaseViewHolder holder, OfflineFormDisplayItem item, int position) {
-        int startPadding = dp(holder.itemView.getContext(), 16 + Math.max(0, item.getDepth() - 1) * 16);
-        holder.itemView.setPadding(startPadding, dp(holder.itemView.getContext(), 8), dp(holder.itemView.getContext(), 16), dp(holder.itemView.getContext(), 8));
+        // 行内边距由字段布局自身统一控制（16dp / 13dp）；嵌套层级由分组引导线表达，不再按 depth 缩进。
         BaseFormItem formItem = item.getFormItem();
+        // 打上字段 id 标记：保存校验失败时据此在视图树里定位字段并滚动高亮。
+        holder.itemView.setTag(R.id.offline_field_id_tag, formItem.getId());
         String originalTitle = formItem.getTitle();
         String displayTitle = item.getFieldDisplayTitle();
         if ((originalTitle == null || originalTitle.isEmpty()) && displayTitle != null && !displayTitle.isEmpty()) {
@@ -737,74 +1004,72 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return transition;
     }
 
-    private static class TriangleToggleView extends View {
-        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private boolean collapsed;
-
-        TriangleToggleView(Context context) {
-            super(context);
-            paint.setColor(context.getColor(R.color.huozige_blue));
-            paint.setStyle(Paint.Style.FILL);
-        }
-
-        void setCollapsed(boolean collapsed) {
-            this.collapsed = collapsed;
-            invalidate();
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            float width = getWidth();
-            float height = getHeight();
-            float centerX = width / 2f;
-            float centerY = height / 2f;
-            float size = Math.min(width, height) * 0.28f;
-
-            Path path = new Path();
-            if (collapsed) {
-                path.moveTo(centerX - size, centerY - size / 2f);
-                path.lineTo(centerX + size, centerY - size / 2f);
-                path.lineTo(centerX, centerY + size / 2f);
-            } else {
-                path.moveTo(centerX - size, centerY + size / 2f);
-                path.lineTo(centerX + size, centerY + size / 2f);
-                path.lineTo(centerX, centerY - size / 2f);
-            }
-            path.close();
-            canvas.drawPath(path, paint);
-        }
-    }
-
-    private class RootGroupViewHolder extends RecyclerView.ViewHolder {
+    private class PageViewHolder extends RecyclerView.ViewHolder {
         private final LinearLayout contentLayout;
 
-        RootGroupViewHolder(View itemView) {
+        PageViewHolder(View itemView) {
             super(itemView);
-            CardView cardView = (CardView) ((LinearLayout) itemView).getChildAt(0);
-            contentLayout = (LinearLayout) cardView.getChildAt(0);
+            contentLayout = (LinearLayout) itemView;
         }
 
-        void bind(OfflineFormDisplayItem rootItem, List<OfflineFormDisplayItem> groupItems) {
-            contentLayout.removeAllViews();
-            addGroupBlock(contentLayout, rootItem, groupItems);
+        void bind(List<OfflineFormDisplayItem> pageItems) {
+            // 分页下整页只有一个表单组：表单项顺序排列，项与项之间统一画通栏发丝线。
+            renderChildrenContent(contentLayout, pageItems);
         }
     }
 
-    private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem, List<OfflineFormDisplayItem> childItems) {
-        LinearLayout groupBlock = new LinearLayout(parentLayout.getContext());
+    /** 平铺布局的卡片：根分组卡片（可折叠）或连续散项合并成的卡片。 */
+    private class FlatCardViewHolder extends RecyclerView.ViewHolder {
+        private final LinearLayout contentLayout;
+
+        FlatCardViewHolder(View itemView) {
+            super(itemView);
+            contentLayout = (LinearLayout) itemView;
+        }
+
+        void bindGroupCard(OfflineFormDisplayItem groupItem, List<OfflineFormDisplayItem> groupItems) {
+            contentLayout.removeAllViews();
+            addGroupBlock(contentLayout, groupItem, groupItems, true);
+        }
+
+        void bindScatterCard(List<OfflineFormDisplayItem> scatterItems) {
+            contentLayout.removeAllViews();
+            renderChildrenContent(contentLayout, scatterItems);
+        }
+    }
+
+    private void addGroupBlock(LinearLayout parentLayout, OfflineFormDisplayItem groupItem,
+                               List<OfflineFormDisplayItem> childItems, boolean topLevelGroup) {
+        Context context = parentLayout.getContext();
+        boolean collapsed = collapsedGroupNodes.contains(groupItem.getNode());
+        LinearLayout groupBlock = new LinearLayout(context);
         groupBlock.setOrientation(LinearLayout.VERTICAL);
 
-        View header = createGroupHeader(groupBlock);
-        LinearLayout childrenLayout = new LinearLayout(parentLayout.getContext());
+        LinearLayout childrenLayout = new LinearLayout(context);
         childrenLayout.setOrientation(LinearLayout.VERTICAL);
         childrenLayout.setLayoutTransition(createLayoutTransition());
+        if (!topLevelGroup) {
+            styleNestedContent(childrenLayout, collapsed);
+        }
 
-        TriangleToggleView toggleView = bindGroupHeader(header, groupItem, v -> toggleGroup(groupItem, (TriangleToggleView) ((LinearLayout) header).getChildAt(2), childrenLayout, childItems));
-        toggleView.setCollapsed(collapsedGroupNodes.contains(groupItem.getNode()));
+        View header = createGroupHeader(groupBlock);
+        bindGroupHeader(header, groupItem, topLevelGroup);
+        setGroupHeaderCollapsed(header, collapsed);
+        header.setOnClickListener(v -> toggleGroup(groupItem, header, childrenLayout, childItems, topLevelGroup));
+
         groupBlock.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (topLevelGroup) {
+            // 顶层分组表头下的 1dp 通栏发丝线：与分页布局 Group Header 下的 divider 一致。
+            // 独立 View 而不是子内容容器背景：空容器带背景时有 1dp 内在最小高度，折叠后会残留并叠成双线。
+            View headerDivider = new View(context);
+            headerDivider.setBackgroundResource(R.drawable.offline_form_row_divider);
+            headerDivider.setVisibility(collapsed || childItems.isEmpty() ? View.GONE : View.VISIBLE);
+            header.setTag(R.id.offline_group_header_divider_tag, headerDivider);
+            groupBlock.addView(headerDivider, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(context, ROW_DIVIDER_HEIGHT_DP)));
+        }
         groupBlock.addView(childrenLayout, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -815,17 +1080,36 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         renderChildrenContent(childrenLayout, childItems);
     }
 
+    /** 行与行之间的发丝分隔线：分页布局与平铺布局统一为 1dp 通栏（同名同色同高）。 */
+    private void addRowDivider(LinearLayout parent) {
+        Context context = parent.getContext();
+        View divider = new View(context);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(context, ROW_DIVIDER_HEIGHT_DP)));
+        divider.setBackgroundResource(R.drawable.offline_form_row_divider);
+        parent.addView(divider);
+    }
+
+    /**
+     * 逐行渲染一组展示项：项与项之间统一画 1dp 通栏发丝分隔线。
+     * 分页布局的页内容与平铺布局的分组内容共用这一套渲染规则。
+     */
     private void renderChildrenContent(LinearLayout childrenLayout, List<OfflineFormDisplayItem> childItems) {
         childrenLayout.removeAllViews();
         if (childItems.isEmpty() || collapsedGroupNodes.contains(findParentNode(childItems))) {
             return;
         }
 
+        boolean first = true;
         for (int i = 0; i < childItems.size(); i++) {
             OfflineFormDisplayItem child = childItems.get(i);
+            if (!first) {
+                addRowDivider(childrenLayout);
+            }
+            first = false;
             if (child.isGroup()) {
                 List<OfflineFormDisplayItem> nestedChildren = collectDirectChildItems(childItems, i);
-                addGroupBlock(childrenLayout, child, nestedChildren);
+                addGroupBlock(childrenLayout, child, nestedChildren, false);
                 i += nestedChildren.size();
             } else if (child.isText()) {
                 View staticText = createStaticTextView(childrenLayout);
@@ -869,15 +1153,5 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             result.add(item);
         }
         return result;
-    }
-
-    private class StaticTextViewHolder extends RecyclerView.ViewHolder {
-        StaticTextViewHolder(View itemView) {
-            super(itemView);
-        }
-
-        void bind(OfflineFormDisplayItem item) {
-            bindStaticText(itemView, item);
-        }
     }
 }

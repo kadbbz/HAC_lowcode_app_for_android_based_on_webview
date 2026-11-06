@@ -17,6 +17,9 @@ public class PatternInput {
     public List<OfflineFormCardStyle> cardStyle = new ArrayList<>();
     public List<PatternStepInput> steps = new ArrayList<>();
     public List<String> displayColumns = new ArrayList<>();
+
+    // 布局方式（flat / paged）；缺失或未知值由下游归一化为 flat。
+    public String layoutMode = "";
 }
 
 

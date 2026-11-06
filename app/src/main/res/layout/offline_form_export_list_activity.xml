@@ -4,6 +4,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- 统一定制 Header：返回 / 选择导出表单 / 网络状态 tag -->
+    <include layout="@layout/offline_form_header" />
+
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="match_parent"
