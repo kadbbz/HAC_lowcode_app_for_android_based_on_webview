@@ -24,6 +24,7 @@ import com.huozige.lab.container.offlineform.OfflinePlusListActivity;
 import com.huozige.lab.container.platform.AbstractStaticFilesCacheFilter;
 import com.huozige.lab.container.proxy.support.pdf.PDFPreviewActivity;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.CookieUtility;
 import com.huozige.lab.container.utilities.StringConvertUtility;
 
 import java.io.ByteArrayOutputStream;
@@ -239,6 +240,11 @@ public class HACWebViewClient extends WebViewClient {
         if (!url.startsWith("file:///android_asset/error/")) {
             _loadingHomePage = false;
         }
+
+        // 登录成功会跳转到首页、退出登录会跳转到登录页，此时 Cookie 的新增或删除还只在内存里，
+        // 异步刷盘，避免用户紧接着退出APP时掉登录，或退出后又从磁盘恢复旧 Cookie 自动登录。
+        CookieUtility.flushAsync();
+
         XLog.v("页面加载完成：" + url);
     }
 

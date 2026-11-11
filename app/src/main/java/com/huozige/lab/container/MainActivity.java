@@ -27,6 +27,7 @@ import com.huozige.lab.container.proxy.AbstractProxy;
 import com.huozige.lab.container.proxy.ProxyRegister;
 import com.huozige.lab.container.utilities.ColorUtility;
 import com.huozige.lab.container.utilities.ConfigManager;
+import com.huozige.lab.container.utilities.CookieUtility;
 import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.webview.HACDownloadListener;
@@ -153,6 +154,20 @@ public class MainActivity extends BaseActivity {
         }
 
         super.onDestroy();
+    }
+
+    /**
+     * 退到后台时将 Cookie 刷盘。
+     * 用户登录或退出登录后很快从最近任务中划掉APP时，Cookie 的新增或删除可能还未写入磁盘，
+     * 会导致重开APP时掉登录，或退出登录后又从磁盘恢复旧 Cookie 自动登录。
+     */
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (_webView != null) {
+            CookieUtility.flush();
+        }
     }
 
     /**

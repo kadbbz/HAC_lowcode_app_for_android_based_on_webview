@@ -32,6 +32,10 @@ public class LifecycleUtility {
 
         XLog.w("调用关闭应用的方法");
 
+        // 直接杀进程前先刷盘，否则登录或退出登录后的 Cookie 变化可能还没写入磁盘，
+        // 导致重开APP时掉登录，或退出登录后又从磁盘恢复旧 Cookie 自动登录。
+        CookieUtility.flush();
+
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 }
