@@ -561,14 +561,14 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
 
         // 平铺布局的顶层分组折叠行与嵌套分组同一套手风琴样式：行高 56dp、左侧根分组实心品牌色竖条、右侧折叠箭头；
-        // 标题保持 18sp 加粗单行，下方由独立发丝线与组内字段分隔。
+        // 标题 18sp 加粗、超长时自动换行（不再单行省略），下方由独立发丝线与组内字段分隔。
         container.setMinimumHeight(context.getResources()
                 .getDimensionPixelSize(R.dimen.offline_form_group_header_min_height));
         container.setPadding(
                 context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_horizontal),
-                0,
+                dp(context, 10),
                 context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_end),
-                0);
+                dp(context, 10));
         addGroupAccentBar(container, true);
 
         TextView titleView = new TextView(context);
@@ -577,8 +577,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 .getDimensionPixelSize(R.dimen.offline_form_page_title_text_size));
         titleView.setTypeface(null, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER_VERTICAL);
-        titleView.setSingleLine(true);
-        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        titleView.setLineSpacing(dp(context, 2), 1f);
         titleView.setText(item.getNode().getTitle());
         container.addView(titleView, new LinearLayout.LayoutParams(
                 0,
@@ -591,6 +590,7 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /**
      * 嵌套子分组的手风琴式表头：整行「淡化主题色竖条 + 标题 + 右侧细箭头」；
      * 与顶层分组折叠行共用行高与箭头规格，用「淡化标识 + 常规字重」与根分组区分层级。
+     * 标题超长时自动换行，行高随内容增长（最小 56dp）。
      */
     private void bindNestedGroupHeader(LinearLayout container, OfflineFormDisplayItem item) {
         Context context = container.getContext();
@@ -599,9 +599,9 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 .getDimensionPixelSize(R.dimen.offline_form_group_header_min_height));
         container.setPadding(
                 context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_horizontal),
-                0,
+                dp(context, 10),
                 context.getResources().getDimensionPixelSize(R.dimen.offline_form_group_header_padding_end),
-                0);
+                dp(context, 10));
         addGroupAccentBar(container, false);
 
         TextView titleView = new TextView(context);
@@ -611,7 +611,8 @@ public class FormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources()
                 .getDimensionPixelSize(R.dimen.offline_form_field_value_text_size));
         titleView.setGravity(Gravity.CENTER_VERTICAL);
-        container.addView(titleView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        titleView.setLineSpacing(dp(context, 2), 1f);
+        container.addView(titleView, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         addGroupToggleChevron(container);
     }

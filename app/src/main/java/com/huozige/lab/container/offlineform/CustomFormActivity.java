@@ -155,8 +155,13 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     private TextView _itemPageCountView;
     // 底栏左侧「上一项 / 页码 / 下一项」区域：单页分页表单 / 无可导航项时隐藏，保存按钮通栏。
     private LinearLayout _itemNavigationButtonsLayout;
-    private TextView _previousItemButton;
-    private TextView _nextItemButton;
+    // 翻页按钮容器：仅图标时由内部居中的 ImageView 渲染箭头；通栏时由带图标的文本按钮渲染「图标 + 文本」。
+    private FrameLayout _previousItemButton;
+    private FrameLayout _nextItemButton;
+    private ImageView _previousItemIcon;
+    private ImageView _nextItemIcon;
+    private TextView _previousItemLabel;
+    private TextView _nextItemLabel;
     // 底部栏右侧的「保存」按钮：只保存当前页（当前表单组）的数据。
     private TextView _savePageButton;
     private View _stepFooterDivider;
@@ -367,6 +372,10 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         _itemNavigationButtonsLayout = findViewById(R.id.layout_nav_buttons);
         _previousItemButton = findViewById(R.id.button_previous_item);
         _nextItemButton = findViewById(R.id.button_next_item);
+        _previousItemIcon = findViewById(R.id.icon_previous_item);
+        _nextItemIcon = findViewById(R.id.icon_next_item);
+        _previousItemLabel = findViewById(R.id.label_previous_item);
+        _nextItemLabel = findViewById(R.id.label_next_item);
         _savePageButton = findViewById(R.id.button_save_page);
         _stepFooterDivider = findViewById(R.id.divider_step_bar_footer);
         _searchInput = findViewById(R.id.edit_search_input);
@@ -2136,7 +2145,7 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
             updateQuickActionsInset(false);
             return;
         }
-        // 规则 3：两个组件宽度自适应，只有一个时自动通栏（两者都 weight=1）。
+        // 规则 3：两个组件宽度自适应（分页器 weight=2、保存 weight=1），只有一个时自动通栏。
         if (_itemNavigationButtonsLayout != null) {
             _itemNavigationButtonsLayout.setVisibility(pagerVisible ? View.VISIBLE : View.GONE);
         }
@@ -2156,19 +2165,26 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         updateQuickActionsInset(!paged);
     }
 
-    /** 分页器通栏时左右按钮显示「上一组 / 上一项」「下一组 / 下一项」文本；与保存并排时只显示箭头图标。 */
+    /**
+     * 分页器通栏时左右按钮显示「上一组 / 上一项」「下一组 / 下一项」文本（图标 + 文本整体居中）；
+     * 与保存并排时只显示箭头图标，图标由按钮内居中的 ImageView 渲染，始终位于按钮中心。
+     */
     private void updatePagerButtonLabels(boolean fullWidth, boolean paged) {
-        if (_previousItemButton == null || _nextItemButton == null) {
+        if (_previousItemButton == null || _nextItemButton == null
+                || _previousItemIcon == null || _nextItemIcon == null
+                || _previousItemLabel == null || _nextItemLabel == null) {
             return;
         }
+        _previousItemIcon.setVisibility(fullWidth ? View.GONE : View.VISIBLE);
+        _nextItemIcon.setVisibility(fullWidth ? View.GONE : View.VISIBLE);
+        _previousItemLabel.setVisibility(fullWidth ? View.VISIBLE : View.GONE);
+        _nextItemLabel.setVisibility(fullWidth ? View.VISIBLE : View.GONE);
         if (!fullWidth) {
-            _previousItemButton.setText("");
-            _nextItemButton.setText("");
             return;
         }
-        _previousItemButton.setText(paged
+        _previousItemLabel.setText(paged
                 ? R.string.offline_button_previous_group : R.string.offline_button_previous_item);
-        _nextItemButton.setText(paged
+        _nextItemLabel.setText(paged
                 ? R.string.offline_button_next_group : R.string.offline_button_next_item);
     }
 
@@ -2295,6 +2311,27 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
     }
 
     /**
+     * 平铺布局：分组卡片内真实组头的高度。
+     * <p>组头标题支持换行后，组头高度可能大于粘滞条高度，粘滞显隐需要据此判断。</p>
+     */
+    private int getFlatCardHeaderHeight(int position) {
+        View cardView = getFlatCardView(position);
+        if (!(cardView instanceof ViewGroup)) {
+            return 0;
+        }
+        ViewGroup card = (ViewGroup) cardView;
+        if (card.getChildCount() == 0 || !(card.getChildAt(0) instanceof ViewGroup)) {
+            return 0;
+        }
+        // 卡片结构：groupBlock（竖向）→ [真实组头, 发丝线, 子内容]
+        ViewGroup groupBlock = (ViewGroup) card.getChildAt(0);
+        if (groupBlock.getChildCount() == 0) {
+            return 0;
+        }
+        return groupBlock.getChildAt(0).getHeight();
+    }
+
+    /**
      * 平铺布局：更新滚动区顶部的「当前分组标题行」粘滞条。
      *
      * <p>粘滞条就是卡片内分组头的复制（同样的竖条 / 字号 / 折叠箭头，点击可折叠展开当前分组）：
@@ -2332,8 +2369,15 @@ public class CustomFormActivity extends OfflineModuleActivity implements ImageCa
         // 此时真实组头正好与粘滞条重合并被其覆盖，标题不会先被裁掉一截再突然出现。
         if (coveringCard < 0 || coveringView == null
                 || !_adapter.isFlatGroupCard(coveringCard)
-                || _adapter.isFlatGroupCardCollapsed(coveringCard)
-                || coveringView.getTop() > scrollY) {
+                || _adapter.isFlatGroupCardCollapsed(coveringCard)) {
+            hideFlatStickyHeader();
+            return;
+        }
+        int cardTop = coveringView.getTop();
+        // 组头标题换行后可能高于粘滞条：等组头剩余可见部分不超过粘滞条高度时再显示，
+        // 否则粘滞条会盖住组头的前几行，看起来像标题被截断。
+        int headerHeight = getFlatCardHeaderHeight(coveringCard);
+        if (cardTop > scrollY || scrollY < cardTop + headerHeight - stickyHeight) {
             hideFlatStickyHeader();
             return;
         }
