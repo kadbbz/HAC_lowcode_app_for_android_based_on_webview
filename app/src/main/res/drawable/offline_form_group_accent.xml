@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    根分组左侧标识：品牌色实心竖条（3×15dp，圆角 2dp）。
+    用于平铺布局顶层分组折叠行与分页布局 Group Header；嵌套子分组使用淡化版
+    offline_form_group_accent_nested，以便在层级上区分。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/huozige_blue" />
+    <corners android:radius="2dp" />
+</shape>

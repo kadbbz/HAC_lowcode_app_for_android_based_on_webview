@@ -12,15 +12,21 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.preference.PreferenceDataStore;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.elvishew.xlog.XLog;
+import com.hjq.permissions.Permission;
 import com.huozige.lab.container.utilities.ConfigManager;
 import com.huozige.lab.container.utilities.DeviceUtility;
 import com.huozige.lab.container.utilities.LifecycleUtility;
+import com.huozige.lab.container.utilities.PermissionsUtility;
 import com.huozige.lab.container.utilities.UiUtility;
+import com.huozige.lab.container.preferences.ScanEditTextPreference;
+import com.king.camera.scan.CameraScan;
 
 import javax.annotation.Nullable;
 
@@ -143,6 +149,26 @@ public class OptionSettingsActivity extends AppCompatActivity {
      */
     public static class SettingsFragment extends PreferenceFragmentCompat {
 
+        private ScanEditTextPreference _entryPreference;
+
+        // 首页地址扫码页返回后先让用户确认，确认后才写入设置项。
+        private final ActivityResultLauncher<Intent> _arcZxingLite = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            Intent data = result.getData();
+            if (data == null || _entryPreference == null) {
+                return;
+            }
+
+            String url = CameraScan.parseScanResult(data);
+            new AlertDialog.Builder(requireActivity())
+                    .setTitle(R.string.url_title)
+                    .setMessage(url)
+                    .setPositiveButton(R.string.ui_button_ok, (dialogInterface, i) -> _entryPreference.setText(url))
+                    .setNegativeButton(R.string.ui_button_cancel, (dialogInterface, i) -> {
+                        // 什么都不干
+                    })
+                    .show();
+        });
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             // 对接ConfigManager实现数据存取
@@ -151,6 +177,23 @@ public class OptionSettingsActivity extends AppCompatActivity {
 
             // 默认逻辑
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            // 只给首页地址（key=E）绑定扫码按钮，其他设置项仍保持普通输入行为。
+            _entryPreference = findPreference(ConfigManager.PREFERENCE_KEY_APP_ENTRY_URL);
+            if (_entryPreference != null) {
+                _entryPreference.setScanClickListener(view -> {
+                    PermissionsUtility.asyncRequirePermissions(requireActivity(), new String[]{
+                            Permission.CAMERA,
+                            Permission.NOTIFICATION_SERVICE
+                    }, () -> {
+                        Intent intent = new Intent(requireActivity(), HACQRCodeScanActivity.class);
+                        intent.putExtra(HACQRCodeScanActivity.EXTRA_KEY_SCAN_HINTS, HACQRCodeScanActivity.EXTRA_QR_CODE_HINTS);
+                        // 这里是手动录入首页地址的辅助扫码入口，不播放提示音，避免设置页里突然响一声。
+                        intent.putExtra(HACQRCodeScanActivity.EXTRA_KEY_PLAY_BEEP, false);
+                        _arcZxingLite.launch(intent);
+                    });
+                });
+            }
         }
     }
 

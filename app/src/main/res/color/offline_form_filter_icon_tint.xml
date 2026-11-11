@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 筛选按钮图标着色：统一使用中性色，选中（筛选条件不是「全部」）时加深，不使用主题色。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:color="@color/offline_form_ink"
+        android:state_selected="true" />
+    <item android:color="@color/offline_form_sec" />
+</selector>

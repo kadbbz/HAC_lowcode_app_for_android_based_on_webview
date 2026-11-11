@@ -7,6 +7,16 @@ import android.content.Intent;
 import android.net.Uri;
 import android.text.InputType;
 import android.webkit.GeolocationPermissions;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.PermissionRequest;
@@ -20,6 +30,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 import com.elvishew.xlog.XLog;
 import com.hjq.permissions.Permission;
 import com.huozige.lab.container.R;
@@ -32,7 +44,6 @@ import com.zhihu.matisse.engine.impl.GlideEngine;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -169,63 +180,250 @@ public class HACWebChromeClient extends WebChromeClient {
         _filePathCallback = filePathCallback; // 将参数缓存起来，回调使用
 
         boolean isMultiSelect = fileChooserParams.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE;
+        String[] acceptTypes = fileChooserParams.getAcceptTypes();
+        boolean acceptsImage = acceptsMimeType(acceptTypes, "image/");
+        boolean acceptsVideo = acceptsMimeType(acceptTypes, "video/");
 
-        if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("video/*") || Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
-
-            // 需要调用摄像头，则先申请权限
+        if (acceptsImage && fileChooserParams.isCaptureEnabled()) {
+            // capture 表示网页要求直接拍摄，保留 HAC 原有行为。
+            launchCameraCapture(webView);
+        } else if (acceptsImage) {
+            // 普通图片请求提供拍照和系统文件选择器两个入口。
+            showImageSourceChooser(webView, isMultiSelect, acceptsOnlyImageTypes(acceptTypes));
+        } else if (acceptsVideo) {
+            // 视频仍使用原有 Matisse 选择流程。
             PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
                     Permission.CAMERA,
                     Permission.WRITE_EXTERNAL_STORAGE
-            }, () -> {
-
-                if (Arrays.asList(fileChooserParams.getAcceptTypes()).contains("image/*")) {
-
-                    // 兼容活字格官方Vant插件，支持"直接调出摄像头拍照上传"功能
-                    if (fileChooserParams.isCaptureEnabled()) {
-
-                        Intent cameraIntent = new Intent(this._context, CameraViewActivity.class);
-                        cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
-                        _imageCaptureChooser.launch(cameraIntent);
-                    } else {
-                        // 照片采用知乎的Matisse库，支持拍摄
-                        Matisse.from(_context)
-                                .choose(MimeType.ofImage(), false)
-                                .countable(true)
-                                .capture(true)
-                                .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
-                                        new CaptureStrategy(true, "com.huozige.lab.container"))
-                                .maxSelectable(isMultiSelect ? 99 : 1)
-                                .thumbnailScale(0.85f)
-                                .imageEngine(new GlideEngine())
-                                .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
-                    }
-                } else {
-
-                    // 视频也采用知乎的Matisse库，支持拍摄
-                    Matisse.from(_context)
-                            .choose(MimeType.ofVideo(), false)
-                            .countable(true)
-                            .capture(true)
-                            .captureStrategy(//参数1 true表示拍照存储在共有目录，false表示存储在私有目录；参数2与 AndroidManifest中authorities值相同，用于适配7.0系统 必须设置
-                                    new CaptureStrategy(true, "com.huozige.lab.container"))
-                            .maxSelectable(isMultiSelect ? 99 : 1)
-                            .thumbnailScale(0.85f)
-                            .imageEngine(new GlideEngine())
-                            .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO);
-                }
-            });
+            }, () -> Matisse.from(_context)
+                    .choose(MimeType.ofVideo(), false)
+                    .countable(true)
+                    .capture(true)
+                    .captureStrategy(new CaptureStrategy(true, "com.huozige.lab.container"))
+                    .maxSelectable(isMultiSelect ? 99 : 1)
+                    .thumbnailScale(0.85f)
+                    .imageEngine(new GlideEngine())
+                    .forResult(REQUEST_CODE_PICK_PHOTO_VIDEO));
         } else {
-
-            // 根据多选模式选择不同的文件选择器
-            if (isMultiSelect) {
-                _multiFileChooser.launch(new String[]{"*/*"});
-            } else {
-                _contentChooser.launch("*/*");
-            }
+            launchSystemFileChooser(isMultiSelect, "*/*");
         }
 
-        // 标记为已经处理
         return true;
+    }
+
+    private boolean acceptsMimeType(String[] acceptTypes, String prefix) {
+        if (acceptTypes == null) {
+            return false;
+        }
+        for (String acceptType : acceptTypes) {
+            if (acceptType == null) {
+                continue;
+            }
+            for (String value : acceptType.split(",")) {
+                String normalized = value.trim().toLowerCase(java.util.Locale.ROOT);
+                if (normalized.startsWith(prefix) || ("image/".equals(prefix) && isImageExtension(normalized))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean acceptsOnlyImageTypes(String[] acceptTypes) {
+        if (acceptTypes == null || acceptTypes.length == 0) {
+            return false;
+        }
+        boolean foundType = false;
+        for (String acceptType : acceptTypes) {
+            if (acceptType == null) {
+                return false;
+            }
+            for (String value : acceptType.split(",")) {
+                String normalized = value.trim().toLowerCase(java.util.Locale.ROOT);
+                if (normalized.isEmpty()) {
+                    return false;
+                }
+                foundType = true;
+                if (!normalized.startsWith("image/") && !isImageExtension(normalized)) {
+                    return false;
+                }
+            }
+        }
+        return foundType;
+    }
+
+    private boolean isImageExtension(String acceptType) {
+        if (!acceptType.startsWith(".")) {
+            return false;
+        }
+        String extension = acceptType.substring(1);
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        return mimeType != null && mimeType.toLowerCase(java.util.Locale.ROOT).startsWith("image/");
+    }
+
+    private void showImageSourceChooser(WebView webView, boolean isMultiSelect, boolean onlyImages) {
+        BottomSheetDialog dialog = new BottomSheetDialog(_context);
+        LinearLayout content = new LinearLayout(_context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setBackgroundColor(Color.WHITE);
+        content.setPadding(dp(24), dp(12), dp(24), dp(20));
+
+        View dragHandle = new View(_context);
+        dragHandle.setBackground(createRoundedBackground(Color.rgb(210, 214, 220), dp(4)));
+        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(dp(36), dp(4));
+        handleParams.gravity = Gravity.CENTER_HORIZONTAL;
+        handleParams.bottomMargin = dp(20);
+        content.addView(dragHandle, handleParams);
+
+        TextView title = new TextView(_context);
+        title.setText(R.string.ui_title_image_source);
+        title.setTextColor(Color.rgb(31, 41, 55));
+        title.setTextSize(20);
+        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        content.addView(title, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView subtitle = new TextView(_context);
+        subtitle.setText(R.string.ui_subtitle_image_source);
+        subtitle.setTextColor(Color.rgb(107, 114, 128));
+        subtitle.setTextSize(14);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        subtitleParams.topMargin = dp(4);
+        subtitleParams.bottomMargin = dp(20);
+        content.addView(subtitle, subtitleParams);
+
+        View cameraOption = createSourceOption(
+                R.drawable.ic_photo,
+                R.string.ui_label_camera_photo,
+                R.string.ui_desc_camera_capture,
+                Color.rgb(0, 161, 233), Color.WHITE,
+                () -> {
+                    dialog.dismiss();
+                    launchCameraCapture(webView);
+                });
+        content.addView(cameraOption, optionLayoutParams());
+
+        View fileOption = createSourceOption(
+                R.drawable.ic_folder_image,
+                R.string.ui_button_choose_file,
+                R.string.ui_desc_choose_image,
+                Color.rgb(232, 246, 253), Color.rgb(0, 133, 190),
+                () -> {
+                    dialog.dismiss();
+                    launchSystemFileChooser(isMultiSelect, onlyImages ? "image/*" : "*/*");
+                });
+        content.addView(fileOption, optionLayoutParams());
+
+        TextView cancel = new TextView(_context);
+        cancel.setText(R.string.ui_button_cancel);
+        cancel.setTextColor(Color.rgb(75, 85, 99));
+        cancel.setTextSize(16);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setBackground(createRoundedBackground(Color.rgb(245, 247, 249), dp(16)));
+        cancel.setOnClickListener(view -> {
+            dialog.dismiss();
+            deliverFileChooserResult(new Uri[0]);
+        });
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+        cancelParams.topMargin = dp(4);
+        content.addView(cancel, cancelParams);
+
+        dialog.setContentView(content);
+        dialog.setOnCancelListener(ignored -> deliverFileChooserResult(new Uri[0]));
+        dialog.show();
+    }
+
+    private View createSourceOption(int iconResource, int titleResource, int descriptionResource,
+                                    int iconBackgroundColor, int iconColor, Runnable onClick) {
+        LinearLayout row = new LinearLayout(_context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(14), dp(12), dp(16), dp(12));
+        row.setBackground(createRoundedBackground(Color.rgb(246, 248, 250), dp(18)));
+        row.setClickable(true);
+        row.setFocusable(true);
+
+        FrameLayout iconContainer = new FrameLayout(_context);
+        iconContainer.setBackground(createRoundedBackground(iconBackgroundColor, dp(24)));
+        ImageView icon = new ImageView(_context);
+        icon.setImageResource(iconResource);
+        icon.setColorFilter(iconColor);
+        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER);
+        iconContainer.addView(icon, iconParams);
+        row.addView(iconContainer, new LinearLayout.LayoutParams(dp(48), dp(48)));
+
+        LinearLayout labels = new LinearLayout(_context);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams labelsParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        labelsParams.leftMargin = dp(14);
+        row.addView(labels, labelsParams);
+
+        TextView title = new TextView(_context);
+        title.setText(titleResource);
+        title.setTextColor(Color.rgb(31, 41, 55));
+        title.setTextSize(16);
+        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        labels.addView(title);
+
+        TextView description = new TextView(_context);
+        description.setText(descriptionResource);
+        description.setTextColor(Color.rgb(107, 114, 128));
+        description.setTextSize(13);
+        LinearLayout.LayoutParams descriptionParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        descriptionParams.topMargin = dp(3);
+        labels.addView(description, descriptionParams);
+        row.setOnClickListener(view -> onClick.run());
+        return row;
+    }
+
+    private LinearLayout.LayoutParams optionLayoutParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = dp(12);
+        return params;
+    }
+
+    private GradientDrawable createRoundedBackground(int color, int radius) {
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(color);
+        background.setCornerRadius(radius);
+        return background;
+    }
+
+    private int dp(int value) {
+        return (int) (value * _context.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void launchCameraCapture(WebView webView) {
+        PermissionsUtility.asyncRequirePermissions(webView.getContext(), new String[]{
+                Permission.CAMERA,
+                Permission.WRITE_EXTERNAL_STORAGE
+        }, () -> {
+            Intent cameraIntent = new Intent(_context, CameraViewActivity.class);
+            cameraIntent.putExtra(CameraViewActivity.EXTRA_OPERATION, CameraViewActivity.OPERATION_TAKE_PHOTO);
+            _imageCaptureChooser.launch(cameraIntent);
+        });
+    }
+
+    private void launchSystemFileChooser(boolean isMultiSelect, String mimeType) {
+        // 沿用 HAC 原有系统文件选择器入口。
+        if (isMultiSelect) {
+            _multiFileChooser.launch(new String[]{mimeType});
+        } else {
+            _contentChooser.launch(mimeType);
+        }
+    }
+
+    private void deliverFileChooserResult(Uri[] uris) {
+        ValueCallback<Uri[]> callback = _filePathCallback;
+        _filePathCallback = null;
+        if (callback != null) {
+            callback.onReceiveValue(uris);
+        }
     }
 
     /**
@@ -242,13 +440,15 @@ public class HACWebChromeClient extends WebChromeClient {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         // 从Intent中读取图片URI
                         String uriStr = result.getData().getStringExtra(CameraViewActivity.EXTRA_OUT_URI);
-                        var uri = Uri.parse(uriStr);
-                        selectedFiles.add(uri);
-                        DeviceUtility.registryLatestFile(uri);
+                        if (uriStr != null && !uriStr.isEmpty()) {
+                            Uri uri = Uri.parse(uriStr);
+                            selectedFiles.add(uri);
+                            DeviceUtility.registryLatestFile(uri);
+                        }
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
-                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    deliverFileChooserResult(selectedFiles.toArray(new Uri[0]));
                 });
 
         // 创建文件选择页面启动器（单选）
@@ -264,7 +464,7 @@ public class HACWebChromeClient extends WebChromeClient {
                     }
 
                     // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
-                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    deliverFileChooserResult(selectedFiles.toArray(new Uri[0]));
                 });
 
         // 创建多选文件选择页面启动器
@@ -279,7 +479,7 @@ public class HACWebChromeClient extends WebChromeClient {
                         }
                     }
 
-                    _filePathCallback.onReceiveValue(selectedFiles.toArray(new Uri[0]));
+                    deliverFileChooserResult(selectedFiles.toArray(new Uri[0]));
                 });
     }
 
@@ -301,7 +501,7 @@ public class HACWebChromeClient extends WebChromeClient {
             }
 
             // 让页面接手处理，每一个ChooseFile都需要有配套的onReceiveValue事件
-            _filePathCallback.onReceiveValue(selectedUris.toArray(new Uri[0]));
+            deliverFileChooserResult(selectedUris.toArray(new Uri[0]));
         }
 
         return false;
